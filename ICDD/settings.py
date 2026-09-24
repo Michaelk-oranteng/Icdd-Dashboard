@@ -35,18 +35,23 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() in ('1', 'true', 'yes')
 # ============================================================
 # HOSTS / CSRF
 # ============================================================
+# Defaults now include '.onrender.com' (leading dot = wildcard subdomain).
+# Set ALLOWED_HOSTS env var on Render to override (e.g. custom domain).
+#
+# IMPORTANT: When you attach a custom domain on Render, add it here too:
+#   ALLOWED_HOSTS=.onrender.com,example.com,www.example.com
 
 ALLOWED_HOSTS = [
     h.strip() for h in os.environ.get(
         'ALLOWED_HOSTS',
-        'localhost,127.0.0.1'
+        'localhost,127.0.0.1,.onrender.com'          # ← CHANGED
     ).split(',') if h.strip()
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.environ.get(
         'CSRF_TRUSTED_ORIGINS',
-        'http://localhost:8000,http://127.0.0.1:8000'
+        'http://localhost:8000,http://127.0.0.1:8000,https://*.onrender.com'  # ← CHANGED
     ).split(',') if o.strip()
 ]
 
@@ -109,7 +114,7 @@ WSGI_APPLICATION = 'ICDD.wsgi.application'
 # DATABASE
 # ============================================================
 # Local dev: SQLite (via .env or default)
-# Production: reads DATABASE_URL (Postgres on Railway)
+# Production: reads DATABASE_URL (Postgres on Render)
 #
 # NOTE: dj_database_url.config() ignores `default=` when DATABASE_URL
 # is defined-but-empty. We guard against that by checking explicitly.
@@ -168,7 +173,7 @@ STORAGES = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
 
@@ -184,9 +189,19 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024   # 50 MB
 # ============================================================
 # SECURITY
 # ============================================================
+# SECURE_SSL_REDIRECT is env-driven so we can disable it if Render's
+# health check ever gets caught in a redirect loop. By default it's on
+# in production, off in debug.
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = not DEBUG
+
+# Optional env override: set DISABLE_SSL_REDIRECT=True on Render ONLY if
+# health checks fail with 301 loops. Defaults to the previous behavior.
+SECURE_SSL_REDIRECT = (
+    not DEBUG
+    and os.environ.get('DISABLE_SSL_REDIRECT', 'False').lower() not in ('1', 'true', 'yes')
+)                                                                    # ← CHANGED (env override)
+
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SECURE_HSTS_SECONDS = 0 if DEBUG else 60 * 60 * 24 * 30
