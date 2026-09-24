@@ -8,7 +8,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Branch data
         branches = [
-            'ATOMIC', 'DANSOMAN', 'DOME', 'EAST LEGON', 'KASOA', 'KEJETIA',
+            'ATOMIC','Airport' 'DANSOMAN', 'DOME', 'EAST LEGON', 'KASOA', 'KEJETIA',
             'KNUST', 'KOFORIDUA', 'KOKOMLEMLE', 'KRONUM', 'LABONE', 'MADINA ESTATE',
             'MANHYIA', 'NIMA', 'NORTH INDUSTRIAL AREA', 'ODORKOR', 'OSU',
             'SPINTEX BASKET', 'SPINTEX MANET', 'SUNYANI', 'TAKORADI HARBOUR',
