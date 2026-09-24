@@ -1,0 +1,609 @@
+/* ==========================================================================
+   LOGGED-EXCEPTIONS.CSS - Logged Exceptions Page Styles
+   ========================================================================== */
+
+/* ==========================================================================
+   1. REPORT TYPE GROUP
+   ========================================================================== */
+
+.report-type-group {
+    margin-bottom: 16px;
+    border: 1px solid var(--glass-border-dark);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--glass-bg);
+    box-shadow: 0 2px 8px var(--glass-shadow);
+    transition: all 0.3s ease;
+}
+
+.report-type-group:hover {
+    box-shadow: 0 4px 16px var(--glass-shadow-hover);
+}
+
+.report-type-header {
+    padding: 14px 20px;
+    background: rgba(0, 51, 153, 0.02);
+    border-bottom: 2px solid var(--glass-border-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.report-type-header:hover {
+    background: rgba(0, 51, 153, 0.04);
+}
+
+.report-type-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.report-type-icon {
+    color: var(--omni-primary);
+    font-size: 18px;
+}
+
+.report-type-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a2332;
+}
+
+.report-type-count {
+    font-size: 12px;
+    color: rgba(26, 35, 50, 0.5);
+    background: rgba(26, 35, 50, 0.06);
+    padding: 2px 12px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.report-type-toggle {
+    color: #9ca3af;
+    transition: transform 0.3s ease;
+    font-size: 14px;
+}
+
+.report-type-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+
+.report-type-body {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.report-type-body.collapsed {
+    display: none;
+}
+
+/* ==========================================================================
+   2. REPORT DETAILS TABLE
+   ========================================================================== */
+
+.report-details-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.report-details-table thead {
+    background: rgba(0, 51, 153, 0.02);
+}
+
+.report-details-table thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: rgba(26, 35, 50, 0.5);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--glass-border-dark);
+}
+
+.report-details-table tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--glass-border-dark);
+    vertical-align: middle;
+    color: #1a2332;
+}
+
+.report-details-table tbody tr:hover {
+    background: rgba(0, 51, 153, 0.02);
+}
+
+.report-details-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ==========================================================================
+   3. USER NAME
+   ========================================================================== */
+
+.user-name {
+    font-weight: 500;
+    color: #1a2332;
+}
+
+/* ==========================================================================
+   4. EXCEPTION DETAILS CELL
+   ========================================================================== */
+
+.exception-details-cell p {
+    margin: 0;
+    font-size: 13px;
+    color: rgba(26, 35, 50, 0.7);
+    line-height: 1.5;
+}
+
+.recommendation-block {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(245, 158, 11, 0.06);
+    border-left: 3px solid var(--omni-warning);
+    border-radius: 4px;
+}
+
+.recommendation-block h5 {
+    margin: 0 0 4px 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(26, 35, 50, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.recommendation-block ul {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.recommendation-block ul li {
+    font-size: 12px;
+    color: rgba(26, 35, 50, 0.6);
+}
+
+/* ==========================================================================
+   5. TIME STAMP
+   ========================================================================== */
+
+.time-stamp {
+    font-size: 13px;
+    color: #1a2332;
+}
+
+/* ==========================================================================
+   6. STATUS BADGES
+   ========================================================================== */
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-badge.open {
+    background: rgba(16, 185, 129, 0.12);
+    color: #065f46;
+}
+
+.status-badge.closed {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.status-badge.pending {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.status-badge.in_progress {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+
+.status-badge.resolved {
+    background: rgba(16, 185, 129, 0.12);
+    color: #065f46;
+}
+
+.status-badge.draft {
+    background: rgba(107, 114, 128, 0.12);
+    color: #6b7280;
+}
+
+.status-badge.submitted {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.status-badge.in_review {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+
+.status-badge.approved {
+    background: rgba(16, 185, 129, 0.12);
+    color: #065f46;
+}
+
+.status-badge.rejected {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.status-badge.revision_requested {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+/* ==========================================================================
+   7. HEADER DATE GROUP
+   ========================================================================== */
+
+.header-date-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-date-group label {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(26, 35, 50, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+}
+
+.header-date-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-date-input {
+    background: rgba(255, 255, 255, 0.8);
+    color: #1a2332;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border-dark);
+    outline: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 140px;
+}
+
+.header-date-input:hover {
+    border-color: var(--omni-primary);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.header-date-input:focus {
+    border-color: var(--omni-primary);
+    box-shadow: 0 0 0 3px rgba(0, 51, 153, 0.08);
+    background: white;
+}
+
+.header-date-input::placeholder {
+    color: rgba(26, 35, 50, 0.3);
+}
+
+.header-date-wrapper span {
+    font-size: 12px;
+    color: rgba(26, 35, 50, 0.3);
+}
+
+/* ==========================================================================
+   8. RESET BUTTON
+   ========================================================================== */
+
+.btn-reset-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(0, 51, 153, 0.06);
+    color: var(--omni-primary);
+    border: 1px solid rgba(0, 51, 153, 0.08);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-reset-header:hover {
+    background: var(--omni-primary);
+    color: #ffffff;
+    border-color: var(--omni-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 51, 153, 0.15);
+}
+
+.btn-reset-header i {
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   9. EMPTY STATE
+   ========================================================================== */
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(26, 35, 50, 0.4);
+}
+
+.empty-state i {
+    font-size: 56px;
+    color: rgba(16, 185, 129, 0.15);
+    display: block;
+    margin-bottom: 16px;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin: 0;
+    color: rgba(26, 35, 50, 0.5);
+}
+
+/* ==========================================================================
+   10. HEADER FILTER GROUP
+   ========================================================================== */
+
+.header-filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.header-filter-group label {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(26, 35, 50, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.header-select {
+    background: rgba(255, 255, 255, 0.8);
+    color: #1a2332;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 32px 6px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border-dark);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='rgba(0,0,0,0.3)' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    min-width: 140px;
+    transition: all 0.3s ease;
+}
+
+.header-select:hover,
+.header-select:focus {
+    border-color: var(--omni-primary);
+    box-shadow: 0 0 0 3px rgba(0, 51, 153, 0.08);
+}
+
+.header-select option {
+    background: #ffffff;
+    color: #1a2332;
+}
+
+.header-divider {
+    width: 1px;
+    height: 30px;
+    background: var(--glass-border-dark);
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   11. RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .top-header {
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 56px;
+        padding: 12px 16px;
+    }
+    
+    .top-header-center {
+        order: 3;
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 8px;
+    }
+    
+    .header-filter-group {
+        flex-wrap: wrap;
+    }
+    
+    .header-select {
+        min-width: 120px;
+        font-size: 11px;
+    }
+    
+    .header-date-group {
+        flex-wrap: wrap;
+    }
+    
+    .header-date-input {
+        min-width: 100px;
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    .top-header-right {
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .report-details-table {
+        font-size: 12px;
+    }
+    
+    .report-details-table thead th,
+    .report-details-table tbody td {
+        padding: 6px 8px;
+    }
+    
+    .report-type-header {
+        padding: 10px 14px;
+    }
+    
+    .report-type-title {
+        font-size: 14px;
+    }
+    
+    .report-type-left {
+        gap: 8px;
+    }
+    
+    .report-details-table tbody td {
+        display: block;
+        padding: 6px 8px;
+        border-bottom: none;
+    }
+    
+    .report-details-table tbody tr {
+        display: block;
+        border: 1px solid var(--glass-border-dark);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        padding: 4px 0;
+    }
+    
+    .report-details-table tbody tr:last-child {
+        margin-bottom: 0;
+    }
+    
+    .report-details-table tbody td:last-child {
+        border-bottom: none;
+    }
+    
+    .report-details-table thead {
+        display: none;
+    }
+    
+    .btn-reset-header {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .btn-reset-header span {
+        display: none;
+    }
+    
+    .header-date-group {
+        flex-wrap: wrap;
+        gap: 4px;
+        width: 100%;
+    }
+    
+    .header-date-group label {
+        font-size: 9px;
+    }
+    
+    .header-date-input {
+        min-width: 90px;
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+    
+    .header-date-wrapper {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    
+    .header-date-wrapper span {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-select {
+        min-width: 80px;
+        font-size: 10px;
+        padding: 4px 20px 4px 8px;
+    }
+    
+    .header-date-input {
+        min-width: 70px;
+        font-size: 10px;
+        padding: 4px 6px;
+    }
+    
+    .header-date-wrapper span {
+        font-size: 10px;
+    }
+    
+    .report-type-header {
+        padding: 8px 10px;
+    }
+    
+    .report-type-title {
+        font-size: 12px;
+    }
+    
+    .report-type-count {
+        font-size: 10px;
+        padding: 1px 8px;
+    }
+    
+    .report-details-table tbody td {
+        font-size: 11px;
+    }
+    
+    .status-badge {
+        font-size: 10px;
+        padding: 2px 10px;
+    }
+    
+    .empty-state i {
+        font-size: 40px;
+    }
+    
+    .empty-state p {
+        font-size: 14px;
+    }
+    
+    .header-date-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .header-date-wrapper {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .header-date-input {
+        flex: 1;
+        min-width: 60px;
+    }
+}

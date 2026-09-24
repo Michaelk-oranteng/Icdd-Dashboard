@@ -1,0 +1,369 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Report Creation{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/reportcenter.css' %}" type="text/css">
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:admin_page' %}{% endblock %}
+
+{% block nav_links %}
+<li><a href="{% url 'control_dashboard:admin_page' %}">
+    <span class="nav-icon"><i class="fas fa-user-cog"></i></span>
+    <span class="nav-text">User Management</span>
+</a></li> 
+<li class="active"><a href="{% url 'control_dashboard:report_creation' %}">
+    <span class="nav-icon"><i class="fas fa-plus-circle"></i></span>
+    <span class="nav-text">Report Creation</span>
+</a></li>  
+<li><a href="{% url 'control_dashboard:report_center' %}">
+    <span class="nav-icon"><i class="fas fa-flag"></i></span>
+    <span class="nav-text">Report Center</span>
+</a></li>   
+<li><a href="{% url 'control_dashboard:checklist_builder' %}">
+    <span class="nav-icon"><i class="fas fa-cubes"></i></span>
+    <span class="nav-text">Checklist Builder</span>
+</a></li>   
+<li><a href="{% url 'control_dashboard:checklist_list' %}">
+    <span class="nav-icon"><i class="fas fa-tools"></i></span>
+    <span class="nav-text">Checklist Activities</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:activity_logs' %}">
+    <span class="nav-icon"><i class="fas fa-key"></i></span>
+    <span class="nav-text">Activity Logs</span>
+</a></li> 
+{% endblock %}
+
+{% block page_title %}Create & Assign Reports{% endblock %}
+
+{% block page_subtitle %}
+<span class="page-subtitle">Create new reports and assign them to team members</span>
+{% endblock %}
+
+{% block top_header_center %}
+<!-- Empty - no filter needed for creation -->
+{% endblock %}
+
+{% block top_header_right %}
+<button class="btn-create-header" id="mainSaveBtn" onclick="createReport()">
+    <i class="fas fa-save"></i> Create Report
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- ==================== CREATE REPORT SECTION ==================== -->
+<div class="report-builder-container">
+    <div class="builder-card main-form">
+        <form id="createReportForm">
+            {% csrf_token %}
+            <div class="form-grid">
+                <!-- Left Column -->
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="reportType">
+                            <i class="fas fa-file-alt"></i> Report Type <span class="required">*</span>
+                        </label>
+                        <select id="reportType" class="form-control" required>
+                            <option value="">Select Type...</option>
+                            <option value="Branch Consolidated Exceptions Report">Branch Consolidated Exceptions Report</option>
+                            <option value="Head Office Consolidated Exceptions Report">Head Office Consolidated Exceptions Report</option>
+                            <option value="Weekly Exceptions Report">Weekly Exceptions Report</option>
+                            <option value="Security Sweep Report">Security Sweep Report</option>
+                            <option value="Cash Count Report">Cash Count Report</option>
+                            <option value="Cash Imbalance Report">Cash Imbalance Report</option>
+                            <option value="Investigation Schedule">Investigation Schedule</option>
+                            <option value="Branch GL Proof Report review Consolidation">Branch GL Proof Report review Consolidation</option>
+                            <option value="E-Business GL Proof review">E-Business GL Proof review</option>
+                            <option value="FINOPs- GL Proof review">FINOPs- GL Proof review</option>
+                            <option value="Finance- GL Proof review">Finance- GL Proof review</option>
+                            <option value="Recovery/Credit GL Proof Review">Recovery/Credit GL Proof Review</option>
+                            <option value="TROPs GL Proof Review">TROPs GL Proof Review</option>
+                            <option value="CMU -Accra GL Proof Review">CMU -Accra GL Proof Review</option>
+                            <option value="CMU- Kumasi GL Proof Review">CMU- Kumasi GL Proof Review</option>
+                            <option value="CMU-Takoradi GL Proof Review">CMU-Takoradi GL Proof Review</option>
+                            <option value="Trade GL Proof Review">Trade GL Proof Review</option>
+                            <option value="Clearing GL Proof Review">Clearing GL Proof Review</option>
+                            <option value="Cost Saved">Cost Saved</option>
+                            <option value="Debit Reversal">Debit Reversal</option>
+                            <option value="Balance Confirmation">Balance Confirmation</option>
+                            <option value="Statement Verification">Statement Verification</option>
+                            <option value="Branch Workplan">Branch Workplan</option>
+                            <option value="Head Office Workplan">Head Office Workplan</option>
+                            <option value="Report on Customer Details wrongly Captured and Details not captured in CBA">Report on Customer Details wrongly Captured and Details not captured in CBA</option>
+                            <option value="EOM Presentation (PPT) on Work Done and Key Findings">EOM Presentation (PPT) on Work Done and Key Findings</option>
+                            <option value="custom">Custom (Type below)</option>
+                        </select>
+                        <input type="text" id="customReportTypeInput" class="form-control" placeholder="Enter custom report type..." style="display: none; margin-top: 8px;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reportFrequency">
+                            <i class="fas fa-clock"></i> Report Frequency <span class="required">*</span>
+                        </label>
+                        <select id="reportFrequency" class="form-control" name="report-frequency">
+                            <option value="one-off">One Off</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="form-column">
+                    <div class="form-group">
+                        <label for="deadlineDate">
+                            <i class="fas fa-calendar-alt"></i> Deadline Date
+                        </label>
+                        <input type="date" id="deadlineDate" class="form-control" name="report-deadline-date">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deadlineTime">
+                            <i class="fas fa-clock"></i> Deadline Time
+                        </label>
+                        <input type="time" id="deadlineTime" class="form-control" name="report-deadline-time">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="assignedTo">
+                            <i class="fas fa-users"></i> Assign Report To <span class="required">*</span>
+                        </label>
+                        <select id="assignedTo" class="form-control" name="assigned-recipient" multiple style="height: 100px;">
+                            <option value="all">All Members</option>
+                            {% for user in users %}
+                            <option value="{{ user.id }}">{{ user.full_name|default:user.email }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-submit" id="mainSaveBtn" onclick="createReport()">
+                            <i class="fas fa-plus"></i> <span id="saveBtnText">Create Report</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== TOAST NOTIFICATION ==================== -->
+<div id="toastNotification" class="toast" style="display: none;">
+    <div class="toast-content">
+        <div class="toast-icon">
+            <i id="toastIcon" class="fas fa-check"></i>
+        </div>
+        <div class="toast-body">
+            <div id="toastTitle" class="toast-title">Success!</div>
+            <div id="toastMessage" class="toast-message">Action completed successfully.</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.parentElement.style.display='none'">&times;</button>
+    </div>
+</div>
+
+<script>
+    console.log('Report Creation JS Loaded');
+    
+    // ============================================
+    // CSRF TOKEN HELPER
+    // ============================================
+    function getCsrfToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === 'csrftoken=') {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+
+    // ============================================
+    // TOAST NOTIFICATION
+    // ============================================
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toastNotification');
+        const msgEl = document.getElementById('toastMessage');
+        const titleEl = document.getElementById('toastTitle');
+        const icon = document.getElementById('toastIcon');
+        
+        msgEl.textContent = message || 'Action completed successfully.';
+        
+        if (type === 'error') {
+            icon.className = 'fas fa-exclamation-circle';
+            toast.className = 'toast error';
+            titleEl.textContent = 'Error!';
+        } else {
+            icon.className = 'fas fa-check-circle';
+            toast.className = 'toast success';
+            titleEl.textContent = 'Success!';
+        }
+        
+        toast.style.display = 'block';
+        
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(function() {
+            toast.style.display = 'none';
+        }, 4000);
+    }
+
+    // ============================================
+    // RESET FORM
+    // ============================================
+    function resetForm() {
+        document.getElementById('reportType').value = '';
+        document.getElementById('reportFrequency').value = 'one-off';
+        document.getElementById('deadlineDate').value = '';
+        document.getElementById('deadlineTime').value = '';
+        document.getElementById('customReportTypeInput').style.display = 'none';
+        document.getElementById('customReportTypeInput').value = '';
+        
+        const assignedTo = document.getElementById('assignedTo');
+        if (assignedTo) {
+            Array.from(assignedTo.options).forEach(opt => opt.selected = false);
+        }
+        
+        document.getElementById('saveBtnText').textContent = 'Create Report';
+        document.getElementById('formStatus').textContent = 'New';
+        document.getElementById('formStatus').className = 'status-badge new';
+        showToast('Form cleared');
+    }
+
+    // ============================================
+    // CREATE REPORT
+    // ============================================
+    function createReport() {
+        console.log('createReport called');
+        
+        var reportType = document.getElementById('reportType').value;
+        var customInput = document.getElementById('customReportTypeInput');
+        if (customInput && customInput.style.display !== 'none' && customInput.value) {
+            reportType = customInput.value;
+        }
+        
+        var frequency = document.getElementById('reportFrequency').value;
+        var deadlineDate = document.getElementById('deadlineDate').value || null;
+        var deadlineTime = document.getElementById('deadlineTime').value || null;
+        var assignedTo = document.getElementById('assignedTo');
+        
+        var selectedUsers = [];
+        var isAssignedToAll = false;
+        
+        for (var i = 0; i < assignedTo.options.length; i++) {
+            if (assignedTo.options[i].selected) {
+                if (assignedTo.options[i].value === 'all') {
+                    isAssignedToAll = true;
+                } else {
+                    selectedUsers.push(assignedTo.options[i].value);
+                }
+            }
+        }
+        
+        if (isAssignedToAll) {
+            selectedUsers = [];
+        }
+
+        if (!reportType) {
+            showToast('Please select or enter a report type.', 'error');
+            return;
+        }
+
+        if (selectedUsers.length === 0 && !isAssignedToAll) {
+            showToast('Please select at least one user.', 'error');
+            return;
+        }
+
+        var data = {
+            report_type: reportType,
+            frequency: frequency,
+            deadline_date: deadlineDate,
+            deadline_time: deadlineTime,
+            assigned_users: selectedUsers,
+            is_assigned_to_all: isAssignedToAll
+        };
+
+        console.log('Sending data:', data);
+
+        var btn = document.getElementById('mainSaveBtn');
+        var originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+
+        fetch('/adminboard/api/reports/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(data)
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                return response.json().then(function(err) {
+                    throw new Error(err.error || 'Server error');
+                });
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            
+            if (data.success) {
+                showToast('Report created successfully!');
+                setTimeout(function() {
+                    window.location.href = '/adminboard/report-center/';
+                }, 1000);
+            } else {
+                showToast('Error: ' + data.error, 'error');
+            }
+        })
+        .catch(function(error) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            console.error('Error:', error);
+            showToast('Error: ' + error.message, 'error');
+        });
+    }
+
+    // ============================================
+    // KEYBOARD SHORTCUTS
+    // ============================================
+    document.addEventListener('keydown', function(event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+            event.preventDefault();
+            createReport();
+        }
+    });
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded - initializing Report Creation');
+        
+        // Setup custom report type input
+        var reportTypeSelect = document.getElementById('reportType');
+        var customInput = document.getElementById('customReportTypeInput');
+
+        reportTypeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customInput.style.display = 'block';
+                customInput.required = true;
+            } else {
+                customInput.style.display = 'none';
+                customInput.required = false;
+            }
+        });
+    });
+</script>
+{% endblock %}

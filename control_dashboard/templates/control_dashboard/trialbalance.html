@@ -1,0 +1,2100 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Daily Trial Balance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/submit.css' %}" type="text/css">
+<style>
+/* ============================================================
+   DAILY TRIAL BALANCE — Premium Light Theme
+   ============================================================ */
+
+:root {
+    /* Surfaces */
+    --tb-bg-0: #eef1f8;
+    --tb-bg-1: #ffffff;
+    --tb-bg-2: #f7f8fc;
+    --tb-bg-3: #f1f3f9;
+
+    /* Glass & borders */
+    --tb-glass: rgba(255, 255, 255, 0.85);
+    --tb-glass-hover: rgba(255, 255, 255, 1);
+    --tb-border: rgba(15, 27, 51, 0.08);
+    --tb-border-strong: rgba(15, 27, 51, 0.16);
+    --tb-hairline: rgba(15, 27, 51, 0.06);
+
+    /* Text */
+    --tb-text-0: #0f1b33;
+    --tb-text-1: #46536b;
+    --tb-text-2: #8993a8;
+
+    /* Accents */
+    --tb-accent: #4f6ef7;
+    --tb-accent-soft: #eef1ff;
+    --tb-cyan: #0ea5a4;
+    --tb-cyan-soft: #e0f7f6;
+    --tb-violet: #7c5cf0;
+    --tb-violet-soft: #f0ebff;
+    --tb-amber: #e08a17;
+    --tb-amber-soft: #fdf2e0;
+    --tb-rose: #e0456a;
+    --tb-rose-soft: #fdeaf0;
+    --tb-emerald: #17a673;
+    --tb-emerald-soft: #e2f7ef;
+
+    /* Shadows */
+    --tb-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --tb-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+    --tb-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
+                    0 4px 12px rgba(15, 27, 51, 0.04);
+
+    --tb-font: 'Poppins', system-ui, -apple-system, sans-serif;
+    --tb-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.tb-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 4px 0 40px;
+    font-family: var(--tb-font);
+    color: var(--tb-text-0);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ============================================================
+   HEADER ACTIONS
+   ============================================================ */
+.tb-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tb-date-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    background: var(--tb-bg-1);
+    border: 1px solid var(--tb-border);
+    border-radius: 10px;
+    transition: all 0.25s ease;
+    box-shadow: var(--tb-shadow-sm);
+}
+
+.tb-date-wrapper:focus-within {
+    border-color: var(--tb-accent);
+    box-shadow:
+        0 0 0 3px rgba(79, 110, 247, 0.12),
+        var(--tb-shadow-sm);
+}
+
+.tb-date-wrapper .tb-date-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--tb-text-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.tb-date-wrapper .tb-date-label i { color: var(--tb-accent); }
+
+.tb-date-wrapper .tb-date-input {
+    border: none;
+    outline: none;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--tb-font);
+    color: var(--tb-text-0);
+    background: transparent;
+    cursor: pointer;
+    padding: 2px 4px;
+    color-scheme: light;
+}
+
+.tb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--tb-font);
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+}
+
+.tb-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.tb-btn:hover:not(:disabled)::before { opacity: 1; }
+
+.tb-btn i { font-size: 13px; }
+
+.tb-btn-primary {
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: white;
+    border-color: rgba(79, 110, 247, 0.4);
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.28);
+}
+
+.tb-btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.tb-btn-success {
+    background: linear-gradient(135deg, #17a673 0%, #0f8a5e 100%);
+    color: white;
+    border-color: rgba(23, 166, 115, 0.4);
+    box-shadow: 0 4px 14px rgba(23, 166, 115, 0.25);
+}
+
+.tb-btn-success:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(23, 166, 115, 0.42);
+}
+
+.tb-btn-outline {
+    background: var(--tb-bg-1);
+    color: var(--tb-text-1);
+    border-color: var(--tb-border);
+    box-shadow: var(--tb-shadow-sm);
+}
+
+.tb-btn-outline:hover:not(:disabled) {
+    background: var(--tb-bg-2);
+    color: var(--tb-text-0);
+    border-color: var(--tb-border-strong);
+}
+
+.tb-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ============================================================
+   DAY LOCK BANNER
+   ============================================================ */
+.tb-lock-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background:
+        linear-gradient(135deg, rgba(224, 138, 23, 0.06), rgba(224, 69, 106, 0.03)),
+        var(--tb-bg-1);
+    border: 1px solid rgba(224, 138, 23, 0.28);
+    border-radius: 16px;
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--tb-shadow-sm);
+}
+
+.tb-lock-banner::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--tb-amber), var(--tb-rose));
+}
+
+.tb-lock-banner .lock-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    background: var(--tb-amber-soft);
+    color: var(--tb-amber);
+    border: 1px solid rgba(224, 138, 23, 0.28);
+}
+
+.tb-lock-banner .lock-content { flex: 1; min-width: 0; }
+
+.tb-lock-banner .lock-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #8a5209;
+    margin: 0;
+    letter-spacing: 0.2px;
+}
+
+.tb-lock-banner .lock-subtitle {
+    font-size: 12px;
+    color: var(--tb-text-1);
+    margin: 3px 0 0 0;
+    line-height: 1.5;
+}
+
+/* ============================================================
+   FILE STATUS CARD
+   ============================================================ */
+.tb-file-status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--tb-bg-1);
+    border: 1px solid var(--tb-border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--tb-shadow-sm);
+}
+
+.tb-file-status.loaded {
+    border-color: rgba(23, 166, 115, 0.28);
+}
+
+.tb-file-status.loaded::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 0% 50%,
+        rgba(23, 166, 115, 0.06), transparent 45%);
+    pointer-events: none;
+}
+
+.tb-file-status .status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    background: var(--tb-bg-2);
+    color: var(--tb-text-2);
+    border: 1px solid var(--tb-border);
+    transition: all 0.3s ease;
+}
+
+.tb-file-status.loaded .status-icon {
+    background: var(--tb-emerald-soft);
+    color: var(--tb-emerald);
+    border-color: rgba(23, 166, 115, 0.28);
+    box-shadow: 0 0 0 4px rgba(23, 166, 115, 0.08);
+}
+
+.tb-file-status .status-content { flex: 1; min-width: 0; }
+
+.tb-file-status .status-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tb-text-0);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tb-file-status .status-subtitle {
+    font-size: 12px;
+    color: var(--tb-text-2);
+    margin: 3px 0 0 0;
+}
+
+.tb-file-status .status-clear {
+    background: var(--tb-bg-1);
+    border: 1px solid var(--tb-border);
+    color: var(--tb-text-1);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--tb-font);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tb-file-status .status-clear:hover {
+    background: var(--tb-rose-soft);
+    color: var(--tb-rose);
+    border-color: rgba(224, 69, 106, 0.28);
+}
+
+/* ============================================================
+   SUMMARY TILES
+   ============================================================ */
+.tb-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+.tb-summary-tile {
+    position: relative;
+    background: var(--tb-bg-1);
+    border-radius: 16px;
+    padding: 18px 20px;
+    border: 1px solid var(--tb-border);
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    isolation: isolate;
+    box-shadow: var(--tb-shadow-sm);
+}
+
+.tb-summary-tile::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--tile-accent, var(--tb-accent)) 50%,
+        transparent 100%);
+    opacity: 0.85;
+}
+
+.tb-summary-tile::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -25%;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--tile-accent, var(--tb-accent)) 22%, transparent) 0%,
+        transparent 70%);
+    opacity: 0.55;
+    z-index: -1;
+    transition: opacity 0.4s ease, transform 0.6s ease;
+}
+
+.tb-summary-tile:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--tile-accent, var(--tb-accent)) 30%, var(--tb-border));
+    box-shadow:
+        0 12px 28px rgba(15, 27, 51, 0.10),
+        0 2px 6px rgba(15, 27, 51, 0.04);
+}
+
+.tb-summary-tile:hover::after {
+    opacity: 0.9;
+    transform: scale(1.15);
+}
+
+.tb-summary-tile.default { --tile-accent: var(--tb-accent); }
+.tb-summary-tile.success { --tile-accent: var(--tb-emerald); }
+.tb-summary-tile.warning { --tile-accent: var(--tb-amber); }
+.tb-summary-tile.danger  { --tile-accent: var(--tb-rose); }
+.tb-summary-tile.info    { --tile-accent: var(--tb-violet); }
+
+.tb-summary-tile .tile-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.tb-summary-tile .tile-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tb-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+}
+
+.tb-summary-tile .tile-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    background: color-mix(in srgb, var(--tile-accent) 12%, transparent);
+    color: var(--tile-accent);
+    border: 1px solid color-mix(in srgb, var(--tile-accent) 22%, transparent);
+}
+
+.tb-summary-tile .tile-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--tb-text-0);
+    line-height: 1.1;
+    letter-spacing: -0.8px;
+    font-variant-numeric: tabular-nums;
+    word-break: break-all;
+}
+
+.tb-summary-tile .tile-value.success { color: var(--tb-emerald); }
+.tb-summary-tile .tile-value.warning { color: var(--tb-amber); }
+.tb-summary-tile .tile-value.info    { color: var(--tb-violet); }
+.tb-summary-tile .tile-value.danger  { color: var(--tb-rose); }
+
+.tb-summary-tile .tile-subtext {
+    font-size: 11px;
+    color: var(--tb-text-2);
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tb-summary-tile .tile-subtext .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--tile-accent);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--tile-accent) 70%, transparent);
+}
+
+/* ============================================================
+   FILTER / CONTROL BAR — positioning fixed
+   ============================================================ */
+.tb-control-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    background: var(--tb-bg-1);
+    border: 1px solid var(--tb-border);
+    border-radius: 16px;
+    padding: 14px 20px;
+    box-shadow: var(--tb-shadow-sm);
+}
+
+.tb-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tb-filter-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--tb-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tb-filter-group label i { color: var(--tb-accent); font-size: 11px; }
+
+.tb-filter-select {
+    padding: 8px 14px;
+    border: 1px solid var(--tb-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--tb-font);
+    color: var(--tb-text-0);
+    background: var(--tb-bg-1);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    min-width: 160px;
+    max-width: 260px;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 14px;
+    padding-right: 34px;
+    box-shadow: var(--tb-shadow-sm);
+}
+
+.tb-filter-select:hover {
+    border-color: var(--tb-border-strong);
+}
+
+.tb-filter-select:focus {
+    border-color: var(--tb-accent);
+    box-shadow:
+        0 0 0 3px rgba(79, 110, 247, 0.12),
+        var(--tb-shadow-sm);
+}
+
+.tb-filter-select option {
+    background: var(--tb-bg-1);
+    color: var(--tb-text-0);
+}
+
+#tbGLFilter { min-width: 240px; max-width: 340px; }
+
+.tb-filter-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--tb-border);
+    margin: 0 2px;
+}
+
+/* ============================================================
+   VIEW TOGGLE — no longer pushed to far right; sits with a
+   small auto-margin so it stays grouped with the filters on
+   narrow screens and moves to the right only when there's room
+   ============================================================ */
+.tb-view-toggle {
+    display: inline-flex;
+    background: var(--tb-bg-2);
+    border: 1px solid var(--tb-border);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 3px;
+    margin-left: auto;
+    box-shadow: var(--tb-shadow-sm);
+}
+
+.tb-view-toggle button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: none;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--tb-font);
+    letter-spacing: 0.3px;
+    color: var(--tb-text-2);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tb-view-toggle button:hover { color: var(--tb-text-0); }
+
+.tb-view-toggle button.active {
+    background: var(--tb-bg-1);
+    color: var(--tb-accent);
+    box-shadow: 0 2px 6px rgba(15, 27, 51, 0.08);
+}
+
+.tb-view-toggle button.active.warning {
+    color: var(--tb-amber);
+    box-shadow: 0 2px 6px rgba(224, 138, 23, 0.15);
+}
+
+/* ============================================================
+   FILTER META — pushed to far right with auto margin so it
+   sits flush against the control bar edge
+   ============================================================ */
+.tb-filter-meta {
+    font-size: 11px;
+    color: var(--tb-text-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--tb-bg-2);
+    border: 1px solid var(--tb-border);
+    border-radius: 10px;
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+}
+
+.tb-filter-meta strong {
+    color: var(--tb-text-0);
+    font-weight: 700;
+}
+
+.tb-filter-meta .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--tb-rose-soft);
+    color: var(--tb-rose);
+    border: 1px solid rgba(224, 69, 106, 0.22);
+}
+
+.tb-filter-meta .badge.warning {
+    background: var(--tb-amber-soft);
+    color: var(--tb-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+/* ============================================================
+   PREVIEW TABLE CARD
+   ============================================================ */
+.tb-card {
+    background: var(--tb-bg-1);
+    border-radius: 18px;
+    border: 1px solid var(--tb-border);
+    overflow: hidden;
+    box-shadow: var(--tb-shadow-sm);
+}
+
+.tb-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--tb-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+}
+
+.tb-card-header h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--tb-text-0);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+}
+
+.tb-card-header h4 i {
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--tb-accent-soft);
+    color: var(--tb-accent);
+    border: 1px solid rgba(79, 110, 247, 0.2);
+}
+
+.tb-card-header .header-meta {
+    font-size: 11px;
+    color: var(--tb-text-2);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   DATA TABLE
+   ============================================================ */
+.tb-table-wrapper {
+    max-height: 600px;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 27, 51, 0.15) transparent;
+}
+
+.tb-table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+.tb-table-wrapper::-webkit-scrollbar-track { background: transparent; }
+.tb-table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(15, 27, 51, 0.12);
+    border-radius: 4px;
+}
+.tb-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 27, 51, 0.24);
+}
+
+.tb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: var(--tb-font);
+    font-variant-numeric: tabular-nums;
+}
+
+.tb-table thead {
+    background: var(--tb-bg-2);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    backdrop-filter: blur(8px);
+}
+
+.tb-table th {
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 10px;
+    color: var(--tb-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--tb-border);
+}
+
+.tb-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--tb-hairline);
+    color: var(--tb-text-1);
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.tb-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.tb-table tbody tr:hover { background: var(--tb-bg-2); }
+
+.tb-table tbody tr:last-child td { border-bottom: none; }
+
+.tb-table .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.tb-table tbody tr.tb-row-exception {
+    background: var(--tb-rose-soft);
+    position: relative;
+}
+
+.tb-table tbody tr.tb-row-exception td:first-child {
+    position: relative;
+}
+
+.tb-table tbody tr.tb-row-exception td:first-child::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--tb-rose);
+}
+
+.tb-table tbody tr.tb-row-exception:hover {
+    background: #fbdde7;
+}
+
+.tb-table .tb-variance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 10px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: #ffffff;
+    color: var(--tb-rose);
+    border: 1px solid rgba(224, 69, 106, 0.3);
+    margin-left: 8px;
+    vertical-align: middle;
+    box-shadow: 0 1px 2px rgba(224, 69, 106, 0.1);
+}
+
+.tb-table tbody tr.tb-hidden {
+    display: none;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.tb-empty {
+    text-align: center;
+    padding: 80px 20px;
+    background: var(--tb-bg-1);
+    border: 1px dashed var(--tb-border-strong);
+    border-radius: 18px;
+}
+
+.tb-empty-glyph {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle,
+        rgba(79, 110, 247, 0.14) 0%,
+        rgba(79, 110, 247, 0.04) 60%,
+        transparent 70%);
+    color: var(--tb-accent);
+    font-size: 32px;
+    animation: tb-float 3s ease-in-out infinite;
+}
+
+@keyframes tb-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.tb-empty h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--tb-text-0);
+    margin-bottom: 6px;
+    letter-spacing: 0.2px;
+}
+
+.tb-empty p {
+    font-size: 13px;
+    color: var(--tb-text-2);
+    margin: 0 auto;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+/* ============================================================
+   LOADING OVERLAY
+   ============================================================ */
+.tb-loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 27, 51, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+.tb-loading-overlay.active { display: flex; }
+
+.tb-loading-card {
+    background: var(--tb-bg-1);
+    border: 1px solid var(--tb-border);
+    padding: 40px 50px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow:
+        0 24px 64px rgba(15, 27, 51, 0.20),
+        0 8px 24px rgba(15, 27, 51, 0.10);
+    min-width: 260px;
+}
+
+.tb-spinner {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 20px;
+    position: relative;
+}
+
+.tb-spinner::before,
+.tb-spinner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid transparent;
+}
+
+.tb-spinner::before {
+    border-top-color: var(--tb-accent);
+    border-right-color: var(--tb-accent);
+    animation: tb-spin 1s linear infinite;
+}
+
+.tb-spinner::after {
+    inset: 8px;
+    border-top-color: var(--tb-cyan);
+    animation: tb-spin 1.6s linear infinite reverse;
+}
+
+@keyframes tb-spin {
+    to { transform: rotate(360deg); }
+}
+
+.tb-loading-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--tb-text-0);
+    margin: 0;
+    letter-spacing: 0.3px;
+}
+
+/* ============================================================
+   TOAST NOTIFICATION
+   ============================================================ */
+.toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--tb-bg-1);
+    border: 1px solid var(--tb-border);
+    border-left: 4px solid var(--tb-emerald);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow:
+        0 16px 40px rgba(15, 27, 51, 0.15),
+        0 4px 12px rgba(15, 27, 51, 0.08);
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100000;
+    min-width: 320px;
+    max-width: 460px;
+}
+
+.toast-notification.show { transform: translateX(0); }
+
+.toast-notification.error {
+    border-left-color: var(--tb-rose);
+}
+
+.toast-notification .toast-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    background: var(--tb-emerald-soft);
+    color: var(--tb-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.28);
+}
+
+.toast-notification.error .toast-icon {
+    background: var(--tb-rose-soft);
+    color: var(--tb-rose);
+    border-color: rgba(224, 69, 106, 0.28);
+}
+
+.toast-notification .toast-content { flex: 1; min-width: 0; }
+
+.toast-notification .toast-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--tb-text-0);
+    margin: 0 0 2px 0;
+    letter-spacing: 0.2px;
+}
+
+.toast-notification .toast-message {
+    font-size: 12px;
+    color: var(--tb-text-1);
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.toast-notification .toast-close {
+    background: transparent;
+    border: none;
+    color: var(--tb-text-2);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 12px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.toast-notification .toast-close:hover {
+    color: var(--tb-text-0);
+    background: var(--tb-bg-2);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+    .tb-summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .tb-control-bar { padding: 12px 16px; }
+    .tb-view-toggle { margin-left: 0; }
+    .tb-filter-meta { margin-left: 0; }
+}
+
+@media (max-width: 768px) {
+    .tb-summary-grid { grid-template-columns: 1fr 1fr; }
+    .tb-date-wrapper { width: 100%; justify-content: center; }
+    .tb-header-actions { width: 100%; }
+    .tb-header-actions .tb-btn { flex: 1; justify-content: center; }
+    .tb-control-bar { flex-direction: column; align-items: stretch; }
+    .tb-filter-group { width: 100%; }
+    .tb-filter-group label { width: 90px; }
+    .tb-filter-select { flex: 1; max-width: none; }
+    .tb-filter-divider { display: none; }
+    .tb-view-toggle { width: 100%; }
+    .tb-view-toggle button { flex: 1; justify-content: center; }
+    .tb-filter-meta { width: 100%; justify-content: center; }
+    .toast-notification {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .tb-summary-grid { grid-template-columns: 1fr; }
+    .tb-summary-tile .tile-value { font-size: 22px; }
+    .tb-card-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .tb-lock-banner { flex-direction: column; align-items: flex-start; }
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:member_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li>
+    <a href="{% url 'control_dashboard:member_dashboard' %}" data-tooltip="Dashboard">
+        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-text">Dashboard</span>
+    </a>
+</li>
+<li class="active">
+    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
+        <span class="nav-icon"><i class="fas fa-balance-scale"></i></span>
+        <span class="nav-text">Daily Trial Balance</span>
+    </a>
+</li>
+<li><a href="{% url 'control_dashboard:analytics_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Analytics</span>
+</a></li>
+<li>
+    <a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
+        <span class="nav-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+        <span class="nav-text">Upload Report</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+        <span class="nav-icon"><i class="fas fa-folder-open"></i></span>
+        <span class="nav-text">My Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
+        <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
+        <span class="nav-text">Consolidated Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:member_checklist' %}" data-tooltip="Checklist">
+        <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+        <span class="nav-text">Activity Checklist</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block page_title %}Daily Trial Balance{% endblock %}
+
+{% block top_header_right %}
+<div class="tb-header-actions">
+    <div class="tb-date-wrapper">
+        <label for="tbReportDate" class="tb-date-label">
+            <i class="fas fa-calendar-alt"></i> Report Date
+        </label>
+        <input type="date" id="tbReportDate" class="tb-date-input" required>
+    </div>
+    <button class="tb-btn tb-btn-outline" onclick="loadTrialBalanceByDate()" id="tb-load-btn">
+        <i class="fas fa-search"></i> View
+    </button>
+    <button class="tb-btn tb-btn-primary" onclick="openUploadDialog()" id="tb-upload-btn">
+        <i class="fas fa-cloud-upload-alt"></i> Upload Excel
+    </button>
+    <button class="tb-btn tb-btn-success" onclick="submitTrialBalance()" id="tb-submit-btn" disabled>
+        <i class="fas fa-paper-plane"></i> Submit
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="tb-container">
+
+    <input type="file" id="tbFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
+
+    <!-- DAY LOCK BANNER -->
+    <div class="tb-lock-banner" id="tb-lock-banner" style="display:none;">
+        <div class="lock-icon"><i class="fas fa-lock"></i></div>
+        <div class="lock-content">
+            <p class="lock-title" id="tb-lock-title">Trial balance already uploaded for this day</p>
+            <p class="lock-subtitle" id="tb-lock-subtitle"></p>
+        </div>
+    </div>
+
+    <!-- FILE STATUS CARD -->
+    <div class="tb-file-status" id="tb-file-status">
+        <div class="status-icon" id="tb-status-icon">
+            <i class="fas fa-file-excel"></i>
+        </div>
+        <div class="status-content">
+            <p class="status-title" id="tb-status-title">No file uploaded</p>
+            <p class="status-subtitle" id="tb-status-subtitle">Click "Upload Excel" to select your trial balance file</p>
+        </div>
+        <button class="status-clear" id="tb-status-clear" onclick="clearUpload()" style="display:none;">
+            <i class="fas fa-times"></i> Clear
+        </button>
+    </div>
+
+    <!-- SUMMARY TILES -->
+    <div class="tb-summary-grid" id="tb-summary" style="display:none;">
+        <div class="tb-summary-tile default">
+            <div class="tile-head">
+                <span class="tile-label">Total Rows</span>
+                <span class="tile-icon"><i class="fas fa-list-ol"></i></span>
+            </div>
+            <div class="tile-value" id="tb-total-rows">0</div>
+            <div class="tile-subtext">
+                <span class="dot"></span>
+                <span>Entries in file</span>
+            </div>
+        </div>
+
+        <div class="tb-summary-tile success">
+            <div class="tile-head">
+                <span class="tile-label">Total Debit</span>
+                <span class="tile-icon"><i class="fas fa-arrow-down"></i></span>
+            </div>
+            <div class="tile-value success" id="tb-total-debit">0.00</div>
+            <div class="tile-subtext">
+                <span class="dot"></span>
+                <span>GHS · DR_BAL_LCY</span>
+            </div>
+        </div>
+
+        <div class="tb-summary-tile info">
+            <div class="tile-head">
+                <span class="tile-label">Total Credit</span>
+                <span class="tile-icon"><i class="fas fa-arrow-up"></i></span>
+            </div>
+            <div class="tile-value info" id="tb-total-credit">0.00</div>
+            <div class="tile-subtext">
+                <span class="dot"></span>
+                <span>GHS · CR_BAL_LCY</span>
+            </div>
+        </div>
+
+        <div class="tb-summary-tile warning" id="tb-variance-tile">
+            <div class="tile-head">
+                <span class="tile-label">Variance</span>
+                <span class="tile-icon"><i class="fas fa-balance-scale-right"></i></span>
+            </div>
+            <div class="tile-value warning" id="tb-variance">0.00</div>
+            <div class="tile-subtext">
+                <span class="dot"></span>
+                <span>Debit − Credit</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTROL BAR (filters + view toggle) -->
+    <div class="tb-control-bar" id="tb-filter-bar" style="display:none;">
+        <div class="tb-filter-group">
+            <label for="tbBranchFilter"><i class="fas fa-building"></i> Branch</label>
+            <select id="tbBranchFilter" class="tb-filter-select" onchange="applyFilters()">
+                <option value="all">All Branches</option>
+            </select>
+        </div>
+
+        <div class="tb-filter-divider"></div>
+
+        <div class="tb-filter-group">
+            <label for="tbDepartmentFilter"><i class="fas fa-sitemap"></i> Category</label>
+            <select id="tbDepartmentFilter" class="tb-filter-select" onchange="applyFilters()">
+                <option value="all">All Categories</option>
+            </select>
+        </div>
+
+        <div class="tb-filter-divider"></div>
+
+        <div class="tb-filter-group">
+            <label for="tbGLFilter"><i class="fas fa-list-ul"></i> GL Name</label>
+            <select id="tbGLFilter" class="tb-filter-select" onchange="applyFilters()">
+                <option value="all">All GL Names</option>
+            </select>
+        </div>
+
+        <div class="tb-view-toggle" id="tb-view-toggle">
+            <button type="button" class="active" id="tb-view-full" onclick="setViewMode('full')">
+                <i class="fas fa-table"></i> Full View
+            </button>
+            <button type="button" id="tb-view-exceptions" onclick="setViewMode('exceptions')">
+                <i class="fas fa-exclamation-triangle"></i> Exceptions
+            </button>
+        </div>
+
+        <div class="tb-filter-meta" id="tb-filter-meta">
+            <i class="fas fa-info-circle"></i>
+            <span><strong id="tb-visible-count">0</strong> / <strong id="tb-total-count">0</strong></span>
+            <span class="badge" id="tb-exception-badge" style="display:none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="tb-exception-badge-text">0 irregular</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- PREVIEW CARD -->
+    <div class="tb-card" id="tb-preview-card" style="display:none;">
+        <div class="tb-card-header">
+            <h4><i class="fas fa-table"></i> <span id="tb-preview-title">Preview</span></h4>
+            <div class="header-meta" id="tb-preview-meta"></div>
+        </div>
+        <div class="tb-table-wrapper">
+            <table class="tb-table" id="tb-preview-table">
+                <thead id="tb-preview-thead"></thead>
+                <tbody id="tb-preview-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="tb-empty" id="tb-empty-state">
+        <div class="tb-empty-glyph">
+            <i class="fas fa-balance-scale"></i>
+        </div>
+        <h3>No Trial Balance Loaded</h3>
+        <p>Pick a report date, then click "Upload Excel" to load your daily trial balance file — or click "View" to inspect an existing upload.</p>
+    </div>
+
+</div>
+
+<!-- Loading Overlay -->
+<div class="tb-loading-overlay" id="tbLoadingOverlay">
+    <div class="tb-loading-card">
+        <div class="tb-spinner"></div>
+        <p class="tb-loading-text" id="tbLoadingText">Processing...</p>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toastNotification" class="toast-notification">
+    <div class="toast-icon"><i class="fas fa-check"></i></div>
+    <div class="toast-content">
+        <p class="toast-title">Success!</p>
+        <p class="toast-message" id="toastMessage">Action completed successfully.</p>
+    </div>
+    <button class="toast-close" onclick="closeToast()"><i class="fas fa-times"></i></button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ============================================
+    // FRONTEND FALLBACK: Branch code → name map
+    // ============================================
+    const BRANCH_CODE_MAP_FALLBACK = {
+        '001': 'CMU - ACCRA', '101': 'AIRPORT', '102': 'ABOSSEY OKAI',
+        '103': 'ASHIAMAN', '104': 'ABELENKPE', '105': 'DOME',
+        '107': 'TEMA HARBOUR', '108': 'KOKOMLEMLE', '109': 'MADINA MARKET',
+        '110': 'TUDU', '111': 'SPINTEX BASKET', '112': 'OSU',
+        '113': 'WEIJA', '114': 'EAST LEGON', '115': 'TEMA COMM 1',
+        '117': 'DANSOMAN', '118': 'ODORKOR', '119': 'ASHALEY BOTWE',
+        '120': 'ADABRAKA', '121': 'ACCRA CENTRAL', '122': 'SPINTEX MANET',
+        '123': 'NIMA', '124': 'NIA', '125': 'MADINA ESTATE',
+        '126': 'ACHIMOTA', '127': 'TEMA COMM 11', '201': 'KOFORIDUA',
+        '301': 'KASOA', '401': 'TAKORADI MARKET', '402': 'TARKWA',
+        '403': 'TAKORADI LIBERATION', '404': 'TAKORADI - CMU',
+        '601': 'MANHYIA', '602': 'ADUM PREMPEH', '603': 'KEJETIA',
+        '604': 'ANLOGA', '605': 'KRONUM', '606': 'ADUM ADDO KUFUOR',
+        '607': 'AHODWO', '608': 'KUMASI - CMU', '609': 'KNUST',
+        '701': 'TECHIMAN', '702': 'SUNYANI', '801': 'TAMALE',
+    };
+
+    function branchNameFromCode(code) {
+        const key = String(code ?? '').trim();
+        if (!key) return '';
+        return BRANCH_CODE_MAP_FALLBACK[key] || key;
+    }
+
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+               document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+
+    function showToast(message, title = 'Success!', isError = false) {
+        const toast = document.getElementById('toastNotification');
+        const msgEl = document.getElementById('toastMessage');
+        const titleEl = toast.querySelector('.toast-title');
+        const iconEl = toast.querySelector('.toast-icon i');
+
+        msgEl.textContent = message || 'Action completed successfully.';
+        titleEl.textContent = title;
+
+        if (isError) {
+            toast.classList.add('error');
+            iconEl.className = 'fas fa-exclamation-circle';
+        } else {
+            toast.classList.remove('error');
+            iconEl.className = 'fas fa-check';
+        }
+
+        toast.classList.add('show');
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    window.closeToast = function() {
+        const toast = document.getElementById('toastNotification');
+        toast.classList.remove('show');
+        if (window.toastTimeout) { clearTimeout(window.toastTimeout); window.toastTimeout = null; }
+    };
+
+    let uploadedFileName = null;
+    let parsedHeaders = [];
+    let parsedRows = [];
+    let parsedDicts = [];
+    let parsedSummary = null;
+
+    let viewMode = 'full';
+    let branchFilter = 'all';
+    let departmentFilter = 'all';
+    let glFilter = 'all';
+
+    let allowedBranchCodes = null;
+    let allowedDepartmentNames = null;
+
+    let dayLockInfo = null;
+
+    // ============================================
+    // DAY LOCK CHECK
+    // ============================================
+    async function checkDayLock() {
+        const reportDate = document.getElementById('tbReportDate')?.value || '';
+        const banner = document.getElementById('tb-lock-banner');
+        const bannerTitle = document.getElementById('tb-lock-title');
+        const bannerSub = document.getElementById('tb-lock-subtitle');
+        const uploadBtn = document.getElementById('tb-upload-btn');
+
+        if (!reportDate) {
+            banner.style.display = 'none';
+            dayLockInfo = null;
+            return;
+        }
+
+        try {
+            const res = await fetch(
+                `/adminboard/api/trial-balance/check-day/?date=${encodeURIComponent(reportDate)}`,
+                { headers: { 'X-CSRFToken': getCsrfToken() } }
+            );
+            const data = await res.json();
+
+            if (!data.success) {
+                banner.style.display = 'none';
+                dayLockInfo = null;
+                return;
+            }
+
+            dayLockInfo = data;
+
+            if (data.locked) {
+                banner.style.display = 'flex';
+                bannerTitle.textContent = `Trial balance already uploaded for ${reportDate}`;
+                const by = data.uploaded_by?.full_name || 'another user';
+                const at = data.uploaded_at
+                    ? new Date(data.uploaded_at).toLocaleString()
+                    : '';
+                const count = (data.row_count || 0).toLocaleString();
+                bannerSub.textContent =
+                    `Uploaded by ${by}${at ? ' · ' + at : ''} · ${count} rows. ` +
+                    `Only one upload per day is allowed — you can still view the data.`;
+
+                uploadBtn.disabled = true;
+                uploadBtn.title = 'Only one upload per day is allowed';
+                document.getElementById('tb-submit-btn').disabled = true;
+            } else {
+                banner.style.display = 'none';
+                uploadBtn.disabled = false;
+                uploadBtn.title = '';
+            }
+        } catch (err) {
+            console.error('[TB] Failed to check day lock:', err);
+            banner.style.display = 'none';
+            dayLockInfo = null;
+        }
+    }
+
+    function openUploadDialog() {
+        if (dayLockInfo && dayLockInfo.locked) {
+            showToast(
+                `A trial balance for this day has already been uploaded by ` +
+                `${dayLockInfo.uploaded_by?.full_name || 'another user'}. ` +
+                `Only one upload per day is allowed.`,
+                'Day Locked',
+                true
+            );
+            return;
+        }
+
+        const dateInput = document.getElementById('tbReportDate');
+        if (!dateInput.value) {
+            showToast('Please select a report date first.', 'Error', true);
+            dateInput.focus();
+            return;
+        }
+        document.getElementById('tbFileInput').click();
+    }
+
+    document.getElementById('tbFileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) handleFile(file);
+    });
+
+    function showLoading(text) {
+        document.getElementById('tbLoadingText').textContent = text || 'Processing...';
+        document.getElementById('tbLoadingOverlay').classList.add('active');
+    }
+    function hideLoading() {
+        document.getElementById('tbLoadingOverlay').classList.remove('active');
+    }
+
+    // ============================================
+    // FILE HANDLING
+    // ============================================
+    function handleFile(file) {
+        uploadedFileName = file.name;
+        showLoading('Parsing trial balance...');
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('file_name', file.name);
+
+        fetch('/adminboard/api/trial-balance/parse/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrfToken() },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            hideLoading();
+            if (!data.success) {
+                showToast(data.error || 'Could not parse file.', 'Error', true);
+                resetToEmpty();
+                return;
+            }
+
+            parsedHeaders = data.headers || [];
+            parsedDicts = data.rows || [];
+            parsedRows = parsedDicts.map(d => parsedHeaders.map(h => d[h]));
+            parsedSummary = data.summary || {};
+
+            allowedBranchCodes = null;
+            allowedDepartmentNames = null;
+
+            renderPreview(data);
+            showToast(`Parsed ${data.row_count} rows successfully.`, 'Loaded');
+        })
+        .catch(err => {
+            hideLoading();
+            console.error(err);
+            showToast('Failed to parse file.', 'Error', true);
+            resetToEmpty();
+        });
+    }
+
+    // ============================================
+    // LOAD EXISTING TRIAL BALANCE BY DATE
+    // ============================================
+    function loadTrialBalanceByDate() {
+        const reportDate = document.getElementById('tbReportDate')?.value || '';
+        if (!reportDate) {
+            showToast('Please pick a report date first.', 'Error', true);
+            document.getElementById('tbReportDate')?.focus();
+            return;
+        }
+
+        showLoading('Loading trial balance...');
+
+        fetch(`/adminboard/api/trial-balance/by-date/?date=${encodeURIComponent(reportDate)}`, {
+            method: 'GET',
+            headers: { 'X-CSRFToken': getCsrfToken() }
+        })
+        .then(r => r.json())
+        .then(data => {
+            hideLoading();
+
+            if (!data.success) {
+                showToast(data.error || 'Could not load trial balance.', 'Error', true);
+                return;
+            }
+
+            if (!data.found) {
+                resetToEmpty(false);
+                showToast(data.message || `No trial balance found for ${reportDate}.`, 'Info');
+                return;
+            }
+
+            uploadedFileName = data.file_name || 'trial_balance.xlsx';
+            parsedHeaders = data.headers || [];
+            parsedDicts = data.rows || [];
+            parsedRows = parsedDicts.map(d => parsedHeaders.map(h => d[h]));
+            parsedSummary = data.summary || {};
+
+            allowedBranchCodes = (Array.isArray(data.allowed_branches) && data.allowed_branches.length > 0)
+                ? data.allowed_branches.map(c => String(c).trim())
+                : null;
+
+            allowedDepartmentNames = (Array.isArray(data.allowed_departments) && data.allowed_departments.length > 0)
+                ? data.allowed_departments.map(d => String(d).trim().toUpperCase())
+                : null;
+
+            renderPreviewOnly(data);
+            showToast(`Loaded ${data.row_count} entries for ${reportDate}.`, 'Loaded');
+        })
+        .catch(err => {
+            hideLoading();
+            console.error(err);
+            showToast('Failed to load trial balance.', 'Error', true);
+        });
+    }
+
+    // ============================================
+    // FILTER HELPERS
+    // ============================================
+    function findHeader(keywords) {
+        for (const h of parsedHeaders) {
+            const hu = String(h).toUpperCase();
+            for (const kw of keywords) {
+                if (hu.includes(kw)) return h;
+            }
+        }
+        return null;
+    }
+
+    function populateFilterDropdowns() {
+        const branchSelect = document.getElementById('tbBranchFilter');
+        const deptSelect = document.getElementById('tbDepartmentFilter');
+        const glSelect = document.getElementById('tbGLFilter');
+
+        branchSelect.innerHTML = '<option value="all">All Branches</option>';
+        deptSelect.innerHTML = '<option value="all">All Categories</option>';
+        glSelect.innerHTML = '<option value="all">All GL Names</option>';
+
+        const branchCol = findHeader(['BRANCH_CODE', 'BRANCH']);
+        const branchNameCol = findHeader(['BRANCH_NAME']);
+        const deptCol = findHeader(['CATEGORY', 'DEPARTMENT', 'DEPT']);
+        const descrCol = findHeader(['DESCR', 'DESCRIPTION', 'ACCOUNT_NAME', 'ACCOUNT NAME']);
+
+        const branchMap = new Map();
+        const deptValues = new Set();
+        const glValues = new Set();
+
+        if (branchCol) {
+            parsedDicts.forEach(row => {
+                const code = String(row[branchCol] ?? '').trim();
+                if (!code) return;
+
+                if (allowedBranchCodes !== null && !allowedBranchCodes.includes(code)) return;
+
+                let displayName = '';
+                if (branchNameCol) displayName = String(row[branchNameCol] ?? '').trim();
+                if (!displayName) displayName = branchNameFromCode(code);
+
+                if (!branchMap.has(code)) branchMap.set(code, displayName);
+            });
+        }
+
+        if (deptCol) {
+            parsedDicts.forEach(row => {
+                const v = String(row[deptCol] ?? '').trim();
+                if (!v) return;
+                if (allowedDepartmentNames !== null &&
+                    !allowedDepartmentNames.includes(v.toUpperCase())) return;
+                deptValues.add(v);
+            });
+        }
+
+        if (descrCol) {
+            parsedDicts.forEach(row => {
+                const v = String(row[descrCol] ?? '').trim();
+                if (v) glValues.add(v);
+            });
+        }
+
+        Array.from(branchMap.entries())
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .forEach(([code, name]) => {
+                const opt = document.createElement('option');
+                opt.value = code;
+                opt.textContent = (name && name !== code) ? `${code} — ${name}` : code;
+                branchSelect.appendChild(opt);
+            });
+
+        Array.from(deptValues).sort().forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            deptSelect.appendChild(opt);
+        });
+
+        Array.from(glValues).sort().forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v.length > 60 ? v.slice(0, 57) + '…' : v;
+            glSelect.appendChild(opt);
+        });
+
+        branchSelect.value = (branchFilter !== 'all' && branchMap.has(branchFilter)) ? branchFilter : 'all';
+        if (branchSelect.value === 'all') branchFilter = 'all';
+
+        deptSelect.value = (departmentFilter !== 'all' && deptValues.has(departmentFilter)) ? departmentFilter : 'all';
+        if (deptSelect.value === 'all') departmentFilter = 'all';
+
+        glSelect.value = (glFilter !== 'all' && glValues.has(glFilter)) ? glFilter : 'all';
+        if (glSelect.value === 'all') glFilter = 'all';
+    }
+
+    // ============================================
+    // GL CLASSIFICATION
+    // ============================================
+    function classifyGL(row) {
+        const categoryCol = findHeader(['CATEGORY']);
+        if (categoryCol) {
+            const raw = String(row[categoryCol] ?? '').trim().toUpperCase();
+            if (raw === 'ASSET')       return 'asset';
+            if (raw === 'LIABILITY')   return 'liability';
+            if (raw === 'INCOME')      return 'income';
+            if (raw === 'EXPENSE')     return 'expense';
+            if (raw.startsWith('ASSET'))       return 'asset';
+            if (raw.startsWith('LIABILIT'))    return 'liability';
+            if (raw.startsWith('INCOME'))      return 'income';
+            if (raw.startsWith('EXPENSE'))     return 'expense';
+        }
+
+        const descr  = row[findHeader(['DESCR', 'DESCRIPTION', 'ACCOUNT_NAME', 'ACCOUNT NAME'])];
+        const glCode = row[findHeader(['GL_CODE', 'ACCOUNT_CODE', 'ACCOUNT CODE'])];
+        const hay = [String(descr || ''), String(glCode || '')].join(' ').toUpperCase();
+
+        if (hay.includes('INTEREST INCOME') || hay.includes('FEE INCOME') ||
+            hay.includes('COMMISSION INCOME') || hay.includes('FEE AND COMMISSION') ||
+            hay.includes('OTHER INCOME') || hay.includes(' INCOME') ||
+            hay.includes('REVENUE')) return 'income';
+
+        if (hay.includes('EXPENSE') || hay.includes('EXPENDITURE') ||
+            hay.includes('DEPRECIATION') || hay.includes('AMORTIZATION') ||
+            hay.includes('AMORTISATION') || hay.includes('IMPAIRMENT') ||
+            hay.includes('SALARIES') || hay.includes('WAGES')) return 'expense';
+
+        if (hay.includes('LIABILITY') || hay.includes('PAYABLE') ||
+            hay.includes('CREDITOR') || hay.includes('CUSTOMER DEPOSIT') ||
+            hay.includes('BORROWING') || hay.includes('OVERDRAFT')) return 'liability';
+
+        if (hay.includes('ASSET') || hay.includes('RECEIVABLE') ||
+            hay.includes('DEBTOR') || hay.includes('CASH') ||
+            hay.includes('BANK') || hay.includes('INVESTMENT') ||
+            hay.includes('PREPAID') || hay.includes('INVENTORY')) return 'asset';
+
+        return null;
+    }
+
+    const NORMAL_SIGN = {
+        asset:     'negative',
+        expense:   'negative',
+        liability: 'positive',
+        income:    'positive',
+    };
+
+    function getGLBalance(row) {
+        const closeCol = findHeader(['CLOSE_BAL_LCY']);
+        if (!closeCol) return 0;
+        const raw = String(row[closeCol] ?? '')
+            .replace(/,/g, '')
+            .replace(/GHS/gi, '')
+            .trim();
+        if (raw === '' || raw === '-' || raw === '--') return 0;
+        let cleaned = raw;
+        const isParenNegative = /^\(.*\)$/.test(cleaned);
+        if (isParenNegative) cleaned = cleaned.slice(1, -1).trim();
+        const v = parseFloat(cleaned);
+        if (isNaN(v)) return 0;
+        return isParenNegative ? -Math.abs(v) : v;
+    }
+
+    function detectIrregularGLPosition(row) {
+        const glCategory = classifyGL(row);
+        if (!glCategory) return { irregular: false, category: null };
+
+        const balance = getGLBalance(row);
+        if (balance === 0) return { irregular: false, category: glCategory, balance: 0 };
+
+        const actualSign   = balance > 0 ? 'positive' : 'negative';
+        const expectedSign = NORMAL_SIGN[glCategory];
+        const irregular    = (expectedSign !== actualSign);
+
+        return {
+            irregular,
+            category: glCategory,
+            expected: expectedSign,
+            actual: actualSign,
+            balance,
+            reason: irregular
+                ? `${glCategory.toUpperCase()} has a ${actualSign.toUpperCase()} CLOSE_BAL_LCY (expected ${expectedSign.toUpperCase()})`
+                : null,
+        };
+    }
+
+    function isExceptionRow(row) {
+        if (row.IS_IRREGULAR !== undefined) return !!row.IS_IRREGULAR;
+        return detectIrregularGLPosition(row).irregular;
+    }
+
+    function updateExceptionBadge() {
+        const exceptionCount = parsedDicts.filter(isExceptionRow).length;
+        const badge = document.getElementById('tb-exception-badge');
+        const badgeText = document.getElementById('tb-exception-badge-text');
+        if (exceptionCount > 0) {
+            badgeText.textContent = `${exceptionCount} irregular GL${exceptionCount !== 1 ? 's' : ''}`;
+            badge.style.display = 'inline-flex';
+            badge.classList.add('warning');
+        } else {
+            badge.style.display = 'none';
+            badge.classList.remove('warning');
+        }
+    }
+
+    // ============================================
+    // APPLY FILTERS
+    // ============================================
+    function applyFilters() {
+        branchFilter = document.getElementById('tbBranchFilter')?.value || 'all';
+        departmentFilter = document.getElementById('tbDepartmentFilter')?.value || 'all';
+        glFilter = document.getElementById('tbGLFilter')?.value || 'all';
+
+        const branchCol = findHeader(['BRANCH_CODE', 'BRANCH']);
+        const deptCol = findHeader(['CATEGORY', 'DEPARTMENT', 'DEPT']);
+        const descrCol = findHeader(['DESCR', 'DESCRIPTION', 'ACCOUNT_NAME', 'ACCOUNT NAME']);
+
+        const tbody = document.getElementById('tb-preview-tbody');
+        const rows = tbody.querySelectorAll('tr');
+        let visible = 0;
+
+        rows.forEach((tr, idx) => {
+            const row = parsedDicts[idx];
+            if (!row) return;
+
+            if (branchFilter !== 'all' && branchCol) {
+                const v = String(row[branchCol] ?? '').trim();
+                if (v !== branchFilter) { tr.classList.add('tb-hidden'); return; }
+            }
+            if (departmentFilter !== 'all' && deptCol) {
+                const v = String(row[deptCol] ?? '').trim();
+                if (v !== departmentFilter) { tr.classList.add('tb-hidden'); return; }
+            }
+            if (glFilter !== 'all' && descrCol) {
+                const v = String(row[descrCol] ?? '').trim();
+                if (v !== glFilter) { tr.classList.add('tb-hidden'); return; }
+            }
+            if (viewMode === 'exceptions') {
+                if (!isExceptionRow(row)) { tr.classList.add('tb-hidden'); return; }
+            }
+
+            tr.classList.remove('tb-hidden');
+            visible++;
+        });
+
+        document.getElementById('tb-visible-count').textContent = visible;
+        document.getElementById('tb-total-count').textContent = parsedDicts.length;
+    }
+
+    function setViewMode(mode) {
+        viewMode = mode;
+
+        document.getElementById('tb-view-full').classList.toggle('active', mode === 'full');
+        document.getElementById('tb-view-full').classList.remove('warning');
+        document.getElementById('tb-view-exceptions').classList.toggle('active', mode === 'exceptions');
+        document.getElementById('tb-view-exceptions').classList.toggle('warning', mode === 'exceptions');
+
+        document.getElementById('tb-preview-title').textContent =
+            mode === 'exceptions' ? 'Irregular GL Positions' : 'Preview';
+
+        applyFilters();
+    }
+
+    // ============================================
+    // BUILD TABLE ROWS
+    // ============================================
+    function buildTableRows(tbody, headers, rows) {
+        tbody.innerHTML = '';
+        rows.forEach(row => {
+            const tr = document.createElement('tr');
+            const exc = detectIrregularGLPosition(row);
+
+            if (exc.irregular) {
+                tr.classList.add('tb-row-exception');
+                tr.title = exc.reason || 'Irregular GL position';
+            }
+
+            const descrHeader = findHeader(['DESCR', 'DESCRIPTION', 'ACCOUNT_NAME', 'ACCOUNT NAME']);
+
+            headers.forEach(h => {
+                const td = document.createElement('td');
+                const v = row[h] ?? '';
+                const hu = String(h).toUpperCase();
+                if (hu.includes('BAL_LCY') || hu.includes('BAL_FCY')) td.classList.add('num');
+
+                if (exc.irregular && descrHeader && h === descrHeader) {
+                    td.innerHTML =
+                        `${escapeHtml(v)} <span class="tb-variance-badge" title="${escapeHtml(exc.reason || '')}">
+                            <i class="fas fa-exclamation-triangle"></i> Irregular
+                        </span>`;
+                } else {
+                    td.textContent = v;
+                }
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ============================================
+    // RENDER FULL PREVIEW
+    // ============================================
+    function renderPreview(data) {
+        const headers = data.headers || [];
+        const rows = data.rows || [];
+        const summary = data.summary || {};
+
+        populateFilterDropdowns();
+        updateExceptionBadge();
+
+        const statusCard = document.getElementById('tb-file-status');
+        statusCard.style.display = '';
+        statusCard.classList.add('loaded');
+        document.getElementById('tb-status-icon').innerHTML = '<i class="fas fa-file-excel"></i>';
+        document.getElementById('tb-status-title').textContent = data.file_name || uploadedFileName || 'File loaded';
+        document.getElementById('tb-status-subtitle').textContent =
+            `${summary.total_rows ?? rows.length} rows · ${headers.length} columns`;
+        document.getElementById('tb-status-clear').style.display = 'inline-flex';
+
+        document.getElementById('tb-empty-state').style.display = 'none';
+        document.getElementById('tb-preview-card').style.display = '';
+        document.getElementById('tb-filter-bar').style.display = 'flex';
+
+        document.getElementById('tb-summary').style.display = '';
+        document.getElementById('tb-total-rows').textContent = summary.total_rows ?? rows.length;
+        document.getElementById('tb-total-debit').textContent =
+            (summary.total_debit ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('tb-total-credit').textContent =
+            (summary.total_credit ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const variance = summary.variance ?? 0;
+        const varianceEl = document.getElementById('tb-variance');
+        const varianceTile = document.getElementById('tb-variance-tile');
+        varianceEl.textContent =
+            variance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Color-code the variance tile based on magnitude
+        varianceTile.classList.remove('success', 'warning', 'danger');
+        const absVar = Math.abs(variance);
+        if (absVar === 0) {
+            varianceTile.classList.add('success');
+            varianceEl.className = 'tile-value success';
+        } else if (absVar < 100) {
+            varianceTile.classList.add('warning');
+            varianceEl.className = 'tile-value warning';
+        } else {
+            varianceTile.classList.add('danger');
+            varianceEl.className = 'tile-value danger';
+        }
+
+        const thead = document.getElementById('tb-preview-thead');
+        thead.innerHTML = '<tr>' + headers.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr>';
+
+        const tbody = document.getElementById('tb-preview-tbody');
+        buildTableRows(tbody, headers, rows);
+
+        document.getElementById('tb-preview-meta').textContent =
+            `${rows.length} rows · ${headers.length} columns`;
+
+        document.getElementById('tb-submit-btn').disabled = false;
+
+        applyFilters();
+    }
+
+    // ============================================
+    // RENDER PREVIEW ONLY (load by date)
+    // ============================================
+    function renderPreviewOnly(data) {
+        const headers = data.headers || [];
+        const rows = data.rows || [];
+
+        populateFilterDropdowns();
+        updateExceptionBadge();
+
+        document.getElementById('tb-file-status').style.display = 'none';
+        document.getElementById('tb-summary').style.display = 'none';
+        document.getElementById('tb-status-clear').style.display = 'none';
+
+        document.getElementById('tb-filter-bar').style.display = 'flex';
+        document.getElementById('tb-empty-state').style.display = 'none';
+        document.getElementById('tb-preview-card').style.display = '';
+
+        const thead = document.getElementById('tb-preview-thead');
+        thead.innerHTML = '<tr>' + headers.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr>';
+
+        const tbody = document.getElementById('tb-preview-tbody');
+        buildTableRows(tbody, headers, rows);
+
+        let metaParts = [`${rows.length} rows`, `${headers.length} columns`];
+        if (data.uploaded_by && data.uploaded_by.full_name) {
+            metaParts.push(`Uploaded by ${data.uploaded_by.full_name}`);
+        }
+        document.getElementById('tb-preview-meta').textContent = metaParts.join(' · ');
+
+        document.getElementById('tb-submit-btn').disabled = true;
+
+        applyFilters();
+    }
+
+    function escapeHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function clearUpload() {
+        resetToEmpty();
+        showToast('Cleared.', 'Info');
+    }
+
+    function resetToEmpty(resetDate = true) {
+        uploadedFileName = null;
+        parsedHeaders = [];
+        parsedRows = [];
+        parsedDicts = [];
+        parsedSummary = null;
+
+        viewMode = 'full';
+        branchFilter = 'all';
+        departmentFilter = 'all';
+        glFilter = 'all';
+        allowedBranchCodes = null;
+        allowedDepartmentNames = null;
+
+        document.getElementById('tbFileInput').value = '';
+
+        if (resetDate) {
+            const dateInput = document.getElementById('tbReportDate');
+            if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
+        }
+
+        const statusCard = document.getElementById('tb-file-status');
+        statusCard.style.display = '';
+        statusCard.classList.remove('loaded');
+        document.getElementById('tb-status-icon').innerHTML = '<i class="fas fa-file-excel"></i>';
+        document.getElementById('tb-status-title').textContent = 'No file uploaded';
+        document.getElementById('tb-status-subtitle').textContent = 'Click "Upload Excel" to select your trial balance file';
+        document.getElementById('tb-status-clear').style.display = 'none';
+
+        document.getElementById('tb-summary').style.display = 'none';
+        document.getElementById('tb-preview-card').style.display = 'none';
+        document.getElementById('tb-filter-bar').style.display = 'none';
+        document.getElementById('tb-empty-state').style.display = '';
+        document.getElementById('tb-submit-btn').disabled = true;
+
+        document.getElementById('tb-view-full').classList.add('active');
+        document.getElementById('tb-view-full').classList.remove('warning');
+        document.getElementById('tb-view-exceptions').classList.remove('active');
+        document.getElementById('tb-view-exceptions').classList.remove('warning');
+        document.getElementById('tb-preview-title').textContent = 'Preview';
+    }
+
+    // ============================================
+    // SUBMIT
+    // ============================================
+    function submitTrialBalance() {
+        if (dayLockInfo && dayLockInfo.locked) {
+            showToast(
+                `A trial balance for this day has already been uploaded by ` +
+                `${dayLockInfo.uploaded_by?.full_name || 'another user'}. ` +
+                `Only one upload per day is allowed.`,
+                'Day Locked',
+                true
+            );
+            return;
+        }
+
+        if (!parsedDicts.length) {
+            showToast('Upload a file first.', 'Error', true);
+            return;
+        }
+
+        const reportDate = document.getElementById('tbReportDate')?.value || '';
+        if (!reportDate) {
+            showToast('Please select a report date.', 'Error', true);
+            document.getElementById('tbReportDate')?.focus();
+            return;
+        }
+
+        _doSubmit(reportDate);
+    }
+
+    function _doSubmit(reportDate) {
+        showLoading('Submitting trial balance...');
+
+        fetch('/adminboard/api/trial-balance/submit/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                file_name: uploadedFileName,
+                report_date: reportDate,
+                headers: parsedHeaders,
+                rows: parsedDicts
+            })
+        })
+        .then(r => r.json().then(body => ({ status: r.status, body })))
+        .then(({ status, body }) => {
+            hideLoading();
+
+            if (status === 409 && body.locked) {
+                showToast(
+                    body.error || 'A trial balance for this day already exists.',
+                    'Day Locked',
+                    true
+                );
+                checkDayLock();
+                return;
+            }
+
+            if (body.success) {
+                showToast(body.message || 'Trial balance submitted.', 'Submitted');
+                setTimeout(() => {
+                    resetToEmpty(true);
+                    checkDayLock();
+                }, 1500);
+            } else {
+                showToast(body.error || 'Submission failed.', 'Error', true);
+            }
+        })
+        .catch(err => {
+            hideLoading();
+            console.error(err);
+            showToast('Submission failed. Please try again.', 'Error', true);
+        });
+    }
+
+    // ============================================
+    // INIT
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('tbReportDate');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().slice(0, 10);
+            dateInput.addEventListener('change', checkDayLock);
+        }
+        checkDayLock();
+        console.log('[TB] Daily Trial Balance page ready');
+    });
+</script>
+{% endblock %}

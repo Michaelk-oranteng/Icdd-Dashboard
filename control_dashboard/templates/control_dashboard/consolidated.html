@@ -1,0 +1,643 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Consolidated Reports{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================================
+   CONSOLIDATED REPORTS — Premium Light Theme
+   ============================================================ */
+
+:root {
+    /* Surfaces */
+    --cr-bg-0: #eef1f8;
+    --cr-bg-1: #ffffff;
+    --cr-bg-2: #f7f8fc;
+    --cr-bg-3: #f1f3f9;
+
+    /* Glass & borders */
+    --cr-glass: rgba(255, 255, 255, 0.85);
+    --cr-border: rgba(15, 27, 51, 0.08);
+    --cr-border-strong: rgba(15, 27, 51, 0.16);
+    --cr-hairline: rgba(15, 27, 51, 0.06);
+
+    /* Text */
+    --cr-text-0: #0f1b33;
+    --cr-text-1: #46536b;
+    --cr-text-2: #8993a8;
+
+    /* Accents */
+    --cr-accent: #4f6ef7;
+    --cr-accent-soft: #eef1ff;
+    --cr-emerald: #17a673;
+    --cr-emerald-soft: #e2f7ef;
+    --cr-emerald-dark: #0f8a5e;
+    --cr-amber: #e08a17;
+    --cr-amber-soft: #fdf2e0;
+    --cr-rose: #e0456a;
+    --cr-rose-soft: #fdeaf0;
+    --cr-violet: #7c5cf0;
+    --cr-violet-soft: #f0ebff;
+
+    /* Shadows */
+    --cr-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --cr-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+    --cr-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
+                    0 4px 12px rgba(15, 27, 51, 0.04);
+
+    --cr-font: 'Poppins', system-ui, -apple-system, sans-serif;
+    --cr-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ============================================================
+   CONTAINER
+   ============================================================ */
+.consolidated-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 4px 0 40px;
+    font-family: var(--cr-font);
+    color: var(--cr-text-0);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ============================================================
+   FILTER CARD
+   ============================================================ */
+.consolidated-filter-card {
+    position: relative;
+    background: var(--cr-bg-1);
+    border-radius: 20px;
+    padding: 26px 28px;
+    border: 1px solid var(--cr-border);
+    box-shadow: var(--cr-shadow-sm);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.consolidated-filter-card:hover {
+    box-shadow: var(--cr-shadow-md);
+    border-color: var(--cr-border-strong);
+}
+
+/* Top accent line — matches the other dashboard pages */
+.consolidated-filter-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--cr-accent) 50%,
+        transparent 100%);
+    opacity: 0.85;
+}
+
+/* Soft aura behind the title */
+.consolidated-filter-card::after {
+    content: '';
+    position: absolute;
+    top: -40%; right: -20%;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(79, 110, 247, 0.08) 0%,
+        transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.consolidated-filter-card > * { position: relative; z-index: 1; }
+
+.consolidated-filter-card .filter-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--cr-text-0);
+    margin: 0 0 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+}
+
+.consolidated-filter-card .filter-title i {
+    font-size: 14px;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: var(--cr-accent-soft);
+    color: var(--cr-accent);
+    border: 1px solid rgba(79, 110, 247, 0.2);
+}
+
+.consolidated-filter-card .filter-subtitle {
+    font-size: 12px;
+    color: var(--cr-text-2);
+    margin: 0 0 22px 0;
+    line-height: 1.5;
+    max-width: 620px;
+}
+
+/* ============================================================
+   FILTER GRID
+   ============================================================ */
+.filter-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: end;
+    margin-bottom: 18px;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.filter-field label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--cr-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.filter-field select,
+.filter-field input {
+    padding: 10px 14px;
+    border: 1px solid var(--cr-border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--cr-font);
+    color: var(--cr-text-0);
+    background: var(--cr-bg-1);
+    transition: all 0.2s ease;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: var(--cr-shadow-sm);
+    height: 42px;
+}
+
+.filter-field select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+.filter-field select:hover,
+.filter-field input:hover {
+    border-color: var(--cr-border-strong);
+}
+
+.filter-field select:focus,
+.filter-field input:focus {
+    border-color: var(--cr-accent);
+    box-shadow:
+        0 0 0 3px rgba(79, 110, 247, 0.12),
+        var(--cr-shadow-sm);
+}
+
+.filter-field input[type="date"] {
+    color-scheme: light;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+}
+
+.filter-field select option {
+    background: var(--cr-bg-1);
+    color: var(--cr-text-0);
+}
+
+/* ============================================================
+   FILTER ACTIONS
+   ============================================================ */
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.btn-generate {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 24px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: white;
+    border: 1px solid rgba(79, 110, 247, 0.4);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    font-family: var(--cr-font);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    height: 42px;
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.28);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-generate::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.btn-generate:hover:not(:disabled)::before { opacity: 1; }
+
+.btn-generate:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.btn-generate:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-generate i { font-size: 13px; }
+
+.btn-reset-filters {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 18px;
+    background: var(--cr-bg-1);
+    color: var(--cr-text-1);
+    border: 1px solid var(--cr-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    font-family: var(--cr-font);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    height: 42px;
+    box-shadow: var(--cr-shadow-sm);
+    white-space: nowrap;
+}
+
+.btn-reset-filters:hover {
+    background: var(--cr-bg-2);
+    color: var(--cr-text-0);
+    border-color: var(--cr-border-strong);
+    transform: translateY(-1px);
+}
+
+.btn-reset-filters i { font-size: 12px; }
+
+/* ============================================================
+   INFO NOTE
+   ============================================================ */
+.info-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--cr-accent-soft);
+    border: 1px solid rgba(79, 110, 247, 0.22);
+    border-left: 3px solid var(--cr-accent);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 12px;
+    color: var(--cr-text-1);
+    line-height: 1.6;
+    position: relative;
+}
+
+.info-note i {
+    color: var(--cr-accent);
+    margin-top: 2px;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+.info-note > div { flex: 1; min-width: 0; }
+
+.info-note strong {
+    color: var(--cr-text-0);
+    font-weight: 600;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-state-card {
+    position: relative;
+    background: var(--cr-bg-1);
+    border-radius: 20px;
+    padding: 80px 32px;
+    text-align: center;
+    border: 1px dashed var(--cr-border-strong);
+    box-shadow: var(--cr-shadow-sm);
+    overflow: hidden;
+}
+
+.empty-state-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--cr-accent) 50%,
+        transparent 100%);
+    opacity: 0.55;
+}
+
+.empty-state-card i {
+    font-size: 44px;
+    width: 88px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(79, 110, 247, 0.14) 0%,
+        rgba(79, 110, 247, 0.04) 60%,
+        transparent 70%);
+    color: var(--cr-accent);
+    animation: cr-float 3s ease-in-out infinite;
+}
+
+@keyframes cr-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.empty-state-card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--cr-text-0);
+    margin: 0 0 8px 0;
+    letter-spacing: 0.2px;
+}
+
+.empty-state-card p {
+    font-size: 13px;
+    color: var(--cr-text-2);
+    margin: 0 auto;
+    max-width: 420px;
+    line-height: 1.55;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+    .filter-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .filter-field:first-child {
+        grid-column: 1 / -1;
+    }
+    .filter-actions {
+        grid-column: 1 / -1;
+        justify-content: stretch;
+    }
+    .btn-generate,
+    .btn-reset-filters {
+        flex: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .consolidated-filter-card {
+        padding: 20px 18px;
+        border-radius: 16px;
+    }
+
+    .consolidated-filter-card .filter-title {
+        font-size: 14px;
+    }
+    .consolidated-filter-card .filter-title i {
+        width: 26px;
+        height: 26px;
+        font-size: 12px;
+    }
+
+    .consolidated-filter-card .filter-subtitle {
+        font-size: 11px;
+        margin-bottom: 18px;
+    }
+
+    .filter-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .filter-actions {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+    .btn-generate,
+    .btn-reset-filters {
+        width: 100%;
+    }
+
+    .empty-state-card {
+        padding: 56px 20px;
+        border-radius: 16px;
+    }
+    .empty-state-card i {
+        width: 72px;
+        height: 72px;
+        font-size: 34px;
+    }
+    .empty-state-card h3 { font-size: 15px; }
+    .empty-state-card p { font-size: 12px; }
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:member_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li>
+    <a href="{% url 'control_dashboard:member_dashboard' %}" data-tooltip="Dashboard">
+        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-text">Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
+        <span class="nav-icon"><i class="fas fa-balance-scale"></i></span>
+        <span class="nav-text">Daily Trial Balance</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Analytics</span>
+</a></li>
+<li>
+    <a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
+        <span class="nav-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+        <span class="nav-text">Upload Report</span>
+    </a>
+</li>
+
+<li>
+    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+        <span class="nav-icon"><i class="fas fa-folder-open"></i></span>
+        <span class="nav-text">My Reports</span>
+    </a>
+</li>
+<li class="active">
+    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
+        <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
+        <span class="nav-text">Consolidated Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:member_checklist' %}" data-tooltip="Checklist">
+        <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+        <span class="nav-text">Activity Checklist</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block page_title %}Consolidated Reports{% endblock %}
+
+{% block content %}
+<div class="consolidated-container">
+
+    {% if available_report_types %}
+        <div class="consolidated-filter-card">
+            <h3 class="filter-title">
+                <i class="fas fa-filter" style="color:#0066cc;"></i> Build Your Consolidated Report
+            </h3>
+            <p class="filter-subtitle">
+                Pick a report type and an optional date range, then generate an Excel workbook with all matching data.
+            </p>
+
+            <div class="filter-grid">
+                <div class="filter-field">
+                    <label for="reportTypeFilter">Report Type</label>
+                    <select id="reportTypeFilter">
+                        <option value="all">All Report Types</option>
+                        {% for rt in available_report_types %}
+                        <option value="{{ rt }}">{{ rt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-field">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate">
+                </div>
+
+                <div class="filter-field">
+                    <label for="endDate">End Date</label>
+                    <input type="date" id="endDate">
+                </div>
+
+                <div class="filter-actions">
+                    <button type="button" class="btn-reset-filters" onclick="resetConsolidatedFilters()">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                    <button type="button" class="btn-generate" id="generateBtn" onclick="generateConsolidatedExcel()">
+                        <i class="fas fa-file-excel"></i> Generate Excel
+                    </button>
+                </div>
+            </div>
+
+            <div class="info-note">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    The generated workbook contains one sheet per report type. If you pick a single type,
+                    you'll get a single sheet. Daily Trial Balance data is intentionally excluded — it's
+                    analytical data, not a report or exception.
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state-card">
+            <i class="fas fa-layer-group"></i>
+            <h3>No Reports Yet</h3>
+            <p>Once you upload or submit reports, you'll be able to consolidate them here.</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function resetConsolidatedFilters() {
+        const rt = document.getElementById('reportTypeFilter');
+        const s = document.getElementById('startDate');
+        const e = document.getElementById('endDate');
+        if (rt) rt.value = 'all';
+        if (s) s.value = '';
+        if (e) e.value = '';
+    }
+
+    function generateConsolidatedExcel() {
+        const rt = document.getElementById('reportTypeFilter');
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+        const btn = document.getElementById('generateBtn');
+
+        const params = new URLSearchParams();
+        if (rt && rt.value) params.set('report_type', rt.value);
+        if (startDate && startDate.value) params.set('start_date', startDate.value);
+        if (endDate && endDate.value) params.set('end_date', endDate.value);
+
+        const url = "{% url 'control_dashboard:generate_consolidated_excel' %}?" + params.toString();
+
+        // Provide instant feedback; the browser will handle the download.
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+        // Use a hidden iframe so the page doesn't navigate away.
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = url;
+        document.body.appendChild(iframe);
+
+        // Re-enable the button after a short delay (the download itself is
+        // handled by Content-Disposition on the server response).
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            // Clean up the iframe after the browser has had time to trigger
+            // the download.
+            setTimeout(() => {
+                if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+            }, 30000);
+        }, 1200);
+    }
+</script>
+{% endblock %}

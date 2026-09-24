@@ -1,0 +1,1121 @@
+/* ==========================================================================
+   REPORTS PAGE — Premium Light Theme
+   ========================================================================== */
+
+/* ==========================================================================
+   DESIGN TOKENS
+   ========================================================================== */
+:root {
+    --rp-bg-0: #eef1f8;
+    --rp-bg-1: #ffffff;
+    --rp-bg-2: #f7f8fc;
+    --rp-bg-3: #f1f3f9;
+
+    --rp-border: rgba(15, 27, 51, 0.08);
+    --rp-border-strong: rgba(15, 27, 51, 0.16);
+    --rp-hairline: rgba(15, 27, 51, 0.06);
+
+    --rp-text-0: #0f1b33;
+    --rp-text-1: #46536b;
+    --rp-text-2: #8993a8;
+
+    --rp-accent: #4f6ef7;
+    --rp-accent-soft: #eef1ff;
+    --rp-emerald: #17a673;
+    --rp-emerald-soft: #e2f7ef;
+    --rp-amber: #e08a17;
+    --rp-amber-soft: #fdf2e0;
+    --rp-rose: #e0456a;
+    --rp-rose-soft: #fdeaf0;
+    --rp-violet: #7c5cf0;
+    --rp-violet-soft: #f0ebff;
+
+    --rp-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --rp-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+    --rp-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
+                    0 4px 12px rgba(15, 27, 51, 0.04);
+
+    --rp-font: 'Poppins', system-ui, -apple-system, sans-serif;
+    --rp-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    --space-xs: 6px;
+    --space-sm: 10px;
+    --space-md: 16px;
+    --space-lg: 20px;
+    --space-xl: 28px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-xl: 22px;
+}
+
+/* ==========================================================================
+   1. REPORT TYPE GROUPS
+   ========================================================================== */
+.report-type-group {
+    margin-bottom: var(--space-lg);
+    background: var(--rp-bg-1);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--rp-border);
+    overflow: hidden;
+    box-shadow: var(--rp-shadow-sm);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.report-type-group:hover {
+    box-shadow: var(--rp-shadow-md);
+    border-color: var(--rp-border-strong);
+}
+
+.report-type-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 22px;
+    cursor: pointer;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    border-bottom: 1px solid var(--rp-hairline);
+    transition: all 0.25s ease;
+    user-select: none;
+    position: relative;
+}
+
+.report-type-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--rp-emerald) 50%,
+        transparent 100%);
+    opacity: 0.85;
+}
+
+.report-type-header:hover {
+    background: linear-gradient(180deg, #fbfcff 0%, #f7f8fc 100%);
+}
+
+.report-type-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.report-type-icon {
+    font-size: 18px;
+    color: var(--rp-emerald);
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    background: var(--rp-emerald-soft);
+    border-radius: 10px;
+    border: 1px solid rgba(23, 166, 115, 0.22);
+    flex-shrink: 0;
+}
+
+.report-type-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--rp-text-0);
+    margin: 0;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.report-type-count {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--rp-emerald);
+    background: var(--rp-emerald-soft);
+    padding: 3px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(23, 166, 115, 0.22);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.report-type-toggle {
+    color: var(--rp-text-2);
+    transition: all 0.3s ease;
+    font-size: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--rp-bg-2);
+    border: 1px solid var(--rp-border);
+}
+
+.report-type-toggle.open i {
+    transform: rotate(180deg);
+}
+
+.report-type-toggle i {
+    transition: transform 0.3s ease;
+}
+
+/* ============================================================
+   REPORT TYPE BODY — horizontal scroll window
+   ============================================================ */
+.report-type-body {
+    padding: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: 4000px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 27, 51, 0.18) transparent;
+}
+
+.report-type-body::-webkit-scrollbar { height: 10px; }
+.report-type-body::-webkit-scrollbar-track {
+    background: var(--rp-bg-2);
+    border-radius: 6px;
+}
+.report-type-body::-webkit-scrollbar-thumb {
+    background: rgba(15, 27, 51, 0.18);
+    border-radius: 6px;
+    border: 2px solid var(--rp-bg-2);
+}
+.report-type-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 27, 51, 0.32);
+}
+
+.report-type-body.hidden,
+.report-type-body.collapsed {
+    max-height: 0;
+    padding: 0;
+    opacity: 0;
+}
+
+/* ==========================================================================
+   2. REPORT DETAILS TABLE — same pattern as draft.html preview table
+   Long cells wrap in place with a max-width cap so rows don't explode.
+   ========================================================================== */
+.report-details-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    background: transparent;
+    font-size: 13px;
+    font-family: var(--rp-font);
+    font-variant-numeric: tabular-nums;
+}
+
+.report-details-table thead {
+    background: var(--rp-bg-2);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.report-details-table thead th {
+    color: var(--rp-text-2);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--rp-border);
+    white-space: nowrap;
+    vertical-align: top;
+    background: var(--rp-bg-2);
+}
+
+/* Default cells — wrap in place with a normal cap */
+.report-details-table tbody td {
+    padding: 12px 14px;
+    color: var(--rp-text-1);
+    font-size: 13px;
+    border-bottom: 1px solid var(--rp-hairline);
+    vertical-align: top;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.55;
+    min-width: 90px;
+    max-width: 420px;
+}
+
+/* ============================================================
+   WIDE — exception, description, remarks, response
+   Higher cap than normal cells, but STILL CAPPED so it wraps
+   instead of creating one long horizontal row.
+   ============================================================ */
+.report-details-table thead th.wide-cell,
+.report-details-table tbody td.wide-cell {
+    min-width: 320px;
+    max-width: 800px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
+    color: var(--rp-text-0);
+}
+
+/* ============================================================
+   COMPACT — S/N, officer, branch, status, category
+   ============================================================ */
+.report-details-table thead th.narrow-cell,
+.report-details-table tbody td.narrow-cell {
+    min-width: 80px;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   DATE cells
+   ============================================================ */
+.report-details-table thead th.date-cell,
+.report-details-table tbody td.date-cell {
+    min-width: 110px;
+    max-width: 140px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--rp-mono);
+    font-size: 11px;
+    color: var(--rp-text-1);
+}
+
+/* ============================================================
+   NUMERIC — income / cost saved
+   ============================================================ */
+.report-details-table thead th.num-cell,
+.report-details-table tbody td.num-cell {
+    min-width: 100px;
+    max-width: 160px;
+    white-space: nowrap;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--rp-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rp-emerald);
+}
+
+/* Zebra + hover */
+.report-details-table tbody tr:nth-child(even) td {
+    background: rgba(15, 27, 51, 0.012);
+}
+
+.report-details-table tbody tr:hover td {
+    background: var(--rp-accent-soft);
+}
+
+.report-details-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.report-details-table tbody tr.selected td {
+    background: var(--rp-accent-soft);
+}
+
+.report-details-table tbody tr.selected:hover td {
+    background: #e3e9ff;
+}
+
+/* Checkbox column */
+.checkbox-cell {
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    text-align: center;
+    padding: 4px 8px !important;
+    vertical-align: middle !important;
+    background: var(--rp-bg-2);
+}
+
+.checkbox-cell input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--rp-accent);
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+/* Actions cell — fixed width */
+.report-details-table thead th.text-center,
+.report-details-table tbody td.text-center {
+    white-space: nowrap;
+    vertical-align: middle;
+    min-width: 90px;
+    max-width: 110px;
+}
+
+/* Empty row */
+.report-details-table .empty-row {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--rp-text-2);
+    font-style: italic;
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   3. TABLE ACTIONS CLUSTER
+   ========================================================================== */
+.table-actions-cluster {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.btn-edit-modal,
+.btn-delete {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    border-width: 1px;
+    border-style: solid;
+    font-family: var(--rp-font);
+}
+
+.btn-edit-modal {
+    background: var(--rp-accent-soft);
+    color: var(--rp-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.btn-edit-modal:hover {
+    background: var(--rp-accent);
+    color: #ffffff;
+    border-color: var(--rp-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 110, 247, 0.25);
+}
+
+.btn-delete {
+    background: var(--rp-rose-soft);
+    color: var(--rp-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.btn-delete:hover {
+    background: var(--rp-rose);
+    color: #ffffff;
+    border-color: var(--rp-rose);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(224, 69, 106, 0.25);
+}
+
+.btn-edit-modal i,
+.btn-delete i { font-size: 11px; }
+
+/* ==========================================================================
+   4. BADGES
+   ========================================================================== */
+.badge-success,
+.badge-secondary,
+.badge-warning,
+.badge-danger {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.badge-success {
+    background: var(--rp-emerald-soft);
+    color: var(--rp-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.badge-secondary {
+    background: var(--rp-bg-2);
+    color: var(--rp-text-1);
+    border-color: var(--rp-border);
+}
+
+.badge-warning {
+    background: var(--rp-amber-soft);
+    color: var(--rp-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.badge-danger {
+    background: var(--rp-rose-soft);
+    color: var(--rp-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+/* ==========================================================================
+   5. MODAL
+   ========================================================================== */
+.modal-wrapper {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 27, 51, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 20px;
+    overflow-y: auto;
+    z-index: 9999;
+    animation: rp-modal-fade 0.25s ease;
+}
+
+@keyframes rp-modal-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.modal-wrapper .modal-content {
+    background: var(--rp-bg-1);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--rp-border);
+    box-shadow:
+        0 24px 64px rgba(15, 27, 51, 0.22),
+        0 8px 24px rgba(15, 27, 51, 0.10);
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: rp-modal-slide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes rp-modal-slide {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+.modal-wrapper .modal-content.modal-content-wide {
+    max-width: 900px;
+}
+
+.modal-wrapper .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--rp-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    flex-shrink: 0;
+}
+
+.modal-wrapper .modal-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--rp-text-0);
+}
+
+.modal-wrapper .modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--rp-text-2);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.modal-wrapper .modal-close:hover {
+    color: var(--rp-rose);
+    background: var(--rp-rose-soft);
+}
+
+.modal-wrapper #editReportForm {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.modal-wrapper #editFormFields {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 20px 24px;
+    min-height: 0;
+}
+
+.modal-wrapper .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--rp-hairline);
+    background: var(--rp-bg-1);
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+}
+
+.modal-wrapper .modal-actions .btn-cancel,
+.modal-wrapper .modal-actions .btn-create {
+    padding: 10px 22px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--rp-font);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.modal-wrapper .modal-actions .btn-cancel {
+    background: var(--rp-bg-1);
+    color: var(--rp-text-1);
+    border-color: var(--rp-border);
+    box-shadow: var(--rp-shadow-sm);
+}
+
+.modal-wrapper .modal-actions .btn-cancel:hover {
+    background: var(--rp-bg-2);
+    color: var(--rp-text-0);
+    border-color: var(--rp-border-strong);
+}
+
+.modal-wrapper .modal-actions .btn-create {
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: #ffffff;
+    border-color: rgba(79, 110, 247, 0.4);
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+}
+
+.modal-wrapper .modal-actions .btn-create:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.modal-wrapper .modal-actions .btn-danger {
+    background: linear-gradient(135deg, #e0456a 0%, #c82d52 100%);
+    border-color: rgba(224, 69, 106, 0.4);
+    box-shadow: 0 4px 14px rgba(224, 69, 106, 0.25);
+}
+
+.modal-wrapper .modal-actions .btn-danger:hover {
+    box-shadow: 0 8px 24px rgba(224, 69, 106, 0.42);
+}
+
+.modal-wrapper > .modal-content > h3,
+.modal-wrapper > .modal-content > p {
+    padding: 0 24px;
+    text-align: center;
+}
+
+.modal-wrapper > .modal-content > h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--rp-text-0);
+    margin: 0 0 6px;
+}
+
+.modal-wrapper > .modal-content > p {
+    font-size: 13px;
+    color: var(--rp-text-1);
+    line-height: 1.5;
+    margin: 0 0 8px;
+}
+
+/* ==========================================================================
+   6. FORM FIELDS
+   ========================================================================== */
+.modal-wrapper .form-group {
+    margin-bottom: 16px;
+}
+
+.modal-wrapper .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.modal-wrapper .form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--rp-text-0);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.modal-wrapper .form-group .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--rp-border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: var(--rp-font);
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    background: var(--rp-bg-1);
+    color: var(--rp-text-0);
+}
+
+.modal-wrapper .form-group .form-control:hover {
+    border-color: var(--rp-border-strong);
+}
+
+.modal-wrapper .form-group .form-control:focus {
+    outline: none;
+    border-color: var(--rp-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.modal-wrapper .form-group textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+}
+
+.modal-wrapper .form-group select.form-control {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    padding-right: 34px;
+    cursor: pointer;
+}
+
+.modal-wrapper .modal-icon {
+    text-align: center;
+    font-size: 44px;
+    margin: 24px 0 12px;
+}
+
+.modal-wrapper .modal-icon.danger {
+    color: var(--rp-rose);
+}
+
+/* ==========================================================================
+   7. EMPTY STATE
+   ========================================================================== */
+.empty-state {
+    text-align: center;
+    padding: 72px 24px;
+    color: var(--rp-text-2);
+    background: var(--rp-bg-1);
+    border: 1px dashed var(--rp-border-strong);
+    border-radius: var(--radius-lg);
+}
+
+.empty-state i {
+    font-size: 48px;
+    width: 88px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(23, 166, 115, 0.14) 0%,
+        rgba(23, 166, 115, 0.04) 60%,
+        transparent 70%);
+    color: var(--rp-emerald);
+    animation: rp-float 3s ease-in-out infinite;
+}
+
+@keyframes rp-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.empty-state h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--rp-text-0);
+    margin: 0 0 6px;
+}
+
+.empty-state p {
+    font-size: 13px;
+    margin: 0 auto;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+.empty-state p strong {
+    color: var(--rp-text-0);
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   8. TOAST NOTIFICATION
+   ========================================================================== */
+.toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--rp-bg-1);
+    border: 1px solid var(--rp-border);
+    border-left: 4px solid var(--rp-emerald);
+    border-radius: 14px;
+    padding: 16px 20px;
+    max-width: 420px;
+    min-width: 320px;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--rp-font);
+    box-shadow:
+        0 16px 40px rgba(15, 27, 51, 0.15),
+        0 4px 12px rgba(15, 27, 51, 0.08);
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast-notification.show { transform: translateX(0); }
+.toast-notification.error { border-left-color: var(--rp-rose); }
+.toast-notification.warning { border-left-color: var(--rp-amber); }
+.toast-notification.info { border-left-color: var(--rp-accent); }
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    background: var(--rp-emerald-soft);
+    color: var(--rp-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.28);
+}
+
+.toast-notification.error .toast-icon {
+    background: var(--rp-rose-soft);
+    color: var(--rp-rose);
+    border-color: rgba(224, 69, 106, 0.28);
+}
+
+.toast-notification.warning .toast-icon {
+    background: var(--rp-amber-soft);
+    color: var(--rp-amber);
+    border-color: rgba(224, 138, 23, 0.28);
+}
+
+.toast-notification.info .toast-icon {
+    background: var(--rp-accent-soft);
+    color: var(--rp-accent);
+    border-color: rgba(79, 110, 247, 0.28);
+}
+
+.toast-content { flex: 1; min-width: 0; }
+
+.toast-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--rp-text-0);
+    margin: 0 0 2px 0;
+}
+
+.toast-message {
+    font-size: 12px;
+    color: var(--rp-text-1);
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--rp-text-2);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    color: var(--rp-text-0);
+    background: var(--rp-bg-2);
+}
+
+/* ==========================================================================
+   9. TABLE CONTAINER OVERRIDES
+   ========================================================================== */
+.table-container {
+    padding: 4px 0 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.table-container .report-type-group:last-child {
+    margin-bottom: 0;
+}
+
+/* ==========================================================================
+   10. SELECTION CONTROLS
+   ========================================================================== */
+.selection-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    background: var(--rp-bg-1);
+    border-radius: 14px;
+    border: 1px solid var(--rp-border);
+    flex-wrap: wrap;
+    gap: 12px;
+    box-shadow: var(--rp-shadow-sm);
+}
+
+.selection-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.selection-left .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--rp-text-0);
+    cursor: pointer;
+    letter-spacing: 0.2px;
+}
+
+.selection-left .checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--rp-accent);
+    cursor: pointer;
+}
+
+.selected-count-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--rp-text-2);
+    background: var(--rp-bg-2);
+    padding: 4px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--rp-border);
+    font-variant-numeric: tabular-nums;
+}
+
+.btn-submit-selected {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 20px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: white;
+    border: 1px solid rgba(79, 110, 247, 0.4);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--rp-font);
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-submit-selected::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.btn-submit-selected:hover:not(:disabled)::before { opacity: 1; }
+
+.btn-submit-selected:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.btn-submit-selected:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-submit-selected i { font-size: 13px; }
+
+/* ==========================================================================
+   11. LOADING STATE
+   ========================================================================== */
+#editFormFields .loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--rp-text-2);
+}
+
+#editFormFields .loading i {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 16px;
+    color: var(--rp-accent);
+}
+
+/* ==========================================================================
+   12. SCROLLBAR FOR MODAL
+   ========================================================================== */
+.modal-wrapper .modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-wrapper .modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-wrapper .modal-content::-webkit-scrollbar-thumb {
+    background: rgba(15, 27, 51, 0.15);
+    border-radius: 4px;
+}
+
+.modal-wrapper .modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 27, 51, 0.28);
+}
+
+.modal-wrapper .modal-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 27, 51, 0.15) transparent;
+}
+
+/* ==========================================================================
+   13. RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .report-details-table thead th,
+    .report-details-table tbody td {
+        padding: 10px 12px;
+    }
+
+    .report-details-table tbody td {
+        max-width: 340px;
+    }
+
+    .report-details-table thead th.wide-cell,
+    .report-details-table tbody td.wide-cell {
+        min-width: 280px;
+        max-width: 620px;
+    }
+
+    .report-type-header {
+        padding: 14px 18px;
+    }
+
+    .modal-wrapper .modal-content {
+        max-width: 92%;
+    }
+
+    .modal-wrapper #editFormFields {
+        padding: 18px 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .report-type-title { font-size: 13px; }
+    .report-type-count { font-size: 10px; padding: 2px 8px; }
+    .report-type-icon { width: 30px; height: 30px; font-size: 14px; }
+
+    .report-details-table { font-size: 12px; }
+    .report-details-table thead th {
+        font-size: 9px;
+        padding: 8px 10px;
+    }
+    .report-details-table tbody td {
+        padding: 8px 10px;
+        font-size: 12px;
+        max-width: 260px;
+    }
+    .report-details-table thead th.wide-cell,
+    .report-details-table tbody td.wide-cell {
+        min-width: 240px;
+        max-width: 500px;
+    }
+
+    .table-actions-cluster {
+        flex-direction: column;
+        gap: 4px;
+    }
+    .btn-edit-modal,
+    .btn-delete {
+        width: 28px;
+        height: 28px;
+    }
+
+    .modal-wrapper {
+        padding: 20px 14px;
+        align-items: flex-end;
+    }
+    .modal-wrapper .modal-content {
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+        max-height: calc(100vh - 40px);
+    }
+    .modal-wrapper .modal-actions {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+    .modal-wrapper .modal-actions .btn-cancel,
+    .modal-wrapper .modal-actions .btn-create {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .toast-notification {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        max-width: none;
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-type-left { gap: 10px; }
+    .report-type-count { display: none; }
+    .report-details-table thead th,
+    .report-details-table tbody td { padding: 7px 9px; font-size: 11px; }
+    .report-details-table tbody td { max-width: 200px; }
+    .report-details-table thead th.wide-cell,
+    .report-details-table tbody td.wide-cell {
+        min-width: 200px;
+        max-width: 360px;
+    }
+    .empty-state { padding: 48px 16px; }
+    .empty-state i { width: 72px; height: 72px; font-size: 36px; }
+}

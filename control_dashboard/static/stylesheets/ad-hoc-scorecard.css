@@ -1,0 +1,896 @@
+/* ==========================================================================
+   AD-HOC SCORECARD — Premium Light Theme
+   ========================================================================== */
+
+:root {
+    /* Surfaces */
+    --ah-bg-0: #eef1f8;
+    --ah-bg-1: #ffffff;
+    --ah-bg-2: #f7f8fc;
+    --ah-bg-3: #f1f3f9;
+
+    /* Borders */
+    --ah-border: rgba(15, 27, 51, 0.08);
+    --ah-border-strong: rgba(15, 27, 51, 0.16);
+    --ah-hairline: rgba(15, 27, 51, 0.06);
+
+    /* Text */
+    --ah-text-0: #0f1b33;
+    --ah-text-1: #46536b;
+    --ah-text-2: #8993a8;
+
+    /* Accents */
+    --ah-accent: #4f6ef7;
+    --ah-accent-soft: #eef1ff;
+    --ah-emerald: #17a673;
+    --ah-emerald-soft: #e2f7ef;
+    --ah-amber: #e08a17;
+    --ah-amber-soft: #fdf2e0;
+    --ah-rose: #e0456a;
+    --ah-rose-soft: #fdeaf0;
+    --ah-violet: #7c5cf0;
+    --ah-violet-soft: #f0ebff;
+
+    /* Shadows */
+    --ah-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --ah-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+    --ah-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
+                    0 4px 12px rgba(15, 27, 51, 0.04);
+
+    --ah-font: 'Poppins', system-ui, -apple-system, sans-serif;
+}
+
+/* ==========================================================================
+   1. STATS GRID — auto-fit, no ghost columns
+   ========================================================================== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    position: relative;
+    background: var(--ah-bg-1);
+    border: 1px solid var(--ah-border);
+    border-radius: 18px;
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--ah-shadow-sm);
+    min-width: 0;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+/* Top accent line per card */
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--stat-accent, var(--ah-accent)) 50%,
+        transparent 100%);
+    opacity: 0.8;
+}
+
+/* Soft aura bloom */
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -30%;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--stat-accent, var(--ah-accent)) 22%, transparent) 0%,
+        transparent 70%);
+    opacity: 0.5;
+    z-index: -1;
+    transition: opacity 0.4s ease, transform 0.6s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--stat-accent, var(--ah-accent)) 30%, var(--ah-border));
+    box-shadow:
+        0 12px 28px rgba(15, 27, 51, 0.10),
+        0 2px 6px rgba(15, 27, 51, 0.04);
+}
+
+.stat-card:hover::after {
+    opacity: 0.9;
+    transform: scale(1.15);
+}
+
+/* Accent variants */
+.stat-card:has(.stat-icon.warning)        { --stat-accent: var(--ah-amber); }
+.stat-card:has(.stat-icon.danger)         { --stat-accent: var(--ah-rose); }
+.stat-card:has(.stat-icon.success-icon)   { --stat-accent: var(--ah-emerald); }
+.stat-card:has(.stat-icon.info-icon)      { --stat-accent: var(--ah-violet); }
+.stat-card:has(.stat-icon.primary)        { --stat-accent: var(--ah-accent); }
+
+.stat-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    border: 1px solid;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.06) rotate(-3deg);
+}
+
+.stat-icon.primary {
+    background: var(--ah-accent-soft);
+    color: var(--ah-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.stat-icon.warning {
+    background: var(--ah-amber-soft);
+    color: var(--ah-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.stat-icon.danger {
+    background: var(--ah-rose-soft);
+    color: var(--ah-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.stat-icon.success-icon {
+    background: var(--ah-emerald-soft);
+    color: var(--ah-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.stat-icon.info-icon {
+    background: var(--ah-violet-soft);
+    color: var(--ah-violet);
+    border-color: rgba(124, 92, 240, 0.22);
+}
+
+.stat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-value {
+    display: block;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ah-text-0);
+    line-height: 1.15;
+    letter-spacing: -0.6px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-label {
+    display: block;
+    font-size: 10px;
+    color: var(--ah-text-2);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   2. CREATE FORM
+   ========================================================================== */
+.create-form {
+    position: relative;
+    background: var(--ah-bg-1);
+    border: 1px solid var(--ah-border);
+    border-radius: 18px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    box-shadow: var(--ah-shadow-sm);
+    animation: ah-slide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.create-form::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--ah-accent) 50%,
+        transparent 100%);
+    opacity: 0.85;
+}
+
+@keyframes ah-slide {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.create-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    border-bottom: 1px solid var(--ah-hairline);
+}
+
+.create-form-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ah-text-0);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+}
+
+.create-form-header h4 i {
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--ah-accent-soft);
+    color: var(--ah-accent);
+    border: 1px solid rgba(79, 110, 247, 0.2);
+    margin: 0;
+}
+
+.close-form {
+    background: none;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--ah-text-2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+
+.close-form:hover {
+    color: var(--ah-rose);
+    background: var(--ah-rose-soft);
+}
+
+.create-form-body {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.create-form-body .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-group {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ah-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.form-group .required {
+    color: var(--ah-rose);
+}
+
+.form-group .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--ah-border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--ah-font);
+    transition: all 0.2s ease;
+    background: var(--ah-bg-1);
+    color: var(--ah-text-0);
+    box-sizing: border-box;
+    outline: none;
+    box-shadow: var(--ah-shadow-sm);
+    height: 42px;
+}
+
+.form-group .form-control::placeholder {
+    color: var(--ah-text-2);
+    font-weight: 400;
+}
+
+.form-group .form-control:hover {
+    border-color: var(--ah-border-strong);
+}
+
+.form-group .form-control:focus {
+    border-color: var(--ah-accent);
+    box-shadow:
+        0 0 0 3px rgba(79, 110, 247, 0.12),
+        var(--ah-shadow-sm);
+}
+
+/* Hide native number input spinners */
+.form-group .form-control[type="number"]::-webkit-outer-spin-button,
+.form-group .form-control[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.form-group .form-control[type="number"] {
+    -moz-appearance: textfield;
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+}
+
+.create-form-footer {
+    padding: 16px 22px;
+    background: var(--ah-bg-2);
+    border-top: 1px solid var(--ah-hairline);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   3. DEDUCTIONS TABLE
+   ========================================================================== */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 14px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 27, 51, 0.15) transparent;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+.table-responsive::-webkit-scrollbar-track {
+    background: var(--ah-bg-2);
+}
+.table-responsive::-webkit-scrollbar-thumb {
+    background: rgba(15, 27, 51, 0.18);
+    border-radius: 4px;
+}
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 27, 51, 0.28);
+}
+
+.deductions-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+    font-size: 12px;
+    font-family: var(--ah-font);
+    font-variant-numeric: tabular-nums;
+}
+
+.deductions-table thead {
+    background: var(--ah-bg-2);
+}
+
+.deductions-table thead th {
+    color: var(--ah-text-2);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--ah-border);
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.deductions-table thead th.text-center {
+    text-align: center;
+}
+
+.deductions-table tbody td {
+    padding: 12px 16px;
+    color: var(--ah-text-1);
+    border-bottom: 1px solid var(--ah-hairline);
+    vertical-align: middle;
+    line-height: 1.5;
+}
+
+.deductions-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.deductions-table tbody tr:hover {
+    background: var(--ah-bg-2);
+}
+
+.deductions-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.deductions-table .text-center {
+    text-align: center;
+}
+
+.deductions-table .font-bold {
+    font-weight: 600;
+    color: var(--ah-text-0);
+    font-size: 13px;
+}
+
+/* Points-added cell */
+.points-added-cell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 12px;
+    background: var(--ah-emerald-soft);
+    color: var(--ah-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.22);
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.2px;
+}
+
+/* ==========================================================================
+   4. DEDUCTION BADGE
+   ========================================================================== */
+.deduction-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    border: 1px solid;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.2px;
+}
+
+.deduction-badge.high {
+    background: var(--ah-rose-soft);
+    color: var(--ah-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.deduction-badge.medium {
+    background: var(--ah-amber-soft);
+    color: var(--ah-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.deduction-badge.low {
+    background: var(--ah-emerald-soft);
+    color: var(--ah-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+/* ==========================================================================
+   5. TIME STAMP
+   ========================================================================== */
+.time-stamp {
+    font-size: 12px;
+    color: var(--ah-text-1);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   6. TABLE ACTIONS
+   ========================================================================== */
+.table-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.table-actions .btn-edit,
+.table-actions .btn-delete {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    border-width: 1px;
+    border-style: solid;
+    transition: all 0.2s ease;
+    font-family: var(--ah-font);
+}
+
+.table-actions .btn-edit {
+    background: var(--ah-accent-soft);
+    color: var(--ah-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.table-actions .btn-edit:hover:not(:disabled) {
+    background: var(--ah-accent);
+    color: #ffffff;
+    border-color: var(--ah-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 110, 247, 0.25);
+}
+
+.table-actions .btn-edit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.table-actions .btn-delete {
+    background: var(--ah-rose-soft);
+    color: var(--ah-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.table-actions .btn-delete:hover:not(:disabled) {
+    background: var(--ah-rose);
+    color: #ffffff;
+    border-color: var(--ah-rose);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(224, 69, 106, 0.25);
+}
+
+.table-actions .btn-delete:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ==========================================================================
+   7. EMPTY STATE
+   ========================================================================== */
+.empty-row {
+    padding: 60px 20px !important;
+    text-align: center;
+}
+
+.empty-row i {
+    font-size: 44px;
+    width: 80px;
+    height: 80px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(79, 110, 247, 0.14) 0%,
+        rgba(79, 110, 247, 0.04) 60%,
+        transparent 70%);
+    color: var(--ah-accent);
+    animation: ah-float 3s ease-in-out infinite;
+}
+
+@keyframes ah-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.empty-row p {
+    margin: 0;
+    color: var(--ah-text-2);
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   8. TABLE CONTAINER
+   ========================================================================== */
+.table-container {
+    position: relative;
+    background: var(--ah-bg-1);
+    border-radius: 18px;
+    border: 1px solid var(--ah-border);
+    box-shadow: var(--ah-shadow-sm);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.table-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--ah-accent) 50%,
+        transparent 100%);
+    opacity: 0.7;
+    z-index: 2;
+}
+
+.table-container:hover {
+    box-shadow: var(--ah-shadow-md);
+    border-color: var(--ah-border-strong);
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--ah-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    flex-wrap: wrap;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.table-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ah-text-0);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+}
+
+.table-header h4 i {
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--ah-accent-soft);
+    color: var(--ah-accent);
+    border: 1px solid rgba(79, 110, 247, 0.2);
+}
+
+/* ==========================================================================
+   9. HEADER CONTROLS (filter group, select, buttons)
+   ========================================================================== */
+.header-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-filter-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--ah-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.header-select {
+    padding: 8px 34px 8px 14px;
+    border: 1px solid var(--ah-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--ah-font);
+    background: var(--ah-bg-1);
+    color: var(--ah-text-0);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 13px;
+    height: 38px;
+    box-sizing: border-box;
+    min-width: 160px;
+    box-shadow: var(--ah-shadow-sm);
+}
+
+.header-select:hover {
+    border-color: var(--ah-border-strong);
+}
+
+.header-select:focus {
+    border-color: var(--ah-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.header-select option {
+    background: var(--ah-bg-1);
+    color: var(--ah-text-0);
+}
+
+/* Create header button */
+.btn-create-header {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: #ffffff;
+    border: 1px solid rgba(79, 110, 247, 0.4);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--ah-font);
+    letter-spacing: 0.3px;
+    height: 38px;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-create-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.btn-create-header:hover::before {
+    opacity: 1;
+}
+
+.btn-create-header:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.btn-create-header i {
+    font-size: 12px;
+}
+
+/* ==========================================================================
+   10. RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .create-form-body .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .stat-card {
+        padding: 16px 18px;
+    }
+    .stat-value {
+        font-size: 22px;
+    }
+    .stat-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
+    }
+
+    /* Table becomes card-style on mobile */
+    .deductions-table thead {
+        display: none;
+    }
+    .deductions-table tbody tr {
+        display: block;
+        border: 1px solid var(--ah-border);
+        border-radius: 12px;
+        margin-bottom: 10px;
+        padding: 8px 4px;
+        background: var(--ah-bg-1);
+        box-shadow: var(--ah-shadow-sm);
+    }
+    .deductions-table tbody tr:last-child {
+        margin-bottom: 0;
+    }
+    .deductions-table tbody td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px;
+        border-bottom: none;
+        gap: 12px;
+        text-align: left;
+    }
+    .deductions-table tbody td.text-center {
+        text-align: left;
+    }
+    .deductions-table tbody td::before {
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--ah-text-2);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        flex-shrink: 0;
+    }
+
+    /* Hide labels on primary cells */
+    .deductions-table tbody td[data-label="Full Name"]::before,
+    .deductions-table tbody td[data-label="Task Description"]::before {
+        display: none;
+    }
+
+    .deductions-table tbody td[data-label="Actions"] {
+        justify-content: center;
+        padding-top: 12px;
+        border-top: 1px solid var(--ah-hairline);
+        margin-top: 4px;
+    }
+}
+
+@media (max-width: 768px) {
+    .create-form-header {
+        padding: 14px 16px 12px;
+    }
+    .create-form-body {
+        padding: 16px;
+    }
+    .create-form-footer {
+        padding: 14px 16px;
+    }
+}
+
+@media (max-width: 560px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .stat-card {
+        padding: 14px 16px;
+    }
+    .stat-value {
+        font-size: 22px;
+    }
+    .stat-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 15px;
+    }
+
+    .create-form-footer {
+        flex-direction: column-reverse;
+    }
+    .create-form-footer .btn-cancel,
+    .create-form-footer .btn-save-form {
+        width: 100%;
+        justify-content: center;
+    }
+}

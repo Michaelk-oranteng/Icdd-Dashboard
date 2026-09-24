@@ -1,0 +1,1940 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Member Checklist{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/member_checklist.css' %}" type="text/css">
+<style>
+/* ============================================================
+   MEMBER CHECKLIST — Premium Light Theme
+   ============================================================ */
+
+:root {
+    --cl-bg-0: #eef1f8;
+    --cl-bg-1: #ffffff;
+    --cl-bg-2: #f7f8fc;
+    --cl-bg-3: #f1f3f9;
+
+    --cl-border: rgba(15, 27, 51, 0.08);
+    --cl-border-strong: rgba(15, 27, 51, 0.16);
+    --cl-hairline: rgba(15, 27, 51, 0.06);
+
+    --cl-text-0: #0f1b33;
+    --cl-text-1: #46536b;
+    --cl-text-2: #8993a8;
+
+    --cl-accent: #4f6ef7;
+    --cl-accent-soft: #eef1ff;
+    --cl-emerald: #17a673;
+    --cl-emerald-soft: #e2f7ef;
+    --cl-amber: #e08a17;
+    --cl-amber-soft: #fdf2e0;
+    --cl-rose: #e0456a;
+    --cl-rose-soft: #fdeaf0;
+    --cl-violet: #7c5cf0;
+    --cl-violet-soft: #f0ebff;
+
+    --cl-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --cl-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+
+    --cl-font: 'Poppins', system-ui, -apple-system, sans-serif;
+    --cl-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ============================================================
+   PAGE CONTAINER
+   ============================================================ */
+.checklist-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 4px 0 40px;
+    font-family: var(--cl-font);
+    color: var(--cl-text-0);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ============================================================
+   PROGRESS CARDS
+   ============================================================ */
+.progress-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+.progress-card {
+    position: relative;
+    background: var(--cl-bg-1);
+    border-radius: 18px;
+    padding: 22px 24px;
+    border: 1px solid var(--cl-border);
+    box-shadow: var(--cl-shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.progress-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--card-accent, var(--cl-accent)) 50%,
+        transparent 100%);
+    opacity: 0.85;
+}
+
+.progress-card::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -30%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--card-accent, var(--cl-accent)) 20%, transparent) 0%,
+        transparent 70%);
+    opacity: 0.5;
+    z-index: -1;
+    transition: opacity 0.4s ease, transform 0.6s ease;
+}
+
+.progress-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--card-accent, var(--cl-accent)) 30%, var(--cl-border));
+    box-shadow:
+        0 12px 28px rgba(15, 27, 51, 0.10),
+        0 2px 6px rgba(15, 27, 51, 0.04);
+}
+
+.progress-card:hover::after {
+    opacity: 0.85;
+    transform: scale(1.15);
+}
+
+.progress-card#monthlyProgressCard   { --card-accent: var(--cl-accent); }
+.progress-card#quarterlyProgressCard { --card-accent: var(--cl-amber); }
+.progress-card#yearlyProgressCard    { --card-accent: var(--cl-emerald); }
+
+.progress-card .card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    border: 1px solid;
+    transition: transform 0.3s ease;
+}
+
+.progress-card:hover .card-icon {
+    transform: scale(1.06) rotate(-3deg);
+}
+
+.progress-card .card-icon.monthly {
+    background: var(--cl-accent-soft);
+    color: var(--cl-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.progress-card .card-icon.quarterly {
+    background: var(--cl-amber-soft);
+    color: var(--cl-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.progress-card .card-icon.yearly {
+    background: var(--cl-emerald-soft);
+    color: var(--cl-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.progress-card .card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.progress-card .card-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--cl-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 4px;
+}
+
+.progress-card .card-subtitle {
+    font-size: 12px;
+    color: var(--cl-text-2);
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.progress-card .card-value {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--cl-text-0);
+    line-height: 1;
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+}
+
+.progress-card .card-value .percent {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--cl-text-2);
+    margin-left: 2px;
+}
+
+.progress-card .card-detail {
+    font-size: 11px;
+    color: var(--cl-text-2);
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+.progress-card .card-detail span {
+    font-weight: 700;
+    color: var(--cl-text-0);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   CIRCULAR PROGRESS
+   ============================================================ */
+.circular-progress-wrapper {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    flex-shrink: 0;
+}
+
+.circular-progress-wrapper svg {
+    width: 84px;
+    height: 84px;
+    transform: rotate(-90deg);
+    overflow: visible;
+}
+
+.circular-progress-wrapper .circle-bg {
+    fill: none;
+    stroke: rgba(15, 27, 51, 0.07);
+    stroke-width: 6;
+}
+
+.circular-progress-wrapper .circle-progress {
+    fill: none;
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+    stroke-dasharray: 263.89;
+    stroke-dashoffset: 263.89;
+}
+
+.circular-progress-wrapper .circle-progress.monthly {
+    stroke: var(--cl-accent);
+    filter: drop-shadow(0 1px 3px rgba(79, 110, 247, 0.4));
+}
+
+.circular-progress-wrapper .circle-progress.quarterly {
+    stroke: var(--cl-amber);
+    filter: drop-shadow(0 1px 3px rgba(224, 138, 23, 0.4));
+}
+
+.circular-progress-wrapper .circle-progress.yearly {
+    stroke: var(--cl-emerald);
+    filter: drop-shadow(0 1px 3px rgba(23, 166, 115, 0.4));
+}
+
+.circular-progress-wrapper .progress-text {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cl-text-0);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.circular-progress-wrapper .progress-text .small {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--cl-text-2);
+}
+
+/* ============================================================
+   FILTER SECTION
+   ============================================================ */
+.filter-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--cl-bg-1);
+    border: 1px solid var(--cl-border);
+    border-radius: 16px;
+    box-shadow: var(--cl-shadow-sm);
+}
+
+.filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.filter-group .filter-group-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--cl-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.filter-section select,
+.filter-section .filter-input {
+    padding: 8px 34px 8px 14px;
+    border: 1px solid var(--cl-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--cl-font);
+    background: var(--cl-bg-1);
+    color: var(--cl-text-0);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 13px;
+    height: 38px;
+    box-sizing: border-box;
+}
+
+.filter-section .filter-input {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3ccircle cx='11' cy='11' r='8'/%3e%3cline x1='21' y1='21' x2='16.65' y2='16.65'/%3e%3c/svg%3e");
+    background-position: left 12px center;
+    padding-left: 36px;
+    padding-right: 14px;
+    cursor: text;
+    min-width: 160px;
+}
+
+.filter-section select:hover,
+.filter-section .filter-input:hover {
+    border-color: var(--cl-border-strong);
+}
+
+.filter-section select:focus,
+.filter-section .filter-input:focus {
+    border-color: var(--cl-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.filter-section select option {
+    background: var(--cl-bg-1);
+    color: var(--cl-text-0);
+}
+
+.filter-section .filter-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--cl-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--cl-text-1);
+    background: var(--cl-bg-1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--cl-font);
+    height: 38px;
+    box-shadow: var(--cl-shadow-sm);
+    white-space: nowrap;
+}
+
+.filter-section .filter-reset:hover {
+    background: var(--cl-bg-2);
+    color: var(--cl-text-0);
+    border-color: var(--cl-border-strong);
+    transform: translateY(-1px);
+}
+
+.filter-section .filter-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--cl-accent-soft);
+    color: var(--cl-accent);
+    border: 1px solid rgba(79, 110, 247, 0.22);
+    letter-spacing: 0.2px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   UNIT BADGES
+   ============================================================ */
+.unit-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    border: 1px solid;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.unit-badge.branch {
+    background: var(--cl-accent-soft);
+    color: var(--cl-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.unit-badge.department {
+    background: var(--cl-amber-soft);
+    color: var(--cl-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.unit-badge.general {
+    background: var(--cl-bg-2);
+    color: var(--cl-text-1);
+    border-color: var(--cl-border);
+}
+
+/* ============================================================
+   FREQUENCY TAGS
+   ============================================================ */
+.frequency-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid;
+    white-space: nowrap;
+}
+
+.frequency-tag.daily {
+    background: var(--cl-accent-soft);
+    color: var(--cl-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.frequency-tag.weekly {
+    background: var(--cl-amber-soft);
+    color: var(--cl-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.frequency-tag.monthly {
+    background: var(--cl-emerald-soft);
+    color: var(--cl-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.frequency-tag.quarterly {
+    background: var(--cl-rose-soft);
+    color: var(--cl-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.frequency-tag.annual,
+.frequency-tag.bi-annual,
+.frequency-tag.one-off {
+    background: var(--cl-violet-soft);
+    color: var(--cl-violet);
+    border-color: rgba(124, 92, 240, 0.22);
+}
+
+/* ============================================================
+   MINI CALENDAR
+   ============================================================ */
+.mini-calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.mini-calendar .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px;
+    background: var(--cl-bg-2);
+    border-radius: 8px;
+    border: 1px solid var(--cl-border);
+}
+
+.mini-calendar .cal-header .cal-prev,
+.mini-calendar .cal-header .cal-next {
+    background: var(--cl-bg-1);
+    border: 1px solid var(--cl-border);
+    border-radius: 6px;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    color: var(--cl-text-2);
+    font-size: 10px;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.mini-calendar .cal-header .cal-prev:hover,
+.mini-calendar .cal-header .cal-next:hover {
+    background: var(--cl-accent);
+    color: white;
+    border-color: var(--cl-accent);
+    transform: translateY(-1px);
+}
+
+.mini-calendar .cal-header .cal-month-year {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--cl-text-0);
+    letter-spacing: 0.3px;
+    font-variant-numeric: tabular-nums;
+}
+
+.day-boxes-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    width: 100%;
+}
+
+.day-box {
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    background: var(--cl-bg-2);
+    color: var(--cl-text-1);
+    border: 1px solid transparent;
+    font-size: 10px;
+    font-weight: 600;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: var(--cl-font);
+    padding: 0;
+    min-width: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.day-box:hover:not(.weekend):not(.empty) {
+    background: var(--cl-bg-3);
+    color: var(--cl-text-0);
+    transform: scale(1.08);
+    border-color: var(--cl-border-strong);
+}
+
+.day-box.logged {
+    background: var(--cl-emerald);
+    color: white;
+    border-color: var(--cl-emerald);
+    box-shadow: 0 2px 6px rgba(23, 166, 115, 0.28);
+    font-weight: 700;
+}
+
+.day-box.logged:hover {
+    background: #0f8a5e;
+    transform: scale(1.08);
+}
+
+.day-box.today {
+    border-color: var(--cl-accent);
+    border-width: 2px;
+    background: var(--cl-accent-soft);
+    color: var(--cl-accent);
+    font-weight: 700;
+}
+
+.day-box.today.logged {
+    background: var(--cl-emerald);
+    color: white;
+    border-color: var(--cl-accent);
+    box-shadow:
+        0 2px 6px rgba(23, 166, 115, 0.28),
+        0 0 0 2px rgba(79, 110, 247, 0.22);
+}
+
+.day-box.weekend {
+    background: transparent;
+    color: var(--cl-text-2);
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: transparent;
+}
+
+.day-box.weekend:hover {
+    background: transparent;
+    transform: none;
+}
+
+.day-box.empty {
+    background: transparent;
+    cursor: default;
+    border: none;
+}
+
+.mini-calendar .cal-month-label {
+    text-align: center;
+    font-size: 9px;
+    color: var(--cl-text-2);
+    padding-top: 4px;
+    border-top: 1px solid var(--cl-hairline);
+    letter-spacing: 0.3px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+/* ============================================================
+   MAIN CARD
+   ============================================================ */
+.glass-card {
+    background: var(--cl-bg-1);
+    border-radius: 18px;
+    border: 1px solid var(--cl-border);
+    box-shadow: var(--cl-shadow-sm);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+    box-shadow: var(--cl-shadow-md);
+    border-color: var(--cl-border-strong);
+}
+
+.table-container {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--cl-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.table-header h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--cl-text-0);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+}
+
+.table-header h4 i {
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--cl-accent-soft);
+    color: var(--cl-accent);
+    border: 1px solid rgba(79, 110, 247, 0.2);
+}
+
+/* ============================================================
+   DASHBOARD TABLE
+   ============================================================ */
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--cl-font);
+    font-variant-numeric: tabular-nums;
+    background: transparent;
+}
+
+.dashboard-table thead {
+    background: var(--cl-bg-2);
+}
+
+.dashboard-table thead th {
+    color: var(--cl-text-2);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--cl-border);
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.dashboard-table tbody td {
+    padding: 14px 16px;
+    color: var(--cl-text-1);
+    font-size: 12px;
+    border-bottom: 1px solid var(--cl-hairline);
+    vertical-align: top;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.5;
+}
+
+.dashboard-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.dashboard-table tbody tr:hover {
+    background: var(--cl-bg-2);
+}
+
+.dashboard-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.dashboard-table .font-bold {
+    font-weight: 600;
+    color: var(--cl-text-0);
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.dashboard-table .font-bold i {
+    color: var(--cl-accent);
+    margin-right: 8px;
+}
+
+/* ============================================================
+   TASK LIST — FULL DISPLAY
+   ============================================================ */
+.task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.task-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 10px;
+    background: var(--cl-bg-2);
+    border: 1px solid var(--cl-hairline);
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--cl-text-1);
+    transition: all 0.2s ease;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.task-list li:hover {
+    background: var(--cl-bg-1);
+    border-color: var(--cl-border-strong);
+    color: var(--cl-text-0);
+    transform: translateX(2px);
+}
+
+.task-list li .task-index {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--cl-accent-soft);
+    color: var(--cl-accent);
+    border: 1px solid rgba(79, 110, 247, 0.22);
+    font-size: 10px;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    line-height: 1;
+    margin-top: 1px;
+    font-variant-numeric: tabular-nums;
+}
+
+.task-list li .task-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.task-list li.text-muted {
+    background: transparent;
+    border: 1px dashed var(--cl-border);
+    color: var(--cl-text-2);
+    font-style: italic;
+    justify-content: center;
+    text-align: center;
+}
+
+.task-list li.text-muted i {
+    color: var(--cl-text-2);
+    font-size: 11px;
+}
+
+.task-list.collapsed li:nth-child(n+6) {
+    display: none;
+}
+
+.task-list.collapsed::after {
+    content: '';
+    display: block;
+    height: 4px;
+    margin-top: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(79, 110, 247, 0.15) 50%,
+        transparent 100%);
+}
+
+.task-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 5px 12px;
+    background: var(--cl-accent-soft);
+    color: var(--cl-accent);
+    border: 1px solid rgba(79, 110, 247, 0.22);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    font-family: var(--cl-font);
+    transition: all 0.2s ease;
+}
+
+.task-toggle:hover {
+    background: var(--cl-accent);
+    color: #ffffff;
+    border-color: var(--cl-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 110, 247, 0.25);
+}
+
+.task-toggle i {
+    font-size: 10px;
+    transition: transform 0.25s ease;
+}
+
+.task-toggle.expanded i {
+    transform: rotate(180deg);
+}
+
+/* ============================================================
+   HEADER ACTIONS
+   ============================================================ */
+.btn-export-header,
+.btn-refresh-header {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    font-family: var(--cl-font);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 38px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    box-shadow: var(--cl-shadow-sm);
+}
+
+.btn-export-header {
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: white;
+    border-color: rgba(79, 110, 247, 0.4);
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    margin-right: 8px;
+}
+
+.btn-export-header:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.btn-refresh-header {
+    background: var(--cl-bg-1);
+    color: var(--cl-text-1);
+    border-color: var(--cl-border);
+}
+
+.btn-refresh-header:hover {
+    background: var(--cl-bg-2);
+    color: var(--cl-text-0);
+    border-color: var(--cl-border-strong);
+    transform: translateY(-1px);
+}
+
+.btn-export-header i,
+.btn-refresh-header i {
+    font-size: 12px;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-state {
+    text-align: center;
+    padding: 72px 24px;
+}
+
+.empty-state i {
+    font-size: 44px;
+    width: 80px;
+    height: 80px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(79, 110, 247, 0.14) 0%,
+        rgba(79, 110, 247, 0.04) 60%,
+        transparent 70%);
+    color: var(--cl-accent);
+    animation: cl-float 3s ease-in-out infinite;
+}
+
+@keyframes cl-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.empty-state h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--cl-text-0);
+    margin: 0 0 6px;
+}
+
+.empty-state p {
+    font-size: 13px;
+    color: var(--cl-text-2);
+    margin: 0 auto;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+/* ============================================================
+   TOAST NOTIFICATION
+   ============================================================ */
+.toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--cl-bg-1);
+    border: 1px solid var(--cl-border);
+    border-left: 4px solid var(--cl-emerald);
+    border-radius: 14px;
+    padding: 16px 20px;
+    max-width: 420px;
+    min-width: 320px;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--cl-font);
+    box-shadow:
+        0 16px 40px rgba(15, 27, 51, 0.15),
+        0 4px 12px rgba(15, 27, 51, 0.08);
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast-notification.show {
+    transform: translateX(0);
+}
+
+.toast-notification.error {
+    border-left-color: var(--cl-rose);
+}
+
+.toast-notification .toast-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    background: var(--cl-emerald-soft);
+    color: var(--cl-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.28);
+}
+
+.toast-notification.error .toast-icon {
+    background: var(--cl-rose-soft);
+    color: var(--cl-rose);
+    border-color: rgba(224, 69, 106, 0.28);
+}
+
+.toast-notification .toast-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-notification .toast-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--cl-text-0);
+    margin: 0 0 2px 0;
+    letter-spacing: 0.2px;
+}
+
+.toast-notification .toast-message {
+    font-size: 12px;
+    color: var(--cl-text-1);
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.toast-notification .toast-close {
+    background: none;
+    border: none;
+    color: var(--cl-text-2);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.toast-notification .toast-close:hover {
+    color: var(--cl-text-0);
+    background: var(--cl-bg-2);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1200px) {
+    .progress-cards-container { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+    .filter-section { padding: 12px 14px; gap: 10px; }
+    .filter-group { flex: 1 1 calc(50% - 10px); min-width: 140px; }
+    .filter-section select,
+    .filter-section .filter-input { flex: 1; width: 100%; min-width: unset; }
+    .filter-section .filter-reset { width: 100%; }
+    .filter-section .filter-badge { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 768px) {
+    .progress-cards-container { grid-template-columns: 1fr; }
+    .progress-card { padding: 18px 20px; gap: 18px; }
+    .circular-progress-wrapper,
+    .circular-progress-wrapper svg { width: 68px; height: 68px; }
+    .progress-card .card-value { font-size: 24px; }
+
+    .filter-section { flex-direction: column; align-items: stretch; }
+    .filter-group { flex: 1 1 auto; width: 100%; }
+    .filter-section select,
+    .filter-section .filter-input,
+    .filter-section .filter-reset { width: 100%; }
+
+    .dashboard-table { font-size: 11px; }
+    .dashboard-table thead th,
+    .dashboard-table tbody td { padding: 10px 12px; font-size: 11px; }
+
+    .dashboard-table thead th:nth-child(1),
+    .dashboard-table tbody td:nth-child(1) { min-width: 100px; }
+    .dashboard-table thead th:nth-child(4),
+    .dashboard-table tbody td:nth-child(4) { min-width: 220px; }
+    .dashboard-table thead th:nth-child(5),
+    .dashboard-table tbody td:nth-child(5) { min-width: 240px; }
+
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-container::-webkit-scrollbar { height: 8px; }
+    .table-container::-webkit-scrollbar-track { background: var(--cl-bg-2); }
+    .table-container::-webkit-scrollbar-thumb {
+        background: rgba(15, 27, 51, 0.18);
+        border-radius: 4px;
+    }
+
+    .day-box { font-size: 9px; }
+
+    .toast-notification {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        max-width: none;
+        min-width: auto;
+    }
+
+    .btn-export-header { margin-right: 0; }
+
+    .task-list li {
+        padding: 5px 8px;
+        font-size: 11px;
+        gap: 8px;
+    }
+    .task-list li .task-index {
+        width: 16px;
+        height: 16px;
+        font-size: 9px;
+    }
+    .task-toggle {
+        font-size: 10px;
+        padding: 4px 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-card { padding: 16px; border-radius: 14px; }
+    .progress-card .card-icon { width: 42px; height: 42px; font-size: 16px; }
+    .progress-card .card-value { font-size: 22px; }
+
+    .circular-progress-wrapper,
+    .circular-progress-wrapper svg { width: 58px; height: 58px; }
+    .circular-progress-wrapper .progress-text { font-size: 15px; }
+
+    .dashboard-table thead th,
+    .dashboard-table tbody td { padding: 8px 10px; font-size: 10px; }
+
+    .frequency-tag,
+    .unit-badge { font-size: 9px; padding: 3px 8px; }
+
+    .empty-state i { width: 68px; height: 68px; font-size: 32px; }
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:member_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li>
+    <a href="{% url 'control_dashboard:member_dashboard' %}" data-tooltip="Dashboard">
+        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-text">Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
+        <span class="nav-icon"><i class="fas fa-balance-scale"></i></span>
+        <span class="nav-text">Daily Trial Balance</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
+        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-text">Analytics</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
+        <span class="nav-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+        <span class="nav-text">Upload Report</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+        <span class="nav-icon"><i class="fas fa-folder-open"></i></span>
+        <span class="nav-text">My Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
+        <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
+        <span class="nav-text">Consolidated Reports</span>
+    </a>
+</li>
+<li class="active">
+    <a href="{% url 'control_dashboard:member_checklist' %}" data-tooltip="Checklist">
+        <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+        <span class="nav-text">Activity Checklist</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block page_title %}My Checklist{% endblock %}
+
+{% block top_header_right %}
+<button class="btn-export-header" onclick="exportChecklist()">
+    <i class="fas fa-download"></i> Export
+</button>
+<button class="btn-refresh-header" onclick="refreshChecklist()">
+    <i class="fas fa-sync"></i> Refresh
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="checklist-container">
+
+    <!-- Progress cards -->
+    <div class="progress-cards-container">
+        <div class="progress-card" id="monthlyProgressCard">
+            <div class="card-icon monthly"><i class="fas fa-calendar-alt"></i></div>
+            <div class="card-info">
+                <div class="card-title">Monthly Progress</div>
+                <div class="card-subtitle">{{ month_name }} {{ display_year }}</div>
+                <div class="card-value">{{ overall_month_progress }}<span class="percent">%</span></div>
+                <div class="card-detail"><span>{{ total_month_actual }}</span> of <span>{{ total_month_expected }}</span> tasks completed</div>
+            </div>
+            <div class="circular-progress-wrapper">
+                <svg viewBox="0 0 100 100">
+                    <circle class="circle-bg" cx="50" cy="50" r="42" />
+                    <circle class="circle-progress monthly" cx="50" cy="50" r="42"
+                            style="stroke-dashoffset: calc(263.89 - (263.89 * {{ overall_month_progress|default:0 }} / 100));" />
+                </svg>
+                <div class="progress-text">{{ overall_month_progress }}<span class="small">%</span></div>
+            </div>
+        </div>
+
+        <div class="progress-card" id="quarterlyProgressCard">
+            <div class="card-icon quarterly"><i class="fas fa-calendar-plus"></i></div>
+            <div class="card-info">
+                <div class="card-title">Quarterly Progress</div>
+                <div class="card-subtitle">
+                    {% if quarter_filter != 'all' %}Q{{ quarter_filter }} {{ display_year }}{% else %}Q{{ current_quarter }} {{ display_year }}{% endif %}
+                </div>
+                <div class="card-value">{{ overall_quarter_progress }}<span class="percent">%</span></div>
+                <div class="card-detail"><span>{{ total_quarter_actual }}</span> of <span>{{ total_quarter_expected }}</span> tasks completed</div>
+            </div>
+            <div class="circular-progress-wrapper">
+                <svg viewBox="0 0 100 100">
+                    <circle class="circle-bg" cx="50" cy="50" r="42" />
+                    <circle class="circle-progress quarterly" cx="50" cy="50" r="42"
+                            style="stroke-dashoffset: calc(263.89 - (263.89 * {{ overall_quarter_progress|default:0 }} / 100));" />
+                </svg>
+                <div class="progress-text">{{ overall_quarter_progress }}<span class="small">%</span></div>
+            </div>
+        </div>
+
+        <div class="progress-card" id="yearlyProgressCard">
+            <div class="card-icon yearly"><i class="fas fa-calendar-check"></i></div>
+            <div class="card-info">
+                <div class="card-title">Year-to-Date Progress</div>
+                <div class="card-subtitle">{{ display_year }}</div>
+                <div class="card-value">{{ overall_year_progress }}<span class="percent">%</span></div>
+                <div class="card-detail"><span>{{ total_year_actual }}</span> of <span>{{ total_year_expected }}</span> tasks completed</div>
+            </div>
+            <div class="circular-progress-wrapper">
+                <svg viewBox="0 0 100 100">
+                    <circle class="circle-bg" cx="50" cy="50" r="42" />
+                    <circle class="circle-progress yearly" cx="50" cy="50" r="42"
+                            style="stroke-dashoffset: calc(263.89 - (263.89 * {{ overall_year_progress|default:0 }} / 100));" />
+                </svg>
+                <div class="progress-text">{{ overall_year_progress }}<span class="small">%</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter section -->
+    <div class="filter-section">
+        <div class="filter-group">
+            <span class="filter-group-label">Branch/Dept</span>
+            <select id="combinedFilter" onchange="applyFilters()">
+                <option value="all" {% if active_combined_filter == 'all' %}selected{% endif %}>Branch/Dept</option>
+                {% for option in combined_filter_options %}
+                <option value="{{ option.value }}" {% if active_combined_filter == option.value %}selected{% endif %}>{{ option.display }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <span class="filter-group-label">Frequency</span>
+            <select id="frequencyFilter" onchange="applyFilters()">
+                <option value="all" {% if frequency_filter == 'all' %}selected{% endif %}>All Frequencies</option>
+                {% for freq_value, freq_label in available_frequencies %}
+                <option value="{{ freq_value }}" {% if frequency_filter == freq_value %}selected{% endif %}>{{ freq_label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <span class="filter-group-label">Quarter</span>
+            <select id="quarterFilter" onchange="applyFilters()">
+                {% for q_value, q_label in quarter_options %}
+                <option value="{{ q_value }}" {% if quarter_filter == q_value %}selected{% endif %}>{{ q_label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <span class="filter-group-label">Month</span>
+            <select id="monthFilter" onchange="applyFilters()">
+                {% for month_value, month_label in month_names %}
+                <option value="{{ month_value }}" {% if month_filter == month_value %}selected{% endif %}>{{ month_label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <span class="filter-group-label">Year</span>
+            <select id="yearFilter" onchange="applyFilters()">
+                <option value="all" {% if year_filter == 'all' %}selected{% endif %}>All Years</option>
+                {% for year in years %}
+                <option value="{{ year }}" {% if year_filter|add:'0' == year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <input type="text" id="searchChecklist" class="filter-input" placeholder="Search activities..." onkeyup="filterChecklists()">
+
+        <button class="filter-reset" onclick="resetFilters()"><i class="fas fa-undo"></i> Reset</button>
+
+        {% if active_combined_filter != 'all' or frequency_filter != 'all' or quarter_filter != 'all' or month_filter != 'all' or year_filter != 'all' %}
+        <span class="filter-badge">
+            <i class="fas fa-check-circle"></i>
+            {% if active_combined_filter != 'all' %}{{ selected_combined_display }}{% endif %}
+            {% if frequency_filter != 'all' %} | {{ selected_frequency_display }}{% endif %}
+            {% if quarter_filter != 'all' %} | {{ selected_quarter_display }}{% endif %}
+            {% if month_filter != 'all' %} | Month {{ month_filter|add:'1' }}{% endif %}
+            {% if year_filter != 'all' %} | {{ year_filter }}{% endif %}
+        </span>
+        {% endif %}
+    </div>
+
+    <!-- Checklist table -->
+    <div class="glass-card">
+        <div class="table-container">
+            <div class="table-header">
+                <h4><i class="fas fa-clipboard-list"></i> My Activities ({{ checklist_data|length }})</h4>
+            </div>
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Department / Branch</th>
+                        <th style="width: 18%;">Activity Name</th>
+                        <th style="width: 10%;">Frequency</th>
+                        <th style="width: 25%;">Checklist Items</th>
+                        <th style="width: 32%;">Calendar</th>
+                    </tr>
+                </thead>
+                <tbody id="taskTableBody">
+                    {% for item in checklist_data %}
+                    <tr data-id="{{ item.id }}"
+                        data-row-key="{{ item.row_key }}"
+                        data-unit-type="{{ item.unit_type }}"
+                        data-unit-id="{{ item.unit_id }}"
+                        class="checklist-row">
+                        <td>
+                            <span class="unit-badge {{ item.unit_type }}">{{ item.unit_display }}</span>
+                        </td>
+                        <td class="font-bold">
+                            <i class="fas fa-clipboard-check" style="color: var(--cl-accent); margin-right: 8px;"></i>
+                            {{ item.name }}
+                        </td>
+                        <td>
+                            <span class="frequency-tag {{ item.frequency }}">{{ item.frequency_display }}</span>
+                        </td>
+                        <td>
+                            <ul class="task-list" data-task-count="{{ item.tasks|length }}">
+                                {% for task in item.tasks %}
+                                <li>
+                                    <span class="task-index">{{ forloop.counter }}</span>
+                                    <span class="task-text">{{ task.description }}</span>
+                                </li>
+                                {% empty %}
+                                <li class="text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>No tasks defined</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% if item.tasks|length > 5 %}
+                            <button type="button" class="task-toggle" onclick="toggleTaskList(this)">
+                                <i class="fas fa-chevron-down"></i>
+                                <span class="toggle-label">Show all {{ item.tasks|length }}</span>
+                            </button>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="mini-calendar-container"
+                                 data-checklist-id="{{ item.id }}"
+                                 data-row-key="{{ item.row_key }}"
+                                 data-index="{{ forloop.counter0 }}">
+                                <!-- Calendar will be rendered by JavaScript -->
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center;padding:40px;color:var(--cl-text-2);">
+                            <i class="fas fa-check-double" style="font-size:32px;display:block;margin-bottom:12px;color:var(--cl-text-2);"></i>
+                            No checklists found. Try adjusting your filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toastNotification" class="toast-notification">
+    <div class="toast-icon"><i class="fas fa-check"></i></div>
+    <div class="toast-content">
+        <p class="toast-title">Task Logged!</p>
+        <p class="toast-message" id="toastMessage">Completion date saved successfully.</p>
+    </div>
+    <button class="toast-close" onclick="closeToast()"><i class="fas fa-times"></i></button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function getCsrfToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === 'csrftoken=') {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+
+    function showToast(message, title = 'Success!') {
+        const toast = document.getElementById('toastNotification');
+        const msgEl = document.getElementById('toastMessage');
+        const titleEl = toast.querySelector('.toast-title');
+        msgEl.textContent = message || 'Action completed successfully.';
+        titleEl.textContent = title;
+        toast.classList.add('show');
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    window.closeToast = function() {
+        const toast = document.getElementById('toastNotification');
+        toast.classList.remove('show');
+        if (window.toastTimeout) { clearTimeout(window.toastTimeout); window.toastTimeout = null; }
+    };
+
+    function applyFilters() {
+        const combined = document.getElementById('combinedFilter').value;
+        const frequency = document.getElementById('frequencyFilter').value;
+        const quarter = document.getElementById('quarterFilter').value;
+        const month = document.getElementById('monthFilter').value;
+        const year = document.getElementById('yearFilter').value;
+        let params = [];
+        if (combined !== 'all') {
+            const parts = combined.split('_');
+            if (parts.length === 2) {
+                if (parts[0] === 'branch') params.push('branch=' + parts[1]);
+                else if (parts[0] === 'department') params.push('department=' + parts[1]);
+            }
+        }
+        if (frequency !== 'all') params.push('frequency=' + frequency);
+        if (quarter !== 'all') params.push('quarter=' + quarter);
+        if (month !== 'all') params.push('month=' + month);
+        if (year !== 'all') params.push('year=' + year);
+        let url = window.location.pathname;
+        if (params.length > 0) url += '?' + params.join('&');
+        window.location.href = url;
+    }
+
+    function filterChecklists() {
+        const search = document.getElementById('searchChecklist').value.toLowerCase();
+        document.querySelectorAll('.checklist-row').forEach(row => {
+            const name = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            const unit = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+            row.style.display = (name.includes(search) || unit.includes(search)) ? '' : 'none';
+        });
+    }
+
+    function resetFilters() {
+        window.location.href = window.location.pathname;
+    }
+
+    // ============================================
+    // TOGGLE FULL TASK LIST (expand / collapse)
+    // ============================================
+    function toggleTaskList(btn) {
+        const ul = btn.previousElementSibling;
+        if (!ul || !ul.classList.contains('task-list')) return;
+
+        const isCollapsed = ul.classList.toggle('collapsed');
+        btn.classList.toggle('expanded', !isCollapsed);
+
+        const count = parseInt(ul.dataset.taskCount, 10) || 0;
+        const label = btn.querySelector('.toggle-label');
+        if (label) {
+            label.textContent = isCollapsed
+                ? `Show all ${count}`
+                : `Show less`;
+        }
+    }
+
+    // ============================================
+    // CHECKLIST DATA
+    // ============================================
+    const tasksData = [
+        {% for item in checklist_data %}
+        {
+            rowKey: "{{ item.row_key|escapejs }}",
+            id: {{ item.id }},
+            unitType: "{{ item.unit_type|escapejs }}",
+            unitId: {{ item.unit_id }},
+            unitName: "{{ item.unit_name|escapejs }}",
+            unitDisplay: "{{ item.unit_display|escapejs }}",
+            activity: "{{ item.name|escapejs }}",
+            task: "{% for task in item.tasks|slice:':1' %}{{ task.description|escapejs }}{% empty %}No tasks{% endfor %}",
+            frequency: "{{ item.frequency_display|escapejs }}",
+            frequency_value: "{{ item.frequency|escapejs }}",
+            logs: [
+                {% for log in item.logs %}
+                "{{ log|escapejs }}"{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ]
+        },
+        {% endfor %}
+    ];
+
+    const tasksByRowKey = {};
+    tasksData.forEach(task => { tasksByRowKey[task.rowKey] = task; });
+
+    let completionLogs = {};
+    tasksData.forEach(task => { completionLogs[task.rowKey] = task.logs ? [...task.logs] : []; });
+
+    let calendarStates = {};
+
+    // ============================================
+    // RENDER ALL CALENDARS
+    // ============================================
+    function renderAllCalendars() {
+        document.querySelectorAll('.mini-calendar-container').forEach(container => {
+            const rowKey = container.dataset.rowKey;
+            const task = tasksByRowKey[rowKey];
+            if (task) {
+                const calendar = createMiniCalendar(rowKey, task.frequency_value);
+                container.innerHTML = '';
+                container.appendChild(calendar);
+            }
+        });
+    }
+
+    // ============================================
+    // CREATE NUMBER-BOX CALENDAR
+    // ============================================
+    function createMiniCalendar(rowKey, frequency) {
+        const container = document.createElement('div');
+        container.className = 'mini-calendar';
+
+        if (!calendarStates[rowKey]) {
+            const today = new Date();
+            calendarStates[rowKey] = {
+                month: today.getMonth(),
+                year: today.getFullYear()
+            };
+        }
+
+        function buildCalendar() {
+            const currentMonth = calendarStates[rowKey].month;
+            const currentYear = calendarStates[rowKey].year;
+
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const loggedDates = completionLogs[rowKey] || [];
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            container.innerHTML = `
+                <div class="cal-header">
+                    <button class="cal-prev" type="button"><i class="fas fa-chevron-left"></i></button>
+                    <span class="cal-month-year">${monthNames[currentMonth]} ${currentYear}</span>
+                    <button class="cal-next" type="button"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div class="day-boxes-grid"></div>
+                <div class="cal-month-label">Month ${currentMonth + 1} of ${currentYear}</div>
+            `;
+
+            const grid = container.querySelector('.day-boxes-grid');
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(currentYear, currentMonth, d);
+                const dateStr = dateObj.toISOString().slice(0, 10);
+
+                const dayOfWeek = dateObj.getDay();
+                const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+                const isLogged = loggedDates.includes(dateStr);
+                const isToday = (dateStr === todayStr);
+
+                const box = document.createElement('button');
+                box.type = 'button';
+                box.className = 'day-box';
+                if (isWeekend) box.classList.add('weekend');
+                if (isToday) box.classList.add('today');
+                if (isLogged) box.classList.add('logged');
+
+                box.dataset.date = dateStr;
+                box.dataset.rowKey = rowKey;
+                box.dataset.isWeekend = isWeekend ? 'true' : 'false';
+                box.textContent = d;
+
+                box.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (this.dataset.isWeekend === 'true') {
+                        showToast('Weekends are not selectable', 'Info');
+                        return;
+                    }
+                    toggleLogCompletion(rowKey, this.dataset.date, this);
+                });
+
+                grid.appendChild(box);
+            }
+
+            container.querySelector('.cal-prev').addEventListener('click', function(e) {
+                e.stopPropagation();
+                calendarStates[rowKey].month--;
+                if (calendarStates[rowKey].month < 0) {
+                    calendarStates[rowKey].month = 11;
+                    calendarStates[rowKey].year--;
+                }
+                buildCalendar();
+            });
+            container.querySelector('.cal-next').addEventListener('click', function(e) {
+                e.stopPropagation();
+                calendarStates[rowKey].month++;
+                if (calendarStates[rowKey].month > 11) {
+                    calendarStates[rowKey].month = 0;
+                    calendarStates[rowKey].year++;
+                }
+                buildCalendar();
+            });
+        }
+
+        buildCalendar();
+        return container;
+    }
+
+    // ============================================
+    // UPDATE PROGRESS CARDS
+    // ============================================
+    function updateProgressCards() {
+        const rows = document.querySelectorAll('.checklist-row');
+        let totalMonthExpected = 0, totalMonthActual = 0;
+        let totalQuarterExpected = 0, totalQuarterActual = 0;
+        let totalYearExpected = 0, totalYearActual = 0;
+
+        rows.forEach(row => {
+            const container = row.querySelector('.mini-calendar-container');
+            if (!container) return;
+            const rowKey = container.dataset.rowKey;
+            const task = tasksByRowKey[rowKey];
+            if (!task) return;
+
+            const state = calendarStates[rowKey];
+            if (!state) return;
+            const month = state.month + 1;
+            const year = state.year;
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const frequencyValue = task.frequency_value || 'weekly';
+
+            let monthExpected = 0;
+            if (frequencyValue === 'daily') {
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dt = new Date(year, month - 1, d);
+                    if (dt.getDay() >= 1 && dt.getDay() <= 5) monthExpected++;
+                }
+            } else if (frequencyValue === 'weekly') {
+                const firstDay = new Date(year, month - 1, 1).getDay();
+                monthExpected = Math.ceil((daysInMonth + firstDay) / 7);
+            } else {
+                monthExpected = 1;
+            }
+
+            const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
+            const monthEnd = `${year}-${String(month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+            const monthLogsSet = new Set();
+            (completionLogs[rowKey] || []).forEach(log => {
+                if (log >= monthStart && log <= monthEnd) monthLogsSet.add(log);
+            });
+            const monthActual = monthLogsSet.size;
+
+            const quarter = Math.ceil(month / 3);
+            const qStartMonth = (quarter - 1) * 3 + 1;
+            const qEndMonth = quarter * 3;
+            const qStart = `${year}-${String(qStartMonth).padStart(2, '0')}-01`;
+            const qEndDay = new Date(year, qEndMonth, 0).getDate();
+            const qEnd = `${year}-${String(qEndMonth).padStart(2, '0')}-${String(qEndDay).padStart(2, '0')}`;
+
+            let quarterExpected = 0;
+            if (frequencyValue === 'daily') {
+                for (let m = qStartMonth; m <= qEndMonth; m++) {
+                    const dm = new Date(year, m, 0).getDate();
+                    for (let d = 1; d <= dm; d++) {
+                        const dt = new Date(year, m - 1, d);
+                        if (dt.getDay() >= 1 && dt.getDay() <= 5) quarterExpected++;
+                    }
+                }
+            } else if (frequencyValue === 'weekly') quarterExpected = 13;
+            else if (frequencyValue === 'monthly') quarterExpected = 3;
+            else quarterExpected = 1;
+
+            const quarterLogsSet = new Set();
+            (completionLogs[rowKey] || []).forEach(log => {
+                if (log >= qStart && log <= qEnd) quarterLogsSet.add(log);
+            });
+            const quarterActual = quarterLogsSet.size;
+
+            const yearStart = `${year}-01-01`;
+            const yearEnd = `${year}-12-31`;
+            const yearLogsSet = new Set();
+            (completionLogs[rowKey] || []).forEach(log => {
+                if (log >= yearStart && log <= yearEnd) yearLogsSet.add(log);
+            });
+
+            let yearExpected = 0;
+            if (frequencyValue === 'daily') {
+                for (let m = 1; m <= 12; m++) {
+                    const dm = new Date(year, m, 0).getDate();
+                    for (let d = 1; d <= dm; d++) {
+                        const dt = new Date(year, m - 1, d);
+                        if (dt.getDay() >= 1 && dt.getDay() <= 5) yearExpected++;
+                    }
+                }
+            } else if (frequencyValue === 'weekly') yearExpected = 52;
+            else if (frequencyValue === 'monthly') yearExpected = 12;
+            else if (frequencyValue === 'quarterly') yearExpected = 4;
+            else if (frequencyValue === 'bi-annual') yearExpected = 2;
+            else if (frequencyValue === 'annual') yearExpected = 1;
+            else yearExpected = 1;
+
+            totalMonthExpected += monthExpected;
+            totalMonthActual += monthActual;
+            totalQuarterExpected += quarterExpected;
+            totalQuarterActual += quarterActual;
+            totalYearExpected += yearExpected;
+            totalYearActual += yearLogsSet.size;
+        });
+
+        const monthProgress = totalMonthExpected > 0 ? Math.min(Math.round((totalMonthActual / totalMonthExpected) * 100), 100) : 0;
+        const quarterProgress = totalQuarterExpected > 0 ? Math.min(Math.round((totalQuarterActual / totalQuarterExpected) * 100), 100) : 0;
+        const yearProgress = totalYearExpected > 0 ? Math.min(Math.round((totalYearActual / totalYearExpected) * 100), 100) : 0;
+
+        updateProgressCardDOM(monthProgress, quarterProgress, yearProgress,
+            totalMonthActual, totalMonthExpected,
+            totalQuarterActual, totalQuarterExpected,
+            totalYearActual, totalYearExpected);
+    }
+
+    function updateProgressCardDOM(monthProgress, quarterProgress, yearProgress,
+        monthActual, monthExpected, quarterActual, quarterExpected, yearActual, yearExpected) {
+        const monthCard = document.querySelector('#monthlyProgressCard');
+        if (monthCard) {
+            const valueEl = monthCard.querySelector('.card-value');
+            if (valueEl) valueEl.innerHTML = `${monthProgress}<span class="percent">%</span>`;
+            const detailEl = monthCard.querySelector('.card-detail');
+            if (detailEl) detailEl.innerHTML = `<span>${monthActual}</span> of <span>${monthExpected}</span> tasks completed`;
+            const circleEl = monthCard.querySelector('.circle-progress.monthly');
+            if (circleEl) {
+                const c = 2 * Math.PI * 42;
+                circleEl.setAttribute('stroke-dasharray', `${c}, ${c}`);
+                circleEl.setAttribute('stroke-dashoffset', c - (monthProgress / 100) * c);
+            }
+            const textEl = monthCard.querySelector('.progress-text');
+            if (textEl) textEl.innerHTML = `${monthProgress}<span class="small">%</span>`;
+        }
+        const quarterCard = document.querySelector('#quarterlyProgressCard');
+        if (quarterCard) {
+            const valueEl = quarterCard.querySelector('.card-value');
+            if (valueEl) valueEl.innerHTML = `${quarterProgress}<span class="percent">%</span>`;
+            const detailEl = quarterCard.querySelector('.card-detail');
+            if (detailEl) detailEl.innerHTML = `<span>${quarterActual}</span> of <span>${quarterExpected}</span> tasks completed`;
+            const circleEl = quarterCard.querySelector('.circle-progress.quarterly');
+            if (circleEl) {
+                const c = 2 * Math.PI * 42;
+                circleEl.setAttribute('stroke-dasharray', `${c}, ${c}`);
+                circleEl.setAttribute('stroke-dashoffset', c - (quarterProgress / 100) * c);
+            }
+            const textEl = quarterCard.querySelector('.progress-text');
+            if (textEl) textEl.innerHTML = `${quarterProgress}<span class="small">%</span>`;
+        }
+        const yearCard = document.querySelector('#yearlyProgressCard');
+        if (yearCard) {
+            const valueEl = yearCard.querySelector('.card-value');
+            if (valueEl) valueEl.innerHTML = `${yearProgress}<span class="percent">%</span>`;
+            const detailEl = yearCard.querySelector('.card-detail');
+            if (detailEl) detailEl.innerHTML = `<span>${yearActual}</span> of <span>${yearExpected}</span> tasks completed`;
+            const circleEl = yearCard.querySelector('.circle-progress.yearly');
+            if (circleEl) {
+                const c = 2 * Math.PI * 42;
+                circleEl.setAttribute('stroke-dasharray', `${c}, ${c}`);
+                circleEl.setAttribute('stroke-dashoffset', c - (yearProgress / 100) * c);
+            }
+            const textEl = yearCard.querySelector('.progress-text');
+            if (textEl) textEl.innerHTML = `${yearProgress}<span class="small">%</span>`;
+        }
+    }
+
+    // ============================================
+    // TOGGLE LOG
+    // ============================================
+    function toggleLogCompletion(rowKey, date, boxElement) {
+        if (!date) return;
+        const task = tasksByRowKey[rowKey];
+        if (!task) { showToast('Error: Task not found.', 'Error'); return; }
+
+        const isLogged = completionLogs[rowKey] && completionLogs[rowKey].includes(date);
+        const action = isLogged ? 'unlog' : 'log';
+
+        if (boxElement) { boxElement.style.opacity = '0.5'; boxElement.disabled = true; }
+
+        fetch("/adminboard/api/checklist-log/", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                checklist_id: task.id,
+                log_date: date,
+                action: action,
+                unit_type: task.unitType,
+                unit_id: task.unitId
+            })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Server returned ' + response.status);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                if (!completionLogs[rowKey]) completionLogs[rowKey] = [];
+                if (isLogged) {
+                    completionLogs[rowKey] = completionLogs[rowKey].filter(d => d !== date);
+                    showToast(`"${task.activity}" (${task.unitName}) unlogged for ${date}`, 'Unlogged');
+                } else {
+                    if (!completionLogs[rowKey].includes(date)) {
+                        completionLogs[rowKey].push(date);
+                        showToast(`"${task.activity}" (${task.unitName}) logged for ${date}`, 'Logged!');
+                    }
+                }
+                updateRowUI(rowKey);
+                updateProgressCards();
+            } else {
+                showToast('Error: ' + (data.error || 'Unknown error'), 'Error');
+                if (boxElement) { boxElement.style.opacity = '1'; boxElement.disabled = false; }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred. Please try again.', 'Error');
+            if (boxElement) { boxElement.style.opacity = '1'; boxElement.disabled = false; }
+        });
+    }
+
+    function updateRowUI(rowKey) {
+        const row = document.querySelector(`tr[data-row-key="${rowKey}"]`);
+        if (!row) return;
+        const tdCalendar = row.querySelector('.mini-calendar-container');
+        if (!tdCalendar) return;
+        const task = tasksByRowKey[rowKey];
+        const newCalendar = createMiniCalendar(rowKey, task.frequency_value);
+        tdCalendar.innerHTML = '';
+        tdCalendar.appendChild(newCalendar);
+    }
+
+    function refreshChecklist() {
+        showToast('Refreshing checklist...', 'Loading');
+        window.location.reload();
+    }
+
+    function exportChecklist() {
+        let csv = 'Department/Branch,Activity,Frequency,Task,Logs\n';
+        tasksData.forEach(task => {
+            const logs = completionLogs[task.rowKey] || [];
+            const uniqueLogs = [...new Set(logs)];
+            csv += `"${task.unitName}","${task.activity}","${task.frequency}","${task.task}","${uniqueLogs.join('; ')}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'my_checklist.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        showToast('Checklist exported successfully!', 'Exported');
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+            event.preventDefault();
+            document.getElementById('searchChecklist').focus();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderAllCalendars();
+
+        // Auto-collapse long task lists on initial load
+        document.querySelectorAll('.task-list').forEach(function(ul) {
+            const count = parseInt(ul.dataset.taskCount, 10) || 0;
+            if (count > 5) {
+                ul.classList.add('collapsed');
+            }
+        });
+
+        setTimeout(updateProgressCards, 500);
+    });
+</script>
+{% endblock %}

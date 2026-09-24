@@ -1,0 +1,1148 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* ============================================================
+   ANALYTICS DASHBOARD — Fed from ExceptionRecord
+   ============================================================ */
+
+:root {
+    --an-bg-0: #eef1f8;
+    --an-bg-1: #ffffff;
+    --an-bg-2: #f7f8fc;
+    --an-bg-3: #f1f3f9;
+
+    --an-border: rgba(15, 27, 51, 0.08);
+    --an-border-strong: rgba(15, 27, 51, 0.16);
+    --an-hairline: rgba(15, 27, 51, 0.06);
+
+    --an-text-0: #0f1b33;
+    --an-text-1: #46536b;
+    --an-text-2: #8993a8;
+
+    --an-accent: #4f6ef7;
+    --an-accent-soft: #eef1ff;
+    --an-emerald: #17a673;
+    --an-emerald-soft: #e2f7ef;
+    --an-amber: #e08a17;
+    --an-amber-soft: #fdf2e0;
+    --an-rose: #e0456a;
+    --an-rose-soft: #fdeaf0;
+    --an-violet: #7c5cf0;
+    --an-violet-soft: #f0ebff;
+
+    --an-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --an-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+
+    --an-font: 'Poppins', system-ui, -apple-system, sans-serif;
+}
+
+.analytics-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 4px 0 40px;
+    font-family: var(--an-font);
+    color: var(--an-text-0);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+.an-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--an-bg-1);
+    border: 1px solid var(--an-border);
+    border-radius: 16px;
+    box-shadow: var(--an-shadow-sm);
+    position: relative;
+}
+
+.an-filter-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--an-accent) 50%,
+        transparent 100%);
+    opacity: 0.7;
+    border-radius: 16px 16px 0 0;
+}
+
+.an-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.an-filter-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--an-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.an-filter-group select,
+.an-filter-group input {
+    padding: 8px 32px 8px 14px;
+    border: 1px solid var(--an-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--an-font);
+    background: var(--an-bg-1);
+    color: var(--an-text-0);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    height: 38px;
+    box-sizing: border-box;
+    min-width: 130px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 13px;
+}
+
+.an-filter-group input[type="date"] {
+    background-image: none;
+    padding-right: 14px;
+    min-width: 130px;
+    color-scheme: light;
+}
+
+.an-filter-group select:hover,
+.an-filter-group input:hover {
+    border-color: var(--an-border-strong);
+}
+
+.an-filter-group select:focus,
+.an-filter-group input:focus {
+    border-color: var(--an-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.an-filter-group select option {
+    background: var(--an-bg-1);
+    color: var(--an-text-0);
+}
+
+.an-filter-spacer { flex: 1; }
+
+.an-btn-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--an-bg-1);
+    color: var(--an-text-1);
+    border: 1px solid var(--an-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--an-font);
+    cursor: pointer;
+    text-decoration: none;
+    height: 38px;
+    box-shadow: var(--an-shadow-sm);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.an-btn-reset:hover {
+    background: var(--an-bg-2);
+    color: var(--an-text-0);
+    border-color: var(--an-border-strong);
+    transform: translateY(-1px);
+}
+
+/* ============================================================
+   KPI GRID
+   ============================================================ */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.kpi-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 22px 16px 20px;
+    background: var(--an-bg-1);
+    border: 1px solid var(--an-border);
+    border-radius: 18px;
+    box-shadow: var(--an-shadow-sm);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--ring-color, var(--an-accent)) 50%,
+        transparent 100%);
+    opacity: 0.85;
+}
+
+.kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--an-shadow-md);
+    border-color: var(--an-border-strong);
+}
+
+.kpi-ring {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: conic-gradient(
+        var(--ring-color, var(--an-accent)) calc(var(--ring-pct, 0) * 1%),
+        var(--an-bg-2) 0
+    );
+    transition: transform 0.3s ease;
+}
+
+.kpi-card:hover .kpi-ring { transform: scale(1.03); }
+
+.kpi-ring-inner {
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    background: var(--an-bg-1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+    padding: 4px;
+}
+
+.kpi-ring-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--an-text-0);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    word-break: break-all;
+    text-align: center;
+}
+
+.kpi-ring-value.small { font-size: 15px; }
+
+.kpi-ring-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--an-text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-top: 4px;
+}
+
+.kpi-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--an-text-0);
+    text-align: center;
+    line-height: 1.3;
+}
+
+.kpi-sub {
+    font-size: 11px;
+    color: var(--an-text-2);
+    text-align: center;
+}
+
+.kpi-card.primary { --ring-color: var(--an-accent); }
+.kpi-card.warning { --ring-color: var(--an-amber); }
+.kpi-card.success { --ring-color: var(--an-emerald); }
+.kpi-card.indigo  { --ring-color: var(--an-violet); }
+.kpi-card.pink    { --ring-color: var(--an-rose); }
+
+/* ============================================================
+   CHART GRID
+   ============================================================ */
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.chart-card {
+    background: var(--an-bg-1);
+    border: 1px solid var(--an-border);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: var(--an-shadow-sm);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.chart-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--an-accent) 50%,
+        transparent 100%);
+    opacity: 0.6;
+    border-radius: 18px 18px 0 0;
+}
+
+.chart-card:hover {
+    box-shadow: var(--an-shadow-md);
+    border-color: var(--an-border-strong);
+}
+
+.chart-card .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.chart-card .chart-header h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--an-text-0);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-card .chart-header h4 i {
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--an-accent-soft);
+    color: var(--an-accent);
+    border: 1px solid rgba(79, 110, 247, 0.2);
+}
+
+.chart-card .chart-header .chart-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--an-accent);
+    background: var(--an-accent-soft);
+    padding: 4px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(79, 110, 247, 0.22);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.chart-card .chart-wrapper {
+    position: relative;
+    height: 240px;
+}
+
+.chart-card .chart-empty {
+    height: 240px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--an-text-2);
+    font-size: 13px;
+}
+
+.chart-card .chart-empty i {
+    font-size: 36px;
+    color: var(--an-border-strong);
+}
+
+/* ============================================================
+   OPEN EXCEPTIONS TABLE — full detail
+   ============================================================ */
+.exc-table-card {
+    background: var(--an-bg-1);
+    border: 1px solid var(--an-border);
+    border-radius: 18px;
+    box-shadow: var(--an-shadow-sm);
+    overflow: hidden;
+    position: relative;
+}
+
+.exc-table-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--an-amber) 50%,
+        transparent 100%);
+    opacity: 0.7;
+    z-index: 2;
+}
+
+.exc-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--an-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.exc-table-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--an-text-0);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.exc-table-header h4 i {
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--an-amber-soft);
+    color: var(--an-amber);
+    border: 1px solid rgba(224, 138, 23, 0.22);
+}
+
+.exc-count-badge {
+    background: var(--an-amber-soft);
+    color: var(--an-amber);
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid rgba(224, 138, 23, 0.22);
+    font-variant-numeric: tabular-nums;
+}
+
+.exc-table-wrap {
+    max-height: 600px;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 27, 51, 0.15) transparent;
+}
+
+.exc-table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+.exc-table-wrap::-webkit-scrollbar-track { background: var(--an-bg-2); }
+.exc-table-wrap::-webkit-scrollbar-thumb {
+    background: rgba(15, 27, 51, 0.18);
+    border-radius: 4px;
+}
+
+.exc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: var(--an-font);
+    font-variant-numeric: tabular-nums;
+}
+
+.exc-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--an-bg-2);
+    color: var(--an-text-2);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--an-border);
+    z-index: 3;
+    white-space: nowrap;
+}
+
+.exc-table tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--an-hairline);
+    color: var(--an-text-1);
+    vertical-align: top;
+    line-height: 1.5;
+}
+
+.exc-table tbody tr:hover { background: var(--an-bg-2); }
+.exc-table tbody tr:last-child td { border-bottom: none; }
+
+.exc-table .cell-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--an-accent);
+    font-weight: 600;
+}
+
+.exc-table .cell-wide {
+    min-width: 520px;
+    max-width: 840px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    color: var(--an-text-0);
+    line-height: 1.6; 
+}
+
+.exc-table .cell-num {
+    text-align: right;
+    font-weight: 700;
+    color: var(--an-emerald);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11px;
+}
+
+.exc-empty {
+    padding: 72px 24px;
+    text-align: center;
+    color: var(--an-text-2);
+}
+
+.exc-empty i {
+    font-size: 44px;
+    width: 80px;
+    height: 80px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(23, 166, 115, 0.14) 0%,
+        rgba(23, 166, 115, 0.04) 60%,
+        transparent 70%);
+    color: var(--an-emerald);
+    animation: an-float 3s ease-in-out infinite;
+}
+
+@keyframes an-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.exc-empty p {
+    margin: 0;
+    font-size: 13px;
+}
+
+/* ============================================================
+   HEADER ACTION: Back button
+   ============================================================ */
+.btn-back-dashboard {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--an-bg-1);
+    color: var(--an-text-1);
+    border: 1px solid var(--an-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--an-font);
+    letter-spacing: 0.3px;
+    height: 38px;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: var(--an-shadow-sm);
+    transition: all 0.25s ease;
+    margin-right: 8px;
+}
+
+.btn-back-dashboard:hover {
+    background: var(--an-bg-2);
+    color: var(--an-text-0);
+    border-color: var(--an-border-strong);
+    transform: translateY(-1px);
+}
+
+.btn-back-dashboard i { font-size: 12px; }
+
+/* Fullscreen button */
+.fullscreen-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: #ffffff;
+    border: 1px solid rgba(79, 110, 247, 0.4);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--an-font);
+    letter-spacing: 0.3px;
+    height: 38px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.fullscreen-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.fullscreen-btn i { font-size: 12px; }
+
+/* Fullscreen shell */
+body.analytics-fullscreen { overflow: hidden; }
+
+.fullscreen-shell {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #f5f8fc 0%, #eef2f7 100%);
+    padding: 24px 32px;
+    overflow-y: auto;
+    z-index: 9999;
+    display: none;
+}
+.fullscreen-shell.show { display: block; }
+
+.fullscreen-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.fullscreen-topbar h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--an-text-0);
+}
+
+.fullscreen-topbar h2 i { color: var(--an-accent); margin-right: 8px; }
+
+.exit-fullscreen-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #fff;
+    color: var(--an-text-0);
+    border: 1px solid var(--an-border);
+    border-radius: 10px;
+    font-family: var(--an-font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.exit-fullscreen-btn:hover {
+    background: var(--an-bg-2);
+    border-color: var(--an-border-strong);
+    transform: translateY(-1px);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+    .an-filter-bar { padding: 12px 14px; }
+    .an-filter-group { flex: 1 1 calc(50% - 8px); min-width: 140px; }
+    .an-filter-group select,
+    .an-filter-group input { flex: 1; width: 100%; min-width: unset; }
+    .an-btn-reset { width: 100%; }
+}
+
+@media (max-width: 768px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .chart-grid { grid-template-columns: 1fr; }
+    .fullscreen-shell { padding: 16px; }
+
+    .exc-table-wrap { max-height: none; }
+    .exc-table { min-width: 1100px; }
+}
+
+@media (max-width: 480px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:supervisor_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li><a href="{% url 'control_dashboard:member_dashboard' %}" data-tooltip="Dashboard">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Dashboard</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
+    <span class="nav-icon"><i class="fas fa-balance-scale"></i></span>
+    <span class="nav-text">Daily Trial Balance</span>
+</a></li>
+<li class="active"><a href="{% url 'control_dashboard:analytics_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Analytics</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
+    <span class="nav-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+    <span class="nav-text">Upload Report</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+    <span class="nav-icon"><i class="fas fa-folder-open"></i></span>
+    <span class="nav-text">My Reports</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
+    <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
+    <span class="nav-text">Consolidated Reports</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:member_checklist' %}" data-tooltip="Checklist">
+    <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+    <span class="nav-text">Activity Checklist</span>
+</a></li>
+{% endblock %}
+
+{% block page_title %}Analytics Dashboard{% endblock %}
+
+{% block top_header_right %}
+<a href="{% url 'control_dashboard:member_dashboard' %}" class="btn-back-dashboard">
+    <i class="fas fa-arrow-left"></i> Back to Dashboard
+</a>
+<button class="fullscreen-btn" onclick="enterFullscreen()">
+    <i class="fas fa-expand"></i> Full Screen
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+
+    <!-- ============================================================
+         FILTER BAR
+         ============================================================ -->
+    <form class="an-filter-bar" method="get" id="analyticsFilterForm">
+
+        <div class="an-filter-group">
+            <label for="branch">Branch / Dept</label>
+            <select name="branch" id="branch" onchange="submitFilters()">
+                <option value="all">All</option>
+                {% for b in available_branches %}
+                <option value="{{ b }}" {% if branch_filter == b %}selected{% endif %}>{{ b }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="an-filter-group">
+            <label for="category">Category</label>
+            <select name="category" id="category" onchange="submitFilters()">
+                <option value="all">All</option>
+                {% for c in available_categories %}
+                <option value="{{ c }}" {% if category_filter == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="an-filter-group">
+            <label for="status">Status</label>
+            <select name="status" id="status" onchange="submitFilters()">
+                <option value="all">All</option>
+                {% for code, label in available_statuses %}
+                <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="an-filter-group">
+            <label for="month">Month</label>
+            <select name="month" id="month" onchange="submitFilters()">
+                <option value="all">All</option>
+                {% for num, label in month_names %}
+                <option value="{{ num }}" {% if month_filter == num|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="an-filter-group">
+            <label for="year">Year</label>
+            <select name="year" id="year" onchange="submitFilters()">
+                <option value="all">All</option>
+                {% for y in available_years %}
+                <option value="{{ y }}" {% if year_filter == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="an-filter-group">
+            <label for="start_date">From</label>
+            <input type="date" name="start_date" id="start_date" value="{{ start_date }}" onchange="submitFilters()">
+        </div>
+
+        <div class="an-filter-group">
+            <label for="end_date">To</label>
+            <input type="date" name="end_date" id="end_date" value="{{ end_date }}" onchange="submitFilters()">
+        </div>
+
+        <div class="an-filter-spacer"></div>
+
+        <a href="{% url 'control_dashboard:analytics_dashboard' %}" class="an-btn-reset">
+            <i class="fas fa-undo"></i> Reset
+        </a>
+    </form>
+
+    <!-- ============================================================
+         KPI CARDS
+         ============================================================ -->
+    <div class="kpi-grid">
+        <div class="kpi-card primary" style="--ring-pct: 100;">
+            <div class="kpi-ring" style="--ring-pct: 100;">
+                <div class="kpi-ring-inner">
+                    <div class="kpi-ring-value">{{ total_exceptions }}</div>
+                    <div class="kpi-ring-label">Total</div>
+                </div>
+            </div>
+            <div class="kpi-title">Total Exceptions</div>
+            <div class="kpi-sub">Records identified</div>
+        </div>
+
+        <div class="kpi-card warning" style="--ring-pct: {% if total_exceptions %}{% widthratio open_exceptions total_exceptions 100 %}{% else %}0{% endif %};">
+            <div class="kpi-ring" style="--ring-pct: {% if total_exceptions %}{% widthratio open_exceptions total_exceptions 100 %}{% else %}0{% endif %};">
+                <div class="kpi-ring-inner">
+                    <div class="kpi-ring-value">{{ open_exceptions }}</div>
+                    <div class="kpi-ring-label">Open</div>
+                </div>
+            </div>
+            <div class="kpi-title">Open Exceptions</div>
+            <div class="kpi-sub">Awaiting resolution</div>
+        </div>
+
+        <div class="kpi-card success" style="--ring-pct: {% if total_exceptions %}{% widthratio closed_exceptions total_exceptions 100 %}{% else %}0{% endif %};">
+            <div class="kpi-ring" style="--ring-pct: {% if total_exceptions %}{% widthratio closed_exceptions total_exceptions 100 %}{% else %}0{% endif %};">
+                <div class="kpi-ring-inner">
+                    <div class="kpi-ring-value">{{ closed_exceptions }}</div>
+                    <div class="kpi-ring-label">Closed</div>
+                </div>
+            </div>
+            <div class="kpi-title">Closed Exceptions</div>
+            <div class="kpi-sub">Resolved</div>
+        </div>
+
+        <div class="kpi-card indigo" style="--ring-pct: {{ resolution_pct }};">
+            <div class="kpi-ring" style="--ring-pct: {{ resolution_pct }};">
+                <div class="kpi-ring-inner">
+                    <div class="kpi-ring-value">{{ resolution_pct }}%</div>
+                    <div class="kpi-ring-label">Resolved</div>
+                </div>
+            </div>
+            <div class="kpi-title">Resolution Rate</div>
+            <div class="kpi-sub">Closed ÷ Total × 100</div>
+        </div>
+
+        <div class="kpi-card pink" style="--ring-pct: 100;">
+            <div class="kpi-ring" style="--ring-pct: 100;">
+                <div class="kpi-ring-inner">
+                    <div class="kpi-ring-value small">{{ cost_saved_total }}</div>
+                    <div class="kpi-ring-label">GHS</div>
+                </div>
+            </div>
+            <div class="kpi-title">Cost Saved</div>
+            <div class="kpi-sub">Total recovered</div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         PIE CHARTS
+         ============================================================ -->
+    <div class="chart-grid">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h4><i class="fas fa-sitemap"></i> Top Branches / Departments</h4>
+                <span class="chart-badge">Top 3</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="topBranchesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h4><i class="fas fa-tags"></i> Top Exception Categories</h4>
+                <span class="chart-badge">Top 3</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="topCategoriesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h4><i class="fas fa-circle-half-stroke"></i> Open vs Closed</h4>
+                <span class="chart-badge">Split</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="openClosedChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         OPEN EXCEPTIONS — full detail table
+         ============================================================ -->
+    <div class="exc-table-card">
+        <div class="exc-table-header">
+            <h4><i class="fas fa-folder-open"></i> Open Exceptions — Full Detail</h4>
+            <span class="exc-count-badge">{{ open_exceptions }} open</span>
+        </div>
+        <div class="exc-table-wrap">
+            <table class="exc-table">
+                <thead>
+                    <tr>
+                        <th>S/N</th>
+                        <th>Branch / Unit</th>
+                        <th>Exception</th>
+                        <th>Date Noted</th>
+                        <th>Target Closure</th>
+                        <th>Category</th>
+                        <th>Responsible Officer</th>
+                        <th>Supervisor</th>
+                        <th>Status</th>
+                        <th>Income / Cost Saved</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in open_exceptions_list %}
+                    <tr>
+                        <td class="cell-mono">{{ e.serial_number }}</td>
+                        <td>{{ e.branch_unit|default:"—" }}</td>
+                        <td class="cell-wide">{{ e.exception|default:"—" }}</td>
+                        <td>{{ e.date_noted|date:"M d, Y"|default:"—" }}</td>
+                        <td>{{ e.target_closure_date|date:"M d, Y"|default:"—" }}</td>
+                        <td>{{ e.category|default:"—" }}</td>
+                        <td>{{ e.responsible_officer|default:"—" }}</td>
+                        <td>{{ e.supervisor|default:"—" }}</td>
+                        <td>{{ e.get_status_display }}</td>
+                        <td class="cell-num">{{ e.income_cost_saved }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10">
+                            <div class="exc-empty">
+                                <i class="fas fa-check-circle"></i>
+                                <p>No open exceptions found for the selected filters.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================================
+     FULLSCREEN SHELL
+     ============================================================ -->
+<div id="fullscreenShell" class="fullscreen-shell">
+    <div class="fullscreen-topbar">
+        <h2><i class="fas fa-chart-pie"></i> Analytics — Full Screen</h2>
+        <a href="{% url 'control_dashboard:member_dashboard' %}" class="exit-fullscreen-btn">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+    <div id="fullscreenBody"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ============================================
+    // SERVER DATA
+    // ============================================
+    const topBranchLabels   = {{ top_branch_labels|safe }};
+    const topBranchValues   = {{ top_branch_values|safe }};
+    const topCategoryLabels = {{ top_category_labels|safe }};
+    const topCategoryValues = {{ top_category_values|safe }};
+    const openClosedLabels  = {{ open_closed_labels|safe }};
+    const openClosedValues  = {{ open_closed_values|safe }};
+
+    const palette = ['#4f6ef7', '#e08a17', '#17a673', '#7c5cf0', '#e0456a', '#0ea5a4'];
+
+    // ============================================
+    // HELPER: build a chart only if there's data
+    // ============================================
+    function buildPie(canvasId, labels, values, colorOverride) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        // Replace the canvas with an empty state if there's no data
+        if (!values || values.length === 0 || values.every(v => v === 0)) {
+            const wrapper = canvas.parentElement;
+            wrapper.innerHTML = `
+                <div class="chart-empty">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>No data for the current filters</span>
+                </div>
+            `;
+            return;
+        }
+
+        new Chart(canvas, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colorOverride || palette.slice(0, labels.length),
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 12, usePointStyle: true, pointStyle: 'circle', font: { size: 11 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
+                                return `${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // BUILD THE THREE PIE CHARTS
+    // ============================================
+    buildPie('topBranchesChart',   topBranchLabels,   topBranchValues);
+    buildPie('topCategoriesChart', topCategoryLabels, topCategoryValues);
+    buildPie('openClosedChart',    openClosedLabels,  openClosedValues, ['#e08a17', '#17a673']);
+
+    // ============================================
+    // FILTER FORM SUBMIT
+    // ============================================
+    function submitFilters() {
+        const form = document.getElementById('analyticsFilterForm');
+        if (form) form.submit();
+    }
+
+    // ============================================
+    // FULLSCREEN — move content, then move it back
+    // ============================================
+    let fullscreenOriginalParent = null;
+    let fullscreenOriginalNextSibling = null;
+    let isFullscreenActive = false;
+
+    function enterFullscreen() {
+        if (isFullscreenActive) return;
+
+        const shell = document.getElementById('fullscreenShell');
+        const container = document.querySelector('.analytics-container');
+        const dst = document.getElementById('fullscreenBody');
+
+        if (!shell || !container || !dst) return;
+
+        // Remember where the container was so we can put it back exactly
+        fullscreenOriginalParent = container.parentElement;
+        fullscreenOriginalNextSibling = container.nextSibling;
+
+        // Move the container itself (not its children) into the shell
+        dst.innerHTML = '';
+        dst.appendChild(container);
+
+        shell.classList.add('show');
+        document.body.classList.add('analytics-fullscreen');
+        isFullscreenActive = true;
+
+        // Let Chart.js recompute sizes
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+    }
+
+    function exitFullscreen() {
+        if (!isFullscreenActive) return;
+
+        const shell = document.getElementById('fullscreenShell');
+        const container = document.querySelector('.analytics-container');
+
+        if (!shell) return;
+
+        // Move the container back to its original spot
+        if (container && fullscreenOriginalParent) {
+            if (fullscreenOriginalNextSibling &&
+                fullscreenOriginalNextSibling.parentElement === fullscreenOriginalParent) {
+                fullscreenOriginalParent.insertBefore(container, fullscreenOriginalNextSibling);
+            } else {
+                fullscreenOriginalParent.appendChild(container);
+            }
+        }
+
+        shell.classList.remove('show');
+        document.body.classList.remove('analytics-fullscreen');
+        isFullscreenActive = false;
+
+        // Reset state so a future enterFullscreen starts clean
+        fullscreenOriginalParent = null;
+        fullscreenOriginalNextSibling = null;
+
+        // Let Chart.js recompute sizes
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+    }
+
+    // Esc key exits fullscreen (kept so users can still leave without navigating)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') exitFullscreen();
+    });
+
+    // Guard against a page unload while in fullscreen
+    window.addEventListener('beforeunload', function() {
+        if (isFullscreenActive) exitFullscreen();
+    });
+</script>
+{% endblock %}

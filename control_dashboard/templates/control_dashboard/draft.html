@@ -1,0 +1,1296 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Upload Exception Report{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/member.css' %}" type="text/css">
+<style>
+/* ============================================================
+   UPLOAD EXCEPTION REPORT — Premium Light Theme
+   ============================================================ */
+
+:root {
+    /* Surfaces */
+    --up-bg-0: #eef1f8;
+    --up-bg-1: #ffffff;
+    --up-bg-2: #f7f8fc;
+    --up-bg-3: #f1f3f9;
+
+    /* Glass & borders */
+    --up-glass: rgba(255, 255, 255, 0.85);
+    --up-border: rgba(15, 27, 51, 0.08);
+    --up-border-strong: rgba(15, 27, 51, 0.16);
+    --up-hairline: rgba(15, 27, 51, 0.06);
+
+    /* Text */
+    --up-text-0: #0f1b33;
+    --up-text-1: #46536b;
+    --up-text-2: #8993a8;
+
+    /* Accents */
+    --up-accent: #4f6ef7;
+    --up-accent-soft: #eef1ff;
+    --up-emerald: #17a673;
+    --up-emerald-soft: #e2f7ef;
+    --up-emerald-dark: #0f8a5e;
+    --up-amber: #e08a17;
+    --up-amber-soft: #fdf2e0;
+    --up-rose: #e0456a;
+    --up-rose-soft: #fdeaf0;
+    --up-violet: #7c5cf0;
+    --up-violet-soft: #f0ebff;
+
+    /* Shadows */
+    --up-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --up-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+    --up-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
+                    0 4px 12px rgba(15, 27, 51, 0.04);
+
+    --up-font: 'Poppins', system-ui, -apple-system, sans-serif;
+    --up-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ============================================================
+   HEADER CONTROLS — proper control surface pill
+   ============================================================ */
+.header-upload-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px;
+    background: var(--up-bg-1);
+    border: 1px solid var(--up-border);
+    border-radius: 14px;
+    box-shadow: var(--up-shadow-sm);
+    flex-wrap: wrap;
+}
+
+.header-upload-controls .form-control {
+    padding: 8px 34px 8px 14px;
+    border: 1px solid var(--up-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--up-font);
+    background: var(--up-bg-1);
+    color: var(--up-text-0);
+    transition: all 0.25s ease;
+    min-width: 240px;
+    height: 38px;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    cursor: pointer;
+}
+
+.header-upload-controls .form-control:hover {
+    border-color: var(--up-border-strong);
+}
+
+.header-upload-controls .form-control:focus {
+    border-color: var(--up-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.header-upload-controls .form-control option {
+    background: var(--up-bg-1);
+    color: var(--up-text-0);
+}
+
+.header-upload-controls .btn-upload {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 18px;
+    background: linear-gradient(135deg, #17a673 0%, #0f8a5e 100%);
+    color: white;
+    border: 1px solid rgba(23, 166, 115, 0.4);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--up-font);
+    white-space: nowrap;
+    height: 38px;
+    box-shadow: 0 4px 14px rgba(23, 166, 115, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.header-upload-controls .btn-upload::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.header-upload-controls .btn-upload:hover:not(:disabled)::before { opacity: 1; }
+
+.header-upload-controls .btn-upload:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(23, 166, 115, 0.42);
+}
+
+.header-upload-controls .btn-upload:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.header-upload-controls .btn-upload .spinner {
+    display: none;
+    animation: up-spin 1s linear infinite;
+}
+
+.header-upload-controls .btn-upload.loading .spinner { display: inline-block; }
+.header-upload-controls .btn-upload.loading .btn-text { display: none; }
+
+@keyframes up-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   BOUNDARY CHAIN — nothing pushes page wider than viewport
+   ============================================================ */
+.submit-container,
+.glass-card,
+.preview-container,
+.table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.submit-container {
+    margin: 0 auto;
+    padding: 4px 0 40px;
+    overflow-x: hidden;
+    position: relative;
+    max-width: 1600px;
+    font-family: var(--up-font);
+    color: var(--up-text-0);
+}
+
+.glass-card {
+    background: var(--up-bg-1);
+    border: 1px solid var(--up-border);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--up-shadow-sm);
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* Subtle top gradient on the glass card */
+.glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--up-emerald) 50%,
+        transparent 100%);
+    opacity: 0.7;
+    border-radius: 20px 20px 0 0;
+}
+
+/* ============================================================
+   PREVIEW CONTAINER
+   ============================================================ */
+.preview-container {
+    display: none;
+    overflow: hidden;
+}
+
+.preview-container.show {
+    display: block;
+    animation: up-fade 0.4s ease;
+}
+
+@keyframes up-fade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--up-hairline);
+}
+
+.preview-header h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--up-text-0);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+}
+
+.preview-header h4 i {
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--up-emerald-soft);
+    color: var(--up-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.2);
+}
+
+.preview-header .record-count {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: var(--up-emerald);
+    background: var(--up-emerald-soft);
+    border: 1px solid rgba(23, 166, 115, 0.22);
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: center;
+}
+
+.preview-header .btn-clear-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--up-bg-1);
+    color: var(--up-rose);
+    border: 1px solid rgba(224, 69, 106, 0.25);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    font-family: var(--up-font);
+    transition: all 0.2s ease;
+}
+
+.preview-header .btn-clear-inline:hover {
+    background: var(--up-rose-soft);
+    border-color: rgba(224, 69, 106, 0.4);
+}
+
+/* ============================================================
+   SCROLL WINDOW — locked width; table can be wider
+   ============================================================ */
+.table-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    border-radius: 14px;
+    border: 1px solid var(--up-border);
+    background: var(--up-bg-1);
+    -webkit-overflow-scrolling: touch;
+    min-width: 0;
+    max-width: 100%;
+    box-shadow: var(--up-shadow-sm);
+}
+
+.preview-table {
+    border-collapse: collapse;
+    font-size: 13px;
+    font-family: var(--up-font);
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+}
+
+.preview-table thead th {
+    background: var(--up-bg-2);
+    color: var(--up-text-2);
+    font-weight: 700;
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--up-border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap;
+    vertical-align: top;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(8px);
+}
+
+.preview-table tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--up-hairline);
+    color: var(--up-text-1);
+    vertical-align: top;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    min-width: 90px;
+    max-width: 420px;
+    line-height: 1.5;
+    hyphens: auto;
+}
+
+/* Long descriptive columns — full text, wraps generously */
+.preview-table tbody td.wide-cell {
+    min-width: 320px;
+    max-width: 800px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    color: var(--up-text-0);
+}
+
+/* Compact columns */
+.preview-table tbody td.narrow-cell {
+    min-width: 80px;
+    max-width: 160px;
+    white-space: nowrap;
+}
+
+/* Date columns */
+.preview-table tbody td.date-cell {
+    min-width: 110px;
+    max-width: 130px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--up-mono);
+    font-size: 11px;
+    color: var(--up-text-1);
+}
+
+/* Numeric columns */
+.preview-table tbody td.num-cell {
+    min-width: 100px;
+    max-width: 160px;
+    white-space: nowrap;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--up-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--up-emerald);
+}
+
+/* Zebra striping for readability */
+.preview-table tbody tr:nth-child(even) td {
+    background: rgba(15, 27, 51, 0.012);
+}
+
+.preview-table tbody tr:hover td {
+    background: var(--up-accent-soft);
+}
+
+.preview-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Status pill styling inside cells */
+.preview-table tbody td.status-pill {
+    white-space: nowrap;
+    text-align: center;
+}
+
+.preview-table .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.preview-table .status-badge.open {
+    background: var(--up-amber-soft);
+    color: var(--up-amber);
+    border: 1px solid rgba(224, 138, 23, 0.22);
+}
+
+.preview-table .status-badge.closed {
+    background: var(--up-emerald-soft);
+    color: var(--up-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.22);
+}
+
+.preview-table .status-badge.in-progress {
+    background: var(--up-accent-soft);
+    color: var(--up-accent);
+    border: 1px solid rgba(79, 110, 247, 0.22);
+}
+
+.preview-table .status-badge.default {
+    background: var(--up-bg-2);
+    color: var(--up-text-1);
+    border: 1px solid var(--up-border);
+}
+
+.preview-table .empty-cell {
+    color: var(--up-text-2);
+    font-style: italic;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+/* Custom scrollbar */
+.table-wrapper::-webkit-scrollbar { height: 10px; width: 10px; }
+.table-wrapper::-webkit-scrollbar-track {
+    background: var(--up-bg-2);
+    border-radius: 6px;
+}
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(15, 27, 51, 0.18);
+    border-radius: 6px;
+    border: 2px solid var(--up-bg-2);
+}
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 27, 51, 0.32);
+}
+
+/* ============================================================
+   SUBMIT ACTIONS
+   ============================================================ */
+.submit-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+    padding-top: 20px;
+    border-top: 1px solid var(--up-hairline);
+}
+
+.btn-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 32px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: white;
+    border: 1px solid rgba(79, 110, 247, 0.4);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--up-font);
+    min-width: 200px;
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.28);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-submit::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.btn-submit:hover:not(:disabled)::before { opacity: 1; }
+
+.btn-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: var(--up-bg-1);
+    color: var(--up-text-1);
+    border: 1px solid var(--up-border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    font-family: var(--up-font);
+    min-width: 140px;
+    box-shadow: var(--up-shadow-sm);
+}
+
+.btn-cancel:hover {
+    background: var(--up-bg-2);
+    color: var(--up-text-0);
+    border-color: var(--up-border-strong);
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-state {
+    text-align: center;
+    padding: 72px 24px;
+    color: var(--up-text-2);
+}
+
+.empty-state i {
+    font-size: 48px;
+    width: 88px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(79, 110, 247, 0.14) 0%,
+        rgba(79, 110, 247, 0.04) 60%,
+        transparent 70%);
+    color: var(--up-accent);
+    animation: up-float 3s ease-in-out infinite;
+}
+
+@keyframes up-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.empty-state h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--up-text-0);
+    margin: 0 0 6px;
+    letter-spacing: 0.2px;
+}
+
+.empty-state p {
+    font-size: 13px;
+    margin: 0 auto;
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+.empty-state p strong {
+    color: var(--up-text-0);
+    font-weight: 600;
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--up-bg-1);
+    border: 1px solid var(--up-border);
+    border-left: 4px solid var(--up-emerald);
+    border-radius: 14px;
+    padding: 16px 20px;
+    max-width: 400px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--up-font);
+    box-shadow:
+        0 16px 40px rgba(15, 27, 51, 0.15),
+        0 4px 12px rgba(15, 27, 51, 0.08);
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast-notification.show { transform: translateX(0); }
+.toast-notification.error { border-left-color: var(--up-rose); }
+
+.toast-notification .toast-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    background: var(--up-emerald-soft);
+    color: var(--up-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.28);
+}
+
+.toast-notification.error .toast-icon {
+    background: var(--up-rose-soft);
+    color: var(--up-rose);
+    border-color: rgba(224, 69, 106, 0.28);
+}
+
+.toast-notification .toast-content { flex: 1; min-width: 0; }
+
+.toast-notification .toast-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--up-text-0);
+    margin: 0 0 2px 0;
+    letter-spacing: 0.2px;
+}
+
+.toast-notification .toast-message {
+    font-size: 12px;
+    color: var(--up-text-1);
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.toast-notification .toast-close {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--up-text-2);
+    padding: 4px;
+    line-height: 1;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.toast-notification .toast-close:hover {
+    color: var(--up-text-0);
+    background: var(--up-bg-2);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+    .header-upload-controls .form-control { min-width: 200px; }
+}
+
+@media (max-width: 768px) {
+    .header-upload-controls { width: 100%; }
+    .header-upload-controls .form-control {
+        min-width: unset;
+        flex: 1;
+        width: 100%;
+    }
+    .header-upload-controls .btn-upload {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .glass-card {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .preview-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .preview-header > div {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .preview-table { font-size: 12px; }
+    .preview-table thead th,
+    .preview-table tbody td { padding: 8px 10px; }
+    .preview-table tbody td.wide-cell {
+        min-width: 240px;
+        max-width: 600px;
+    }
+
+    .submit-actions { flex-direction: column; }
+    .submit-actions .btn-submit,
+    .submit-actions .btn-cancel {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .toast-notification {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .glass-card { padding: 14px; border-radius: 14px; }
+    .preview-header h4 { font-size: 13px; }
+    .preview-header h4 i { width: 24px; height: 24px; font-size: 11px; }
+    .preview-table thead th,
+    .preview-table tbody td { padding: 7px 9px; font-size: 11px; }
+    .empty-state { padding: 48px 16px; }
+    .empty-state i { width: 72px; height: 72px; font-size: 36px; }
+}
+
+/* ============================================================
+   LAST-RESORT CLAMP — defensive min-width: 0 chain
+   ============================================================ */
+.main-content-wrapper,
+.main-content,
+.page-wrapper {
+    min-width: 0;
+    max-width: 100%;
+}
+.main-content,
+.main-content-wrapper {
+    overflow-x: clip;
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:member_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li>
+    <a href="{% url 'control_dashboard:member_dashboard' %}" data-tooltip="Dashboard">
+        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-text">Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
+        <span class="nav-icon"><i class="fas fa-balance-scale"></i></span>
+        <span class="nav-text">Daily Trial Balance</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Analytics</span>
+</a></li>
+<li class="active">
+    <a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
+        <span class="nav-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+        <span class="nav-text">Upload Report</span>
+    </a>
+</li>
+
+<li>
+    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+        <span class="nav-icon"><i class="fas fa-folder-open"></i></span>
+        <span class="nav-text">My Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
+        <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
+        <span class="nav-text">Consolidated Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:member_checklist' %}" data-tooltip="Checklist">
+        <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+        <span class="nav-text">Activity Checklist</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block page_title %}Upload Exception Report{% endblock %}
+
+{% block top_header_center %}
+<div class="header-upload-controls">
+    <select id="reportType" class="form-control" required>
+        <option value="">Select Report Type...</option>
+        {% for report_type in report_types %}
+        <option value="{{ report_type }}">{{ report_type }}</option>
+        {% endfor %}
+    </select>
+
+    <button class="btn-upload" id="uploadBtn" onclick="document.getElementById('excelFileInput').click()">
+        <i class="fas fa-file-excel"></i>
+        <span class="btn-text">Upload Excel</span>
+        <span class="spinner"><i class="fas fa-spinner"></i></span>
+    </button>
+
+    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv"
+           style="display: none;" onchange="handleFileUpload(this.files[0])">
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="submit-container">
+    <div class="glass-card">
+
+        <!-- PREVIEW TABLE -->
+        <div class="preview-container" id="previewContainer">
+            <div class="preview-header">
+                <h4><i class="fas fa-table"></i> Data Preview</h4>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="record-count" id="recordCount">0 records</span>
+                    <button class="btn-clear-inline" onclick="clearData()">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table class="preview-table" id="previewTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="submit-actions">
+                <button class="btn-submit" id="submitBtn" onclick="submitData()">
+                    <i class="fas fa-paper-plane"></i> Submit Report
+                </button>
+                <button class="btn-cancel" onclick="clearData()">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div class="empty-state" id="emptyState">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>No Data Loaded</h3>
+            <p>Select a report type and click <strong>Upload Excel</strong> in the header above</p>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toastNotification" class="toast-notification">
+    <div class="toast-icon"><i class="fas fa-check"></i></div>
+    <div class="toast-content">
+        <p class="toast-title">Success!</p>
+        <p class="toast-message" id="toastMessage">Action completed successfully.</p>
+    </div>
+    <button class="toast-close" onclick="closeToast()"><i class="fas fa-times"></i></button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+    // ============================================
+    // CSRF TOKEN
+    // ============================================
+    function getCsrfToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === 'csrftoken=') {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+
+    // ============================================
+    // TOAST
+    // ============================================
+    function showToast(message, title = 'Success!', isError = false) {
+        const toast = document.getElementById('toastNotification');
+        const msgEl = document.getElementById('toastMessage');
+        const titleEl = toast.querySelector('.toast-title');
+        const iconEl = toast.querySelector('.toast-icon i');
+
+        msgEl.textContent = message || 'Action completed successfully.';
+        titleEl.textContent = title;
+
+        if (isError) {
+            toast.classList.add('error');
+            iconEl.className = 'fas fa-exclamation-circle';
+        } else {
+            toast.classList.remove('error');
+            iconEl.className = 'fas fa-check-circle';
+        }
+
+        toast.classList.add('show');
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4000);
+    }
+
+    window.closeToast = function() {
+        const toast = document.getElementById('toastNotification');
+        toast.classList.remove('show');
+        if (window.toastTimeout) {
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = null;
+        }
+    };
+
+    // ============================================
+    // STATE
+    // ============================================
+    let importedData = null;
+    let importedHeaders = [];
+    let fileName = '';
+
+    // ============================================
+    // COLUMN CLASSIFIER
+    // ============================================
+    function classifyColumn(header) {
+        const h = String(header || '').toUpperCase().replace(/\s+/g, ' ').trim();
+
+        // Long-text columns — full text, wraps
+        if (h.includes('EXCEPTION') && !h.includes('CATEGORY')) return 'wide-cell';
+        if (h.includes('AUDITEE') || h.includes('RESPONSE')) return 'wide-cell';
+        if (h.includes('REMARK') || h.includes('COMMENT') || h.includes('NOTE')) return 'wide-cell';
+
+        // Date columns
+        if (h.includes('DATE')) return 'date-cell';
+
+        // Numeric columns
+        if (h.includes('INCOME') || h.includes('COST') || h.includes('SAVED')) return 'num-cell';
+        if (h === 'S/N' || h === 'SN' || h === 'SERIAL NUMBER' || h === 'SERIAL NO') return 'narrow-cell';
+
+        // Name / branch / status
+        if (h.includes('OFFICER') || h.includes('SUPERVISOR')) return 'narrow-cell';
+        if (h.includes('BRANCH') || h.includes('UNIT')) return 'narrow-cell';
+        if (h === 'STATUS' || h === 'STATE') return 'narrow-cell';
+        if (h.includes('CATEGORY')) return 'narrow-cell';
+
+        return '';
+    }
+
+    // ============================================
+    // EXCEL SERIAL DATE → STRING
+    // ============================================
+    function excelSerialToDate(serial) {
+        // Excel epoch is 1899-12-30 (accounting for the 1900 leap year bug)
+        const excelEpoch = Date.UTC(1899, 11, 30);
+        const ms = serial * 24 * 60 * 60 * 1000;
+        const d = new Date(excelEpoch + ms);
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(d.getUTCDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function normalizeCellValue(value) {
+        // Only convert numbers that fall in the Excel serial date range
+        // (roughly 2000-01-01 through 2100-01-01)
+        if (typeof value === 'number' && value > 36526 && value < 73415) {
+            return excelSerialToDate(value);
+        }
+        return value;
+    }
+
+    // ============================================
+    // HTML ESCAPE
+    // ============================================
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // ============================================
+    // STATUS BADGE
+    // ============================================
+    function statusBadgeClass(value) {
+        const v = String(value || '').toLowerCase().trim();
+        if (v === 'closed' || v === 'resolved' || v === 'completed' || v === 'approved') return 'closed';
+        if (v === 'open' || v === 'pending') return 'open';
+        if (v === 'in progress' || v === 'in_progress' || v === 'ongoing') return 'in-progress';
+        return 'default';
+    }
+
+    // ============================================
+    // EXCEL FILE HANDLING
+    // ============================================
+    function handleFileUpload(file) {
+        if (!file) return;
+
+        const validTypes = [
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel',
+            'text/csv'
+        ];
+
+        if (!validTypes.includes(file.type) && !file.name.match(/\.(xlsx|xls|csv)$/i)) {
+            showToast('Please upload a valid Excel file (.xlsx, .xls, or .csv)', 'Error', true);
+            return;
+        }
+
+        fileName = file.name;
+
+        const uploadBtn = document.getElementById('uploadBtn');
+        uploadBtn.classList.add('loading');
+        uploadBtn.disabled = true;
+
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {
+                    type: 'array',
+                    cellDates: true,          // parse dates as JS Date objects where possible
+                    cellNF: false,
+                    cellText: false,
+                });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+                // raw: false makes SheetJS use the cell's formatted value
+                // (which shows dates as they appear in Excel)
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+                    header: 1,
+                    raw: false,               // ← respects Excel date formatting
+                    dateNF: 'yyyy-mm-dd',
+                    defval: '',
+                });
+
+                if (!jsonData || jsonData.length === 0) {
+                    showToast('No data found in the file', 'Error', true);
+                    uploadBtn.classList.remove('loading');
+                    uploadBtn.disabled = false;
+                    return;
+                }
+
+                const headers = jsonData[0] || [];
+                const rows = jsonData.slice(1) || [];
+
+                const filteredRows = rows.filter(row =>
+                    row.some(cell => cell !== undefined && cell !== null && cell !== '')
+                );
+
+                if (headers.length === 0) {
+                    showToast('No headers found in the file', 'Error', true);
+                    uploadBtn.classList.remove('loading');
+                    uploadBtn.disabled = false;
+                    return;
+                }
+
+                if (filteredRows.length === 0) {
+                    showToast('No data rows found in the file', 'Error', true);
+                    uploadBtn.classList.remove('loading');
+                    uploadBtn.disabled = false;
+                    return;
+                }
+
+                importedHeaders = headers;
+                importedData = filteredRows;
+
+                renderPreview(headers, filteredRows);
+                document.getElementById('previewContainer').classList.add('show');
+                document.getElementById('emptyState').style.display = 'none';
+
+                showToast(`Loaded ${filteredRows.length} records from ${fileName}`, 'Success');
+
+            } catch (error) {
+                console.error('Error parsing Excel:', error);
+                showToast('Error parsing file: ' + error.message, 'Error', true);
+            } finally {
+                uploadBtn.classList.remove('loading');
+                uploadBtn.disabled = false;
+            }
+        };
+
+        reader.onerror = function() {
+            showToast('Error reading file. Please try again.', 'Error', true);
+            uploadBtn.classList.remove('loading');
+            uploadBtn.disabled = false;
+        };
+
+        reader.readAsArrayBuffer(file);
+    }
+
+    // ============================================
+    // RENDER PREVIEW
+    // ============================================
+    function renderPreview(headers, data) {
+        const thead = document.getElementById('tableHead');
+        const tbody = document.getElementById('tableBody');
+        const recordCount = document.getElementById('recordCount');
+
+        const columnClasses = headers.map(h => classifyColumn(h));
+
+        // Header row
+        let headerHTML = '<tr>';
+        headers.forEach(header => {
+            const displayHeader = header || 'Column';
+            headerHTML += `<th>${escapeHtml(displayHeader)}</th>`;
+        });
+        headerHTML += '</tr>';
+        thead.innerHTML = headerHTML;
+
+        // Data rows — up to 100, wrapping enabled
+        const MAX_ROWS = 100;
+        const displayData = data.slice(0, MAX_ROWS);
+        let bodyHTML = '';
+
+        if (displayData.length === 0) {
+            bodyHTML = `<tr><td colspan="${headers.length}" class="empty-cell">No data to display</td></tr>`;
+        } else {
+            displayData.forEach(row => {
+                bodyHTML += '<tr>';
+                for (let i = 0; i < headers.length; i++) {
+                    const rawValue = row[i];
+                    const normalized = normalizeCellValue(rawValue);
+                    const value = normalized !== undefined && normalized !== null ? normalized : '';
+
+                    const cls = columnClasses[i];
+                    const clsAttr = cls ? ` class="${cls}"` : '';
+
+                    // Render status as a pill
+                    const header = String(headers[i] || '').toUpperCase();
+                    if (header === 'STATUS' || header === 'STATE') {
+                        const badge = statusBadgeClass(value);
+                        bodyHTML += `<td class="status-pill"><span class="status-badge ${badge}">${escapeHtml(value)}</span></td>`;
+                    } else {
+                        bodyHTML += `<td${clsAttr}>${escapeHtml(value)}</td>`;
+                    }
+                }
+                bodyHTML += '</tr>';
+            });
+
+            if (data.length > MAX_ROWS) {
+                bodyHTML += `<tr><td colspan="${headers.length}" style="text-align: center; color: #6b7280; font-style: italic; background: #f8fafc; padding: 12px;">
+                    <i class="fas fa-ellipsis-h"></i> ${data.length - MAX_ROWS} more rows not shown (preview limited to ${MAX_ROWS})
+                </td></tr>`;
+            }
+        }
+
+        tbody.innerHTML = bodyHTML;
+        recordCount.textContent = `${data.length} records`;
+    }
+
+    // ============================================
+    // CLEAR
+    // ============================================
+    function clearData() {
+        if (importedData && importedData.length > 0) {
+            if (!confirm('Are you sure you want to clear the loaded data?')) return;
+        }
+
+        importedData = null;
+        importedHeaders = [];
+        fileName = '';
+
+        document.getElementById('previewContainer').classList.remove('show');
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('tableHead').innerHTML = '';
+        document.getElementById('tableBody').innerHTML = '';
+        document.getElementById('recordCount').textContent = '0 records';
+        document.getElementById('excelFileInput').value = '';
+
+        showToast('Data cleared successfully', 'Info');
+    }
+
+    // ============================================
+    // SUBMIT
+    // ============================================
+    function submitData() {
+        const reportType = document.getElementById('reportType').value;
+
+        if (!reportType) {
+            showToast('Please select a report type', 'Error', true);
+            document.getElementById('reportType').focus();
+            return;
+        }
+
+        if (!importedData || importedData.length === 0) {
+            showToast('Please upload an Excel file first', 'Error', true);
+            return;
+        }
+
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+        // Normalize dates in the payload so the backend stores clean strings
+        const normalizedData = importedData.map(row =>
+            row.map(cell => normalizeCellValue(cell))
+        );
+
+        const payload = {
+            report_type: reportType,
+            headers: importedHeaders,
+            data: normalizedData,
+            file_name: fileName || 'uploaded.xlsx'
+        };
+
+        fetch('/adminboard/api/save-imported-data/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+
+            if (data.success) {
+                const typedCount = data.typed_record_count;
+                let msg = data.message;
+                if (typeof typedCount !== 'undefined') {
+                    msg += ` — ${typedCount} typed exception record(s) created.`;
+                }
+                showToast(msg, 'Success');
+
+                setTimeout(() => {
+                    clearData();
+                    document.getElementById('reportType').value = '';
+                }, 2500);
+            } else {
+                showToast('Error: ' + data.error, 'Error', true);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Report';
+            showToast('An error occurred while submitting. Please try again.', 'Error', true);
+        });
+    }
+
+    // ============================================
+    // KEYBOARD SHORTCUTS
+    // ============================================
+    document.addEventListener('keydown', function(event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+            event.preventDefault();
+            if (document.getElementById('previewContainer').classList.contains('show')) {
+                submitData();
+            }
+        }
+    });
+</script>
+{% endblock %}

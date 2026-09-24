@@ -1,0 +1,548 @@
+/* ==========================================================================
+   SUBMITTED REPORTS — Premium Light Theme
+   ========================================================================== */
+
+:root {
+    /* Surfaces */
+    --sr-bg-0: #eef1f8;
+    --sr-bg-1: #ffffff;
+    --sr-bg-2: #f7f8fc;
+    --sr-bg-3: #f1f3f9;
+
+    /* Borders */
+    --sr-border: rgba(15, 27, 51, 0.08);
+    --sr-border-strong: rgba(15, 27, 51, 0.16);
+    --sr-hairline: rgba(15, 27, 51, 0.06);
+
+    /* Text */
+    --sr-text-0: #0f1b33;
+    --sr-text-1: #46536b;
+    --sr-text-2: #8993a8;
+
+    /* Accents */
+    --sr-accent: #4f6ef7;
+    --sr-accent-soft: #eef1ff;
+    --sr-emerald: #17a673;
+    --sr-emerald-soft: #e2f7ef;
+    --sr-amber: #e08a17;
+    --sr-amber-soft: #fdf2e0;
+    --sr-rose: #e0456a;
+    --sr-rose-soft: #fdeaf0;
+    --sr-violet: #7c5cf0;
+    --sr-violet-soft: #f0ebff;
+
+    /* Shadows */
+    --sr-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --sr-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+
+    --sr-font: 'Poppins', system-ui, -apple-system, sans-serif;
+}
+
+/* ==========================================================================
+   1. STATS GRID — not used in current template but kept for compat
+   ========================================================================== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    position: relative;
+    background: var(--sr-bg-1);
+    border: 1px solid var(--sr-border);
+    border-radius: 16px;
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--sr-shadow-sm);
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--stat-accent, var(--sr-accent)) 50%,
+        transparent 100%);
+    opacity: 0.75;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--stat-accent, var(--sr-accent)) 30%, var(--sr-border));
+    box-shadow:
+        0 12px 28px rgba(15, 27, 51, 0.10),
+        0 2px 6px rgba(15, 27, 51, 0.04);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    border: 1px solid;
+}
+
+.stat-icon.primary {
+    background: var(--sr-accent-soft);
+    color: var(--sr-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.stat-icon.success {
+    background: var(--sr-emerald-soft);
+    color: var(--sr-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.stat-icon.warning {
+    background: var(--sr-amber-soft);
+    color: var(--sr-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.stat-icon.danger {
+    background: var(--sr-rose-soft);
+    color: var(--sr-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.stat-info { flex: 1; min-width: 0; }
+
+.stat-value {
+    display: block;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--sr-text-0);
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.6px;
+}
+
+.stat-label {
+    display: block;
+    font-size: 11px;
+    color: var(--sr-text-2);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 3px;
+}
+
+/* ==========================================================================
+   2. STATUS BADGES
+   ========================================================================== */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    border: 1px solid;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.status-badge.submitted {
+    background: var(--sr-amber-soft);
+    color: var(--sr-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.status-badge.approved,
+.status-badge.completed {
+    background: var(--sr-emerald-soft);
+    color: var(--sr-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.status-badge.rejected {
+    background: var(--sr-rose-soft);
+    color: var(--sr-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.status-badge.in_review {
+    background: var(--sr-accent-soft);
+    color: var(--sr-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+/* ==========================================================================
+   3. TIME STAMP
+   ========================================================================== */
+.time-stamp {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+    color: var(--sr-text-0);
+    font-variant-numeric: tabular-nums;
+}
+
+.time-stamp small {
+    font-size: 11px;
+    color: var(--sr-text-2);
+}
+
+.na-text {
+    color: var(--sr-text-2);
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* ==========================================================================
+   4. DEDUCTION INPUT
+   ========================================================================== */
+.deduction-input {
+    width: 70px;
+    padding: 6px 10px;
+    border: 1px solid var(--sr-border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    font-family: var(--sr-font);
+    transition: all 0.2s ease;
+    background: var(--sr-bg-2);
+    color: var(--sr-text-0);
+    outline: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.deduction-input:hover {
+    border-color: var(--sr-border-strong);
+}
+
+.deduction-input:focus {
+    border-color: var(--sr-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    background: var(--sr-bg-1);
+}
+
+/* ==========================================================================
+   5. SCORE BADGE
+   ========================================================================== */
+.score-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 52px;
+    border: 1px solid;
+    font-variant-numeric: tabular-nums;
+}
+
+.score-badge.success {
+    background: var(--sr-emerald-soft);
+    color: var(--sr-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.score-badge.warning {
+    background: var(--sr-amber-soft);
+    color: var(--sr-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.score-badge.danger {
+    background: var(--sr-rose-soft);
+    color: var(--sr-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.score-badge.pending {
+    background: var(--sr-bg-2);
+    color: var(--sr-text-2);
+    border-color: var(--sr-border);
+}
+
+/* ==========================================================================
+   6. TABLE ACTIONS
+   ========================================================================== */
+.table-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    border: 1px solid rgba(79, 110, 247, 0.4);
+    border-radius: 10px;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--sr-font);
+    letter-spacing: 0.3px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    white-space: nowrap;
+}
+
+.btn-save:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.btn-save:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.saving-indicator {
+    display: none;
+    font-size: 14px;
+    color: var(--sr-accent);
+}
+
+.saving-indicator.active {
+    display: inline-block;
+}
+
+/* ==========================================================================
+   7. EMPTY STATE
+   ========================================================================== */
+.empty-row {
+    padding: 60px 20px !important;
+    text-align: center;
+}
+
+.empty-row i {
+    font-size: 44px;
+    width: 80px;
+    height: 80px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(79, 110, 247, 0.14) 0%,
+        rgba(79, 110, 247, 0.04) 60%,
+        transparent 70%);
+    color: var(--sr-accent);
+    animation: sr-float 3s ease-in-out infinite;
+}
+
+@keyframes sr-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.empty-row p {
+    margin: 0;
+    color: var(--sr-text-2);
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   8. HEADER: filter group + date group
+   ========================================================================== */
+.header-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-filter-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--sr-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.header-select {
+    padding: 8px 34px 8px 14px;
+    border: 1px solid var(--sr-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--sr-font);
+    background: var(--sr-bg-1);
+    color: var(--sr-text-0);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 13px;
+    height: 38px;
+    box-sizing: border-box;
+    min-width: 160px;
+    box-shadow: var(--sr-shadow-sm);
+}
+
+.header-select:hover { border-color: var(--sr-border-strong); }
+
+.header-select:focus {
+    border-color: var(--sr-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.header-select option {
+    background: var(--sr-bg-1);
+    color: var(--sr-text-0);
+}
+
+.header-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--sr-border);
+    margin: 0 4px;
+}
+
+.header-date-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-date-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--sr-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.header-date-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--sr-bg-1);
+    border: 1px solid var(--sr-border);
+    border-radius: 10px;
+    box-shadow: var(--sr-shadow-sm);
+    transition: all 0.25s ease;
+}
+
+.header-date-wrapper:focus-within {
+    border-color: var(--sr-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.header-date-input {
+    background: transparent;
+    color: var(--sr-text-0);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--sr-font);
+    padding: 4px 6px;
+    border: none;
+    outline: none;
+    min-width: 120px;
+    color-scheme: light;
+    font-variant-numeric: tabular-nums;
+}
+
+.header-date-wrapper span {
+    font-size: 11px;
+    color: var(--sr-text-2);
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   9. RESET HEADER BUTTON
+   ========================================================================== */
+.btn-reset-header {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--sr-bg-1);
+    color: var(--sr-text-1);
+    border: 1px solid var(--sr-border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--sr-font);
+    letter-spacing: 0.3px;
+    height: 38px;
+    white-space: nowrap;
+    box-shadow: var(--sr-shadow-sm);
+    transition: all 0.25s ease;
+}
+
+.btn-reset-header:hover {
+    background: var(--sr-bg-2);
+    color: var(--sr-text-0);
+    border-color: var(--sr-border-strong);
+    transform: translateY(-1px);
+}
+
+.btn-reset-header i { font-size: 12px; }
+
+/* ==========================================================================
+   10. RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1200px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 1024px) {
+    .header-select { min-width: 130px; }
+    .header-date-input { min-width: 100px; }
+}
+
+@media (max-width: 768px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .stat-card { padding: 14px 16px; }
+    .stat-value { font-size: 22px; }
+    .stat-icon { width: 40px; height: 40px; font-size: 16px; }
+
+    .header-filter-group,
+    .header-date-group { width: 100%; flex-wrap: wrap; }
+    .header-select,
+    .header-date-wrapper { flex: 1; width: 100%; min-width: unset; }
+    .header-divider { display: none; }
+
+    .deduction-input { width: 60px; font-size: 12px; padding: 4px 8px; }
+    .score-badge { font-size: 11px; padding: 3px 10px; min-width: 44px; }
+    .btn-save { font-size: 11px; padding: 6px 10px; }
+    .btn-reset-header { padding: 8px 14px; }
+}
+
+@media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+    .stat-card { padding: 12px 14px; }
+    .stat-value { font-size: 20px; }
+    .stat-icon { width: 36px; height: 36px; font-size: 14px; }
+
+    .header-select { min-width: 80px; font-size: 11px; padding: 8px 30px 8px 12px; }
+    .header-date-input { min-width: 80px; font-size: 11px; padding: 4px 4px; }
+    .header-date-wrapper span { font-size: 10px; }
+}

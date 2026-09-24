@@ -1,0 +1,417 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Activity Logs{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/activity.css' %}" type="text/css">
+<style>
+    /* Activity Logs Dashboard Styles */
+    .activity-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .stat-card {
+        background: rgba(255,255,255,0.75);
+        backdrop-filter: blur(12px);
+        border-radius: 12px;
+        padding: 16px 20px;
+        border: 1px solid rgba(255,255,255,0.3);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    
+    .stat-card .stat-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-card .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a2332;
+        margin-top: 4px;
+    }
+    
+    .stat-card .stat-sub {
+        font-size: 12px;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
+    
+    .activity-breakdown {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+    
+    .breakdown-card {
+        background: rgba(255,255,255,0.6);
+        backdrop-filter: blur(8px);
+        border-radius: 12px;
+        padding: 16px 20px;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    
+    .breakdown-card h5 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a2332;
+        margin: 0 0 12px 0;
+    }
+    
+    .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+        border-bottom: 1px solid #f3f4f6;
+        font-size: 13px;
+    }
+    
+    .breakdown-item:last-child {
+        border-bottom: none;
+    }
+    
+    .breakdown-item .activity-label {
+        color: #6b7280;
+    }
+    
+    .breakdown-item .activity-count {
+        font-weight: 600;
+        color: #1a2332;
+    }
+    
+    .breakdown-item .activity-bar {
+        flex: 1;
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        margin: 0 12px;
+        overflow: hidden;
+    }
+    
+    .breakdown-item .activity-bar .fill {
+        height: 100%;
+        background: #0066cc;
+        border-radius: 2px;
+        transition: width 0.6s ease;
+    }
+    
+    @media (max-width: 768px) {
+        .activity-breakdown {
+            grid-template-columns: 1fr;
+        }
+        .activity-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .activity-stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:admin_page' %}{% endblock %}
+
+{% block nav_links %}
+<li><a href="{% url 'control_dashboard:admin_page' %}">
+    <span class="nav-icon"><i class="fas fa-user-cog"></i></span>
+    <span class="nav-text">User Management</span>
+</a></li> 
+<li><a href="{% url 'control_dashboard:report_creation' %}">
+    <span class="nav-icon"><i class="fas fa-flag"></i></span>
+    <span class="nav-text">Report Creation</span>
+</a></li>  
+<li><a href="{% url 'control_dashboard:report_center' %}">
+    <span class="nav-icon"><i class="fas fa-flag"></i></span>
+    <span class="nav-text">Report Center</span>
+</a></li>   
+<li><a href="{% url 'control_dashboard:checklist_builder' %}">
+    <span class="nav-icon"><i class="fas fa-cubes"></i></span>
+    <span class="nav-text">Checklist Builder</span>
+</a></li>   
+<li><a href="{% url 'control_dashboard:checklist_list' %}">
+    <span class="nav-icon"><i class="fas fa-tools"></i></span>
+    <span class="nav-text">Checklist Activities</span>
+</a></li>
+<li class="active"><a href="{% url 'control_dashboard:activity_logs' %}">
+    <span class="nav-icon"><i class="fas fa-key"></i></span>
+    <span class="nav-text">Activity Logs</span>
+</a></li> 
+{% endblock %}
+
+{% block page_title %}Activity Logs Dashboard{% endblock %}
+
+{% block page_subtitle %}
+<span class="page-subtitle">Monitor all user activities across the system</span>
+{% endblock %}
+
+{% block top_header_center %}
+<div class="header-filter-group">
+    <label for="user-filter">User</label>
+    <select id="user-filter" class="header-select" onchange="applyFilters()">
+        <option value="all">All Users</option>
+        {% for user in users %}
+        <option value="{{ user.id }}" {% if user_filter == user.id|stringformat:"s" %}selected{% endif %}>
+            {{ user.full_name|default:user.email }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+<div class="header-divider"></div>
+<div class="header-filter-group">
+    <label for="activity-filter">Activity Type</label>
+    <select id="activity-filter" class="header-select" onchange="applyFilters()">
+        <option value="all">All Activities</option>
+        {% for key, label in activity_types %}
+        <option value="{{ key }}" {% if activity_filter == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div class="header-divider"></div>
+<div class="header-date-group">
+    <label for="start-date">Date Range</label>
+    <div class="header-date-wrapper">
+        <input type="date" id="start-date" class="header-date-input" value="{{ start_date }}" onchange="applyFilters()">
+        <span>to</span>
+        <input type="date" id="end-date" class="header-date-input" value="{{ end_date }}" onchange="applyFilters()">
+    </div>
+</div>
+{% endblock %}
+
+{% block top_header_right %}
+<button class="btn-reset-header" onclick="resetFilters()">
+    <i class="fas fa-undo"></i> Reset
+</button>
+<button class="btn-export-header" onclick="exportLogs()">
+    <i class="fas fa-download"></i> Export CSV
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="activity-stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Activities</div>
+        <div class="stat-value">{{ activity_logs|length }}</div>
+        <div class="stat-sub">{{ today_logs }} today</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Active Users</div>
+        <div class="stat-value">{{ unique_users }}</div>
+        <div class="stat-sub">Users with activity</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Latest Activity</div>
+        <div class="stat-value">{{ last_activity|default:"-" }}</div>
+        <div class="stat-sub">Most recent log</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Activity Types</div>
+        <div class="stat-value">{{ activity_breakdown|length }}</div>
+        <div class="stat-sub">Unique activity types</div>
+    </div>
+</div>
+
+<!-- Activity Breakdown -->
+<div class="activity-breakdown">
+    <div class="breakdown-card">
+        <h5><i class="fas fa-chart-bar" style="color: #0066cc;"></i> Activity Breakdown</h5>
+        {% for item in activity_breakdown|slice:":8" %}
+        <div class="breakdown-item">
+            <span class="activity-label">{{ item.activity_type|title }}</span>
+            <div class="activity-bar">
+                <div class="fill" style="width: {% widthratio item.count activity_breakdown.0.count 100 %}%;"></div>
+            </div>
+            <span class="activity-count">{{ item.count }}</span>
+        </div>
+        {% empty %}
+        <p style="text-align:center;color:#9ca3af;padding:20px 0;">No activity data available</p>
+        {% endfor %}
+    </div>
+    <div class="breakdown-card">
+        <h5><i class="fas fa-users" style="color: #8b5cf6;"></i> Top Users by Activity</h5>
+        {% for item in user_activity_summary|slice:":8" %}
+        <div class="breakdown-item">
+            <span class="activity-label">{{ item.user__full_name|default:item.user__email }}</span>
+            <span style="color:#9ca3af;font-size:12px;">{{ item.user__role|title }}</span>
+            <span class="activity-count">{{ item.total_activities }}</span>
+        </div>
+        {% empty %}
+        <p style="text-align:center;color:#9ca3af;padding:20px 0;">No user activity data available</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Activity Logs Table -->
+<div class="table-container">
+    <div class="table-header">
+        <h4>Activity Logs</h4>
+        <span class="badge-count">{{ activity_logs|length }} records</span>
+    </div>
+
+    {% if activity_logs %}
+    <table class="users-table">
+        <thead>
+            <tr>
+                <th>Date &amp; Time</th>
+                <th>User</th>
+                <th>Role</th>
+                <th>Activity Type</th>
+                <th>Details</th>
+                <th>IP Address</th>
+            </tr>
+        </thead>
+<tbody>
+    {% for log in activity_logs %}
+    <tr>
+        <td data-label="Date & Time">
+            <span class="time-stamp">
+                <i class="far fa-calendar-alt"></i> {{ log.created_at|date:"M d, Y" }}
+                <br>
+                <i class="far fa-clock"></i> {{ log.created_at|date:"H:i" }}
+            </span>
+        </td>
+        <td class="font-bold" data-label="User">{{ log.user.full_name|default:log.user.email }}</td>
+        <td data-label="Activity">
+            <span class="activity-tag {{ log.activity_type }}">
+                <i class="fas {{ log.get_activity_icon }}"></i>
+                {{ log.get_activity_type_display }}
+            </span>
+        </td>
+        <td data-label="Details">
+            <div class="activity-details">
+                <i class="fas fa-info-circle"></i>
+                {{ log.details|default:"No details available" }}
+            </div>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="4" class="text-center empty-row">
+            <i class="fas fa-clipboard-list"></i>
+            <p>No activity logs found.</p>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ============================================
+    // CSRF Token Helper
+    // ============================================
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+
+    // ============================================
+    // FILTERS
+    // ============================================
+    function applyFilters() {
+        const user = document.getElementById('user-filter').value;
+        const activity = document.getElementById('activity-filter').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        let url = window.location.pathname + '?';
+        if (user !== 'all') url += `user=${user}&`;
+        if (activity !== 'all') url += `activity=${activity}&`;
+        if (startDate) url += `start_date=${startDate}&`;
+        if (endDate) url += `end_date=${endDate}&`;
+        
+        window.location.href = url;
+    }
+
+    function resetFilters() {
+        window.location.href = window.location.pathname;
+    }
+
+    // ============================================
+    // EXPORT LOGS
+    // ============================================
+    function exportLogs() {
+        const user = document.getElementById('user-filter').value;
+        const activity = document.getElementById('activity-filter').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        let url = '/adminboard/api/export-logs/?';
+        if (user !== 'all') url += `user=${user}&`;
+        if (activity !== 'all') url += `activity=${activity}&`;
+        if (startDate) url += `start_date=${startDate}&`;
+        if (endDate) url += `end_date=${endDate}&`;
+        
+        window.location.href = url;
+    }
+
+    // ============================================
+    // TOAST NOTIFICATION
+    // ============================================
+    function showToast(message, title = 'Success!') {
+        const toast = document.getElementById('toastNotification');
+        if (!toast) return;
+        const msgEl = document.getElementById('toastMessage');
+        const titleEl = toast.querySelector('.toast-title');
+        msgEl.textContent = message || 'Action completed successfully.';
+        titleEl.textContent = title;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ============================================
+    // AUTO REFRESH (every 30 seconds)
+    // ============================================
+    let autoRefreshInterval = null;
+
+    function startAutoRefresh() {
+        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        autoRefreshInterval = setInterval(() => {
+            if (!document.hidden) {
+                // Only refresh if there are filters applied
+                const hasFilters = window.location.search.length > 0;
+                if (hasFilters) {
+                    fetch(window.location.href, { method: 'HEAD' })
+                        .then(() => location.reload())
+                        .catch(() => {});
+                }
+            }
+        }, 30000);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        startAutoRefresh();
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            } else {
+                startAutoRefresh();
+            }
+        });
+    });
+
+    window.addEventListener('beforeunload', function() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+        }
+    });
+</script>
+{% endblock %}

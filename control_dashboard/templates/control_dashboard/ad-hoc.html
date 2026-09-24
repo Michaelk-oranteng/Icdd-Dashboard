@@ -1,0 +1,509 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Ad-Hoc Scorecard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/ad-hoc-scorecard.css' %}" type="text/css">
+<style>
+/* ============================================================
+   AD-HOC SCORECARD — Local template overrides
+   ============================================================ */
+
+/* Primary save button */
+.btn-save-form {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: #ffffff;
+    border: 1px solid rgba(79, 110, 247, 0.4);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    white-space: nowrap;
+    height: 42px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-save-form::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.btn-save-form:hover:not(:disabled)::before { opacity: 1; }
+
+.btn-save-form:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.btn-save-form:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-save-form i { font-size: 12px; }
+
+/* Cancel button */
+.create-form-footer .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: var(--ah-bg-1, #ffffff);
+    color: var(--ah-text-1, #46536b);
+    border: 1px solid var(--ah-border, rgba(15, 27, 51, 0.08));
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    height: 42px;
+    box-shadow: var(--ah-shadow-sm, 0 1px 2px rgba(15, 27, 51, 0.04));
+    white-space: nowrap;
+}
+
+.create-form-footer .btn-cancel:hover {
+    background: var(--ah-bg-2, #f7f8fc);
+    color: var(--ah-text-0, #0f1b33);
+    border-color: var(--ah-border-strong, rgba(15, 27, 51, 0.16));
+    transform: translateY(-1px);
+}
+
+/* Form row layout helper */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+}
+
+/* Points added — used by the table cell */
+.points-added-cell {
+    color: var(--ah-emerald, #17a673);
+    font-weight: 700;
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:supervisor_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li><a href="{% url 'control_dashboard:supervisor_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+    <span class="nav-text">Dashboard</span>
+</a></li>  
+<li><a href="{% url 'control_dashboard:analytics_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Analytics</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:supervisor_checklist' %}">
+    <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+    <span class="nav-text">Activity Checklist</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:team_performance' %}">
+    <span class="nav-icon"><i class="fas fa-users"></i></span>
+    <span class="nav-text">Team Performance</span>
+</a></li>
+<li class="active"><a href="{% url 'control_dashboard:ad_hoc_scorecard' %}">
+    <span class="nav-icon"><i class="fas fa-star"></i></span>
+    <span class="nav-text">Ad-Hoc Scorecard</span>
+</a></li> 
+<li><a href="{% url 'control_dashboard:submitted_reports' %}">
+    <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
+    <span class="nav-text">Submitted Reports</span>
+</a></li> 
+<li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
+    <span class="nav-icon"><i class="fas fa-search"></i></span>
+    <span class="nav-text">Activity Logs</span>
+</a></li> 
+{% endblock %}
+
+{% block page_title %}Ad-Hoc Scorecard{% endblock %}
+
+{% block top_header_center %}
+<div class="header-filter-group">
+    <label for="user-filter">Filter By User</label>
+    <select id="user-filter" class="header-select" onchange="applyFilter()">
+        <option value="all">All Users</option>
+        {% for user in users %}
+        <option value="{{ user.id }}" {% if user_filter|add:"0" == user.id %}selected{% endif %}>
+            {{ user.full_name|default:user.email }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+{% endblock %}
+
+{% block top_header_right %}
+<button class="btn-create-header" onclick="toggleCreateForm()">
+    <i class="fas fa-plus"></i> <span id="createBtnText">Create New Score</span>
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- KPI cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon warning"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ users|length }}</span>
+            <span class="stat-label">Team Members</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon danger"><i class="fas fa-minus-circle"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_points|default:0 }}</span>
+            <span class="stat-label">Total Points Deducted</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon success-icon"><i class="fas fa-plus-circle"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_points_added|default:0 }}</span>
+            <span class="stat-label">Total Points Added</span>
+        </div>
+    </div>
+</div>
+
+<!-- Create form -->
+<div id="createForm" class="create-form" style="display: none;">
+    <div class="create-form-header">
+        <h4><i class="fas fa-plus-circle"></i> New Score Entry</h4>
+        <button type="button" class="close-form" onclick="toggleCreateForm()">&times;</button>
+    </div>
+    <div class="create-form-body">
+        <div class="form-group">
+            <label for="inline-user">User <span class="required">*</span></label>
+            <select id="inline-user" class="form-control">
+                <option value="">Select User...</option>
+                {% for user in users %}
+                <option value="{{ user.id }}">{{ user.full_name|default:user.email }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="inline-task">Task Description <span class="required">*</span></label>
+            <input type="text" id="inline-task" class="form-control" placeholder="e.g., Weekly Exceptions Report">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="inline-points">Points Deducted</label>
+                <input type="number" id="inline-points" class="form-control" placeholder="0" min="0" max="100">
+            </div>
+            <div class="form-group">
+                <label for="inline-points-added">Points Added</label>
+                <input type="number" id="inline-points-added" class="form-control" placeholder="0" min="0" max="100">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="inline-reason">Reason / Notes</label>
+            <input type="text" id="inline-reason" class="form-control" placeholder="e.g., Late submission / Extra effort">
+        </div>
+    </div>
+    <div class="create-form-footer">
+        <button type="button" onclick="toggleCreateForm()" class="btn-cancel">Cancel</button>
+        <button type="button" onclick="createInlineDeduction()" class="btn-save-form" id="saveDeductionBtn">
+            <i class="fas fa-save"></i> Save Entry
+        </button>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="table-container">
+    <div class="table-header">
+        <h4>Ad-Hoc Score Entries ({{ deductions|length }})</h4>
+    </div>
+
+    <div class="table-responsive">
+        <table class="deductions-table">
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Task Description</th>
+                    <th class="text-center">Deducted</th>
+                    <th class="text-center">Added</th>
+                    <th>Reason</th>
+                    <th>Date</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="deductionsTableBody">
+                {% for deduction in deductions %}
+                <tr id="row_{{ deduction.id }}">
+                    <td><span class="font-bold">{{ deduction.user_name }}</span></td>
+                    <td><span>{{ deduction.task_description|default:"-" }}</span></td>
+                    <td class="text-center">
+                        {% if deduction.points %}
+                        <span class="deduction-badge {% if deduction.points >= 20 %}high{% elif deduction.points >= 10 %}medium{% else %}low{% endif %}">
+                            -{{ deduction.points }}%
+                        </span>
+                        {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if deduction.points_added %}
+                        <span class="points-added-cell">+{{ deduction.points_added }}%</span>
+                        {% else %}<span style="color:#cbd5e1;">—</span>{% endif %}
+                    </td>
+                    <td><span>{{ deduction.reason|default:"-" }}</span></td>
+                    <td><span class="time-stamp">{{ deduction.created_at|date:"M d, Y" }}</span></td>
+                    <td class="text-center">
+                        <div class="table-actions">
+                            <button class="btn-edit" onclick="editDeduction({{ deduction.id }})"><i class="fas fa-edit"></i></button>
+                            <button class="btn-delete" onclick="deleteDeduction({{ deduction.id }})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center empty-row"><i class="fas fa-star"></i><p>No entries found.</p></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) return meta.getAttribute('content');
+        const input = document.querySelector('input[name=csrfmiddlewaretoken]');
+        if (input) return input.value;
+        const name = 'csrftoken';
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        for (let i = 0; i < cookies.length; i++) {
+            const c = cookies[i].trim();
+            if (c.substring(0, name.length + 1) === (name + '=')) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    function showToast(message, title = 'Success!') {
+        const toast = document.getElementById('toastNotification');
+        if (!toast) { console.log('[toast]', title, message); return; }
+        const msgEl = document.getElementById('toastMessage');
+        const titleEl = toast.querySelector('.toast-title');
+        msgEl.textContent = message || '';
+        titleEl.textContent = title;
+        const icon = toast.querySelector('.toast-icon i');
+        const iconContainer = toast.querySelector('.toast-icon');
+        const isError = title.toLowerCase().includes('error') || title.toLowerCase().includes('warning');
+        if (isError) {
+            icon.className = 'fas fa-exclamation-circle';
+            toast.style.borderLeftColor = '#ef4444';
+            iconContainer.style.color = '#ef4444';
+            iconContainer.style.background = 'rgba(239, 68, 68, 0.1)';
+        } else {
+            icon.className = 'fas fa-check';
+            toast.style.borderLeftColor = '#10b981';
+            iconContainer.style.color = '#10b981';
+            iconContainer.style.background = 'rgba(16, 185, 129, 0.1)';
+        }
+        toast.classList.add('show');
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    window.closeToast = function() {
+        const t = document.getElementById('toastNotification');
+        if (t) t.classList.remove('show');
+    };
+
+    let createFormVisible = false;
+    function toggleCreateForm() {
+        createFormVisible = !createFormVisible;
+        const form = document.getElementById('createForm');
+        const btnText = document.getElementById('createBtnText');
+        if (createFormVisible) {
+            form.style.display = 'block';
+            btnText.textContent = 'Cancel';
+            setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+        } else {
+            form.style.display = 'none';
+            btnText.textContent = 'Create New Score';
+            ['inline-user', 'inline-task', 'inline-points', 'inline-points-added', 'inline-reason'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+        }
+    }
+
+    function createInlineDeduction() {
+        const user_id = document.getElementById('inline-user').value;
+        const task = document.getElementById('inline-task').value.trim();
+        const pointsRaw = document.getElementById('inline-points').value.trim();
+        const pointsAddedRaw = document.getElementById('inline-points-added').value.trim();
+        const reason = document.getElementById('inline-reason').value.trim();
+
+        const points = pointsRaw === '' ? 0 : parseInt(pointsRaw, 10);
+        const points_added = pointsAddedRaw === '' ? 0 : parseInt(pointsAddedRaw, 10);
+
+        if (!user_id) { showToast('Please select a user', 'Warning'); return; }
+        if (!task) { showToast('Please enter a task description', 'Warning'); return; }
+        if (isNaN(points) || points < 0 || points > 100) { showToast('Deducted points must be 0–100', 'Warning'); return; }
+        if (isNaN(points_added) || points_added < 0 || points_added > 100) { showToast('Added points must be 0–100', 'Warning'); return; }
+        if (points === 0 && points_added === 0) { showToast('Enter either deducted or added points', 'Warning'); return; }
+
+        const btn = document.getElementById('saveDeductionBtn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        fetch("/adminboard/api/ad-hoc/create/", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                user_id: user_id,
+                task_description: task,
+                points: points,
+                points_added: points_added,
+                reason: reason
+            })
+        })
+        .then(r => {
+            if (!r.ok) return r.json().catch(() => ({})).then(d => { throw new Error(d.error || ('HTTP ' + r.status)); });
+            return r.json();
+        })
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            if (data.success) {
+                showToast('Entry saved successfully!', 'Success');
+                toggleCreateForm();
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                showToast(data.error || 'Failed to save', 'Error');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            console.error(err);
+            showToast(err.message || 'An error occurred.', 'Error');
+        });
+    }
+
+    function applyFilter() {
+        const user = document.getElementById('user-filter').value;
+        const params = new URLSearchParams();
+        if (user && user !== 'all') params.set('user', user);
+        window.location.href = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    }
+
+    function editDeduction(deductionId) {
+        const row = document.getElementById(`row_${deductionId}`);
+        const cells = row.querySelectorAll('td');
+        const task = cells[1].textContent.trim();
+        const deductedText = cells[2].textContent.trim();
+        const addedText = cells[3].textContent.trim();
+        const reason = cells[4].textContent.trim();
+        const curPoints = deductedText === '—' ? '0' : deductedText.replace('-', '').replace('%', '').trim();
+        const curAdded = addedText === '—' ? '0' : addedText.replace('+', '').replace('%', '').trim();
+
+        const newTask = prompt('Task Description:', task === '-' ? '' : task);
+        if (newTask === null) return;
+        const newPoints = prompt('Deducted Points (0-100):', curPoints);
+        if (newPoints === null) return;
+        const newPointsAdded = prompt('Added Points (0-100):', curAdded);
+        if (newPointsAdded === null) return;
+        const newReason = prompt('Reason:', reason === '-' ? '' : reason);
+        if (newReason === null) return;
+
+        const btn = row.querySelector('.btn-edit');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        fetch(`/adminboard/api/ad-hoc/${deductionId}/update/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken(), 'Accept': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                task_description: newTask,
+                points: newPoints,
+                points_added: newPointsAdded,
+                reason: newReason
+            })
+        })
+        .then(r => {
+            if (!r.ok) return r.json().catch(() => ({})).then(d => { throw new Error(d.error || ('HTTP ' + r.status)); });
+            return r.json();
+        })
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            if (data.success) { showToast('Entry updated!', 'Success'); setTimeout(() => location.reload(), 1200); }
+            else showToast(data.error || 'Failed to update', 'Error');
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            console.error(err);
+            showToast(err.message || 'An error occurred.', 'Error');
+        });
+    }
+
+    function deleteDeduction(deductionId) {
+        if (!confirm('Are you sure you want to delete this entry?')) return;
+        const row = document.getElementById(`row_${deductionId}`);
+        const btn = row.querySelector('.btn-delete');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        fetch(`/adminboard/api/ad-hoc/${deductionId}/delete/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCsrfToken(), 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) { showToast('Entry deleted!', 'Success'); setTimeout(() => location.reload(), 1200); }
+            else { showToast(data.error || 'Failed to delete', 'Error'); btn.disabled = false; btn.innerHTML = originalText; }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            console.error(err);
+            showToast('An error occurred.', 'Error');
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && ['inline-task', 'inline-points', 'inline-points-added', 'inline-reason'].includes(e.target.id)) {
+            e.preventDefault();
+            createInlineDeduction();
+        }
+        if (e.key === 'Escape' && createFormVisible) toggleCreateForm();
+    });
+</script>
+{% endblock %}

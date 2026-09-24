@@ -1,0 +1,1158 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}My Reports{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/reports.css' %}" type="text/css">
+<style>
+/* ============================================================
+   HEADER FILTER CONTROLS — page-local
+   ============================================================ */
+.header-filter-group,
+.header-date-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-filter-group label,
+.header-date-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--rp-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.header-select {
+    padding: 8px 34px 8px 14px;
+    border: 1px solid var(--rp-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--rp-font);
+    background: var(--rp-bg-1);
+    color: var(--rp-text-0);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.25s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    min-width: 160px;
+    box-shadow: var(--rp-shadow-sm);
+}
+
+.header-select:hover { border-color: var(--rp-border-strong); }
+
+.header-select:focus {
+    border-color: var(--rp-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.header-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--rp-border);
+}
+
+.header-date-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--rp-bg-1);
+    border: 1px solid var(--rp-border);
+    border-radius: 10px;
+    box-shadow: var(--rp-shadow-sm);
+    transition: all 0.25s ease;
+}
+
+.header-date-wrapper:focus-within {
+    border-color: var(--rp-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.header-date-wrapper span {
+    font-size: 11px;
+    color: var(--rp-text-2);
+    font-weight: 500;
+}
+
+.header-date-input {
+    background: transparent;
+    color: var(--rp-text-0);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--rp-font);
+    padding: 4px 6px;
+    border: none;
+    outline: none;
+    min-width: 120px;
+    color-scheme: light;
+}
+
+.btn-reset-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--rp-bg-1);
+    color: var(--rp-text-1);
+    border: 1px solid var(--rp-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--rp-font);
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: var(--rp-shadow-sm);
+}
+
+.btn-reset-header:hover {
+    background: var(--rp-bg-2);
+    color: var(--rp-text-0);
+    border-color: var(--rp-border-strong);
+    transform: translateY(-1px);
+}
+
+.btn-reset-header i { font-size: 12px; }
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:member_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li>
+    <a href="{% url 'control_dashboard:member_dashboard' %}" data-tooltip="Dashboard">
+        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-text">Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
+        <span class="nav-icon"><i class="fas fa-balance-scale"></i></span>
+        <span class="nav-text">Daily Trial Balance</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:analytics_dashboard' %}" data-tooltip="Analytics">
+        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-text">Analytics</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
+        <span class="nav-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+        <span class="nav-text">Upload Report</span>
+    </a>
+</li>
+<li class="active">
+    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+        <span class="nav-icon"><i class="fas fa-folder-open"></i></span>
+        <span class="nav-text">My Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
+        <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
+        <span class="nav-text">Consolidated Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:member_checklist' %}" data-tooltip="Checklist">
+        <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+        <span class="nav-text">Activity Checklist</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block page_title %}My Reports{% endblock %}
+
+{% block top_header_center %}
+<div class="header-divider"></div>
+<div class="header-filter-group">
+    <label for="type-filter">Report Type</label>
+    <select id="type-filter" class="header-select">
+        <option value="all">All Types</option>
+        {% for report_type in report_types %}
+        <option value="{{ report_type }}">{{ report_type }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="header-divider"></div>
+
+<div class="header-date-group">
+    <label for="start-date">Date Range</label>
+    <div class="header-date-wrapper">
+        <input type="date" id="start-date" class="header-date-input">
+        <span>to</span>
+        <input type="date" id="end-date" class="header-date-input">
+    </div>
+</div>
+{% endblock %}
+
+{% block top_header_right %}
+<button class="btn-reset-header" onclick="resetFilters()">
+    <i class="fas fa-undo"></i> Reset
+</button>
+{% endblock %}
+
+{% block content %}
+{# ---- URL config for JS (single source of truth) ---- #}
+<script id="reports-config" type="application/json">
+{
+  "urls": {
+    "submitSelected": "{% url 'control_dashboard:submit_selected' %}",
+    "draftDetail":    "{% url 'control_dashboard:draft_detail' 0 %}",
+    "draftEdit":      "{% url 'control_dashboard:draft_edit' 0 %}",
+    "draftDelete":    "{% url 'control_dashboard:draft_delete' 0 %}",
+    "excelEdit":      "{% url 'control_dashboard:excel_row_edit' 0 %}",
+    "excelDelete":    "{% url 'control_dashboard:excel_row_delete' 0 %}"
+  },
+  "openSubmitInNewTab": false
+}
+</script>
+
+<div class="table-container">
+
+    {% if exception_uploads %}
+
+        <!-- Selection Controls -->
+        <div class="selection-controls">
+            <div class="selection-left">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="selectAllReports" onchange="toggleSelectAllReports()">
+                    <span>Select All</span>
+                </label>
+                <span class="selected-count-badge" id="selectedReportsCountBadge">0 selected</span>
+            </div>
+            <div class="selection-right">
+                <button class="btn-submit-selected"
+                        onclick="submitSelectedReports()"
+                        id="submitSelectedReportsBtn"
+                        disabled>
+                    <i class="fas fa-paper-plane"></i> Submit Selected
+                </button>
+            </div>
+        </div>
+
+        {% regroup exception_uploads by report_type as exc_groups %}
+        {% for type_group in exc_groups %}
+            <div class="report-type-group">
+                <div class="report-type-header" onclick="toggleGroup(this)">
+                    <div class="report-type-left">
+                        <i class="fas fa-file-excel report-type-icon"></i>
+                        <h3 class="report-type-title">{{ type_group.grouper|default:"Uncategorized" }}</h3>
+                        <span class="report-type-count">
+                            {{ type_group.list|length }} upload{{ type_group.list|length|pluralize }}
+                        </span>
+                    </div>
+                    <div class="report-type-toggle open">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+
+                <div class="report-type-body">
+                    {% for report_item in type_group.list %}
+                        {% with display=report_item.get_display_data %}
+                            {% if forloop.first %}
+                                <table class="report-details-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="checkbox-cell">
+                                                <input type="checkbox"
+                                                       class="select-all-in-group"
+                                                       data-group="{{ type_group.grouper }}"
+                                                       onchange="toggleGroupSelection(this)">
+                                            </th>
+                                            {% if display.is_excel %}
+                                                {% for header in display.headers %}
+                                                    {% with h=header|upper %}
+                                                        {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
+                                                            <th class="narrow-cell">{{ header|default:"Column" }}</th>
+                                                        {% elif "DATE" in h %}
+                                                            <th class="date-cell">{{ header|default:"Column" }}</th>
+                                                        {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "OFFICER" in h or h == "SUPERVISOR" or h == "STATUS" or "CATEGORY" in h %}
+                                                            <th class="narrow-cell">{{ header|default:"Column" }}</th>
+                                                        {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
+                                                            <th class="num-cell">{{ header|default:"Column" }}</th>
+                                                        {% elif "EXCEPTION" in h or "DESCRIPTION" in h or "OBSERVATION" in h or "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h or "DETAIL" in h %}
+                                                            <th class="wide-cell">{{ header|default:"Column" }}</th>
+                                                        {% else %}
+                                                            <th>{{ header|default:"Column" }}</th>
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                {% endfor %}
+                                            {% else %}
+                                                <th>Branch/Unit</th>
+                                                <th>Date</th>
+                                                <th>Observation</th>
+                                                <th>Responsible Staff</th>
+                                                <th>Status</th>
+                                            {% endif %}
+                                            <th class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                            {% endif %}
+
+                            {% if display.is_excel %}
+                                {% for row in display.rows %}
+                                    <tr data-type="{{ report_item.report_type }}"
+                                        data-id="{{ report_item.id }}"
+                                        data-row-id="{{ row.row_id }}"
+                                        data-kind="excel"
+                                        class="report-row">
+                                        <td class="checkbox-cell">
+                                            <input type="checkbox"
+                                                   class="report-checkbox"
+                                                   data-id="{{ report_item.id }}"
+                                                   data-group="{{ type_group.grouper }}"
+                                                   onchange="toggleReportSelection(this)">
+                                        </td>
+                                        {% for header in display.headers %}
+                                            {% with h=header|upper %}
+                                                {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
+                                                    <td class="narrow-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                {% elif "DATE" in h %}
+                                                    <td class="date-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "OFFICER" in h or h == "SUPERVISOR" or h == "STATUS" or "CATEGORY" in h %}
+                                                    <td class="narrow-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
+                                                    <td class="num-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                {% elif "EXCEPTION" in h or "DESCRIPTION" in h or "OBSERVATION" in h or "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h or "DETAIL" in h %}
+                                                    <td class="wide-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                {% else %}
+                                                    <td>{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endfor %}
+                                        <td class="text-center">
+                                            <div class="table-actions-cluster">
+                                                <button class="btn-edit-modal"
+                                                        onclick="openEditRowModal('{{ report_item.id }}', '{{ row.row_id }}')"
+                                                        title="Edit row">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn-delete"
+                                                        onclick="deleteExcelRow('{{ row.row_id }}')"
+                                                        title="Delete row">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="{{ display.headers|length|default:0|add:2 }}" class="empty-row">
+                                            No data rows found in this Excel import.
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                {% with row=display.rows.0 %}
+                                    <tr data-type="{{ report_item.report_type }}"
+                                        data-id="{{ report_item.id }}"
+                                        data-kind="form"
+                                        class="report-row">
+                                        <td class="checkbox-cell">
+                                            <input type="checkbox"
+                                                   class="report-checkbox"
+                                                   data-id="{{ report_item.id }}"
+                                                   data-group="{{ type_group.grouper }}"
+                                                   onchange="toggleReportSelection(this)">
+                                        </td>
+                                        {% if row %}
+                                            <td class="narrow-cell">
+                                                {% with value=row.Branch|default:row.branch|default:row.BRANCH|default:row.BRANCH_UNIT|default:row.branch_unit|default:row.Unit|default:row.unit|default:"-" %}
+                                                    {{ value }}
+                                                {% endwith %}
+                                            </td>
+                                            <td class="date-cell">
+                                                {% with value=row.Date|default:row.date|default:row.DATE|default:row.Submission_Date|default:row.submission_date|default:"-" %}
+                                                    {{ value }}
+                                                {% endwith %}
+                                            </td>
+                                            <td class="wide-cell">
+                                                {% with value=row.Observation|default:row.observation|default:row.OBSERVATION|default:row.Comments|default:row.comments|default:"-" %}
+                                                    {{ value }}
+                                                {% endwith %}
+                                            </td>
+                                            <td class="narrow-cell">
+                                                {% with value=row.Responsible_Staff|default:row.responsible_staff|default:row.RESPONSIBLE_STAFF|default:row.Staff|default:row.staff|default:"-" %}
+                                                    {{ value }}
+                                                {% endwith %}
+                                            </td>
+                                            <td class="narrow-cell">
+                                                {% with status=row.Status|default:row.status|default:"Open" %}
+                                                    {% if status == 'Open' or status == 'open' or status == 'OPEN' %}
+                                                        <span class="badge-success">{{ status }}</span>
+                                                    {% elif status == 'Closed' or status == 'closed' or status == 'CLOSED' %}
+                                                        <span class="badge-secondary">{{ status }}</span>
+                                                    {% elif status == 'In Progress' or status == 'in progress' or status == 'IN PROGRESS' or status == 'In-Progress' %}
+                                                        <span class="badge-warning">{{ status }}</span>
+                                                    {% elif status == 'Resolved' or status == 'resolved' or status == 'RESOLVED' %}
+                                                        <span class="badge-success">{{ status }}</span>
+                                                    {% elif status == 'Pending' or status == 'pending' or status == 'PENDING' %}
+                                                        <span class="badge-warning">{{ status }}</span>
+                                                    {% elif status == 'Rejected' or status == 'rejected' or status == 'REJECTED' %}
+                                                        <span class="badge-danger">{{ status }}</span>
+                                                    {% else %}
+                                                        <span class="badge-secondary">{{ status|default:"Open" }}</span>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            </td>
+                                        {% else %}
+                                            {# checkbox + 5 fields + actions = 7 #}
+                                            <td colspan="7" class="empty-row">No data available</td>
+                                        {% endif %}
+                                        <td class="text-center">
+                                            <div class="table-actions-cluster">
+                                                <button class="btn-edit-modal"
+                                                        onclick="openEditModal('{{ report_item.id }}')"
+                                                        title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn-delete"
+                                                        onclick="deleteReport('{{ report_item.id }}')"
+                                                        title="Delete">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endwith %}
+                            {% endif %}
+
+                            {% if forloop.last %}
+                                    </tbody>
+                                </table>
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-file-excel"></i>
+            <h3>No Exception Uploads Yet</h3>
+            <p>Use <strong>Upload Report</strong> to import exception data from Excel files.</p>
+        </div>
+    {% endif %}
+
+</div>
+
+<!-- EDIT REPORT MODAL -->
+<div id="editReportModal" class="modal-wrapper" style="display: none;">
+    <div class="modal-content modal-content-wide">
+        <div class="modal-header">
+            <h3 id="editModalTitle">Edit Report</h3>
+            <button type="button" class="modal-close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <form id="editReportForm" onsubmit="submitEditReport(event)">
+            {% csrf_token %}
+            <input type="hidden" id="editReportId" value="">
+            <div id="editFormFields"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn-create">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal-wrapper" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-icon danger">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3>Confirm Deletion</h3>
+        <p id="deleteModalMessage">Are you sure you want to permanently delete this report? This action cannot be undone.</p>
+        <input type="hidden" id="deleteReportId" value="">
+        <input type="hidden" id="deleteRowId" value="">
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn-create btn-danger" onclick="confirmDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toastNotification" class="toast-notification">
+    <div class="toast-icon">
+        <i class="fas fa-check-circle"></i>
+    </div>
+    <div class="toast-content">
+        <p class="toast-title" id="toastTitle">Success</p>
+        <p class="toast-message" id="toastMessage">Action completed successfully</p>
+    </div>
+    <button class="toast-close" onclick="closeToast()">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    // ============================================
+    // CONFIG
+    // ============================================
+    const CFG = JSON.parse(document.getElementById('reports-config').textContent);
+    const urlFor = (tpl, id) => tpl.replace('/0/', '/' + id + '/');
+
+    // ============================================
+    // CSRF TOKEN HELPER
+    // ============================================
+    function getCsrfToken() {
+        const tokenInput = document.querySelector('input[name=csrfmiddlewaretoken]');
+        if (tokenInput && tokenInput.value) return tokenInput.value;
+        const name = 'csrftoken';
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        for (let i = 0; i < cookies.length; i++) {
+            const c = cookies[i].trim();
+            if (c.substring(0, name.length + 1) === (name + '=')) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    // ============================================
+    // TOAST
+    // ============================================
+    function showToast(message, type) {
+        const toast = document.getElementById('toastNotification');
+        const title = document.getElementById('toastTitle');
+        const msg   = document.getElementById('toastMessage');
+        if (!toast) return;
+        title.textContent = (type === 'success') ? 'Success' : 'Error';
+        msg.textContent = message;
+        toast.className = 'toast-notification show ' + (type === 'success' ? 'success' : 'error');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    function closeToast() {
+        const toast = document.getElementById('toastNotification');
+        if (toast) toast.classList.remove('show');
+    }
+
+    // ============================================
+    // TOGGLE GROUP
+    // ============================================
+    function toggleGroup(header) {
+        const body = header.nextElementSibling;
+        if (!body) return;
+        body.classList.toggle('collapsed');
+        const toggle = header.querySelector('.report-type-toggle');
+        if (toggle) toggle.classList.toggle('open', !body.classList.contains('collapsed'));
+    }
+
+    // ============================================
+    // RESET FILTERS
+    // ============================================
+    function resetFilters() {
+        const t = document.getElementById('type-filter');
+        const s = document.getElementById('start-date');
+        const e = document.getElementById('end-date');
+        if (t) t.value = 'all';
+        if (s) s.value = '';
+        if (e) e.value = '';
+        location.reload();
+    }
+
+    // ============================================
+    // REPORT SELECTION
+    //   The Set stores unique report IDs.
+    //   All rows belonging to the same report toggle together.
+    // ============================================
+    const selectedReportIds = new Set();
+
+    function eachCheckbox(cb) {
+        return document.querySelectorAll(
+            '.report-checkbox[data-id="' + cb.dataset.id + '"]'
+        );
+    }
+
+    function toggleSelectAllReports() {
+        const selectAll = document.getElementById('selectAllReports');
+        const allChecked = selectAll.checked;
+        document.querySelectorAll('.report-checkbox').forEach(cb => {
+            cb.checked = allChecked;
+            const id = parseInt(cb.dataset.id, 10);
+            if (allChecked) selectedReportIds.add(id);
+            else            selectedReportIds.delete(id);
+            cb.closest('tr').classList.toggle('selected', allChecked);
+        });
+        document.querySelectorAll('.select-all-in-group').forEach(g => {
+            g.checked = allChecked;
+            g.indeterminate = false;
+        });
+        updateReportSelectionCount();
+    }
+
+    function toggleGroupSelection(groupCheckbox) {
+        const group = groupCheckbox.dataset.group;
+        const isChecked = groupCheckbox.checked;
+        document.querySelectorAll('.report-checkbox[data-group="' + group + '"]').forEach(cb => {
+            cb.checked = isChecked;
+            const id = parseInt(cb.dataset.id, 10);
+            if (isChecked) selectedReportIds.add(id);
+            else           selectedReportIds.delete(id);
+            cb.closest('tr').classList.toggle('selected', isChecked);
+        });
+        updateReportSelectionCount();
+        syncSelectAllReportsCheckbox();
+    }
+
+    function toggleReportSelection(cb) {
+        const id = parseInt(cb.dataset.id, 10);
+        const checked = cb.checked;
+        if (checked) selectedReportIds.add(id);
+        else         selectedReportIds.delete(id);
+
+        // Reflect state across all rows of the same report
+        eachCheckbox(cb).forEach(c => {
+            c.checked = checked;
+            c.closest('tr').classList.toggle('selected', checked);
+        });
+
+        syncSelectAllReportsCheckbox();
+        syncGroupCheckboxes(cb.dataset.group);
+        updateReportSelectionCount();
+    }
+
+    function syncSelectAllReportsCheckbox() {
+        const all = document.querySelectorAll('.report-checkbox');
+        const checked = document.querySelectorAll('.report-checkbox:checked');
+        const selectAll = document.getElementById('selectAllReports');
+        if (!selectAll) return;
+        selectAll.checked = all.length > 0 && checked.length === all.length;
+        selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+    }
+
+    function syncGroupCheckboxes(group) {
+        if (!group) return;
+        const groupCheckbox = document.querySelector('.select-all-in-group[data-group="' + group + '"]');
+        if (!groupCheckbox) return;
+        const groupRows = document.querySelectorAll('.report-checkbox[data-group="' + group + '"]');
+        const groupChecked = document.querySelectorAll('.report-checkbox[data-group="' + group + '"]:checked');
+        groupCheckbox.checked = groupRows.length > 0 && groupChecked.length === groupRows.length;
+        groupCheckbox.indeterminate = groupChecked.length > 0 && groupChecked.length < groupRows.length;
+    }
+
+    function updateReportSelectionCount() {
+        const count = selectedReportIds.size;
+        const badge = document.getElementById('selectedReportsCountBadge');
+        const btn = document.getElementById('submitSelectedReportsBtn');
+        if (badge) badge.textContent = count + ' selected';
+        if (btn) {
+            btn.disabled = (count === 0);
+            btn.innerHTML = (count > 0)
+                ? '<i class="fas fa-paper-plane"></i> Submit ' + count + ' Selected'
+                : '<i class="fas fa-paper-plane"></i> Submit Selected';
+        }
+    }
+
+    function submitSelectedReports() {
+        if (selectedReportIds.size === 0) {
+            showToast('Please select at least one report to submit.', 'error');
+            return;
+        }
+
+        const selectedIds = Array.from(selectedReportIds);
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = CFG.urls.submitSelected;
+        if (CFG.openSubmitInNewTab) form.target = '_blank';
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = getCsrfToken();
+        form.appendChild(csrfInput);
+
+        const dataInput = document.createElement('input');
+        dataInput.type = 'hidden';
+        dataInput.name = 'selected_reports';
+        dataInput.value = JSON.stringify(selectedIds);
+        form.appendChild(dataInput);
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
+
+    // ============================================
+    // DELETE — single Excel row
+    // ============================================
+    function deleteExcelRow(rowId) {
+        if (!rowId) return;
+        document.getElementById('deleteReportId').value = '';
+        document.getElementById('deleteRowId').value = rowId;
+        document.getElementById('deleteModalMessage').textContent =
+            'Are you sure you want to delete this single row? This action cannot be undone.';
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    // ============================================
+    // DELETE — whole Report
+    // ============================================
+    function deleteReport(reportId) {
+        document.getElementById('deleteReportId').value = reportId;
+        document.getElementById('deleteRowId').value = '';
+        document.getElementById('deleteModalMessage').textContent =
+            'Are you sure you want to permanently delete this report? This action cannot be undone.';
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        document.getElementById('deleteReportId').value = '';
+        document.getElementById('deleteRowId').value = '';
+    }
+
+    function confirmDelete() {
+        const reportId = document.getElementById('deleteReportId').value;
+        const rowId    = document.getElementById('deleteRowId').value;
+
+        const btn = document.querySelector('#deleteModal .btn-danger');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+        btn.disabled = true;
+
+        let url;
+        if (rowId) {
+            url = urlFor(CFG.urls.excelDelete, rowId);
+        } else if (reportId) {
+            url = urlFor(CFG.urls.draftDelete, reportId);
+        } else {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            return;
+        }
+
+        fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => { throw new Error(data.error || 'Server error'); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+
+            if (data.success) {
+                if (rowId) {
+                    showToast('Row deleted successfully!', 'success');
+                    const tr = document.querySelector('tr[data-row-id="' + rowId + '"]');
+                    if (tr) tr.remove();
+                    closeDeleteModal();
+                } else {
+                    showToast('Report deleted successfully!', 'success');
+                    closeDeleteModal();
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } else {
+                showToast(data.error || 'Failed to delete.', 'error');
+            }
+        })
+        .catch(error => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            showToast(error.message || 'An error occurred.', 'error');
+        });
+    }
+
+    // ============================================
+    // OPEN EDIT MODAL — whole Report
+    // ============================================
+    function openEditModal(reportId) {
+        if (!reportId) {
+            showToast('Invalid report ID', 'error');
+            return;
+        }
+
+        document.getElementById('editModalTitle').textContent = 'Edit Report';
+        document.getElementById('editReportId').value = reportId;
+        document.getElementById('editFormFields').innerHTML =
+            '<p style="text-align:center;padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading...</p>';
+        document.getElementById('editReportModal').style.display = 'flex';
+
+        const form = document.getElementById('editReportForm');
+        delete form.dataset.mode;
+        delete form.dataset.rowId;
+
+        fetch(urlFor(CFG.urls.draftDetail, reportId), {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Server returned ' + response.status);
+            return response.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                showToast('Error loading report details: ' + (data.error || 'Unknown error'), 'error');
+                closeEditModal();
+                return;
+            }
+            const reportData = (data.report && data.report.data) || {};
+            document.getElementById('editFormFields').innerHTML = buildFormEditorHTML(reportData);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error loading report details. Please try again.', 'error');
+            closeEditModal();
+        });
+    }
+
+    // ============================================
+    // OPEN EDIT MODAL — single Excel row
+    // ============================================
+    function openEditRowModal(reportId, rowId) {
+        if (!rowId) { showToast('Invalid row ID', 'error'); return; }
+
+        const tr = document.querySelector('tr[data-row-id="' + rowId + '"]');
+        if (!tr) { showToast('Row not found in page.', 'error'); return; }
+
+        const table = tr.closest('table');
+        const headers = [];
+        table.querySelectorAll('thead th').forEach((th, idx) => {
+            if (idx === 0) return;                          // checkbox col
+            const txt = th.textContent.trim();
+            if (txt.toLowerCase() === 'actions') return;
+            headers.push(txt);
+        });
+
+        const cells = [];
+        tr.querySelectorAll('td').forEach(td => {
+            if (td.classList.contains('checkbox-cell')) return;
+            if (td.querySelector('.table-actions-cluster')) return;
+            cells.push(td.textContent.trim());
+        });
+
+        let html = '<div class="form-group">';
+        html += '<p style="font-size:12px;color:#6b7280;margin-bottom:12px;">Editing a single row. Only this row will be updated.</p>';
+        headers.forEach((h, i) => {
+            const val = (cells[i] === '-' || cells[i] === undefined) ? '' : cells[i];
+            html += '<label>' + escapeHtml(h) + '</label>';
+            html += '<input type="text" class="form-control excel-row-cell" data-col="' + escapeHtml(h) + '" value="' + escapeHtml(val) + '">';
+            html += '<div style="height:10px;"></div>';
+        });
+        html += '</div>';
+
+        document.getElementById('editModalTitle').textContent = 'Edit Row';
+        document.getElementById('editReportId').value = reportId;
+        document.getElementById('editFormFields').innerHTML = html;
+        document.getElementById('editReportModal').style.display = 'flex';
+
+        const form = document.getElementById('editReportForm');
+        form.dataset.mode = 'excel-row';
+        form.dataset.rowId = rowId;
+    }
+
+    // ============================================
+    // CLOSE EDIT MODAL
+    // ============================================
+    function closeEditModal() {
+        const form = document.getElementById('editReportForm');
+        if (form) {
+            delete form.dataset.mode;
+            delete form.dataset.rowId;
+        }
+        document.getElementById('editReportModal').style.display = 'none';
+        document.getElementById('editReportId').value = '';
+        document.getElementById('editFormFields').innerHTML = '';
+    }
+
+    // ============================================
+    // SUBMIT EDIT REPORT
+    // ============================================
+    function submitEditReport(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const mode = form.dataset.mode || 'report';
+
+        if (mode === 'excel-row') {
+            const rowId = form.dataset.rowId;
+            const cells = {};
+            form.querySelectorAll('.excel-row-cell').forEach(inp => {
+                cells[inp.dataset.col] = inp.value;
+            });
+
+            const btn = form.querySelector('button[type="submit"]');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            btn.disabled = true;
+
+            fetch(urlFor(CFG.urls.excelEdit, rowId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ cells: cells }),
+                credentials: 'same-origin'
+            })
+            .then(r => {
+                if (!r.ok) return r.json().then(d => { throw new Error(d.error || 'Server error'); });
+                return r.json();
+            })
+            .then(data => {
+                btn.innerHTML = original;
+                btn.disabled = false;
+                if (data.success) {
+                    showToast('Row updated successfully!', 'success');
+                    closeEditModal();
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showToast(data.error || 'Failed to update row.', 'error');
+                }
+            })
+            .catch(err => {
+                btn.innerHTML = original;
+                btn.disabled = false;
+                showToast(err.message || 'An error occurred.', 'error');
+            });
+            return;
+        }
+
+        // ---- Report mode ----
+        const reportId = document.getElementById('editReportId').value;
+        const formContainer = document.getElementById('editFormFields');
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+
+        const formData = {};
+        formContainer.querySelectorAll('input, select, textarea').forEach(input => {
+            const key = input.getAttribute('data-key');
+            if (key) formData[key] = input.value;
+        });
+
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        submitBtn.disabled = true;
+
+        fetch(urlFor(CFG.urls.draftEdit, reportId), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                form_data: formData,
+                is_excel: false
+            }),
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => { throw new Error(data.error || 'Server error'); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            if (data.success) {
+                showToast('Report updated successfully!', 'success');
+                closeEditModal();
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.error || 'Failed to update report.', 'error');
+            }
+        })
+        .catch(error => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+            showToast(error.message || 'An error occurred.', 'error');
+        });
+    }
+
+    // ============================================
+    // BUILD FORM EDITOR HTML
+    // ============================================
+    function buildFormEditorHTML(reportData) {
+        let formData = {};
+        if (reportData.form_data && reportData.form_data.length > 0) {
+            formData = reportData.form_data[0];
+        } else if (reportData && typeof reportData === 'object' && !reportData.import_type) {
+            formData = reportData;
+        }
+
+        if (!formData || Object.keys(formData).length === 0) {
+            return '<p style="color:#6b7280;text-align:center;padding:20px;">No editable fields found.</p>';
+        }
+
+        const fields = [
+            { label: 'Branch/Unit',       field_type: 'text'     },
+            { label: 'Date',              field_type: 'date'     },
+            { label: 'Observation',       field_type: 'textarea' },
+            { label: 'Responsible Staff', field_type: 'text'     },
+            { label: 'Status',            field_type: 'dropdown' }
+        ];
+
+        const statusOptions = ['Open', 'In Progress', 'Resolved', 'Closed', 'Pending Review'];
+        let html = '';
+
+        fields.forEach(field => {
+            const fieldLabel = field.label;
+            const value =
+                formData[fieldLabel] !== undefined ? formData[fieldLabel] :
+                formData[fieldLabel.toUpperCase()] !== undefined ? formData[fieldLabel.toUpperCase()] :
+                formData[fieldLabel.toLowerCase()] || '';
+
+            html += '<div class="form-group">';
+            html += '<label>' + escapeHtml(fieldLabel) + '</label>';
+
+            if (field.field_type === 'dropdown') {
+                html += '<select class="form-control" data-key="' + escapeHtml(fieldLabel) + '">';
+                statusOptions.forEach(opt => {
+                    const selected = (opt === value) ? 'selected' : '';
+                    html += '<option value="' + escapeHtml(opt) + '" ' + selected + '>' + escapeHtml(opt) + '</option>';
+                });
+                html += '</select>';
+            } else if (field.field_type === 'textarea') {
+                html += '<textarea class="form-control" data-key="' + escapeHtml(fieldLabel) + '" rows="3">' + escapeHtml(value) + '</textarea>';
+            } else if (field.field_type === 'date') {
+                html += '<input type="date" class="form-control" data-key="' + escapeHtml(fieldLabel) + '" value="' + escapeHtml(value) + '">';
+            } else {
+                html += '<input type="text" class="form-control" data-key="' + escapeHtml(fieldLabel) + '" value="' + escapeHtml(value) + '">';
+            }
+            html += '</div>';
+        });
+
+        return html;
+    }
+
+    // ============================================
+    // ESCAPE HTML
+    // ============================================
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    }
+
+    // ============================================
+    // OUTSIDE-CLICK CLOSE
+    // ============================================
+    window.addEventListener('click', event => {
+        const editModal   = document.getElementById('editReportModal');
+        const deleteModal = document.getElementById('deleteModal');
+        if (event.target === editModal)   closeEditModal();
+        if (event.target === deleteModal) closeDeleteModal();
+    });
+
+    // ============================================
+    // DATE FILTER (ISO-safe)
+    // ============================================
+    function parseRowDate(s) {
+        if (!s || s === '-') return null;
+        const t = Date.parse(s);
+        return Number.isNaN(t) ? null : new Date(t);
+    }
+
+    function applyDateFilter() {
+        const startVal = document.getElementById('start-date').value;
+        const endVal   = document.getElementById('end-date').value;
+        const start = startVal ? new Date(startVal) : null;
+        const end   = endVal   ? new Date(endVal)   : null;
+        if (end) end.setHours(23, 59, 59, 999);
+
+        document.querySelectorAll('.report-details-table tbody tr').forEach(row => {
+            if (row.dataset.kind === 'excel') return;      // Excel rows have per-row dates in arbitrary columns
+            if (row.querySelector('.empty-row')) return;
+
+            const dateCell = row.querySelector('td.date-cell');
+            if (!dateCell) return;
+
+            const d = parseRowDate(dateCell.textContent.trim());
+            if (!d) return;
+
+            let show = true;
+            if (start && d < start) show = false;
+            if (end   && d > end)   show = false;
+            row.style.display = show ? '' : 'none';
+        });
+    }
+
+    // ============================================
+    // INIT
+    // ============================================
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.report-type-body').forEach(b => b.classList.remove('collapsed'));
+        document.querySelectorAll('.report-type-toggle').forEach(t => t.classList.add('open'));
+
+        const typeFilter = document.getElementById('type-filter');
+        if (typeFilter) {
+            typeFilter.addEventListener('change', function () {
+                const selectedType = this.value;
+                document.querySelectorAll('.report-details-table tbody tr').forEach(row => {
+                    if (row.querySelector('.empty-row')) return;
+                    const reportType = row.getAttribute('data-type');
+                    row.style.display = (selectedType === 'all' || reportType === selectedType) ? '' : 'none';
+                });
+            });
+        }
+
+        const startDate = document.getElementById('start-date');
+        const endDate   = document.getElementById('end-date');
+        if (startDate) startDate.addEventListener('change', applyDateFilter);
+        if (endDate)   endDate.addEventListener('change', applyDateFilter);
+    });
+
+    // ============================================
+    // EXPOSE HANDLERS TO INLINE onclick
+    // ============================================
+    window.showToast                = showToast;
+    window.closeToast               = closeToast;
+    window.toggleGroup              = toggleGroup;
+    window.resetFilters             = resetFilters;
+    window.toggleSelectAllReports   = toggleSelectAllReports;
+    window.toggleGroupSelection     = toggleGroupSelection;
+    window.toggleReportSelection    = toggleReportSelection;
+    window.submitSelectedReports    = submitSelectedReports;
+    window.deleteExcelRow           = deleteExcelRow;
+    window.deleteReport             = deleteReport;
+    window.closeDeleteModal         = closeDeleteModal;
+    window.confirmDelete            = confirmDelete;
+    window.openEditModal            = openEditModal;
+    window.openEditRowModal         = openEditRowModal;
+    window.closeEditModal           = closeEditModal;
+    window.submitEditReport         = submitEditReport;
+
+})();
+</script>
+{% endblock %}

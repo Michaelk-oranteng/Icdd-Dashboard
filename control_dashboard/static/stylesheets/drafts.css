@@ -1,0 +1,721 @@
+/* ============================================
+   SUBMIT PAGE STYLES - Enhanced
+   OmniBSIC Bank - Member Submit Report
+   ============================================ */
+
+/* ==========================================================================
+   1. CSS VARIABLES
+   ========================================================================== */
+
+:root {
+    --omni-primary: #003399;
+    --omni-primary-dark: #002266;
+    --omni-primary-rgb: 0, 51, 153;
+    
+    --omni-success: #10b981;
+    --omni-success-dark: #059669;
+    --omni-success-rgb: 16, 185, 129;
+    
+    --omni-danger: #dc2626;
+    --omni-danger-rgb: 220, 38, 38;
+    
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --glass-shadow: rgba(0, 0, 0, 0.08);
+    
+    --text-primary: #1a2332;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --text-white: #ffffff;
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+    
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 48px;
+    
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+    
+    --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ==========================================================================
+   2. CONTAINER
+   ========================================================================== */
+
+.submit-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--space-md);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    box-shadow: 0 8px 32px var(--glass-shadow);
+    transition: all var(--transition-slow);
+}
+
+.glass-card:hover {
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* ==========================================================================
+   3. HEADER SECTION
+   ========================================================================== */
+
+.submit-header {
+    text-align: center;
+    padding: var(--space-md) 0 var(--space-lg) 0;
+}
+
+.submit-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.submit-header .subtitle {
+    color: var(--text-secondary);
+    font-size: 15px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ==========================================================================
+   4. CONTROLS
+   ========================================================================== */
+
+.submit-controls {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+    flex-wrap: wrap;
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.submit-controls .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    flex: 1;
+    min-width: 200px;
+    max-width: 350px;
+}
+
+.submit-controls .form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.submit-controls .form-control {
+    padding: 10px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: var(--font-family);
+    background: white;
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+    min-width: 200px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+.submit-controls .form-control:focus {
+    border-color: var(--omni-primary);
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(var(--omni-primary-rgb), 0.1);
+}
+
+/* ==========================================================================
+   5. UPLOAD BUTTON
+   ========================================================================== */
+
+.btn-upload {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: 10px 28px;
+    background: var(--omni-success);
+    color: var(--text-white);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all var(--transition-normal);
+    font-family: var(--font-family);
+    white-space: nowrap;
+    height: 48px;
+    min-width: 160px;
+}
+
+.btn-upload:hover:not(:disabled) {
+    background: var(--omni-success-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(var(--omni-success-rgb), 0.35);
+}
+
+.btn-upload:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-upload .spinner {
+    display: none;
+    animation: spin 1s linear infinite;
+}
+
+.btn-upload.loading .spinner {
+    display: inline-block;
+}
+
+.btn-upload.loading .btn-text {
+    display: none;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   6. UPLOAD STATUS
+   ========================================================================== */
+
+.upload-status {
+    display: none;
+    margin-top: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-sm);
+    border-left: 4px solid var(--omni-success);
+    background: #f0fdf4;
+}
+
+.upload-status.show {
+    display: block;
+}
+
+.upload-status.error {
+    border-left-color: var(--omni-danger);
+    background: #fef2f2;
+}
+
+.upload-status .status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.upload-status .status-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex: 1;
+}
+
+.upload-status .status-icon {
+    font-size: 20px;
+    color: var(--omni-success);
+}
+
+.upload-status.error .status-icon {
+    color: var(--omni-danger);
+}
+
+.upload-status .status-message {
+    font-size: 14px;
+    font-weight: 500;
+    color: #065f46;
+}
+
+.upload-status.error .status-message {
+    color: #991b1b;
+}
+
+.upload-status .status-actions {
+    display: flex;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+}
+
+.btn-clear {
+    padding: 4px 16px;
+    background: #fee2e2;
+    color: var(--omni-danger);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    font-family: var(--font-family);
+}
+
+.btn-clear:hover {
+    background: #fecaca;
+}
+
+/* ==========================================================================
+   7. PREVIEW TABLE
+   ========================================================================== */
+
+.preview-container {
+    margin-top: var(--space-xl);
+    display: none;
+}
+
+.preview-container.show {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.preview-header h4 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.preview-header h4 i {
+    color: var(--omni-primary);
+}
+
+.preview-header .record-count {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-white);
+    background: var(--omni-primary);
+    padding: 6px 18px;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid #e5e7eb;
+    background: white;
+}
+
+.preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-family: var(--font-family);
+}
+
+.preview-table thead {
+    background: #f8fafc;
+}
+
+.preview-table thead th {
+    padding: 14px 18px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 2px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap;
+    background: #f8fafc;
+}
+
+.preview-table tbody td {
+    padding: 12px 18px;
+    border-bottom: 1px solid #f3f4f6;
+    color: var(--text-primary);
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.preview-table tbody tr:hover td {
+    background: rgba(var(--omni-primary-rgb), 0.03);
+}
+
+.preview-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.preview-table .empty-cell {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.preview-table .more-rows {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    background: #f8fafc;
+    padding: 12px 20px;
+}
+
+/* ==========================================================================
+   8. SUBMIT ACTIONS - CENTERED
+   ========================================================================== */
+
+.submit-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+}
+
+.btn-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: 14px 48px;
+    background: var(--omni-primary);
+    color: var(--text-white);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all var(--transition-normal);
+    font-family: var(--font-family);
+    min-width: 200px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-submit:hover:not(:disabled) {
+    background: var(--omni-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(var(--omni-primary-rgb), 0.35);
+}
+
+.btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-submit i {
+    font-size: 18px;
+}
+
+.btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding: 14px 32px;
+    background: #f3f4f6;
+    color: var(--text-secondary);
+    border: 2px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    font-family: var(--font-family);
+    min-width: 140px;
+}
+
+.btn-cancel:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+    transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   9. EMPTY STATE
+   ========================================================================== */
+
+.empty-state {
+    text-align: center;
+    padding: var(--space-2xl) var(--space-lg);
+    color: var(--text-secondary);
+}
+
+.empty-state .empty-icon {
+    font-size: 64px;
+    color: #d1d5db;
+    margin-bottom: var(--space-md);
+    display: block;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.empty-state p {
+    font-size: 14px;
+    margin: 0;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ==========================================================================
+   10. TOAST NOTIFICATION
+   ========================================================================== */
+
+.toast-notification {
+    position: fixed;
+    bottom: var(--space-lg);
+    right: var(--space-lg);
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    padding: var(--space-md) var(--space-lg);
+    max-width: 420px;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    border-left: 4px solid var(--omni-success);
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    font-family: var(--font-family);
+}
+
+.toast-notification.show {
+    transform: translateX(0);
+}
+
+.toast-notification.error {
+    border-left-color: var(--omni-danger);
+}
+
+.toast-notification .toast-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: rgba(var(--omni-success-rgb), 0.1);
+    color: var(--omni-success);
+}
+
+.toast-notification.error .toast-icon {
+    background: rgba(var(--omni-danger-rgb), 0.1);
+    color: var(--omni-danger);
+}
+
+.toast-notification .toast-content {
+    flex: 1;
+}
+
+.toast-notification .toast-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.toast-notification .toast-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 2px 0 0 0;
+}
+
+.toast-notification .toast-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.toast-notification .toast-close:hover {
+    color: var(--text-primary);
+}
+
+/* ==========================================================================
+   11. RESPONSIVE - MOBILE
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .submit-container {
+        padding: 0 var(--space-sm);
+    }
+    
+    .glass-card {
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+    }
+    
+    .submit-header h2 {
+        font-size: 22px;
+    }
+    
+    .submit-header .subtitle {
+        font-size: 13px;
+    }
+    
+    .submit-controls {
+        flex-direction: column;
+        align-items: stretch;
+        padding: var(--space-md);
+        gap: var(--space-md);
+    }
+    
+    .submit-controls .form-group {
+        min-width: unset;
+        max-width: unset;
+        width: 100%;
+    }
+    
+    .submit-controls .form-control {
+        width: 100%;
+        min-width: unset;
+    }
+    
+    .btn-upload {
+        width: 100%;
+        justify-content: center;
+        min-width: unset;
+    }
+    
+    .submit-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+    
+    .btn-submit,
+    .btn-cancel {
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+    }
+    
+    .preview-table thead th,
+    .preview-table tbody td {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .toast-notification {
+        left: var(--space-md);
+        right: var(--space-md);
+        bottom: var(--space-md);
+        max-width: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .glass-card {
+        padding: var(--space-sm);
+    }
+    
+    .submit-header h2 {
+        font-size: 20px;
+    }
+    
+    .submit-header .subtitle {
+        font-size: 12px;
+    }
+    
+    .btn-submit,
+    .btn-cancel {
+        max-width: 100%;
+        padding: 12px 24px;
+        font-size: 14px;
+    }
+    
+    .btn-submit {
+        min-width: unset;
+    }
+    
+    .btn-cancel {
+        min-width: unset;
+    }
+    
+    .preview-table thead th,
+    .preview-table tbody td {
+        padding: 6px 8px;
+        font-size: 10px;
+    }
+    
+    .toast-notification {
+        padding: var(--space-sm) var(--space-md);
+    }
+    
+    .toast-notification .toast-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+}

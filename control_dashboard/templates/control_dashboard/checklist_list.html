@@ -1,0 +1,564 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Checklist Activities{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/checklist_list.css' %}" type="text/css">
+<style>
+    /* Additional styles for department/branch columns */
+    .assigned-items-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+    }
+    
+    .assigned-items-list .item-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 10px;
+        white-space: nowrap;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .assigned-items-list .item-tag.branch-tag {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .assigned-items-list .item-tag.dept-tag {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .assigned-items-list .item-tag.more-tag {
+        background: #f3f4f6;
+        color: #6b7280;
+        font-size: 9px;
+        cursor: help;
+    }
+    
+    .assigned-items-list .no-assignment {
+        color: #9ca3af;
+        font-size: 11px;
+        font-style: italic;
+    }
+    
+    .assignment-cell {
+        max-width: 200px;
+    }
+    
+    .checklist-table th {
+        white-space: nowrap;
+    }
+    
+    .checklist-table td {
+        vertical-align: top;
+        padding: 10px 8px;
+    }
+    
+    /* Column width adjustments */
+    .checklist-table .col-name { min-width: 160px; }
+    .checklist-table .col-frequency { min-width: 100px; }
+    .checklist-table .col-assignment { min-width: 120px; }
+    .checklist-table .col-branches { min-width: 140px; }
+    .checklist-table .col-departments { min-width: 140px; }
+    .checklist-table .col-tasks { min-width: 200px; }
+    .checklist-table .col-actions { min-width: 100px; text-align: center; }
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:admin_page' %}{% endblock %}
+
+{% block nav_links %}
+<li><a href="{% url 'control_dashboard:admin_page' %}">
+    <span class="nav-icon"><i class="fas fa-user-cog"></i></span>
+    <span class="nav-text">User Management</span>
+</a></li> 
+<li><a href="{% url 'control_dashboard:report_creation' %}">
+    <span class="nav-icon"><i class="fas fa-flag"></i></span>
+    <span class="nav-text">Report Creation</span>
+</a></li>  
+<li><a href="{% url 'control_dashboard:report_center' %}">
+    <span class="nav-icon"><i class="fas fa-flag"></i></span>
+    <span class="nav-text">Report Center</span>
+</a></li>   
+<li><a href="{% url 'control_dashboard:checklist_builder' %}">
+    <span class="nav-icon"><i class="fas fa-cubes"></i></span>
+    <span class="nav-text">Checklist Builder</span>
+</a></li>   
+<li class="active"><a href="{% url 'control_dashboard:checklist_list' %}">
+    <span class="nav-icon"><i class="fas fa-tools"></i></span>
+    <span class="nav-text">Checklist Activities</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:activity_logs' %}">
+    <span class="nav-icon"><i class="fas fa-key"></i></span>
+    <span class="nav-text">Activity Logs</span>
+</a></li> 
+{% endblock %}
+
+{% block page_title %}Checklist Activities{% endblock %}
+
+{% block page_subtitle %}
+<span class="page-subtitle">View and manage all created checklists</span>
+{% endblock %}
+
+{% block top_header_center %}
+<!-- Empty -->
+{% endblock %}
+
+{% block top_header_right %}
+<a href="{% url 'control_dashboard:checklist_builder' %}" class="btn-create-header">
+    <i class="fas fa-plus"></i> Create New
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="checklist-list-container">
+    <div class="table-container">
+        <div class="table-header">
+            <h4><i class="fas fa-clipboard-list"></i> All Activities ({{ checklists|length }})</h4>
+            <div class="table-actions">
+                <input type="text" id="searchChecklist" class="table-input" placeholder="Search activities..." style="width: 200px;" onkeyup="filterChecklists()">
+                <button class="btn-refresh" onclick="location.reload()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        {% if checklists %}
+        <table class="users-table checklist-table">
+            <thead>
+                <tr>
+                    <th class="col-name">Activity Name</th>
+                    <th class="col-frequency">Frequency</th>
+                    <th class="col-assignment">Assignment Target</th>
+                    <th class="col-branches">Assigned Branches</th>
+                    <th class="col-departments">Assigned Departments</th>
+                    <th class="col-tasks">Checklist Items</th>
+                    <th class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for checklist in checklists %}
+                <tr data-id="{{ checklist.id }}" class="checklist-row">
+                    <td class="col-name font-bold">
+                        <i class="fas fa-clipboard-check" style="color: #0066cc; margin-right: 8px;"></i>
+                        {{ checklist.name }}
+                    </td>
+                    <td class="col-frequency">
+                        <span class="frequency-tag {{ checklist.frequency }}">
+                            {{ checklist.get_frequency_display }}
+                        </span>
+                    </td>
+                    <td class="col-assignment">
+                        <span class="assignment-tag {% if checklist.assignment_target == 'all' %}all{% elif checklist.assignment_target == 'hc' %}hc{% elif checklist.assignment_target == 'cc' %}cc{% else %}specific{% endif %}">
+                            {% if checklist.assignment_target == 'all' %}
+                                All Personnel
+                            {% elif checklist.assignment_target == 'hc' %}
+                                Head Office Control
+                            {% elif checklist.assignment_target == 'cc' %}
+                                Cluster Control
+                            {% else %}
+                                Specific Users
+                            {% endif %}
+                        </span>
+                        {% if checklist.assignment_target == 'specific' %}
+                        <div class="assigned-users-list" style="margin-top: 4px;">
+                            {% for user in checklist.assigned_users.all|slice:":3" %}
+                            <span class="user-tag">{{ user.full_name|default:user.email }}</span>
+                            {% endfor %}
+                            {% if checklist.assigned_users.count > 3 %}
+                            <span class="user-tag more">+{{ checklist.assigned_users.count|add:"-3" }}</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="col-branches assignment-cell">
+                        <div class="assigned-items-list">
+                            {% with branches=checklist.assigned_branches.all %}
+                                {% if branches %}
+                                    {% for branch in branches|slice:":3" %}
+                                        <span class="item-tag branch-tag" title="{{ branch.name }}">{{ branch.name }}</span>
+                                    {% endfor %}
+                                    {% if branches|length > 3 %}
+                                        <span class="item-tag more-tag" title="{{ branches|join:', ' }}">+{{ branches|length|add:"-3" }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="no-assignment">Not assigned</span>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </td>
+                    <td class="col-departments assignment-cell">
+                        <div class="assigned-items-list">
+                            {% with departments=checklist.assigned_departments.all %}
+                                {% if departments %}
+                                    {% for dept in departments|slice:":3" %}
+                                        <span class="item-tag dept-tag" title="{{ dept.name }}">{{ dept.name }}</span>
+                                    {% endfor %}
+                                    {% if departments|length > 3 %}
+                                        <span class="item-tag more-tag" title="{{ departments|join:', ' }}">+{{ departments|length|add:"-3" }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="no-assignment">Not assigned</span>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </td>
+                    <td class="col-tasks">
+                        <ul class="task-list">
+                            {% for task in checklist.tasks.all|slice:":3" %}
+                            <li><i class="fas fa-check-circle"></i> {{ task.description }}</li>
+                            {% empty %}
+                            <li class="text-muted">No tasks defined</li>
+                            {% endfor %}
+                            {% if checklist.tasks.count > 3 %}
+                            <li class="text-muted more-tasks">+{{ checklist.tasks.count|add:"-3" }} more tasks</li>
+                            {% endif %}
+                        </ul>
+                    </td>
+                    <td class="col-actions text-center">
+                        <div class="action-buttons">
+                            <button class="btn-action edit" onclick="editChecklist('{{ checklist.id }}')" title="Edit Activity">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action delete" onclick="deleteChecklist('{{ checklist.id }}')" title="Delete Activity">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="btn-action view" onclick="viewChecklist('{{ checklist.id }}')" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h3>No Checklists Created</h3>
+            <p>Create your first checklist using the <a href="{% url 'control_dashboard:checklist_builder' %}">Checklist Builder</a></p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ==================== DELETE CONFIRMATION MODAL ==================== -->
+<div id="deleteModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+        <div class="modal-icon danger">
+            <i class="fas fa-trash"></i>
+        </div>
+        <h2>Confirm Delete</h2>
+        <p>Are you sure you want to delete this checklist? This action cannot be undone.</p>
+        <input type="hidden" id="deleteChecklistId">
+        <div class="modal-actions">
+            <button onclick="closeDeleteModal()" class="btn-secondary">Cancel</button>
+            <button onclick="confirmDeleteChecklist()" class="btn-danger">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== VIEW CHECKLIST MODAL ==================== -->
+<div id="viewModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 550px;">
+        <div class="modal-header">
+            <h2 id="viewChecklistTitle">Checklist Details</h2>
+            <button class="modal-close" onclick="closeViewModal()">&times;</button>
+        </div>
+        <div id="viewChecklistContent">
+            <!-- Dynamically populated -->
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TOAST NOTIFICATION ==================== -->
+<div id="toastNotification" class="toast" style="display: none;">
+    <div class="toast-content">
+        <div class="toast-icon">
+            <i id="toastIcon" class="fas fa-check"></i>
+        </div>
+        <div class="toast-body">
+            <div id="toastTitle" class="toast-title">Success!</div>
+            <div id="toastMessage" class="toast-message">Action completed successfully.</div>
+        </div>
+        <button class="toast-close" onclick="this.parentElement.parentElement.style.display='none'">&times;</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    console.log('Checklist List loaded successfully!');
+    
+    // ============================================
+    // CSRF TOKEN HELPER
+    // ============================================
+    function getCsrfToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, 10) === 'csrftoken=') {
+                    cookieValue = decodeURIComponent(cookie.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+
+    // ============================================
+    // TOAST NOTIFICATION
+    // ============================================
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toastNotification');
+        const msgEl = document.getElementById('toastMessage');
+        const titleEl = document.getElementById('toastTitle');
+        const icon = document.getElementById('toastIcon');
+        
+        msgEl.textContent = message || 'Action completed successfully.';
+        
+        if (type === 'error') {
+            icon.className = 'fas fa-exclamation-circle';
+            toast.className = 'toast error';
+            titleEl.textContent = 'Error!';
+        } else {
+            icon.className = 'fas fa-check-circle';
+            toast.className = 'toast success';
+            titleEl.textContent = 'Success!';
+        }
+        
+        toast.style.display = 'block';
+        
+        if (window.toastTimeout) {
+            clearTimeout(window.toastTimeout);
+        }
+        
+        window.toastTimeout = setTimeout(() => {
+            toast.style.display = 'none';
+        }, 4000);
+    }
+
+    // ============================================
+    // FILTER CHECKLISTS
+    // ============================================
+    function filterChecklists() {
+        const search = document.getElementById('searchChecklist').value.toLowerCase();
+        const rows = document.querySelectorAll('.checklist-row');
+        
+        rows.forEach(row => {
+            const name = row.querySelector('.col-name').textContent.toLowerCase();
+            if (name.includes(search)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // ============================================
+    // EDIT CHECKLIST (Redirect to builder)
+    // ============================================
+    function editChecklist(checklistId) {
+        window.location.href = `/adminboard/checklists/?edit=${checklistId}`;
+    }
+
+    // ============================================
+    // DELETE CHECKLIST FUNCTIONS
+    // ============================================
+    function deleteChecklist(checklistId) {
+        document.getElementById('deleteChecklistId').value = checklistId;
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        document.getElementById('deleteChecklistId').value = '';
+    }
+
+    function confirmDeleteChecklist() {
+        const checklistId = document.getElementById('deleteChecklistId').value;
+        if (!checklistId) return;
+
+        const btn = document.querySelector('#deleteModal .btn-danger');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+
+        fetch(`/adminboard/api/checklists/${checklistId}/delete/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCsrfToken() }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Checklist deleted successfully!');
+                closeDeleteModal();
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                showToast('Error: ' + data.error, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+            console.error(err);
+            showToast('An error occurred while deleting', 'error');
+        });
+    }
+
+    // ============================================
+    // VIEW CHECKLIST FUNCTIONS
+    // ============================================
+    function viewChecklist(checklistId) {
+        fetch(`/adminboard/api/checklists/${checklistId}/`, {
+            method: 'GET',
+            headers: { 'X-CSRFToken': getCsrfToken() }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const checklist = data.checklist;
+                document.getElementById('viewChecklistTitle').textContent = checklist.name;
+                
+                // Get branch and department names from the data
+                // We need to fetch these from the DOM or pass them through context
+                // For now, we'll use the data from the API
+                let branchNames = [];
+                let deptNames = [];
+                
+                // Try to get branch names from the DOM
+                const row = document.querySelector(`.checklist-row[data-id="${checklistId}"]`);
+                if (row) {
+                    const branchCell = row.querySelector('.col-branches .assigned-items-list');
+                    const deptCell = row.querySelector('.col-departments .assigned-items-list');
+                    
+                    if (branchCell) {
+                        branchCell.querySelectorAll('.item-tag.branch-tag').forEach(el => {
+                            branchNames.push(el.textContent);
+                        });
+                    }
+                    if (deptCell) {
+                        deptCell.querySelectorAll('.item-tag.dept-tag').forEach(el => {
+                            deptNames.push(el.textContent);
+                        });
+                    }
+                }
+                
+                let html = `
+                    <div class="view-checklist-details">
+                        <div class="detail-row">
+                            <strong>Frequency:</strong>
+                            <span class="frequency-tag ${checklist.frequency}">${checklist.frequency.charAt(0).toUpperCase() + checklist.frequency.slice(1)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Assignment:</strong>
+                            <span class="assignment-tag ${checklist.assignment_target}">
+                                ${checklist.assignment_target === 'all' ? 'All Personnel' : 
+                                  checklist.assignment_target === 'hc' ? 'Head Office Control' :
+                                  checklist.assignment_target === 'cc' ? 'Cluster Control' : 'Specific Users'}
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Assigned Branches:</strong>
+                            <div class="assigned-items-list">
+                                ${branchNames.length > 0 ? branchNames.map(name => 
+                                    `<span class="item-tag branch-tag">${name}</span>`
+                                ).join('') : '<span class="no-assignment">Not assigned</span>'}
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Assigned Departments:</strong>
+                            <div class="assigned-items-list">
+                                ${deptNames.length > 0 ? deptNames.map(name => 
+                                    `<span class="item-tag dept-tag">${name}</span>`
+                                ).join('') : '<span class="no-assignment">Not assigned</span>'}
+                            </div>
+                        </div>
+                        <div class="detail-row">
+                            <strong>Tasks:</strong>
+                            <ul class="task-list">
+                                ${checklist.tasks.map(task => `
+                                    <li><i class="fas fa-check-circle"></i> ${task.description}</li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                        ${checklist.assigned_users && checklist.assigned_users.length > 0 ? `
+                        <div class="detail-row">
+                            <strong>Assigned Users:</strong>
+                            <div class="assigned-users-list">
+                                ${checklist.assigned_users.map(userId => {
+                                    const user = document.querySelector(`#checklist-specific-users option[value="${userId}"]`);
+                                    return user ? `<span class="user-tag">${user.textContent}</span>` : '';
+                                }).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                document.getElementById('viewChecklistContent').innerHTML = html;
+                document.getElementById('viewModal').style.display = 'flex';
+            } else {
+                showToast('Error: ' + data.error, 'error');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('Could not fetch checklist details', 'error');
+        });
+    }
+
+    function closeViewModal() {
+        document.getElementById('viewModal').style.display = 'none';
+    }
+
+    // ============================================
+    // MODAL CLOSE ON CLICK OUTSIDE
+    // ============================================
+    window.onclick = function(event) {
+        const deleteModal = document.getElementById('deleteModal');
+        const viewModal = document.getElementById('viewModal');
+        if (event.target === deleteModal) closeDeleteModal();
+        if (event.target === viewModal) closeViewModal();
+    }
+
+    // ============================================
+    // KEYBOARD SHORTCUTS
+    // ============================================
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeDeleteModal();
+            closeViewModal();
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+            event.preventDefault();
+            document.getElementById('searchChecklist').focus();
+        }
+    });
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('edit');
+        if (editId) {
+            window.location.href = `/adminboard/checklists/?edit=${editId}`;
+        }
+    });
+</script>
+{% endblock %}

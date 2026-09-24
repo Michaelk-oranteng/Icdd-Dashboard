@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Internal Control Dashboard</title>
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'stylesheets/index.css' %}" type="text/css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </head>
+
+<body>
+    <div class="page-wrapper">
+        <div class="welcome">
+            <h1>Internal Control & Due Diligence Dashboard</h1>
+            <p>Your centralized hub for real-time exception management, risk mitigation, and compliance reporting.</p>
+        </div>
+        
+        <div class="login-profile">
+            <div class="img-container">
+                <img src="{% static 'images/OmniBSIC_Bank_Logo.svg' %}" id="logo" alt="OmniBSIC Bank Logo"/>
+            </div>
+            <div class="login">
+                <h2>Welcome Back</h2>
+                <p>Sign in to your account to continue</p>
+                
+                <!-- Django Messages -->
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- Error Message -->
+                <div id="errorMessage" class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> 
+                    <span id="errorText">Invalid credentials. Please try again.</span>
+                </div>
+                
+                <!-- Success Message -->
+                <div id="successMessage" class="success-message">
+                    <i class="fas fa-check-circle"></i> 
+                    <span id="successText">Login successful! Redirecting...</span>
+                </div>
+                
+                <!-- Microsoft Login with Transform -->
+                <div class="microsoft-login-container">
+                    <button class="btn-microsoft" id="msLoginBtn" onclick="expandMicrosoftLogin()">
+                        <i class="fab fa-microsoft"></i>
+                        <span class="btn-text">Sign in with Microsoft</span>
+                        <div class="ms-input-wrapper">
+                            <i class="fas fa-envelope ms-input-icon"></i>
+                            <input 
+                                type="text" 
+                                id="msEmailInput" 
+                                placeholder="Enter your username or email and press Enter" 
+                                autocomplete="username"
+                                onkeydown="handleMsInputKeydown(event)"
+                            />
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <span class="divider">|</span>
+                <a href="#">Security Guidelines</a>
+            </div>
+            <div class="footer-copyright">
+                <p>&copy; 2026 OmniBSIC Bank. All rights reserved.</p>
+            </div>
+            <div class="footer-support">
+                <a href="mailto:itsupport@omnibsic.com">
+                    <i class="support-icon">✉</i> IT Support Helpdesk
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CSRF Token Helper
+        // ============================================
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        // ============================================
+        // MICROSOFT LOGIN - EXPAND/CONTRACT
+        // ============================================
+
+        function expandMicrosoftLogin() {
+            const btn = document.getElementById('msLoginBtn');
+            const input = document.getElementById('msEmailInput');
+            
+            if (!btn.classList.contains('expanded')) {
+                btn.classList.add('expanded');
+                setTimeout(() => {
+                    input.focus();
+                }, 300);
+            }
+        }
+
+        function collapseMicrosoftLogin() {
+            const btn = document.getElementById('msLoginBtn');
+            const input = document.getElementById('msEmailInput');
+            
+            btn.classList.remove('expanded');
+            btn.classList.remove('loading');
+            input.value = '';
+            hideError();
+            hideSuccess();
+        }
+
+        function handleMsInputKeydown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                processMicrosoftLogin();
+            }
+            if (event.key === 'Escape') {
+                collapseMicrosoftLogin();
+            }
+        }
+
+        // Click outside to cancel
+        document.addEventListener('click', function(event) {
+            const btn = document.getElementById('msLoginBtn');
+            const container = document.querySelector('.microsoft-login-container');
+            
+            if (btn.classList.contains('expanded') && !container.contains(event.target)) {
+                if (!event.target.closest('.btn-microsoft')) {
+                    collapseMicrosoftLogin();
+                }
+            }
+        });
+
+        // ============================================
+        // MICROSOFT LOGIN - PROCESS
+        // ============================================
+
+        function processMicrosoftLogin() {
+            const input = document.getElementById('msEmailInput');
+            const loginInput = input.value.trim();
+            const btn = document.getElementById('msLoginBtn');
+            
+            if (!loginInput) {
+                showError('Please enter your username or email.');
+                input.focus();
+                return;
+            }
+
+            // Auto-complete email domain if only username is entered
+            let emailToSend = loginInput;
+            
+            // Check if it's a username (no @ symbol)
+            if (!loginInput.includes('@')) {
+                // Auto-complete with the domain
+                emailToSend = loginInput + '@omnisbic.com.gh';
+                
+                // Also try alternative domain
+                // You can add logic here to try multiple domains if needed
+            }
+
+            btn.classList.add('loading');
+            hideError();
+            hideSuccess();
+
+            // Show a message indicating what we're doing
+            showSuccess(`Logging in as ${emailToSend}...`);
+
+            fetch('/adminboard/api/email-login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ 
+                    email: emailToSend,
+                    raw_input: loginInput  // Send the raw input for reference
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess(data.message);
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1500);
+                } else {
+                    // If login failed with the auto-completed email, try alternative domains
+                    if (!loginInput.includes('@')) {
+                        // Try alternative domain if the user doesn't have @
+                        tryAlternativeDomain(loginInput, btn);
+                        return;
+                    }
+                    showError(data.error || 'Login failed. Please try again.');
+                    btn.classList.remove('loading');
+                    input.focus();
+                }
+            })
+            .catch(error => {
+                console.error('Login error:', error);
+                showError('An error occurred during login. Please try again.');
+                btn.classList.remove('loading');
+                input.focus();
+            });
+        }
+
+        function tryAlternativeDomain(username, btn) {
+            // Try alternative domain (e.g., @omnisbic.com instead of @omnisbic.com.gh)
+            const alternativeEmail = username + '@omnisbic.com';
+            
+            showSuccess(`Trying ${alternativeEmail}...`);
+            
+            fetch('/adminboard/api/email-login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify({ 
+                    email: alternativeEmail,
+                    raw_input: username
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess(data.message);
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1500);
+                } else {
+                    showError('No account found. Please check your username or email.');
+                    btn.classList.remove('loading');
+                    document.getElementById('msEmailInput').focus();
+                }
+            })
+            .catch(error => {
+                showError('An error occurred during login. Please try again.');
+                btn.classList.remove('loading');
+            });
+        }
+
+        // ============================================
+        // MESSAGE DISPLAY FUNCTIONS
+        // ============================================
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorEl.className = 'error-message show';
+            hideSuccess();
+        }
+
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            const successText = document.getElementById('successText');
+            successText.textContent = message;
+            successEl.className = 'success-message show';
+            hideError();
+        }
+
+        function hideError() {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.className = 'error-message';
+        }
+
+        function hideSuccess() {
+            const successEl = document.getElementById('successMessage');
+            successEl.className = 'success-message';
+        }
+
+        // ============================================
+        // SESSION CHECK
+        // ============================================
+
+        function checkSession() {
+            fetch('/adminboard/api/user/profile/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.authenticated) {
+                    const role = data.user.role || 'member';
+                    const redirectUrls = {
+                        'admin': '/adminboard/admin/',
+                        'supervisor': '/adminboard/supervisor/',
+                        'member': '/adminboard/member/'
+                    };
+                    window.location.href = redirectUrls[role] || '/adminboard/member/';
+                }
+            })
+            .catch(error => {
+                console.log('Session check failed:', error);
+            });
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            checkSession();
+            
+            // Auto-focus on the input field
+            setTimeout(() => {
+                document.getElementById('msEmailInput').focus();
+            }, 500);
+        });
+
+        window.expandMicrosoftLogin = expandMicrosoftLogin;
+        window.collapseMicrosoftLogin = collapseMicrosoftLogin;
+        window.processMicrosoftLogin = processMicrosoftLogin;
+        window.handleMsInputKeydown = handleMsInputKeydown;
+    </script>
+</body>
+</html>

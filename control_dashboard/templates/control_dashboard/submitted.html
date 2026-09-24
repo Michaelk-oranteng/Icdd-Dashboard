@@ -1,0 +1,942 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Submitted Reports{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/submitted-reports.css' %}" type="text/css">
+<style>
+/* ============================================================
+   SUBMITTED REPORTS — Premium Light Theme
+   Page-specific styles (table, member chip, deadline pills)
+   ============================================================ */
+
+:root {
+    --sr-bg-0: #eef1f8;
+    --sr-bg-1: #ffffff;
+    --sr-bg-2: #f7f8fc;
+    --sr-bg-3: #f1f3f9;
+
+    --sr-border: rgba(15, 27, 51, 0.08);
+    --sr-border-strong: rgba(15, 27, 51, 0.16);
+    --sr-hairline: rgba(15, 27, 51, 0.06);
+
+    --sr-text-0: #0f1b33;
+    --sr-text-1: #46536b;
+    --sr-text-2: #8993a8;
+
+    --sr-accent: #4f6ef7;
+    --sr-accent-soft: #eef1ff;
+    --sr-emerald: #17a673;
+    --sr-emerald-soft: #e2f7ef;
+    --sr-amber: #e08a17;
+    --sr-amber-soft: #fdf2e0;
+    --sr-rose: #e0456a;
+    --sr-rose-soft: #fdeaf0;
+    --sr-violet: #7c5cf0;
+    --sr-violet-soft: #f0ebff;
+
+    --sr-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --sr-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+
+    --sr-font: 'Poppins', system-ui, -apple-system, sans-serif;
+}
+
+/* ============================================================
+   TABLE CONTAINER
+   ============================================================ */
+.sr-table-container {
+    position: relative;
+    background: var(--sr-bg-1);
+    border: 1px solid var(--sr-border);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--sr-shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.sr-table-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--sr-accent) 50%,
+        transparent 100%);
+    opacity: 0.7;
+    z-index: 2;
+}
+
+.sr-table-container:hover {
+    box-shadow: var(--sr-shadow-md);
+    border-color: var(--sr-border-strong);
+}
+
+.sr-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--sr-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    flex-wrap: wrap;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.sr-table-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--sr-text-0);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+}
+
+.sr-table-header h4 i {
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--sr-accent-soft);
+    color: var(--sr-accent);
+    border: 1px solid rgba(79, 110, 247, 0.2);
+}
+
+.sr-table-header .sr-count-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    background: var(--sr-accent-soft);
+    color: var(--sr-accent);
+    border: 1px solid rgba(79, 110, 247, 0.22);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+.sr-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: var(--sr-font);
+    font-variant-numeric: tabular-nums;
+}
+
+.sr-table thead {
+    background: var(--sr-bg-2);
+}
+
+.sr-table thead th {
+    background: transparent;
+    color: var(--sr-text-2);
+    text-align: left;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--sr-border);
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.sr-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--sr-hairline);
+    color: var(--sr-text-1);
+    vertical-align: middle;
+    line-height: 1.5;
+}
+
+.sr-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.sr-table tbody tr:hover {
+    background: var(--sr-bg-2);
+}
+
+.sr-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ============================================================
+   MEMBER CELL
+   ============================================================ */
+.sr-member {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sr-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f6ef7 0%, #7c5cf0 100%);
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 12px;
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(79, 110, 247, 0.25);
+    text-transform: uppercase;
+}
+
+.sr-member-info { min-width: 0; }
+
+.sr-member-info .sr-member-name {
+    font-weight: 600;
+    color: var(--sr-text-0);
+    font-size: 13px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sr-member-info .sr-member-email {
+    color: var(--sr-text-2);
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+}
+
+/* ============================================================
+   REPORT TYPE CHIP + ATTACHMENT PILL
+   ============================================================ */
+.sr-report-type {
+    display: inline-flex;
+    align-items: center;
+    background: var(--sr-bg-2);
+    color: var(--sr-text-0);
+    border: 1px solid var(--sr-border);
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sr-attach-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--sr-emerald-soft);
+    color: var(--sr-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.22);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 8px;
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================================
+   DEADLINE CELL + STATUS PILLS
+   ============================================================ */
+.sr-deadline {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: flex-start;
+}
+
+.sr-deadline .sr-deadline-date {
+    font-weight: 600;
+    color: var(--sr-text-0);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.sr-deadline .sr-deadline-meta {
+    color: var(--sr-text-2);
+    font-size: 11px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.sr-deadline .sr-deadline-meta i {
+    color: var(--sr-text-2);
+    font-size: 10px;
+}
+
+.sr-deadline .sr-na {
+    color: var(--sr-text-2);
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* Unified status pill style */
+.sr-late,
+.sr-ontime,
+.sr-no-deadline-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 9px;
+    font-weight: 700;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid;
+    white-space: nowrap;
+}
+
+.sr-late {
+    background: var(--sr-rose-soft);
+    color: var(--sr-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.sr-ontime {
+    background: var(--sr-emerald-soft);
+    color: var(--sr-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.sr-no-deadline-hint {
+    background: var(--sr-amber-soft);
+    color: var(--sr-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+/* ============================================================
+   SCORE CELL + INPUT
+   ============================================================ */
+.sr-score-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    min-width: 96px;
+}
+
+.sr-score-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--sr-border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: var(--sr-font);
+    text-align: center;
+    font-weight: 700;
+    color: var(--sr-text-0);
+    transition: all 0.2s ease;
+    outline: none;
+    background: var(--sr-bg-2);
+    font-variant-numeric: tabular-nums;
+    box-sizing: border-box;
+}
+
+.sr-score-input::placeholder {
+    color: var(--sr-text-2);
+    font-weight: 500;
+}
+
+.sr-score-input:hover {
+    border-color: var(--sr-border-strong);
+}
+
+.sr-score-input:focus {
+    border-color: var(--sr-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    background: var(--sr-bg-1);
+}
+
+/* Hide native number input spinners for a cleaner look */
+.sr-score-input::-webkit-outer-spin-button,
+.sr-score-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.sr-score-input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* ============================================================
+   SCORE BADGE + OVERRIDE TAG
+   ============================================================ */
+.sr-score {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    text-align: center;
+    min-width: 56px;
+    border: 1px solid;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.2px;
+}
+
+.sr-score.success {
+    background: var(--sr-emerald-soft);
+    color: var(--sr-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.sr-score.warning {
+    background: var(--sr-amber-soft);
+    color: var(--sr-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.sr-score.danger {
+    background: var(--sr-rose-soft);
+    color: var(--sr-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.sr-score-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.sr-override-tag {
+    display: inline-flex;
+    align-items: center;
+    background: var(--sr-amber-soft);
+    color: var(--sr-amber);
+    border: 1px solid rgba(224, 138, 23, 0.22);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+.sr-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+.sr-btn-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: #ffffff;
+    border: 1px solid rgba(79, 110, 247, 0.4);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--sr-font);
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.sr-btn-save::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.sr-btn-save:hover:not(:disabled)::before { opacity: 1; }
+
+.sr-btn-save:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.sr-btn-save:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.sr-saving-indicator {
+    display: none;
+    color: var(--sr-accent);
+    font-size: 14px;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.sr-empty {
+    padding: 72px 24px;
+    text-align: center;
+    color: var(--sr-text-2);
+}
+
+.sr-empty i {
+    font-size: 44px;
+    width: 80px;
+    height: 80px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(79, 110, 247, 0.14) 0%,
+        rgba(79, 110, 247, 0.04) 60%,
+        transparent 70%);
+    color: var(--sr-accent);
+    animation: sr-float 3s ease-in-out infinite;
+}
+
+@keyframes sr-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.sr-empty p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--sr-text-2);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+    .sr-table { font-size: 11px; }
+    .sr-table thead th,
+    .sr-table tbody td { padding: 10px 12px; }
+    .sr-avatar { width: 30px; height: 30px; font-size: 11px; }
+    .sr-member-info .sr-member-name { font-size: 12px; }
+    .sr-member-info .sr-member-email { font-size: 10px; }
+    .sr-score-input { padding: 6px 8px; font-size: 12px; }
+    .sr-btn-save { padding: 6px 12px; font-size: 11px; }
+    .sr-report-type { font-size: 10px; padding: 4px 10px; }
+}
+
+@media (max-width: 640px) {
+    .sr-table-container { border-radius: 14px; }
+    .sr-table-header { padding: 14px 16px 12px; }
+    .sr-table-header h4 { font-size: 12px; }
+    .sr-table-header h4 i { width: 24px; height: 24px; font-size: 11px; }
+    .sr-count-badge { font-size: 10px; padding: 4px 10px; }
+
+    /* Enable horizontal scroll on mobile */
+    .sr-table-container > div[style*="overflow-x"] {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sr-table { min-width: 780px; }
+
+    .sr-table-container > div::-webkit-scrollbar { height: 8px; }
+    .sr-table-container > div::-webkit-scrollbar-track {
+        background: var(--sr-bg-2);
+    }
+    .sr-table-container > div::-webkit-scrollbar-thumb {
+        background: rgba(15, 27, 51, 0.18);
+        border-radius: 4px;
+    }
+
+    .sr-table thead th,
+    .sr-table tbody td { padding: 10px 12px; font-size: 11px; }
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:supervisor_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li><a href="{% url 'control_dashboard:supervisor_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+    <span class="nav-text">Dashboard</span>
+</a></li>  
+<li><a href="{% url 'control_dashboard:analytics_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Analytics</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:supervisor_checklist' %}">
+    <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+    <span class="nav-text">Activity Checklist</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:team_performance' %}">
+    <span class="nav-icon"><i class="fas fa-users"></i></span>
+    <span class="nav-text">Team Performance</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:ad_hoc_scorecard' %}">
+    <span class="nav-icon"><i class="fas fa-star"></i></span>
+    <span class="nav-text">Ad-Hoc Scorecard</span>
+</a></li> 
+<li class="active"><a href="{% url 'control_dashboard:submitted_reports' %}">
+    <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
+    <span class="nav-text">Submitted Reports</span>
+</a></li> 
+<li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
+    <span class="nav-icon"><i class="fas fa-search"></i></span>
+    <span class="nav-text">Activity Logs</span>
+</a></li> 
+{% endblock %}
+
+{% block page_title %}Submitted Reports{% endblock %}
+
+{% block top_header_center %}
+<div class="header-filter-group">
+    <label for="user-filter">User</label>
+    <select id="user-filter" class="header-select" onchange="applyFilters()">
+        <option value="all">All Users</option>
+        {% for user in users %}
+        <option value="{{ user.id }}" {% if user_filter|add:"0" == user.id %}selected{% endif %}>
+            {{ user.full_name|default:user.email }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="header-divider"></div>
+
+<div class="header-filter-group">
+    <label for="category-filter">Category</label>
+    <select id="category-filter" class="header-select" onchange="applyFilters()">
+        <option value="all">All Categories</option>
+        {% for category in categories %}
+        <option value="{{ category }}" {% if category_filter == category %}selected{% endif %}>
+            {{ category }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="header-divider"></div>
+
+<div class="header-date-group">
+    <label for="start-date">Date Range</label>
+    <div class="header-date-wrapper">
+        <input type="date" id="start-date" class="header-date-input" value="{{ start_date }}" onchange="applyFilters()">
+        <span>to</span>
+        <input type="date" id="end-date" class="header-date-input" value="{{ end_date }}" onchange="applyFilters()">
+    </div>
+</div>
+{% endblock %}
+
+{% block top_header_right %}
+<button class="btn-reset-header" onclick="resetFilters()"><i class="fas fa-undo"></i> Reset Filters</button>
+{% endblock %}
+
+{% block content %}
+
+<div class="sr-table-container">
+    <div class="sr-table-header">
+        <h4><i class="fas fa-file-alt"></i> Submitted Reports</h4>
+        <span class="sr-count-badge">{{ report_data|length }} submission{{ report_data|length|pluralize }}</span>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table class="sr-table">
+            <thead>
+                <tr>
+                    <th>Team Member</th>
+                    <th>Report Type</th>
+                    <th>Submitted</th>
+                    <th>Deadline</th>
+                    <th>Deduction</th>
+                    <th style="text-align:center;">Final Score</th>
+                    <th style="text-align:center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in report_data %}
+                <tr>
+                    <td>
+                        <div class="sr-member">
+                            <div class="sr-avatar">
+                                {{ item.created_by.full_name|default:item.created_by.email|slice:":2"|upper }}
+                            </div>
+                            <div class="sr-member-info">
+                                <div class="sr-member-name">{{ item.created_by.full_name|default:item.created_by.email }}</div>
+                                <div class="sr-member-email">{{ item.created_by.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="sr-report-type">{{ item.report_type }}</span>
+                        {% if item.had_attachment %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="sr-deadline">
+                            {% if item.submitted_at %}
+                                <span class="sr-deadline-date">{{ item.submitted_at|date:"M d, Y" }}</span>
+                                <span class="sr-deadline-meta"><i class="far fa-clock"></i> {{ item.submitted_at|date:"H:i" }}</span>
+                                {% if item.minutes_late > 0 %}
+                                    <span class="sr-late"><i class="fas fa-exclamation-triangle"></i> {{ item.minutes_late }} min late</span>
+                                {% else %}
+                                {% endif %}
+                            {% else %}
+                                <span class="sr-na">Never submitted</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        {% if item.deadline_at %}
+                            <div class="sr-deadline">
+                                <span class="sr-deadline-date">{{ item.deadline_at|date:"M d, Y" }}</span>
+                                <span class="sr-deadline-meta"><i class="far fa-clock"></i> {{ item.deadline_at|date:"H:i" }}</span>
+                            </div>
+                        {% elif item.report.deadline_date %}
+                            <div class="sr-deadline">
+                                <span class="sr-deadline-date">{{ item.report.deadline_date|date:"M d, Y" }}</span>
+                                <span class="sr-deadline-meta">
+                                    {% if item.report.deadline_time %}
+                                        <i class="far fa-clock"></i> {{ item.report.deadline_time|date:"H:i" }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        {% else %}
+                            <div class="sr-deadline">
+                                <span class="sr-na">Not set</span>
+                                <span class="sr-no-deadline-hint" title="The admin must set a deadline on the Report in Report Center">
+                                    <i class="fas fa-exclamation-triangle"></i> Admin: set a deadline
+                                </span>
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="sr-score-cell">
+                            <input type="number"
+                                   class="sr-score-input"
+                                   id="score_{{ item.score.id }}"
+                                   placeholder="0"
+                                   min="0"
+                                   max="100"
+                                   value="{{ item.deduction|default:0 }}"
+                                   title="Points to deduct from the final score"
+                                   onchange="updateScore({{ item.score.id }})">
+                        </div>
+                    </td>
+                    <td style="text-align:center;">
+                        <div class="sr-score-stack">
+                            <span class="sr-score {{ item.badge_class }}">{{ item.final_score }}%</span>
+                            {% if item.is_overridden %}
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td style="text-align:center;">
+                        <div class="sr-actions">
+                            <button class="sr-btn-save"
+                                    id="saveBtn_{{ item.score.id }}"
+                                    onclick="saveScore({{ item.score.id }})">
+                                <i class="fas fa-check"></i> Save
+                            </button>
+                            <span class="sr-saving-indicator" id="savingIndicator_{{ item.score.id }}">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="sr-empty">
+                            <i class="fas fa-file-alt"></i>
+                            <p>No submitted reports found.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) return meta.getAttribute('content');
+        const input = document.querySelector('input[name=csrfmiddlewaretoken]');
+        if (input) return input.value;
+        const name = 'csrftoken';
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        for (let i = 0; i < cookies.length; i++) {
+            const c = cookies[i].trim();
+            if (c.substring(0, name.length + 1) === (name + '=')) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    function showToast(message, title = 'Success!') {
+        const toast = document.getElementById('toastNotification');
+        if (!toast) return console.log('[toast]', title, message);
+        const msgEl = document.getElementById('toastMessage');
+        const titleEl = toast.querySelector('.toast-title');
+        msgEl.textContent = message || '';
+        titleEl.textContent = title;
+        const icon = toast.querySelector('.toast-icon i');
+        if (title.toLowerCase().includes('error') || title.toLowerCase().includes('warning')) {
+            icon.className = 'fas fa-exclamation-circle';
+        } else {
+            icon.className = 'fas fa-check';
+        }
+        toast.classList.add('show');
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    window.closeToast = function() {
+        const toast = document.getElementById('toastNotification');
+        if (toast) toast.classList.remove('show');
+        if (window.toastTimeout) { clearTimeout(window.toastTimeout); window.toastTimeout = null; }
+    };
+
+    function applyFilters() {
+        const user = document.getElementById('user-filter').value;
+        const category = document.getElementById('category-filter').value;
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+
+        const params = new URLSearchParams();
+        if (user && user !== 'all') params.set('user', user);
+        if (category && category !== 'all') params.set('category', category);
+        if (startDate) params.set('start_date', startDate);
+        if (endDate) params.set('end_date', endDate);
+
+        window.location.href = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    }
+
+    function resetFilters() {
+        window.location.href = window.location.pathname;
+    }
+
+    function updateScore(scoreId) {
+        const saveBtn = document.getElementById(`saveBtn_${scoreId}`);
+        if (saveBtn) {
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Unsaved';
+            saveBtn.style.background = '#f59e0b';
+        }
+    }
+
+    function saveScore(scoreId) {
+        const input = document.getElementById(`score_${scoreId}`);
+        const saveBtn = document.getElementById(`saveBtn_${scoreId}`);
+        const indicator = document.getElementById(`savingIndicator_${scoreId}`);
+
+        if (!input || !saveBtn) return;
+
+        const raw = input.value.trim();
+        const deduction = raw === '' ? 0 : parseInt(raw, 10);
+
+        if (isNaN(deduction) || deduction < 0 || deduction > 100) {
+            showToast('Deduction must be between 0 and 100.', 'Warning');
+            return;
+        }
+
+        saveBtn.disabled = true;
+        indicator.style.display = 'inline-block';
+
+        fetch("/adminboard/api/update-report-score/", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                score_id: scoreId,       // target the SUBMISSION row
+                deduction: deduction
+            })
+        })
+        .then(r => {
+            if (!r.ok) {
+                return r.json().then(d => { throw new Error(d.error || ('HTTP ' + r.status)); });
+            }
+            return r.json();
+        })
+        .then(data => {
+            indicator.style.display = 'none';
+            saveBtn.disabled = false;
+
+            if (data.success) {
+                showToast(
+                    deduction === 0
+                        ? `Deduction cleared — final score ${data.final_score}%`
+                        : `Deducted ${deduction} — final score ${data.final_score}%`,
+                    'Success'
+                );
+                saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
+                saveBtn.style.background = '#10b981';
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                showToast(data.error || 'Failed to save.', 'Error');
+                saveBtn.innerHTML = '<i class="fas fa-check"></i> Save';
+                saveBtn.style.background = '#0066cc';
+            }
+        })
+        .catch(err => {
+            indicator.style.display = 'none';
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-check"></i> Save';
+            saveBtn.style.background = '#0066cc';
+            console.error(err);
+            showToast(err.message || 'An error occurred while saving.', 'Error');
+        });
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const target = e.target;
+            if (target.id === 'start-date' || target.id === 'end-date') applyFilters();
+        }
+    });
+
+    // Auto-save on blur, keyed per submission row.
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.sr-score-input').forEach(input => {
+            input.addEventListener('blur', function() {
+                const scoreId = this.id.replace('score_', '');
+                saveScore(scoreId);
+            });
+        });
+    });
+</script>
+{% endblock %}

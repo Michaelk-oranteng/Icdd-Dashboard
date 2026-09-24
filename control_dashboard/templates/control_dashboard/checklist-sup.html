@@ -1,0 +1,574 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Activity Checklist{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/supervisor-checklist.css' %}" type="text/css">
+<style>
+/* ============================================================
+   SUPERVISOR CHECKLIST — Local template overrides
+   ============================================================ */
+
+/* Mini progress chip — matches the themed bar system */
+.mini-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.mini-progress .bar {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--sc-bg-2, #f7f8fc);
+    border: 1px solid var(--sc-hairline, rgba(15, 27, 51, 0.06));
+    overflow: hidden;
+    position: relative;
+}
+
+.mini-progress .bar > span {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.mini-progress .bar > span::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.25) 0%,
+        transparent 100%);
+    pointer-events: none;
+}
+
+.mini-progress .pct {
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 40px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.2px;
+}
+
+/* Progress color variants */
+.mini-progress.green  .bar > span {
+    background: linear-gradient(90deg, #17a673 0%, #0f8a5e 100%);
+}
+.mini-progress.green  .pct { color: var(--sc-emerald, #17a673); }
+
+.mini-progress.orange .bar > span {
+    background: linear-gradient(90deg, #e08a17 0%, #c46e0c 100%);
+}
+.mini-progress.orange .pct { color: var(--sc-amber, #e08a17); }
+
+.mini-progress.red    .bar > span {
+    background: linear-gradient(90deg, #e0456a 0%, #c82d52 100%);
+}
+.mini-progress.red    .pct { color: var(--sc-rose, #e0456a); }
+
+/* Modal sections */
+.modal-section {
+    margin-bottom: 22px;
+}
+
+.modal-section:last-child {
+    margin-bottom: 0;
+}
+
+.modal-section h4 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--sc-text-0, #0f1b33);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--sc-hairline, rgba(15, 27, 51, 0.06));
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-section h4 i {
+    font-size: 12px;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    background: var(--sc-accent-soft, #eef1ff);
+    color: var(--sc-accent, #4f6ef7);
+    border: 1px solid rgba(79, 110, 247, 0.2);
+}
+
+/* Unit row inside modal */
+.unit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.unit-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--sc-bg-2, #f7f8fc);
+    border: 1px solid var(--sc-hairline, rgba(15, 27, 51, 0.06));
+    transition: all 0.2s ease;
+}
+
+.unit-row:hover {
+    background: var(--sc-bg-1, #ffffff);
+    border-color: var(--sc-border-strong, rgba(15, 27, 51, 0.16));
+}
+
+.unit-row .unit-name {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sc-text-0, #0f1b33);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.unit-row .unit-name .unit-code {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--sc-text-2, #8993a8);
+    margin-left: 6px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.unit-row .unit-counts {
+    font-size: 11px;
+    color: var(--sc-text-2, #8993a8);
+    min-width: 70px;
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.unit-row .mini-progress {
+    flex: 0 0 180px;
+    min-width: 0;
+}
+
+/* Summary strip inside modal */
+.modal-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.modal-summary .ms-card {
+    position: relative;
+    background: var(--sc-bg-1, #ffffff);
+    border: 1px solid var(--sc-border, rgba(15, 27, 51, 0.08));
+    border-radius: 14px;
+    padding: 16px 18px;
+    text-align: center;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.modal-summary .ms-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--sc-accent, #4f6ef7) 50%,
+        transparent 100%);
+    opacity: 0.75;
+}
+
+.modal-summary .ms-card .ms-val {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--sc-text-0, #0f1b33);
+    line-height: 1;
+    letter-spacing: -0.6px;
+    font-variant-numeric: tabular-nums;
+}
+
+.modal-summary .ms-card .ms-lbl {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--sc-text-2, #8993a8);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 6px;
+}
+
+@media (max-width: 768px) {
+    .modal-summary { grid-template-columns: 1fr; }
+    .unit-row { flex-wrap: wrap; gap: 10px; }
+    .unit-row .mini-progress { flex: 1 0 100%; }
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:supervisor_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li><a href="{% url 'control_dashboard:supervisor_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+    <span class="nav-text">Dashboard</span>
+</a></li>  
+<li><a href="{% url 'control_dashboard:analytics_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Analytics</span>
+</a></li>
+<li class="active"><a href="{% url 'control_dashboard:supervisor_checklist' %}">
+    <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+    <span class="nav-text">Activity Checklist</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:team_performance' %}">
+    <span class="nav-icon"><i class="fas fa-users"></i></span>
+    <span class="nav-text">Team Performance</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:ad_hoc_scorecard' %}">
+    <span class="nav-icon"><i class="fas fa-star"></i></span>
+    <span class="nav-text">Ad-Hoc Scorecard</span>
+</a></li> 
+<li><a href="{% url 'control_dashboard:submitted_reports' %}">
+    <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
+    <span class="nav-text">Submitted Reports</span>
+</a></li> 
+<li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
+    <span class="nav-icon"><i class="fas fa-search"></i></span>
+    <span class="nav-text">Activity Logs</span>
+</a></li> 
+{% endblock %}
+
+{% block page_title %}Activity Completion Summary{% endblock %}
+
+{% block top_header_right %}
+<button class="btn-export-header" onclick="exportReport()">
+    <i class="fas fa-download"></i> Export Report
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon primary"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_users|default:0 }}</span>
+            <span class="stat-label">Team Members</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon success"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ avg_completion|default:0 }}%</span>
+            <span class="stat-label">Average Completion</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon warning"><i class="fas fa-clipboard-list"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_assigned|default:0 }}</span>
+            <span class="stat-label">Expected Logs</span>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon info"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_completed|default:0 }}</span>
+            <span class="stat-label">Logged to Date</span>
+        </div>
+    </div>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <h4>Team Activity Checklist</h4>
+        <span class="user-count">{{ user_completion_data|length }} users</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="checklist-table">
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Position</th>
+                    <th class="text-center">Branches</th>
+                    <th class="text-center">Departments</th>
+                    <th class="text-center">Expected</th>
+                    <th class="text-center">Logged</th>
+                    <th style="width: 25%;">Completion (MTD)</th>
+                    <th style="width: 18%;">YTD</th>
+                    <th class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in user_completion_data %}
+                <tr onclick="viewUserDetail({{ data.user.id }})" class="user-row" data-user="{{ data.user.id }}" style="cursor: pointer;">
+                    <td class="font-bold">{{ data.user.full_name|default:data.user.email }}</td>
+                    <td>{{ data.user.get_position_display|default:"Member" }}</td>
+                    <td class="text-center">
+                        <span class="task-count-badge">{{ data.branch_count }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="task-count-badge">{{ data.department_count }}</span>
+                    </td>
+                    <td class="text-center"><span class="task-count-badge">{{ data.total_checklists }}</span></td>
+                    <td class="text-center"><span class="task-count-badge">{{ data.completed_checklists }}</span></td>
+                    <td>
+                        <div class="mini-progress {% if data.completion_rate >= 70 %}green{% elif data.completion_rate >= 40 %}orange{% else %}red{% endif %}">
+                            <div class="bar"><span style="width: {{ data.completion_rate }}%;"></span></div>
+                            <span class="pct">{{ data.completion_rate }}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="mini-progress {% if data.ytd_completion_rate >= 70 %}green{% elif data.ytd_completion_rate >= 40 %}orange{% else %}red{% endif %}">
+                            <div class="bar"><span style="width: {{ data.ytd_completion_rate }}%;"></span></div>
+                            <span class="pct">{{ data.ytd_completion_rate }}%</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="status-badge {% if data.status == 'success' %}active{% elif data.status == 'warning' %}pending{% else %}inactive{% endif %}">
+                            {{ data.status_text }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center empty-row">
+                        <i class="fas fa-users"></i>
+                        <p>No team members found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="userDetailModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 780px;">
+        <div class="modal-header">
+            <h2 id="modalUserName">User Activity Details</h2>
+            <button onclick="closeModal()" class="modal-close-btn">&times;</button>
+        </div>
+        <div id="modalBody">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading activity breakdown...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) return meta.getAttribute('content');
+        const input = document.querySelector('input[name=csrfmiddlewaretoken]');
+        if (input) return input.value;
+        const name = 'csrftoken';
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        for (let i = 0; i < cookies.length; i++) {
+            const c = cookies[i].trim();
+            if (c.substring(0, name.length + 1) === (name + '=')) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    function showToast(message, title = 'Success!') {
+        const toast = document.getElementById('toastNotification');
+        if (!toast) { console.log('[toast]', title, message); return; }
+        const msgEl = document.getElementById('toastMessage');
+        const titleEl = toast.querySelector('.toast-title');
+        msgEl.textContent = message || '';
+        titleEl.textContent = title;
+        toast.classList.add('show');
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    window.closeToast = function() {
+        const t = document.getElementById('toastNotification');
+        if (t) t.classList.remove('show');
+    };
+
+    function progressClass(p) {
+        if (p >= 70) return 'green';
+        if (p >= 40) return 'orange';
+        return 'red';
+    }
+
+    function unitRow(row) {
+        const cls = progressClass(row.progress);
+        return `
+            <div class="unit-row">
+                <div class="unit-name">
+                    ${row.name}
+                    ${row.code ? `<span class="unit-code">${row.code}</span>` : ''}
+                </div>
+                <div class="unit-counts">${row.actual} / ${row.expected}</div>
+                <div class="mini-progress ${cls}" style="flex: 0 0 180px;">
+                    <div class="bar"><span style="width: ${row.progress}%;"></span></div>
+                    <span class="pct">${row.progress}%</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function viewUserDetail(userId) {
+        const modal = document.getElementById('userDetailModal');
+        const title = document.getElementById('modalUserName');
+        const body = document.getElementById('modalBody');
+        if (!modal) return;
+
+        modal.style.display = 'flex';
+        title.textContent = 'Loading...';
+        body.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p>Loading...</p></div>';
+
+        const url = "/adminboard/api/checklist/detail/" + userId + "/";
+
+        fetch(url, {
+            method: 'GET',
+            headers: { 'X-CSRFToken': getCsrfToken(), 'Accept': 'application/json' },
+            credentials: 'same-origin'
+        })
+        .then(r => {
+            if (!r.ok) return r.json().then(d => { throw new Error(d.error || ('HTTP ' + r.status)); });
+            return r.json();
+        })
+        .then(data => {
+            if (!data.success) {
+                showToast(data.error || 'Failed to load', 'Error');
+                return;
+            }
+            const user = data.user;
+            title.textContent = user.full_name + ' — Activity Breakdown';
+
+            let html = `
+                <div class="modal-summary">
+                    <div class="ms-card">
+                        <div class="ms-val">${user.completion_rate}%</div>
+                        <div class="ms-lbl">Month to Date</div>
+                    </div>
+                    <div class="ms-card">
+                        <div class="ms-val">${user.ytd_completion_rate}%</div>
+                        <div class="ms-lbl">Year to Date</div>
+                    </div>
+                    <div class="ms-card">
+                        <div class="ms-val">${user.position}</div>
+                        <div class="ms-lbl">Position</div>
+                    </div>
+                </div>
+            `;
+
+            // Branches section
+            html += '<div class="modal-section"><h4><i class="fas fa-building"></i> Branches</h4>';
+            if (user.branches && user.branches.length > 0) {
+                html += '<div class="unit-list">';
+                user.branches.forEach(b => { html += unitRow(b); });
+                html += '</div>';
+            } else {
+                html += '<p style="color:#94a3b8;font-style:italic;font-size:13px;">No branches assigned.</p>';
+            }
+            html += '</div>';
+
+            // Departments section
+            html += '<div class="modal-section"><h4><i class="fas fa-sitemap"></i> Departments</h4>';
+            if (user.departments && user.departments.length > 0) {
+                html += '<div class="unit-list">';
+                user.departments.forEach(d => { html += unitRow(d); });
+                html += '</div>';
+            } else {
+                html += '<p style="color:#94a3b8;font-style:italic;font-size:13px;">No departments assigned.</p>';
+            }
+            html += '</div>';
+
+            // Checklists section (existing)
+            if (user.checklist_details && user.checklist_details.length > 0) {
+                html += '<div class="modal-section"><h4><i class="fas fa-clipboard-check"></i> Today\'s Checklists</h4>';
+                html += '<div class="unit-list">';
+                user.checklist_details.forEach(c => {
+                    const cls = progressClass(c.task_completion_rate);
+                    html += `
+                        <div class="unit-row">
+                            <div class="unit-name">${c.name}</div>
+                            <div class="unit-counts">${c.completed_tasks} / ${c.total_tasks}</div>
+                            <div class="mini-progress ${cls}" style="flex: 0 0 180px;">
+                                <div class="bar"><span style="width: ${c.task_completion_rate}%;"></span></div>
+                                <span class="pct">${c.task_completion_rate}%</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div></div>';
+            }
+
+            body.innerHTML = html;
+        })
+        .catch(err => {
+            console.error(err);
+            body.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Failed to load user details.</p></div>';
+            showToast(err.message || 'An error occurred.', 'Error');
+        });
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('userDetailModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function exportReport() {
+        showToast('Exporting report...', 'Processing');
+        let csv = 'Full Name,Position,Branches,Departments,Expected,Logged,Completion MTD,YTD,Status\n';
+        document.querySelectorAll('.checklist-table tbody tr').forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 9) {
+                const name = cells[0].textContent.trim();
+                const position = cells[1].textContent.trim();
+                const branches = cells[2].textContent.trim();
+                const departments = cells[3].textContent.trim();
+                const expected = cells[4].textContent.trim();
+                const logged = cells[5].textContent.trim();
+                const mtd = cells[6].querySelector('.pct')?.textContent?.trim() || '0%';
+                const ytd = cells[7].querySelector('.pct')?.textContent?.trim() || '0%';
+                const status = cells[8].textContent.trim();
+                csv += `"${name}","${position}","${branches}","${departments}","${expected}","${logged}","${mtd}","${ytd}","${status}"\n`;
+            }
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'activity_checklist.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        setTimeout(() => showToast('Report exported successfully!', 'Exported'), 500);
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') closeModal();
+    });
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('userDetailModal');
+        if (event.target === modal) closeModal();
+    });
+</script>
+{% endblock %}

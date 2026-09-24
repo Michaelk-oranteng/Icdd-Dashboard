@@ -1,0 +1,1277 @@
+/* ============================================
+   REPORT CENTER & CREATION STYLES
+   ============================================ */
+
+/* ==========================================================================
+   1. CONTAINER
+   ========================================================================== */
+
+.report-builder-container {
+    max-width: 1200px;
+    margin: 0 auto 24px;
+}
+
+.report-list-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* ==========================================================================
+   2. BUILDER CARDS
+   ========================================================================== */
+
+.builder-card {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.8));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 16px;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.3));
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.builder-card:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f0f0f0;
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.card-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-header-left i {
+    font-size: 20px;
+    color: #0066cc;
+}
+
+.card-header-left h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a2332;
+    margin: 0;
+}
+
+.card-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.new {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge.editing {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* ==========================================================================
+   3. FORM GRID
+   ========================================================================== */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 24px;
+}
+
+.form-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ==========================================================================
+   4. FORM GROUPS
+   ========================================================================== */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1a2332;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.form-group label i {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.form-group label .required {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    background: white;
+    color: #1a2332;
+}
+
+.form-control:focus {
+    border-color: #0066cc;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.08);
+}
+
+.form-control::placeholder {
+    color: #9ca3af;
+}
+
+.form-control[multiple] {
+    min-height: 100px;
+    height: auto;
+}
+
+.help-text {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+/* ==========================================================================
+   5. FORM ACTIONS
+   ========================================================================== */
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.btn-clear {
+    padding: 10px 20px;
+    background: #f3f4f6;
+    color: #374151;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-clear:hover {
+    background: #e5e7eb;
+}
+
+.btn-submit {
+    flex: 1;
+    padding: 10px 24px;
+    background: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-submit:hover {
+    background: #004e8c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 102, 204, 0.25);
+}
+
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ==========================================================================
+   6. TABLE CONTAINER
+   ========================================================================== */
+
+.table-container {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.75));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 16px;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.3));
+    padding: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.table-container:hover {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* ==========================================================================
+   7. TABLE HEADER
+   ========================================================================== */
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.table-header h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a2332;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-header h4 i {
+    color: #0066cc;
+    font-size: 18px;
+}
+
+.table-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-actions .table-input {
+    width: 220px;
+    padding: 8px 14px 8px 36px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 12px center;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.table-actions .table-input:focus {
+    border-color: #0066cc;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.08);
+}
+
+.btn-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn-refresh:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+.btn-refresh i {
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   8. TABLE STYLES
+   ========================================================================== */
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+}
+
+.report-table thead th {
+    background: rgba(0, 51, 102, 0.03);
+    color: rgba(26, 35, 50, 0.5);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: left;
+    padding: 14px 16px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.report-table tbody td {
+    padding: 16px;
+    color: #1a2332;
+    font-size: 13px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+}
+
+.report-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.report-table tbody tr:hover {
+    background: rgba(0, 51, 102, 0.02);
+}
+
+.report-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.report-table .font-bold {
+    font-weight: 600;
+    color: #1a2332;
+}
+
+.report-table .font-bold i {
+    color: #0066cc;
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   9. FREQUENCY TAGS
+   ========================================================================== */
+
+.frequency-tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.frequency-tag.daily {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.frequency-tag.weekly {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.frequency-tag.monthly {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.frequency-tag.quarterly {
+    background: #fce7f3;
+    color: #9d174d;
+}
+
+.frequency-tag.one-off {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.frequency-tag.yearly {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+/* ==========================================================================
+   10. STATUS TAGS
+   ========================================================================== */
+
+.status-tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.status-tag.assigned {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-tag.in_progress {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-tag.completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-tag.submitted {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.status-tag.draft {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.status-tag.rejected {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.status-tag.approved {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* ==========================================================================
+   11. ASSIGNMENT TAGS
+   ========================================================================== */
+
+.assignment-tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.assignment-tag.all {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.assignment-tag.hc {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.assignment-tag.cc {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.assignment-tag.specific {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+/* ==========================================================================
+   12. USER TAGS
+   ========================================================================== */
+
+.assigned-users-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.user-tag {
+    display: inline-block;
+    padding: 2px 10px;
+    background: #f3f4f6;
+    color: #374151;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid #e5e7eb;
+}
+
+.user-tag.more {
+    background: #e5e7eb;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+}
+
+/* ==========================================================================
+   13. ACTION BUTTONS
+   ========================================================================== */
+
+.action-buttons {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.btn-action {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.btn-action.edit {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.btn-action.edit:hover {
+    background: #fde68a;
+    transform: scale(1.08);
+    box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);
+}
+
+.btn-action.delete {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.btn-action.delete:hover {
+    background: #fecaca;
+    transform: scale(1.08);
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
+
+.btn-action.view {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.btn-action.view:hover {
+    background: #bfdbfe;
+    transform: scale(1.08);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+/* ==========================================================================
+   14. MODAL STYLES
+   ========================================================================== */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 550px;
+    width: 90%;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.modal-content h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a2332;
+    margin: 0;
+}
+
+.modal-content p {
+    color: #6b7280;
+    font-size: 14px;
+    margin: 0 0 24px 0;
+}
+
+.modal-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 28px;
+}
+
+.modal-icon.danger {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.modal-icon.success {
+    background: #d1fae5;
+    color: #10b981;
+}
+
+.modal-icon.info {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.modal-header h2 {
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 0;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #1a2332;
+}
+
+/* Modal Buttons */
+.btn-secondary {
+    padding: 10px 24px;
+    background: #f3f4f6;
+    color: #374151;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+.btn-danger {
+    padding: 10px 24px;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.btn-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ==========================================================================
+   15. VIEW REPORT DETAILS
+   ========================================================================== */
+
+.view-report-details {
+    padding: 8px 0;
+}
+
+.detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row strong {
+    min-width: 110px;
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.detail-row .frequency-tag,
+.detail-row .status-tag,
+.detail-row .assignment-tag {
+    font-size: 12px;
+    padding: 3px 14px;
+}
+
+.detail-row .assigned-users-list {
+    margin-top: 2px;
+}
+
+/* ==========================================================================
+   16. EMPTY STATE
+   ========================================================================== */
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-state i {
+    font-size: 56px;
+    color: #d1d5db;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a2332;
+    margin: 0 0 8px 0;
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.empty-state p a {
+    color: #0066cc;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.empty-state p a:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   17. TOAST NOTIFICATION
+   ========================================================================== */
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    padding: 16px 20px;
+    max-width: 400px;
+    z-index: 9999;
+    animation: slideUp 0.3s ease;
+    border-left: 4px solid #10b981;
+}
+
+.toast.error {
+    border-left-color: #ef4444;
+}
+
+.toast.success {
+    border-left-color: #10b981;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.toast.success .toast-icon {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.toast.error .toast-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.toast-body {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a2332;
+}
+
+.toast-message {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 0 4px;
+}
+
+/* ==========================================================================
+   18. HEADER STYLES
+   ========================================================================== */
+
+.header-divider {
+    width: 1px;
+    height: 28px;
+    background: #e5e7eb;
+    margin: 0 12px;
+}
+
+.header-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-filter-group label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.header-select {
+    padding: 6px 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    background: white;
+    font-family: 'Poppins', sans-serif;
+    color: #1a2332;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.header-select:focus {
+    border-color: #0066cc;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.08);
+}
+
+.btn-create-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    background: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+    text-decoration: none;
+}
+
+.btn-create-header:hover {
+    background: #004e8c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 102, 204, 0.25);
+    color: white;
+}
+
+/* ==========================================================================
+   19. RESPONSIVE DESIGN
+   ========================================================================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .table-container {
+        padding: 16px;
+    }
+    
+    .report-table {
+        font-size: 12px;
+    }
+    
+    .report-table thead th,
+    .report-table tbody td {
+        padding: 12px;
+    }
+    
+    .report-table tbody td {
+        font-size: 12px;
+    }
+    
+    .table-actions .table-input {
+        width: 160px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .report-builder-container,
+    .report-list-container {
+        padding: 0;
+    }
+    
+    .card-header {
+        padding: 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .card-header-left h4 {
+        font-size: 14px;
+    }
+    
+    .form-grid {
+        padding: 16px;
+    }
+    
+    .form-column {
+        gap: 14px;
+    }
+    
+    .form-control {
+        font-size: 13px;
+        padding: 8px 12px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn-submit {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .btn-clear {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .table-container {
+        padding: 12px;
+        border-radius: 12px;
+    }
+    
+    .table-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .table-header h4 {
+        font-size: 14px;
+    }
+    
+    .table-actions {
+        flex-wrap: wrap;
+    }
+    
+    .table-actions .table-input {
+        width: 100%;
+        flex: 1;
+    }
+    
+    .btn-refresh {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    /* Make table horizontally scrollable on mobile */
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    .report-table {
+        min-width: 700px;
+        font-size: 11px;
+    }
+    
+    .report-table thead th,
+    .report-table tbody td {
+        padding: 10px;
+        font-size: 11px;
+    }
+    
+    .action-buttons {
+        gap: 4px;
+    }
+    
+    .btn-action {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+    
+    .frequency-tag,
+    .status-tag,
+    .assignment-tag {
+        font-size: 10px;
+        padding: 3px 10px;
+    }
+    
+    .modal-content {
+        padding: 24px;
+        margin: 16px;
+        max-width: 100%;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .btn-secondary,
+    .btn-danger {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .toast {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        max-width: none;
+    }
+    
+    .detail-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .detail-row strong {
+        min-width: auto;
+    }
+    
+    .header-divider {
+        display: none;
+    }
+    
+    .header-filter-group {
+        flex-wrap: wrap;
+    }
+    
+    .header-filter-group label {
+        font-size: 11px;
+    }
+    
+    .header-select {
+        font-size: 12px;
+        padding: 4px 10px;
+        flex: 1;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .card-header-left h4 {
+        font-size: 13px;
+    }
+    
+    .form-grid {
+        padding: 12px;
+    }
+    
+    .form-group label {
+        font-size: 12px;
+    }
+    
+    .form-control {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+    
+    .table-container {
+        padding: 8px;
+    }
+    
+    .table-header h4 {
+        font-size: 13px;
+    }
+    
+    .report-table thead th,
+    .report-table tbody td {
+        padding: 8px;
+        font-size: 10px;
+    }
+    
+    .report-table {
+        min-width: 600px;
+        font-size: 10px;
+    }
+    
+    .frequency-tag,
+    .status-tag,
+    .assignment-tag {
+        font-size: 9px;
+        padding: 2px 8px;
+    }
+    
+    .btn-action {
+        width: 26px;
+        height: 26px;
+        font-size: 11px;
+    }
+    
+    .user-tag {
+        font-size: 9px;
+        padding: 1px 8px;
+    }
+    
+    .modal-content {
+        padding: 16px;
+    }
+    
+    .modal-content h2 {
+        font-size: 17px;
+    }
+    
+    .toast-content {
+        gap: 8px;
+    }
+    
+    .toast-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+    
+    .toast-title {
+        font-size: 12px;
+    }
+    
+    .toast-message {
+        font-size: 11px;
+    }
+    
+    .empty-state i {
+        font-size: 40px;
+    }
+    
+    .empty-state h3 {
+        font-size: 17px;
+    }
+    
+    .empty-state p {
+        font-size: 13px;
+    }
+}
+
+/* ==========================================================================
+   20. PRINT STYLES
+   ========================================================================== */
+
+@media print {
+    .form-actions,
+    .btn-create-header,
+    .btn-refresh-header,
+    .btn-refresh,
+    .table-actions,
+    .action-buttons,
+    .card-header-right {
+        display: none !important;
+    }
+    
+    .table-container,
+    .builder-card {
+        box-shadow: none !important;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .report-table tbody tr:hover {
+        background: transparent !important;
+    }
+}

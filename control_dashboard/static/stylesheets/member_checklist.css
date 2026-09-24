@@ -1,0 +1,1218 @@
+/* ============================================
+   MEMBER CHECKLIST STYLES - FULL WIDTH
+   OmniBSIC Bank - Member Checklist Page
+   ============================================ */
+
+/* ==========================================================================
+   1. CSS VARIABLES & ROOT
+   ========================================================================== */
+
+:root {
+    --omni-primary: #003399;
+    --omni-primary-dark: #002266;
+    --omni-primary-light: #e6eeff;
+    --omni-secondary: #00a86b;
+    --omni-secondary-light: #d1fae5;
+    --omni-danger: #dc2626;
+    --omni-warning: #f59e0b;
+    --omni-info: #3b82f6;
+    
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --glass-shadow: rgba(0, 0, 0, 0.08);
+    --glass-shadow-hover: rgba(0, 0, 0, 0.15);
+    --glass-border-dark: rgba(0, 0, 0, 0.06);
+    
+    --text-primary: #1a2332;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.4s ease;
+}
+
+/* ==========================================================================
+   2. CONTAINER & LAYOUT - FULL WIDTH
+   ========================================================================== */
+
+.checklist-container {
+    max-width: 100%;
+    padding: 0 var(--space-md);
+    margin: 0;
+    width: 100%;
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    box-shadow: 0 8px 32px var(--glass-shadow);
+    transition: all var(--transition-slow);
+    width: 100%;
+}
+
+.glass-card:hover {
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 8px 40px var(--glass-shadow-hover);
+}
+
+.glass-card h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.glass-card p {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-lg);
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   3. TABLE HEADER WITH FILTERS - FULL WIDTH
+   ========================================================================== */
+
+.table-container {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    padding: var(--space-lg);
+    overflow-x: auto;
+    box-shadow: 0 2px 12px var(--glass-shadow);
+    width: 100%;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+}
+
+.table-header h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.table-header h4 i {
+    color: var(--omni-primary);
+}
+
+.table-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.table-input {
+    padding: 8px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: 'Poppins', sans-serif;
+    background: white;
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+    outline: none;
+}
+
+.table-input:focus {
+    border-color: var(--omni-primary);
+    box-shadow: 0 0 0 3px rgba(0, 51, 153, 0.1);
+}
+
+.table-input::placeholder {
+    color: var(--text-muted);
+}
+
+.table-input option {
+    padding: 4px;
+}
+
+/* ==========================================================================
+   4. BUTTONS
+   ========================================================================== */
+
+.btn-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #f3f4f6;
+    color: var(--text-secondary);
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    font-family: 'Poppins', sans-serif;
+    white-space: nowrap;
+}
+
+.btn-refresh:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.btn-refresh:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    background: var(--omni-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    font-family: 'Poppins', sans-serif;
+    white-space: nowrap;
+}
+
+.btn-primary:hover {
+    background: var(--omni-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 51, 153, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-success {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
+    background: var(--omni-secondary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    font-family: 'Poppins', sans-serif;
+    white-space: nowrap;
+}
+
+.btn-success:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 168, 107, 0.3);
+}
+
+/* ==========================================================================
+   5. MAIN TABLE - FULL WIDTH
+   ========================================================================== */
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+}
+
+.dashboard-table thead th {
+    background: rgba(0, 51, 153, 0.03);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    text-align: left;
+    padding: 14px 16px;
+    border-bottom: 2px solid var(--glass-border-dark);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.dashboard-table thead th:last-child {
+    text-align: center;
+}
+
+.dashboard-table tbody td {
+    padding: 16px;
+    color: var(--text-primary);
+    font-size: 13px;
+    border-bottom: 1px solid var(--glass-border-dark);
+    vertical-align: middle;
+    transition: background var(--transition-fast);
+}
+
+.dashboard-table tbody tr {
+    transition: background var(--transition-fast);
+}
+
+.dashboard-table tbody tr:hover td {
+    background: rgba(0, 51, 153, 0.02);
+}
+
+.dashboard-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.font-bold {
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   6. FREQUENCY TAGS
+   ========================================================================== */
+
+.frequency-tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: #f3f4f6;
+    text-transform: capitalize;
+    letter-spacing: 0.3px;
+}
+
+.frequency-tag.daily {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.frequency-tag.weekly {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.frequency-tag.monthly {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.frequency-tag.quarterly {
+    background: #fce7f3;
+    color: #9d174d;
+}
+
+.frequency-tag.one-off {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* ==========================================================================
+   7. TASK LIST
+   ========================================================================== */
+
+.task-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+}
+
+.task-list li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+    color: var(--text-primary);
+}
+
+.task-list li i {
+    color: var(--omni-secondary);
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.task-list .text-muted {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 12px;
+}
+
+.task-list .more-tasks {
+    color: var(--omni-primary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: default;
+}
+
+/* ==========================================================================
+   8. MINI CALENDAR - ENHANCED
+   ========================================================================== */
+
+.mini-calendar {
+    display: inline-block;
+    background: #f8fafc;
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    min-width: 220px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: all var(--transition-fast);
+}
+
+.mini-calendar:hover {
+    border-color: var(--omni-primary);
+    box-shadow: 0 2px 8px rgba(0, 51, 153, 0.08);
+}
+
+.cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cal-header button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    font-size: 12px;
+}
+
+.cal-header button:hover {
+    background: #e5e7eb;
+    color: var(--text-primary);
+}
+
+.cal-header button:active {
+    transform: scale(0.95);
+}
+
+.cal-month-year {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 80px;
+    text-align: center;
+}
+
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+}
+
+.day-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 4px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cal-day {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all var(--transition-fast);
+    background: transparent;
+    color: var(--text-primary);
+    font-family: 'Poppins', sans-serif;
+    margin: 0 auto;
+}
+
+.cal-day:hover:not(.empty):not(.weekend) {
+    background: #e5e7eb;
+    transform: scale(1.1);
+}
+
+.cal-day:active:not(.empty):not(.weekend) {
+    transform: scale(0.95);
+}
+
+.cal-day.today {
+    border: 2px solid var(--omni-primary);
+    font-weight: 700;
+    color: var(--omni-primary);
+}
+
+.cal-day.today:hover {
+    background: var(--omni-primary-light);
+}
+
+.cal-day.logged {
+    background: var(--omni-secondary-light);
+    color: #065f46;
+}
+
+.cal-day.logged:hover {
+    background: #a7f3d0;
+}
+
+.cal-day.logged .cal-tick-mark {
+    display: block;
+}
+
+.cal-day.empty {
+    cursor: default;
+    visibility: hidden;
+}
+
+.cal-tick-mark {
+    display: none;
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    font-size: 10px;
+    color: var(--omni-secondary);
+}
+
+.day-num {
+    position: relative;
+    z-index: 1;
+}
+
+.cal-day .fa-check.cal-tick-mark {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    font-size: 10px;
+    color: var(--omni-secondary);
+    display: block;
+}
+
+.cal-month-number {
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #e5e7eb;
+    grid-column: 1 / -1;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* ==========================================================================
+   9. TOAST NOTIFICATION
+   ========================================================================== */
+
+.toast-notification {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: white;
+    border-radius: var(--radius-md);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    padding: 18px 24px;
+    display: none;
+    align-items: center;
+    gap: 16px;
+    max-width: 420px;
+    z-index: 10000;
+    border-left: 4px solid var(--omni-secondary);
+    font-family: 'Poppins', sans-serif;
+    animation: slideInRight 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.toast-notification.error {
+    border-left-color: var(--omni-danger);
+}
+
+.toast-notification.warning {
+    border-left-color: var(--omni-warning);
+}
+
+.toast-notification.info {
+    border-left-color: var(--omni-info);
+}
+
+.toast-notification.show {
+    display: flex;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(120%) scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(120%) scale(0.9);
+        opacity: 0;
+    }
+}
+
+.toast-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--omni-secondary);
+}
+
+.toast-notification.error .toast-icon {
+    background: rgba(220, 38, 38, 0.12);
+    color: var(--omni-danger);
+}
+
+.toast-notification.warning .toast-icon {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--omni-warning);
+}
+
+.toast-notification.info .toast-icon {
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--omni-info);
+}
+
+.toast-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-title {
+    margin: 0;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text-primary);
+}
+
+.toast-message {
+    margin: 2px 0 0 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    word-wrap: break-word;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 20px;
+    padding: 4px;
+    transition: color var(--transition-fast);
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    color: var(--text-primary);
+}
+
+/* ==========================================================================
+   10. HEADER BUTTONS
+   ========================================================================== */
+
+.btn-export-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: var(--omni-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    font-family: 'Poppins', sans-serif;
+    white-space: nowrap;
+}
+
+.btn-export-header:hover {
+    background: var(--omni-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 51, 153, 0.35);
+}
+
+.btn-export-header:active {
+    transform: translateY(0);
+}
+
+.btn-refresh-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: #f3f4f6;
+    color: var(--text-secondary);
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+    font-family: 'Poppins', sans-serif;
+    white-space: nowrap;
+}
+
+.btn-refresh-header:hover {
+    background: #e5e7eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.btn-refresh-header:active {
+    transform: translateY(0);
+}
+
+/* ==========================================================================
+   11. RESPONSIVE - TABLET
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .checklist-container {
+        padding: 0 var(--space-sm);
+    }
+    
+    .glass-card {
+        padding: var(--space-md);
+        border-radius: var(--radius-lg);
+    }
+    
+    .table-container {
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+    }
+    
+    .dashboard-table thead th,
+    .dashboard-table tbody td {
+        padding: 12px 14px;
+        font-size: 12px;
+    }
+    
+    .mini-calendar {
+        min-width: 190px;
+        padding: 8px;
+    }
+    
+    .cal-day {
+        width: 28px;
+        height: 28px;
+        font-size: 11px;
+    }
+    
+    .cal-header {
+        font-size: 12px;
+    }
+    
+    .table-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-sm);
+    }
+    
+    .table-actions {
+        flex-wrap: wrap;
+    }
+    
+    .table-actions .table-input {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+/* ==========================================================================
+   12. RESPONSIVE - MOBILE
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .glass-card {
+        padding: var(--space-md);
+        border-radius: var(--radius-md);
+    }
+    
+    .glass-card h2 {
+        font-size: 20px;
+    }
+    
+    .glass-card p {
+        font-size: 13px;
+    }
+    
+    .table-container {
+        padding: var(--space-sm);
+        border-radius: var(--radius-sm);
+    }
+    
+    .dashboard-table {
+        font-size: 12px;
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .dashboard-table thead th,
+    .dashboard-table tbody td {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+    
+    .dashboard-table tbody td {
+        min-width: 80px;
+    }
+    
+    .mini-calendar {
+        min-width: 170px;
+        padding: 6px;
+    }
+    
+    .cal-day {
+        width: 26px;
+        height: 26px;
+        font-size: 10px;
+    }
+    
+    .cal-day .fa-check.cal-tick-mark {
+        font-size: 8px;
+    }
+    
+    .cal-header {
+        font-size: 11px;
+    }
+    
+    .cal-header button {
+        padding: 2px 6px;
+    }
+    
+    .cal-month-year {
+        font-size: 11px;
+        min-width: 60px;
+    }
+    
+    .task-list {
+        font-size: 12px;
+    }
+    
+    .frequency-tag {
+        font-size: 10px;
+        padding: 2px 10px;
+    }
+    
+    .table-header h4 {
+        font-size: 14px;
+    }
+    
+    .table-actions .table-input {
+        font-size: 12px;
+        padding: 6px 10px;
+        min-width: 100px;
+    }
+    
+    .btn-refresh,
+    .btn-primary,
+    .btn-success {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+    
+    .btn-export-header,
+    .btn-refresh-header {
+        font-size: 12px;
+        padding: 6px 14px;
+    }
+    
+    .btn-export-header span,
+    .btn-refresh-header span {
+        display: none;
+    }
+    
+    .toast-notification {
+        bottom: 16px;
+        right: 16px;
+        left: 16px;
+        max-width: none;
+        padding: 14px 18px;
+        border-radius: var(--radius-sm);
+    }
+    
+    .toast-title {
+        font-size: 14px;
+    }
+    
+    .toast-message {
+        font-size: 12px;
+    }
+    
+    .toast-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 15px;
+    }
+}
+
+/* ==========================================================================
+   13. RESPONSIVE - SMALL MOBILE
+   ========================================================================== */
+
+@media (max-width: 480px) {
+    .glass-card {
+        padding: var(--space-sm);
+        border-radius: var(--radius-sm);
+    }
+    
+    .glass-card h2 {
+        font-size: 18px;
+    }
+    
+    .glass-card p {
+        font-size: 12px;
+        margin-bottom: var(--space-md);
+    }
+    
+    .table-container {
+        padding: var(--space-xs);
+        border-radius: var(--radius-sm);
+    }
+    
+    .dashboard-table thead th,
+    .dashboard-table tbody td {
+        padding: 8px 10px;
+        font-size: 11px;
+    }
+    
+    .dashboard-table thead th {
+        font-size: 10px;
+        letter-spacing: 0.5px;
+        padding: 10px 8px;
+    }
+    
+    .mini-calendar {
+        min-width: 140px;
+        padding: 4px;
+    }
+    
+    .cal-day {
+        width: 22px;
+        height: 22px;
+        font-size: 9px;
+    }
+    
+    .cal-day .fa-check.cal-tick-mark {
+        font-size: 7px;
+        bottom: -1px;
+        right: -1px;
+    }
+    
+    .cal-header {
+        font-size: 10px;
+    }
+    
+    .cal-header button {
+        padding: 2px 4px;
+        font-size: 10px;
+    }
+    
+    .cal-month-year {
+        font-size: 10px;
+        min-width: 50px;
+    }
+    
+    .day-label {
+        font-size: 8px;
+    }
+    
+    .cal-month-number {
+        font-size: 8px;
+        margin-top: 4px;
+        padding-top: 4px;
+    }
+    
+    .task-list {
+        font-size: 11px;
+    }
+    
+    .task-list li {
+        padding: 1px 0;
+    }
+    
+    .frequency-tag {
+        font-size: 9px;
+        padding: 2px 8px;
+    }
+    
+    .table-header {
+        gap: var(--space-xs);
+    }
+    
+    .table-header h4 {
+        font-size: 13px;
+    }
+    
+    .table-actions {
+        gap: var(--space-xs);
+    }
+    
+    .table-actions .table-input {
+        font-size: 11px;
+        padding: 4px 8px;
+        min-width: 80px;
+        width: 100%;
+    }
+    
+    .btn-refresh,
+    .btn-primary,
+    .btn-success {
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+    
+    .btn-refresh span {
+        display: none;
+    }
+    
+    .btn-export-header,
+    .btn-refresh-header {
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+    
+    .toast-notification {
+        padding: 12px 14px;
+        gap: 12px;
+    }
+    
+    .toast-title {
+        font-size: 13px;
+    }
+    
+    .toast-message {
+        font-size: 11px;
+    }
+    
+    .toast-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+}
+
+/* ==========================================================================
+   14. UTILITY CLASSES
+   ========================================================================== */
+
+/* Scrollbar Styling */
+.table-container::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: var(--omni-primary);
+    border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: var(--omni-primary-dark);
+}
+
+/* Selection Colors */
+::selection {
+    background: var(--omni-primary-light);
+    color: var(--omni-primary);
+}
+
+/* Print Styles */
+@media print {
+    .btn-export-header,
+    .btn-refresh-header,
+    .btn-refresh,
+    .btn-primary,
+    .btn-success,
+    .table-actions {
+        display: none !important;
+    }
+    
+    .glass-card,
+    .table-container {
+        background: white !important;
+        backdrop-filter: none !important;
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+    
+    .dashboard-table tbody tr:hover td {
+        background: transparent !important;
+    }
+}
+
+/* ==========================================================================
+   15. WEEKEND DAYS STYLING - GRAYED OUT
+   ========================================================================== */
+
+.cal-day.weekend {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.cal-day.weekend .day-num {
+    color: #999;
+}
+
+.cal-day.weekend.logged {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.cal-day.weekend .cal-tick-mark {
+    opacity: 0.3;
+}
+
+/* ==========================================================================
+   16. FILTER SECTION - FULL WIDTH
+   ========================================================================== */
+
+.filter-section {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    width: 100%;
+}
+
+.filter-section .filter-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.filter-section select, 
+.filter-section .filter-input {
+    padding: 6px 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 13px;
+    background: white;
+    color: #1a2332;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    min-height: 38px;
+}
+
+.filter-section select:focus,
+.filter-section .filter-input:focus {
+    border-color: #0066cc;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0,102,204,0.08);
+}
+
+.filter-section .filter-input {
+    min-width: 150px;
+}
+
+.filter-section .filter-reset {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #6b7280;
+    background: #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Poppins', sans-serif;
+}
+
+.filter-section .filter-reset:hover {
+    background: #d1d5db;
+    color: #1a2332;
+}
+
+.filter-section .filter-badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #e8f4fd;
+    color: #0066cc;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.filter-group .filter-group-label {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}

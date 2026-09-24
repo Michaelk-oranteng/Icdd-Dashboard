@@ -1,0 +1,932 @@
+/* ==========================================================================
+   SUBMIT.CSS - Submit Exception Report Page Styles
+   ========================================================================== */
+
+/* ==========================================================================
+   1. EMAIL BUILDER GRID
+   ========================================================================== */
+
+.email-builder-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 24px;
+    margin-top: 20px;
+}
+
+/* ==========================================================================
+   2. BUILDER CARDS
+   ========================================================================== */
+.tb-btn-outline {
+    background: white;
+    color: #374151;
+    border: 1.5px solid #e5e7eb;
+}
+.tb-btn-outline:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    color: #1a2332;
+}
+.builder-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 20px var(--glass-shadow);
+    transition: all 0.3s ease;
+}
+
+.builder-card:hover {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 8px 32px var(--glass-shadow-hover);
+}
+
+/* ==========================================================================
+   3. FORM ROWS
+   ========================================================================== */
+
+.form-row {
+    margin-bottom: 18px;
+}
+
+.form-row:last-of-type {
+    margin-bottom: 20px;
+}
+
+.form-row label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(26, 35, 50, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+}
+
+.form-row .required {
+    color: var(--omni-danger);
+    margin-left: 2px;
+}
+
+/* ==========================================================================
+   4. FORM INPUTS
+   ========================================================================== */
+
+.table-select,
+.table-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--glass-border-dark);
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.6);
+    color: #1a2332;
+}
+
+.table-select:hover,
+.table-input:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.table-select:focus,
+.table-input:focus {
+    outline: none;
+    border-color: var(--omni-primary);
+    box-shadow: 0 0 0 4px rgba(0, 51, 153, 0.08);
+    background: #ffffff;
+}
+
+.table-select option {
+    background: #ffffff;
+    color: #1a2332;
+    padding: 8px;
+}
+
+.template-textarea {
+    width: 100%;
+    min-height: 140px;
+    padding: 12px 14px;
+    border: 1px solid var(--glass-border-dark);
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    resize: vertical;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.6);
+    color: #1a2332;
+    line-height: 1.8;
+}
+
+.template-textarea:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.template-textarea:focus {
+    outline: none;
+    border-color: var(--omni-primary);
+    box-shadow: 0 0 0 4px rgba(0, 51, 153, 0.08);
+    background: #ffffff;
+}
+
+.template-textarea::placeholder {
+    color: rgba(26, 35, 50, 0.3);
+}
+
+/* ==========================================================================
+   5. SELECTED SUMMARY
+   ========================================================================== */
+
+.selected-summary {
+    background: rgba(0, 51, 153, 0.03);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin: 16px 0 20px;
+    border: 1px solid rgba(0, 51, 153, 0.06);
+    transition: all 0.3s ease;
+}
+
+.selected-summary.has-selections {
+    background: rgba(0, 51, 153, 0.05);
+    border-color: rgba(0, 51, 153, 0.12);
+}
+
+.selected-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.selected-count {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--omni-primary);
+    line-height: 1;
+}
+
+.selected-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(26, 35, 50, 0.5);
+}
+
+.selected-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.selected-tag {
+    background: rgba(0, 51, 153, 0.08);
+    padding: 3px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--omni-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.selected-tag .remove-tag {
+    cursor: pointer;
+    color: rgba(0, 51, 153, 0.3);
+    font-size: 12px;
+    transition: color 0.2s;
+}
+
+.selected-tag .remove-tag:hover {
+    color: var(--omni-danger);
+}
+
+.empty-selection-text {
+    color: rgba(26, 35, 50, 0.3);
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   6. SEND MAIL BUTTON
+   ========================================================================== */
+
+.btn-send-mail {
+    width: 100%;
+    padding: 14px;
+    background: var(--omni-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn-send-mail:hover:not(:disabled) {
+    background: var(--omni-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 51, 153, 0.25);
+}
+
+.btn-send-mail:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-send-mail i {
+    font-size: 18px;
+}
+
+/* ==========================================================================
+   7. EXCEPTION SELECTOR
+   ========================================================================== */
+
+.selector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.selector-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.selector-header-left h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a2332;
+}
+
+.exception-count {
+    font-size: 13px;
+    color: rgba(26, 35, 50, 0.5);
+    font-weight: 400;
+}
+
+.selector-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ==========================================================================
+   8. SELECT ALL BUTTON
+   ========================================================================== */
+
+.btn-select-all {
+    padding: 6px 16px;
+    background: rgba(0, 51, 153, 0.06);
+    border: 1px solid rgba(0, 51, 153, 0.08);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--omni-primary);
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.btn-select-all:hover {
+    background: rgba(0, 51, 153, 0.1);
+    border-color: var(--omni-primary);
+    transform: translateY(-1px);
+}
+
+.btn-select-all i {
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   9. CATEGORY FILTER
+   ========================================================================== */
+
+.category-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--glass-border-dark);
+}
+
+.category-btn {
+    padding: 5px 16px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--glass-border-dark);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: rgba(26, 35, 50, 0.6);
+    font-family: 'Poppins', sans-serif;
+}
+
+.category-btn:hover {
+    background: rgba(0, 51, 153, 0.05);
+    border-color: rgba(0, 51, 153, 0.2);
+    color: #1a2332;
+}
+
+.category-btn.active {
+    background: var(--omni-primary);
+    color: #ffffff;
+    border-color: var(--omni-primary);
+    box-shadow: 0 4px 16px rgba(0, 51, 153, 0.15);
+}
+
+.category-btn.active:hover {
+    background: var(--omni-primary-dark);
+}
+
+/* ==========================================================================
+   10. EXCEPTION CHECKLIST STACK
+   ========================================================================== */
+
+.exception-checklist-stack {
+    max-height: 520px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.exception-checklist-stack::-webkit-scrollbar {
+    width: 4px;
+}
+
+.exception-checklist-stack::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 10px;
+}
+
+.exception-checklist-stack::-webkit-scrollbar-thumb {
+    background: var(--omni-primary);
+    border-radius: 10px;
+}
+
+/* ==========================================================================
+   11. EXCEPTION SELECT CARD
+   ========================================================================== */
+
+.exception-select-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--glass-border-dark);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.exception-select-card:hover {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 51, 153, 0.2);
+    transform: translateX(4px);
+}
+
+.exception-select-card.active {
+    background: rgba(0, 51, 153, 0.04);
+    border-color: var(--omni-primary);
+    box-shadow: 0 0 0 3px rgba(0, 51, 153, 0.06);
+}
+
+.exception-select-card:last-child {
+    margin-bottom: 0;
+}
+
+.exception-select-card input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 3px;
+    accent-color: var(--omni-primary);
+    border-radius: 4px;
+}
+
+.exception-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.ex-unit {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(26, 35, 50, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ex-unit i {
+    font-size: 11px;
+}
+
+.ex-title {
+    margin: 4px 0 2px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a2332;
+    line-height: 1.3;
+}
+
+.ex-details {
+    font-size: 13px;
+    color: rgba(26, 35, 50, 0.6);
+    margin: 4px 0 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.5;
+}
+
+.ex-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: rgba(26, 35, 50, 0.4);
+    margin-top: 4px;
+}
+
+.ex-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ex-meta i {
+    font-size: 12px;
+}
+
+/* ==========================================================================
+   12. EXCEPTION STATUS BADGES
+   ========================================================================== */
+
+.ex-status {
+    padding: 2px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+    display: inline-block;
+}
+
+.ex-status.draft {
+    background: rgba(107, 114, 128, 0.12);
+    color: #6b7280;
+}
+
+.ex-status.submitted {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.ex-status.in_review {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+
+.ex-status.approved {
+    background: rgba(16, 185, 129, 0.12);
+    color: #065f46;
+}
+
+.ex-status.rejected {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.ex-status.revision_requested {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+/* ==========================================================================
+   13. EMPTY STATE
+   ========================================================================== */
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(26, 35, 50, 0.4);
+}
+
+.empty-state i {
+    font-size: 56px;
+    color: rgba(26, 35, 50, 0.08);
+    margin-bottom: 16px;
+    display: block;
+}
+
+.empty-state p {
+    font-size: 16px;
+    margin: 0;
+}
+
+.empty-state .sub-text {
+    font-size: 13px;
+    color: rgba(26, 35, 50, 0.3);
+    margin-top: 4px;
+}
+
+/* ==========================================================================
+   14. TOP HEADER BUTTONS
+   ========================================================================== */
+
+.btn-send-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: var(--omni-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-send-header:hover {
+    background: var(--omni-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 51, 153, 0.25);
+}
+
+.btn-send-header i {
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   15. LOADING OVERLAY
+   ========================================================================== */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.loading-content {
+    background: #ffffff;
+    padding: 40px 48px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(0, 51, 153, 0.08);
+    border-top: 4px solid var(--omni-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-content p {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1a2332;
+    margin: 0;
+}
+
+/* ==========================================================================
+   16. TOAST NOTIFICATION
+   ========================================================================== */
+
+.toast-notification {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 420px;
+    z-index: 10001;
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    border-left: 4px solid var(--omni-success);
+}
+
+.toast-notification.show {
+    transform: translateX(0);
+}
+
+.toast-notification.error {
+    border-left-color: var(--omni-danger);
+}
+
+.toast-notification.warning {
+    border-left-color: var(--omni-warning);
+}
+
+.toast-notification.info {
+    border-left-color: var(--omni-info);
+}
+
+.toast-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(16, 185, 129, 0.12);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #065f46;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.toast-notification.error .toast-icon {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.toast-notification.warning .toast-icon {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.toast-notification.info .toast-icon {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    margin: 0;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a2332;
+}
+
+.toast-message {
+    margin: 2px 0 0 0;
+    font-size: 13px;
+    color: rgba(26, 35, 50, 0.6);
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: rgba(26, 35, 50, 0.2);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.toast-close:hover {
+    color: #1a2332;
+}
+
+/* ==========================================================================
+   17. RESPONSIVE
+   ========================================================================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .email-builder-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .builder-card {
+        padding: 20px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .email-builder-grid {
+        gap: 16px;
+        margin-top: 16px;
+    }
+    
+    .builder-card {
+        padding: 16px;
+        border-radius: 16px;
+    }
+    
+    .form-row {
+        margin-bottom: 14px;
+    }
+    
+    .template-textarea {
+        min-height: 100px;
+    }
+    
+    .selected-summary {
+        padding: 12px 14px;
+    }
+    
+    .selected-count {
+        font-size: 20px;
+    }
+    
+    .exception-select-card {
+        padding: 12px 14px;
+        gap: 10px;
+    }
+    
+    .ex-title {
+        font-size: 13px;
+    }
+    
+    .ex-details {
+        font-size: 12px;
+    }
+    
+    .ex-meta {
+        font-size: 11px;
+        gap: 8px;
+    }
+    
+    .selector-header-left h4 {
+        font-size: 14px;
+    }
+    
+    .btn-send-mail {
+        padding: 12px;
+        font-size: 15px;
+    }
+    
+    .toast-notification {
+        top: 16px;
+        right: 16px;
+        left: 16px;
+        max-width: none;
+        padding: 14px 16px;
+    }
+    
+    .category-filter {
+        gap: 4px;
+    }
+    
+    .category-btn {
+        font-size: 11px;
+        padding: 4px 12px;
+    }
+    
+    .btn-send-header {
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .builder-card {
+        padding: 12px;
+    }
+    
+    .form-row label {
+        font-size: 11px;
+    }
+    
+    .table-select,
+    .table-input {
+        padding: 8px 12px;
+        font-size: 13px;
+        border-radius: 10px;
+    }
+    
+    .template-textarea {
+        padding: 10px 12px;
+        font-size: 13px;
+        min-height: 80px;
+    }
+    
+    .exception-select-card {
+        padding: 10px 12px;
+    }
+    
+    .ex-title {
+        font-size: 12px;
+    }
+    
+    .ex-unit {
+        font-size: 10px;
+    }
+    
+    .selected-summary {
+        padding: 10px 12px;
+        margin: 12px 0 16px;
+    }
+    
+    .selected-count {
+        font-size: 18px;
+    }
+    
+    .selected-tag {
+        font-size: 11px;
+        padding: 2px 10px;
+    }
+    
+    .btn-send-mail {
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 10px;
+    }
+    
+    .btn-send-mail i {
+        font-size: 16px;
+    }
+    
+    .loading-content {
+        padding: 30px 24px;
+        margin: 20px;
+    }
+    
+    .spinner {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .modal-content {
+        padding: 24px;
+        margin: 16px;
+    }
+}
+
+/* ==========================================================================
+   18. PRINT STYLES
+   ========================================================================== */
+
+@media print {
+    .nav-bar,
+    .top-header,
+    .btn-send-mail,
+    .btn-send-header,
+    .toast-notification {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+    
+    .builder-card {
+        border: 1px solid #ddd;
+        box-shadow: none;
+        background: #fff;
+        break-inside: avoid;
+    }
+    
+    .exception-select-card {
+        break-inside: avoid;
+        border-color: #ddd;
+    }
+}

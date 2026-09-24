@@ -1,0 +1,1116 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Member Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/member.css' %}" type="text/css">
+<style>
+/* ============================================================
+   MEMBER DASHBOARD — Premium Light Theme
+   ============================================================ */
+
+:root {
+    /* Surfaces */
+    --fx-bg-0: #eef1f8;
+    --fx-bg-1: #ffffff;
+    --fx-bg-2: #f7f8fc;
+    --fx-bg-3: #f1f3f9;
+
+    /* Glass & borders */
+    --fx-glass: rgba(255, 255, 255, 0.85);
+    --fx-glass-hover: rgba(255, 255, 255, 1);
+    --fx-border: rgba(15, 27, 51, 0.08);
+    --fx-border-strong: rgba(15, 27, 51, 0.16);
+    --fx-hairline: rgba(15, 27, 51, 0.06);
+
+    /* Text */
+    --fx-text-0: #0f1b33;
+    --fx-text-1: #46536b;
+    --fx-text-2: #8993a8;
+
+    /* Accents — pastel-friendly, high-contrast on white */
+    --fx-accent: #4f6ef7;     /* indigo */
+    --fx-accent-soft: #eef1ff;
+    --fx-cyan: #0ea5a4;       /* teal */
+    --fx-cyan-soft: #e0f7f6;
+    --fx-violet: #7c5cf0;     /* violet */
+    --fx-violet-soft: #f0ebff;
+    --fx-amber: #e08a17;      /* warm amber */
+    --fx-amber-soft: #fdf2e0;
+    --fx-rose: #e0456a;       /* coral rose */
+    --fx-rose-soft: #fdeaf0;
+    --fx-emerald: #17a673;    /* emerald */
+    --fx-emerald-soft: #e2f7ef;
+
+    /* Shadows */
+    --fx-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --fx-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+    --fx-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
+                    0 4px 12px rgba(15, 27, 51, 0.04);
+
+    --fx-font: 'Poppins', system-ui, -apple-system, sans-serif;
+    --fx-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ============================================================
+   DASHBOARD CONTAINER
+   ============================================================ */
+.fx-dashboard {
+    font-family: var(--fx-font);
+    color: var(--fx-text-0);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 4px 0 32px;
+}
+
+/* ============================================================
+   SECTION 1 — HERO METRICS STRIP
+   ============================================================ */
+.fx-metrics-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.fx-metric {
+    position: relative;
+    padding: 20px 22px;
+    border-radius: 18px;
+    background: var(--fx-bg-1);
+    border: 1px solid var(--fx-border);
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    isolation: isolate;
+    box-shadow: var(--fx-shadow-sm);
+}
+
+/* Top accent line */
+.fx-metric::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--metric-accent, var(--fx-accent)) 50%,
+        transparent 100%);
+    opacity: 0.85;
+}
+
+/* Soft aura bloom */
+.fx-metric::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -30%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 22%, transparent) 0%,
+        transparent 70%);
+    opacity: 0.55;
+    z-index: -1;
+    transition: opacity 0.4s ease, transform 0.6s ease;
+}
+
+.fx-metric:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 30%, var(--fx-border));
+    box-shadow:
+        0 12px 28px rgba(15, 27, 51, 0.10),
+        0 2px 6px rgba(15, 27, 51, 0.04),
+        inset 0 0 0 1px color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 12%, transparent);
+}
+
+.fx-metric:hover::after {
+    opacity: 0.9;
+    transform: scale(1.15);
+}
+
+.fx-metric[data-accent="violet"]  { --metric-accent: var(--fx-violet); }
+.fx-metric[data-accent="emerald"] { --metric-accent: var(--fx-emerald); }
+.fx-metric[data-accent="rose"]    { --metric-accent: var(--fx-rose); }
+.fx-metric[data-accent="amber"]   { --metric-accent: var(--fx-amber); }
+
+.fx-metric-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.fx-metric-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: var(--fx-text-2);
+}
+
+.fx-metric-glyph {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    background: color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 10%, transparent);
+    color: var(--metric-accent, var(--fx-accent));
+    border: 1px solid color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 20%, transparent);
+}
+
+.fx-metric-value {
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -1px;
+    color: var(--fx-text-0);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 6px;
+}
+
+.fx-metric-value .unit {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--fx-text-2);
+    margin-left: 2px;
+}
+
+.fx-metric-foot {
+    font-size: 11px;
+    color: var(--fx-text-2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fx-metric-foot .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--metric-accent, var(--fx-accent));
+    box-shadow: 0 0 6px color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 70%, transparent);
+}
+
+/* ============================================================
+   SECTION 2 — PROGRESS ORBIT RINGS
+   ============================================================ */
+.fx-orbit-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 18px;
+    border-radius: 20px;
+    background:
+        linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+    border: 1px solid var(--fx-border);
+    box-shadow: var(--fx-shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.fx-orbit-strip::before {
+    content: '';
+    position: absolute;
+    top: -100px; left: 50%;
+    transform: translateX(-50%);
+    width: 500px; height: 200px;
+    background: radial-gradient(ellipse,
+        rgba(79, 110, 247, 0.08) 0%,
+        transparent 70%);
+    pointer-events: none;
+}
+
+.fx-orbit {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.fx-orbit:hover {
+    background: var(--fx-bg-2);
+    transform: translateX(2px);
+}
+
+.fx-orbit-ring {
+    position: relative;
+    width: 56px; height: 56px;
+    flex-shrink: 0;
+}
+
+.fx-orbit-ring svg {
+    width: 56px; height: 56px;
+    transform: rotate(-90deg);
+}
+
+.fx-orbit-ring .ring-track {
+    fill: none;
+    stroke: rgba(15, 27, 51, 0.08);
+    stroke-width: 4;
+}
+
+.fx-orbit-ring .ring-fill {
+    fill: none;
+    stroke-width: 4;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 1px 3px color-mix(in srgb, currentColor 40%, transparent));
+}
+
+.fx-orbit-ring .ring-center {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--fx-text-0);
+    font-variant-numeric: tabular-nums;
+}
+
+.fx-orbit-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.fx-orbit-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--fx-text-2);
+}
+
+.fx-orbit-meta {
+    font-size: 12px;
+    color: var(--fx-text-1);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   SECTION 3 — MAIN BENTO GRID
+   ============================================================ */
+.fx-bento {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 20px;
+}
+
+.fx-panel {
+    position: relative;
+    border-radius: 20px;
+    background: var(--fx-bg-1);
+    border: 1px solid var(--fx-border);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--fx-shadow-sm);
+}
+
+.fx-panel:hover {
+    border-color: var(--fx-border-strong);
+    box-shadow: var(--fx-shadow-md);
+}
+
+.fx-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--fx-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+}
+
+.fx-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--fx-text-0);
+}
+
+.fx-panel-title i {
+    font-size: 13px;
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--fx-accent-soft);
+    color: var(--fx-accent);
+    border: 1px solid rgba(79, 110, 247, 0.2);
+}
+
+.fx-panel-title.rose i {
+    background: var(--fx-rose-soft);
+    color: var(--fx-rose);
+    border-color: rgba(224, 69, 106, 0.2);
+}
+
+.fx-panel-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--fx-rose-soft);
+    color: var(--fx-rose);
+    border: 1px solid rgba(224, 69, 106, 0.2);
+    font-variant-numeric: tabular-nums;
+}
+
+.fx-panel-body { padding: 4px 0 0; }
+
+/* ============================================================
+   SECTION 4 — DATA TABLE
+   ============================================================ */
+.fx-table-scroll {
+    max-height: 380px;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 27, 51, 0.15) transparent;
+}
+
+.fx-table-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.fx-table-scroll::-webkit-scrollbar-track { background: transparent; }
+.fx-table-scroll::-webkit-scrollbar-thumb {
+    background: rgba(15, 27, 51, 0.12);
+    border-radius: 4px;
+}
+.fx-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 27, 51, 0.24);
+}
+
+.fx-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.fx-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--fx-bg-2);
+    backdrop-filter: blur(8px);
+}
+
+.fx-table thead th {
+    padding: 12px 18px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--fx-text-2);
+    border-bottom: 1px solid var(--fx-border);
+    white-space: nowrap;
+}
+
+.fx-table thead th.num { text-align: right; }
+
+.fx-table tbody td {
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--fx-hairline);
+    color: var(--fx-text-1);
+    white-space: nowrap;
+}
+
+.fx-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.fx-table tbody tr:hover {
+    background: var(--fx-rose-soft);
+}
+
+.fx-table tbody tr:last-child td { border-bottom: none; }
+
+.fx-table .code-cell {
+    font-family: var(--fx-mono);
+    font-size: 11px;
+    color: var(--fx-accent);
+    font-weight: 600;
+}
+
+.fx-table .descr-cell {
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--fx-text-0);
+}
+
+.fx-table .num { text-align: right; }
+
+.fx-table .lcy-cell {
+    color: var(--fx-rose);
+    font-weight: 700;
+}
+
+.fx-table .fcy-cell {
+    color: var(--fx-text-2);
+}
+
+/* ============================================================
+   SECTION 5 — EMPTY STATE
+   ============================================================ */
+.fx-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 56px 24px;
+    text-align: center;
+}
+
+.fx-empty-glyph {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle,
+        rgba(23, 166, 115, 0.14) 0%,
+        rgba(23, 166, 115, 0.04) 60%,
+        transparent 70%);
+    color: var(--fx-emerald);
+    font-size: 24px;
+    margin-bottom: 4px;
+    animation: fx-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes fx-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.06); opacity: 1; }
+}
+
+.fx-empty-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fx-text-0);
+}
+
+.fx-empty-desc {
+    font-size: 12px;
+    color: var(--fx-text-2);
+    max-width: 320px;
+    line-height: 1.5;
+}
+
+/* ============================================================
+   SECTION 6 — QUICK ACTIONS
+   ============================================================ */
+.fx-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+}
+
+.fx-action {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--fx-bg-1);
+    border: 1px solid var(--fx-border);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    box-shadow: var(--fx-shadow-sm);
+}
+
+.fx-action::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--action-accent, var(--fx-accent));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Soft aura on the right */
+.fx-action::after {
+    content: '';
+    position: absolute;
+    top: 50%; right: -40px;
+    transform: translateY(-50%);
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        color-mix(in srgb, var(--action-accent, var(--fx-accent)) 20%, transparent) 0%,
+        transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.fx-action:hover {
+    background: var(--fx-bg-1);
+    border-color: color-mix(in srgb, var(--action-accent, var(--fx-accent)) 35%, var(--fx-border));
+    transform: translateX(4px);
+    box-shadow:
+        0 8px 24px rgba(15, 27, 51, 0.08),
+        0 2px 6px rgba(15, 27, 51, 0.04);
+}
+
+.fx-action:hover::before { opacity: 1; }
+.fx-action:hover::after  { opacity: 0.9; }
+
+.fx-action[data-accent="rose"]   { --action-accent: var(--fx-rose); }
+.fx-action[data-accent="cyan"]   { --action-accent: var(--fx-cyan); }
+.fx-action[data-accent="violet"] { --action-accent: var(--fx-violet); }
+
+.fx-action-glyph {
+    width: 40px; height: 40px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    background: color-mix(in srgb, var(--action-accent, var(--fx-accent)) 10%, transparent);
+    color: var(--action-accent, var(--fx-accent));
+    border: 1px solid color-mix(in srgb, var(--action-accent, var(--fx-accent)) 20%, transparent);
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.fx-action:hover .fx-action-glyph {
+    transform: scale(1.06) rotate(-4deg);
+}
+
+.fx-action-text { flex: 1; min-width: 0; position: relative; z-index: 1; }
+
+.fx-action-text h5 {
+    margin: 0 0 2px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fx-text-0);
+    letter-spacing: 0.2px;
+}
+
+.fx-action-text p {
+    margin: 0;
+    font-size: 11px;
+    color: var(--fx-text-2);
+}
+
+.fx-action-arrow {
+    color: var(--fx-text-2);
+    font-size: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.fx-action:hover .fx-action-arrow {
+    color: var(--action-accent, var(--fx-accent));
+    transform: translateX(3px);
+}
+
+/* ============================================================
+   SECTION 7 — FOOTER STATS STRIP
+   ============================================================ */
+.fx-footer-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--fx-border);
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--fx-border);
+    box-shadow: var(--fx-shadow-sm);
+}
+
+.fx-footer-cell {
+    background: var(--fx-bg-1);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    transition: background 0.3s ease;
+}
+
+.fx-footer-cell:hover {
+    background: var(--fx-bg-2);
+}
+
+.fx-footer-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--fx-text-2);
+}
+
+.fx-footer-value {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--fx-text-0);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+}
+
+.fx-footer-value.green  { color: var(--fx-emerald); }
+.fx-footer-value.blue   { color: var(--fx-accent); }
+.fx-footer-value.orange { color: var(--fx-amber); }
+.fx-footer-value.red    { color: var(--fx-rose); }
+.fx-footer-value.purple { color: var(--fx-violet); }
+
+.fx-footer-bar {
+    height: 4px;
+    background: rgba(15, 27, 51, 0.06);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.fx-footer-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1200px) {
+    .fx-metrics-strip { grid-template-columns: repeat(2, 1fr); }
+    .fx-orbit-strip   { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+    .fx-bento { grid-template-columns: 1fr; }
+    .fx-footer-strip { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 640px) {
+    .fx-dashboard { gap: 14px; }
+    .fx-metrics-strip { grid-template-columns: 1fr; gap: 12px; }
+    .fx-orbit-strip { grid-template-columns: 1fr; gap: 10px; padding: 12px; }
+    .fx-metric { padding: 16px 18px; }
+    .fx-metric-value { font-size: 28px; }
+    .fx-panel-head { padding: 14px 16px 12px; }
+    .fx-table thead th,
+    .fx-table tbody td { padding: 9px 12px; }
+    .fx-footer-strip { grid-template-columns: 1fr 1fr; }
+    .fx-footer-cell { padding: 14px 16px; }
+    .fx-footer-value { font-size: 18px; }
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:member_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li class="active">
+    <a href="{% url 'control_dashboard:member_dashboard' %}" data-tooltip="Dashboard">
+        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-text">Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
+        <span class="nav-icon"><i class="fas fa-balance-scale"></i></span>
+        <span class="nav-text">Daily Trial Balance</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
+        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-text">Analytics</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
+        <span class="nav-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+        <span class="nav-text">Upload Report</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+        <span class="nav-icon"><i class="fas fa-folder-open"></i></span>
+        <span class="nav-text">My Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
+        <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
+        <span class="nav-text">Consolidated Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:member_checklist' %}" data-tooltip="Checklist">
+        <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+        <span class="nav-text">Activity Checklist</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block page_title %}Member Dashboard{% endblock %}
+
+{% block content %}
+<div class="fx-dashboard">
+
+    <!-- ============================================================
+         SECTION 1 — HERO METRICS STRIP
+         ============================================================ -->
+    <section class="fx-metrics-strip">
+        <article class="fx-metric" data-accent="violet">
+            <div class="fx-metric-head">
+                <span class="fx-metric-label">Active Checklist Rows</span>
+                <span class="fx-metric-glyph"><i class="fas fa-tasks"></i></span>
+            </div>
+            <div class="fx-metric-value">{{ all_checklists_count|default:0 }}</div>
+            <div class="fx-metric-foot">
+                <span class="dot"></span>
+                <span>{{ frequency_summary }}</span>
+            </div>
+        </article>
+
+        <article class="fx-metric" data-accent="emerald">
+            <div class="fx-metric-head">
+                <span class="fx-metric-label">Tasks Completed</span>
+                <span class="fx-metric-glyph"><i class="fas fa-check-double"></i></span>
+            </div>
+            <div class="fx-metric-value">{{ total_checklists_completed|default:0 }}</div>
+            <div class="fx-metric-foot">
+                <span class="dot"></span>
+                <span>Total log entries recorded</span>
+            </div>
+        </article>
+
+        <article class="fx-metric" data-accent="rose">
+            <div class="fx-metric-head">
+                <span class="fx-metric-label">Exceptions Captured</span>
+                <span class="fx-metric-glyph"><i class="fas fa-bug"></i></span>
+            </div>
+            <div class="fx-metric-value">{{ total_exceptions_captured|default:0 }}</div>
+            <div class="fx-metric-foot">
+                <span class="dot"></span>
+                <span>
+                    {% if exceptions_this_week > 0 %}
+                        +{{ exceptions_this_week }} this week
+                    {% else %}
+                        No new entries this week
+                    {% endif %}
+                </span>
+            </div>
+        </article>
+
+        <article class="fx-metric" data-accent="amber">
+            <div class="fx-metric-head">
+                <span class="fx-metric-label">Pending Submissions</span>
+                <span class="fx-metric-glyph"><i class="fas fa-clock"></i></span>
+            </div>
+            <div class="fx-metric-value">{{ pending_submissions|default:0 }}</div>
+            <div class="fx-metric-foot">
+                <span class="dot"></span>
+                <span>
+                    {% if pending_submissions > 0 %}
+                        {{ pending_submissions }} awaiting action
+                    {% else %}
+                        All clear
+                    {% endif %}
+                </span>
+            </div>
+        </article>
+    </section>
+
+    <!-- ============================================================
+         SECTION 2 — PROGRESS ORBIT RINGS
+         ============================================================ -->
+    <section class="fx-orbit-strip">
+        <div class="fx-orbit">
+            <div class="fx-orbit-ring">
+                <svg viewBox="0 0 56 56">
+                    <circle class="ring-track" cx="28" cy="28" r="24"></circle>
+                    <circle class="ring-fill" cx="28" cy="28" r="24"
+                            stroke="var(--fx-emerald)"
+                            stroke-dasharray="150.8"
+                            stroke-dashoffset="{{ overall_month_progress|default:0|add:-100|floatformat:0 }}"
+                            data-target-offset="{{ overall_month_progress|default:0|add:-100|floatformat:0 }}"
+                            style="color: var(--fx-emerald);"></circle>
+                </svg>
+                <div class="ring-center">{{ overall_month_progress|default:0 }}%</div>
+            </div>
+            <div class="fx-orbit-info">
+                <span class="fx-orbit-label">Month Progress</span>
+                <span class="fx-orbit-meta">{{ month_completed|default:0 }} / {{ month_total|default:0 }} tasks</span>
+            </div>
+        </div>
+
+        <div class="fx-orbit">
+            <div class="fx-orbit-ring">
+                <svg viewBox="0 0 56 56">
+                    <circle class="ring-track" cx="28" cy="28" r="24"></circle>
+                    <circle class="ring-fill" cx="28" cy="28" r="24"
+                            stroke="var(--fx-amber)"
+                            stroke-dasharray="150.8"
+                            stroke-dashoffset="{{ overall_quarter_progress|default:0|add:-100|floatformat:0 }}"
+                            data-target-offset="{{ overall_quarter_progress|default:0|add:-100|floatformat:0 }}"
+                            style="color: var(--fx-amber);"></circle>
+                </svg>
+                <div class="ring-center">{{ overall_quarter_progress|default:0 }}%</div>
+            </div>
+            <div class="fx-orbit-info">
+                <span class="fx-orbit-label">Quarter Progress</span>
+                <span class="fx-orbit-meta">Rolling quarter</span>
+            </div>
+        </div>
+
+        <div class="fx-orbit">
+            <div class="fx-orbit-ring">
+                <svg viewBox="0 0 56 56">
+                    <circle class="ring-track" cx="28" cy="28" r="24"></circle>
+                    <circle class="ring-fill" cx="28" cy="28" r="24"
+                            stroke="var(--fx-accent)"
+                            stroke-dasharray="150.8"
+                            stroke-dashoffset="{{ overall_year_progress|default:0|add:-100|floatformat:0 }}"
+                            data-target-offset="{{ overall_year_progress|default:0|add:-100|floatformat:0 }}"
+                            style="color: var(--fx-accent);"></circle>
+                </svg>
+                <div class="ring-center">{{ overall_year_progress|default:0 }}%</div>
+            </div>
+            <div class="fx-orbit-info">
+                <span class="fx-orbit-label">Year Progress</span>
+                <span class="fx-orbit-meta">{{ year_completed|default:0 }} / {{ year_total|default:0 }} tasks</span>
+            </div>
+        </div>
+
+        <div class="fx-orbit">
+            <div class="fx-orbit-ring">
+                <svg viewBox="0 0 56 56">
+                    <circle class="ring-track" cx="28" cy="28" r="24"></circle>
+                    <circle class="ring-fill" cx="28" cy="28" r="24"
+                            stroke="var(--fx-violet)"
+                            stroke-dasharray="150.8"
+                            stroke-dashoffset="{{ weekly_completion_rate|default:0|add:-100|floatformat:0 }}"
+                            data-target-offset="{{ weekly_completion_rate|default:0|add:-100|floatformat:0 }}"
+                            style="color: var(--fx-violet);"></circle>
+                </svg>
+                <div class="ring-center">{{ weekly_completion_rate|default:0 }}%</div>
+            </div>
+            <div class="fx-orbit-info">
+                <span class="fx-orbit-label">Weekly Completion</span>
+                <span class="fx-orbit-meta">Current week</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 3 — MAIN BENTO GRID
+         ============================================================ -->
+    <section class="fx-bento">
+
+        <!-- Irregular GLs panel -->
+        <div class="fx-panel">
+            <header class="fx-panel-head">
+                <div class="fx-panel-title rose">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Irregular GL Positions</span>
+                </div>
+                {% if irregular_gls %}
+                    <span class="fx-panel-badge">{{ irregular_gls|length }} flagged</span>
+                {% else %}
+                    <span class="fx-panel-badge" style="background: rgba(52,211,153,0.1); color: var(--fx-emerald); border-color: rgba(52,211,153,0.25);">Clean</span>
+                {% endif %}
+            </header>
+
+            <div class="fx-panel-body">
+                {% if irregular_gls %}
+                    <div class="fx-table-scroll">
+                        <table class="fx-table">
+                            <thead>
+                                <tr>
+                                    <th>Branch Code</th>
+                                    <th>Branch Name</th>
+                                    <th>GL Code</th>
+                                    <th>Description</th>
+                                    <th class="num">Close Bal (LCY)</th>
+                                    <th class="num">Close Bal (FCY)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in irregular_gls %}
+                                <tr>
+                                    <td class="code-cell">{{ row.branch_code|default:"—" }}</td>
+                                    <td>{{ row.branch_name|default:"—" }}</td>
+                                    <td class="code-cell">{{ row.gl_code|default:"—" }}</td>
+                                    <td class="descr-cell" title="{{ row.descr }}">{{ row.descr|default:"—" }}</td>
+                                    <td class="num lcy-cell">{{ row.close_bal_lcy }}</td>
+                                    <td class="num fcy-cell">{{ row.close_bal_fcy }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="fx-empty">
+                        <div class="fx-empty-glyph">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="fx-empty-title">All GL positions balanced</div>
+                        <div class="fx-empty-desc">
+                            No irregular GL entries detected in the latest uploaded trial balance.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick actions panel -->
+        <div class="fx-panel">
+            <header class="fx-panel-head">
+                <div class="fx-panel-title">
+                    <i class="fas fa-bolt"></i>
+                    <span>Quick Actions</span>
+                </div>
+            </header>
+
+            <div class="fx-panel-body">
+                <nav class="fx-actions">
+                    <a href="{% url 'control_dashboard:drafts_page' %}" class="fx-action" data-accent="rose">
+                        <div class="fx-action-glyph"><i class="fas fa-exclamation-circle"></i></div>
+                        <div class="fx-action-text">
+                            <h5>Log Exception</h5>
+                            <p>Report a control breach</p>
+                        </div>
+                        <div class="fx-action-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </a>
+
+                    <a href="{% url 'control_dashboard:member_checklist' %}" class="fx-action" data-accent="cyan">
+                        <div class="fx-action-glyph"><i class="fas fa-check-double"></i></div>
+                        <div class="fx-action-text">
+                            <h5>View Checklist</h5>
+                            <p>Track your daily progress</p>
+                        </div>
+                        <div class="fx-action-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </a>
+
+                    <a href="{% url 'control_dashboard:reports_page' %}" class="fx-action" data-accent="violet">
+                        <div class="fx-action-glyph"><i class="fas fa-file-alt"></i></div>
+                        <div class="fx-action-text">
+                            <h5>My Reports</h5>
+                            <p>Browse submitted reports</p>
+                        </div>
+                        <div class="fx-action-arrow"><i class="fas fa-chevron-right"></i></div>
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         SECTION 4 — FOOTER STATS STRIP
+         ============================================================ -->
+    <section class="fx-footer-strip">
+        <div class="fx-footer-cell">
+            <span class="fx-footer-label">Month Progress</span>
+            <span class="fx-footer-value {% if overall_month_progress >= 70 %}green{% elif overall_month_progress >= 40 %}orange{% else %}red{% endif %}">
+                {{ overall_month_progress|default:0 }}%
+            </span>
+            <div class="fx-footer-bar">
+                <div class="fx-footer-bar-fill"
+                     data-width="{{ overall_month_progress|default:0 }}%"
+                     style="width: 0%; background: {% if overall_month_progress >= 70 %}var(--fx-emerald){% elif overall_month_progress >= 40 %}var(--fx-amber){% else %}var(--fx-rose){% endif %};"></div>
+            </div>
+        </div>
+
+        <div class="fx-footer-cell">
+            <span class="fx-footer-label">Quarter Progress</span>
+            <span class="fx-footer-value {% if overall_quarter_progress >= 70 %}green{% elif overall_quarter_progress >= 40 %}orange{% else %}red{% endif %}">
+                {{ overall_quarter_progress|default:0 }}%
+            </span>
+            <div class="fx-footer-bar">
+                <div class="fx-footer-bar-fill"
+                     data-width="{{ overall_quarter_progress|default:0 }}%"
+                     style="width: 0%; background: {% if overall_quarter_progress >= 70 %}var(--fx-emerald){% elif overall_quarter_progress >= 40 %}var(--fx-amber){% else %}var(--fx-rose){% endif %};"></div>
+            </div>
+        </div>
+
+        <div class="fx-footer-cell">
+            <span class="fx-footer-label">Year Progress</span>
+            <span class="fx-footer-value {% if overall_year_progress >= 70 %}green{% elif overall_year_progress >= 40 %}orange{% else %}red{% endif %}">
+                {{ overall_year_progress|default:0 }}%
+            </span>
+            <div class="fx-footer-bar">
+                <div class="fx-footer-bar-fill"
+                     data-width="{{ overall_year_progress|default:0 }}%"
+                     style="width: 0%; background: {% if overall_year_progress >= 70 %}var(--fx-emerald){% elif overall_year_progress >= 40 %}var(--fx-amber){% else %}var(--fx-rose){% endif %};"></div>
+            </div>
+        </div>
+
+        <div class="fx-footer-cell">
+            <span class="fx-footer-label">Total Checklists</span>
+            <span class="fx-footer-value blue">{{ all_checklists_count|default:0 }}</span>
+        </div>
+
+        <div class="fx-footer-cell">
+            <span class="fx-footer-label">Logged Days</span>
+            <span class="fx-footer-value purple">{{ total_logged_days|default:0 }}</span>
+        </div>
+    </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    /* ============================================================
+       Animate progress rings + bars on load
+       ============================================================ */
+    function animateOnLoad() {
+        // Progress rings — read the final offset from data attribute
+        document.querySelectorAll('.fx-orbit-ring .ring-fill').forEach(function (ring) {
+            var target = ring.getAttribute('data-target-offset');
+            if (target === null) return;
+            // Start fully empty, then animate to target
+            ring.style.strokeDashoffset = '150.8';
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    ring.style.strokeDashoffset = target;
+                });
+            });
+        });
+
+        // Progress bars — read final width from data attribute
+        document.querySelectorAll('.fx-footer-bar-fill').forEach(function (bar) {
+            var target = bar.getAttribute('data-width') || '0%';
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    bar.style.width = target;
+                });
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', animateOnLoad);
+    } else {
+        animateOnLoad();
+    }
+})();
+</script>
+{% endblock %}

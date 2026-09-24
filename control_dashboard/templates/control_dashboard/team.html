@@ -1,0 +1,307 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Team Performance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/team-performance.css' %}" type="text/css">
+<style>
+/* ============================================================
+   TEAM PERFORMANCE — Local template overrides
+   ============================================================ */
+
+/* Prevent the score text from wrapping when it has three digits */
+.score-text {
+    white-space: nowrap;
+}
+
+/* Prevent the number badges from ever wrapping */
+.task-count-badge {
+    white-space: nowrap;
+}
+
+/* Slight breathing room below the metric grid */
+.analytics-metrics-grid + .table-container {
+    margin-top: 4px;
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:supervisor_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li><a href="{% url 'control_dashboard:supervisor_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+    <span class="nav-text">Dashboard</span>
+</a></li>  
+<li><a href="{% url 'control_dashboard:analytics_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Analytics</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:supervisor_checklist' %}">
+    <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+    <span class="nav-text">Activity Checklist</span>
+</a></li>
+<li class="active"><a href="{% url 'control_dashboard:team_performance' %}">
+    <span class="nav-icon"><i class="fas fa-users"></i></span>
+    <span class="nav-text">Team Performance</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:ad_hoc_scorecard' %}">
+    <span class="nav-icon"><i class="fas fa-star"></i></span>
+    <span class="nav-text">Ad-Hoc Scorecard</span>
+</a></li> 
+<li><a href="{% url 'control_dashboard:submitted_reports' %}">
+    <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
+    <span class="nav-text">Submitted Reports</span>
+</a></li> 
+<li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
+    <span class="nav-icon"><i class="fas fa-search"></i></span>
+    <span class="nav-text">Activity Logs</span>
+</a></li> 
+{% endblock %}
+
+{% block page_title %}Team Member Performance{% endblock %}
+
+{% block top_header_center %}
+<div class="header-filter-group">
+    <label for="search-member"><i class="fas fa-search"></i></label>
+    <input type="text" id="search-member" class="header-search" placeholder="Search team members..." onkeyup="filterTeamMembers()">
+</div>
+{% endblock %}
+
+{% block top_header_right %}
+<button class="btn-export-header" onclick="exportTeamData()">
+    <i class="fas fa-download"></i> Export Report
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Summary Cards -->
+<div class="analytics-metrics-grid">
+    <div class="metric-card border-left-primary">
+        <div class="metric-card-content">
+            <span class="card-metric-label">Total Team Members</span>
+            <h3 class="card-metric-value text-primary">{{ total_members|default:0 }}</h3>
+            <span class="card-metric-subtext">Active members</span>
+        </div>
+        <div class="metric-card-icon text-primary-dim"><i class="fas fa-users"></i></div>
+    </div>
+
+    <div class="metric-card border-left-success">
+        <div class="metric-card-content">
+            <span class="card-metric-label">Total Tasks</span>
+            <h3 class="card-metric-value text-success">{{ total_tasks|default:0 }}</h3>
+            <span class="card-metric-subtext">Expected submissions to date</span>
+        </div>
+        <div class="metric-card-icon text-success-dim"><i class="fas fa-tasks"></i></div>
+    </div>
+
+    <div class="metric-card border-left-warning">
+        <div class="metric-card-content">
+            <span class="card-metric-label">Completed Tasks</span>
+            <h3 class="card-metric-value text-warning">{{ total_completed|default:0 }}</h3>
+            <span class="card-metric-subtext">Email submissions received</span>
+        </div>
+        <div class="metric-card-icon text-warning-dim"><i class="fas fa-check-circle"></i></div>
+    </div>
+
+    <div class="metric-card border-left-info">
+        <div class="metric-card-content">
+            <span class="card-metric-label">Overall Completion</span>
+            <h3 class="card-metric-value text-info">{{ overall_completion|default:0 }}%</h3>
+            <span class="card-metric-subtext">Average performance score</span>
+        </div>
+        <div class="metric-card-icon text-info-dim"><i class="fas fa-chart-pie"></i></div>
+    </div>
+</div>
+
+<!-- Team Performance Table -->
+<div class="table-container">
+    <div class="table-header">
+        <h4>Team Members ({{ team_data|length }})</h4>
+    </div>
+    
+    <table class="users-table" id="teamTable">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Position</th>
+                <th class="text-center" title="Expected submissions to date (recurrence count across all assigned reports)">Total Tasks</th>
+                <th class="text-center" title="Email submissions received (one row per send)">Completed</th>
+                <th class="text-center" title="Points added via Ad-Hoc Scorecard">Bonuses</th>
+                <th class="text-center" title="Points deducted via Ad-Hoc Scorecard">Deductions</th>
+                <th style="width: 25%;" title="(Σ submission final scores + Bonuses − Deductions) / Total Tasks × 100 — no upper cap">Performance Score</th>
+                <th class="text-center">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in team_data %}
+            <tr data-name="{{ member.user.full_name|lower }}">
+                <td class="font-bold">{{ member.user.full_name|default:member.user.email }}</td>
+                <td>{{ member.user.get_position_display|default:"-" }}</td>
+                <td class="text-center"><span class="task-count-badge">{{ member.total_tasks }}</span></td>
+                <td class="text-center"><span class="task-count-badge">{{ member.completed }}</span></td>
+                <td class="text-center">
+                    {% if member.bonuses %}
+                        <span style="color:#059669;font-weight:600;">+{{ member.bonuses }}</span>
+                    {% else %}
+                        <span style="color:#cbd5e1;">—</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                    {% if member.deductions %}
+                        <span style="color:#dc2626;font-weight:600;">−{{ member.deductions }}</span>
+                    {% else %}
+                        <span style="color:#cbd5e1;">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="performance-metric-wrapper">
+                        <span class="score-text {% if member.percentage >= 90 %}text-success{% elif member.percentage >= 70 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ member.percentage }}%
+                        </span>
+                        <div class="progress-track">
+                            <div class="progress-bar {% if member.percentage >= 90 %}bar-success{% elif member.percentage >= 70 %}bar-warning{% else %}bar-danger{% endif %}" 
+                                 style="width: {{ member.percentage_bar }}%;"></div>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-center">
+                    <span class="status-badge {% if member.status == 'success' %}active{% elif member.status == 'warning' %}pending{% else %}inactive{% endif %}">
+                        {{ member.status_text }}
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center">
+                    <i class="fas fa-users"></i>
+                    No team members found. Add members to get started.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function getCsrfToken() {
+        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+
+    // ============================================
+    // TOAST NOTIFICATION
+    // ============================================
+
+    function showToast(message, title = 'Success!') {
+        const toast = document.getElementById('toastNotification');
+        const msgEl = document.getElementById('toastMessage');
+        const titleEl = toast.querySelector('.toast-title');
+        msgEl.textContent = message || 'Action completed successfully.';
+        titleEl.textContent = title;
+        toast.classList.add('show');
+        
+        if (window.toastTimeout) {
+            clearTimeout(window.toastTimeout);
+        }
+        
+        window.toastTimeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    window.closeToast = function() {
+        const toast = document.getElementById('toastNotification');
+        toast.classList.remove('show');
+        if (window.toastTimeout) {
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = null;
+        }
+    };
+
+    // ============================================
+    // FILTER TEAM MEMBERS
+    // ============================================
+
+    function filterTeamMembers() {
+        const input = document.getElementById('search-member');
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById('teamTable');
+        const rows = table.getElementsByTagName('tr');
+
+        for (let i = 1; i < rows.length; i++) {
+            const nameCell = rows[i].getElementsByTagName('td')[0];
+            if (nameCell) {
+                const name = nameCell.textContent.toLowerCase();
+                rows[i].style.display = name.includes(filter) ? '' : 'none';
+            }
+        }
+    }
+
+    // ============================================
+    // EXPORT TEAM DATA
+    // ============================================
+
+    function exportTeamData() {
+        showToast('Exporting team data...', 'Exporting');
+        
+        let csv = 'Full Name,Position,Total Tasks,Completed,Bonuses,Deductions,Performance Score,Status\n';
+        const rows = document.querySelectorAll('#teamTable tbody tr');
+        
+        rows.forEach(row => {
+            if (row.style.display !== 'none') {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 7) {
+                    const name = cells[0].textContent.trim();
+                    const position = cells[1].textContent.trim();
+                    const tasks = cells[2].textContent.trim();
+                    const completed = cells[3].textContent.trim();
+                    const bonuses = cells[4].textContent.trim();
+                    const deductions = cells[5].textContent.trim();
+                    const score = cells[6].querySelector('.score-text')?.textContent?.trim() || '0%';
+                    const status = cells[7]?.textContent?.trim() || '';
+                    csv += `"${name}","${position}","${tasks}","${completed}","${bonuses}","${deductions}","${score}","${status}"\n`;
+                }
+            }
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'team_performance.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        setTimeout(() => {
+            showToast('Team data exported successfully!', 'Exported');
+        }, 500);
+    }
+
+    // ============================================
+    // ENTER KEY SUPPORT FOR SEARCH
+    // ============================================
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const target = e.target;
+            if (target.id === 'search-member') {
+                filterTeamMembers();
+            }
+        }
+    });
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Team Performance page loaded');
+        console.log('Total team members:', {{ team_data|length }});
+    });
+</script>
+{% endblock %}
