@@ -78,7 +78,6 @@
     min-height: 120px;
 }
 
-/* Top accent line — color varies by metric type */
 .metric-card::before {
     content: '';
     position: absolute;
@@ -91,7 +90,6 @@
     opacity: 0.85;
 }
 
-/* Soft aura bloom */
 .metric-card::after {
     content: '';
     position: absolute;
@@ -123,13 +121,11 @@
     transform: translateY(-1px) scale(0.99);
 }
 
-/* Metric type variants */
 .metric-card.border-left-danger  { --metric-accent: var(--sv-rose); }
 .metric-card.border-left-warning { --metric-accent: var(--sv-amber); }
 .metric-card.border-left-purple  { --metric-accent: var(--sv-violet); }
 .metric-card.border-left-success { --metric-accent: var(--sv-emerald); }
 
-/* Hover overlay */
 .metric-card-hover {
     position: absolute;
     bottom: 0;
@@ -156,7 +152,6 @@
     transform: translateY(0);
 }
 
-/* Metric content */
 .metric-card-content {
     flex: 1;
     min-width: 0;
@@ -197,7 +192,6 @@
     line-height: 1.4;
 }
 
-/* Metric card icon */
 .metric-card-icon {
     font-size: 34px;
     opacity: 0.18;
@@ -218,7 +212,6 @@
 .metric-card-icon.text-purple-dim  { color: var(--sv-violet); }
 .metric-card-icon.text-success-dim { color: var(--sv-emerald); }
 
-/* Small badges inside metric cards */
 .badge-danger-dim,
 .badge-warning-dim,
 .badge-success-dim,
@@ -352,6 +345,50 @@
 }
 
 /* ============================================================
+   LIVE pill (Top Performers header)
+   ============================================================ */
+.sv-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #059669;
+    background: rgba(16, 185, 129, 0.10);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.sv-live-pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+    animation: sv-live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes sv-live-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.3); opacity: 0.7; }
+}
+
+/* Flash animation when a live cell updates */
+@keyframes sv-cell-flash {
+    0%   { background: rgba(79, 110, 247, 0.16); }
+    100% { background: transparent; }
+}
+.sv-cell-updated {
+    animation: sv-cell-flash 1.4s ease-out;
+    border-radius: 6px;
+}
+
+/* ============================================================
    USERS TABLE (Top Performers)
    ============================================================ */
 .users-table {
@@ -410,7 +447,6 @@
     font-size: 13px;
 }
 
-/* Rank badges */
 .rank-badge {
     display: inline-flex;
     align-items: center;
@@ -449,18 +485,17 @@
     border: 1px solid var(--sv-border);
 }
 
-/* Percentage display */
 .simple-percentage {
     font-weight: 700;
     font-size: 14px;
     font-variant-numeric: tabular-nums;
+    transition: color 0.5s ease;
 }
 
 .simple-percentage.text-success { color: var(--sv-emerald); }
 .simple-percentage.text-warning { color: var(--sv-amber); }
 .simple-percentage.text-danger  { color: var(--sv-rose); }
 
-/* Status pills */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -555,7 +590,6 @@
 .action-shortcut-item:hover::before { opacity: 1; }
 .action-shortcut-item:hover::after  { opacity: 0.9; }
 
-/* Accent variants */
 .action-shortcut-item:has(.danger-box)  { --action-accent: var(--sv-rose); }
 .action-shortcut-item:has(.primary-box) { --action-accent: var(--sv-accent); }
 .action-shortcut-item:has(.warning-box) { --action-accent: var(--sv-amber); }
@@ -642,7 +676,6 @@
     transform: translateX(4px);
 }
 
-/* Exception count badge */
 .exception-count-badge {
     display: inline-flex;
     align-items: center;
@@ -813,7 +846,6 @@
     font-size: 12px;
 }
 
-/* Week range (kept for compatibility) */
 .week-range {
     font-size: 13px;
     font-weight: 400;
@@ -825,161 +857,52 @@
    RESPONSIVE
    ============================================================ */
 @media (max-width: 1200px) {
-    .analytics-metrics-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    .analytics-metrics-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 1024px) {
-    .dashboard-split-layout {
-        grid-template-columns: 1fr;
-    }
+    .dashboard-split-layout { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
-    .analytics-metrics-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
-
-    .metric-card {
-        padding: 18px 20px;
-        min-height: 100px;
-    }
-
-    .card-metric-value {
-        font-size: 26px;
-    }
-
-    .metric-card-icon {
-        font-size: 26px;
-    }
-
-    .panel-card-header {
-        padding: 14px 16px 12px;
-    }
-
+    .analytics-metrics-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .metric-card { padding: 18px 20px; min-height: 100px; }
+    .card-metric-value { font-size: 26px; }
+    .metric-card-icon { font-size: 26px; }
+    .panel-card-header { padding: 14px 16px 12px; }
     .users-table thead th,
-    .users-table tbody td {
-        padding: 10px 12px;
-        font-size: 11px;
-    }
-
-    .users-table .font-bold {
-        font-size: 12px;
-    }
-
-    .quick-actions-list-stack {
-        padding: 12px;
-    }
-
-    .action-shortcut-item {
-        padding: 12px 14px;
-        gap: 12px;
-    }
-
-    .shortcut-icon-box {
-        width: 38px;
-        height: 38px;
-        font-size: 15px;
-    }
-
-    .shortcut-text-box h5 {
-        font-size: 12px;
-    }
-
-    .shortcut-desc {
-        font-size: 10px;
-    }
-
+    .users-table tbody td { padding: 10px 12px; font-size: 11px; }
+    .users-table .font-bold { font-size: 12px; }
+    .quick-actions-list-stack { padding: 12px; }
+    .action-shortcut-item { padding: 12px 14px; gap: 12px; }
+    .shortcut-icon-box { width: 38px; height: 38px; font-size: 15px; }
+    .shortcut-text-box h5 { font-size: 12px; }
+    .shortcut-desc { font-size: 10px; }
     .toast-notification {
-        left: 16px;
-        right: 16px;
-        bottom: 16px;
-        max-width: none;
-        min-width: auto;
+        left: 16px; right: 16px; bottom: 16px;
+        max-width: none; min-width: auto;
     }
-
-    .week-range {
-        display: block;
-        margin-left: 0;
-        margin-top: 4px;
-    }
+    .week-range { display: block; margin-left: 0; margin-top: 4px; }
 }
 
 @media (max-width: 480px) {
-    .analytics-metrics-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .metric-card {
-        padding: 16px;
-        min-height: 90px;
-        border-radius: 16px;
-    }
-
-    .card-metric-value {
-        font-size: 22px;
-    }
-
-    .metric-card-icon {
-        font-size: 22px;
-    }
-
-    .card-metric-label {
-        font-size: 9px;
-    }
-
-    .panel-card-header h4 {
-        font-size: 12px;
-    }
-
-    .panel-header-link {
-        font-size: 10px;
-        padding: 4px 8px;
-    }
-
+    .analytics-metrics-grid { grid-template-columns: 1fr; gap: 10px; }
+    .metric-card { padding: 16px; min-height: 90px; border-radius: 16px; }
+    .card-metric-value { font-size: 22px; }
+    .metric-card-icon { font-size: 22px; }
+    .card-metric-label { font-size: 9px; }
+    .panel-card-header h4 { font-size: 12px; }
+    .panel-header-link { font-size: 10px; padding: 4px 8px; }
     .users-table thead th,
-    .users-table tbody td {
-        padding: 8px 10px;
-        font-size: 10px;
-    }
-
-    .rank-badge {
-        width: 24px;
-        height: 24px;
-        font-size: 10px;
-    }
-
-    .simple-percentage {
-        font-size: 12px;
-    }
-
-    .action-shortcut-item {
-        padding: 10px 12px;
-        gap: 10px;
-    }
-
-    .shortcut-icon-box {
-        width: 32px;
-        height: 32px;
-        font-size: 13px;
-    }
-
-    .shortcut-text-box h5 {
-        font-size: 11px;
-    }
-
-    .shortcut-desc {
-        font-size: 9px;
-    }
-
-    .exception-count-badge {
-        min-width: 18px;
-        height: 18px;
-        font-size: 9px;
-    }
+    .users-table tbody td { padding: 8px 10px; font-size: 10px; }
+    .rank-badge { width: 24px; height: 24px; font-size: 10px; }
+    .simple-percentage { font-size: 12px; }
+    .action-shortcut-item { padding: 10px 12px; gap: 10px; }
+    .shortcut-icon-box { width: 32px; height: 32px; font-size: 13px; }
+    .shortcut-text-box h5 { font-size: 11px; }
+    .shortcut-desc { font-size: 9px; }
+    .exception-count-badge { min-width: 18px; height: 18px; font-size: 9px; }
+    .sv-live-pill { font-size: 9px; padding: 2px 7px; }
 }
 </style>
 {% endblock %}
@@ -990,7 +913,7 @@
 <li class="active"><a href="{% url 'control_dashboard:supervisor_dashboard' %}">
     <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
     <span class="nav-text">Dashboard</span>
-</a></li>  
+</a></li>
 <li><a href="{% url 'control_dashboard:analytics_dashboard' %}">
     <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
     <span class="nav-text">Analytics</span>
@@ -1006,15 +929,15 @@
 <li><a href="{% url 'control_dashboard:ad_hoc_scorecard' %}">
     <span class="nav-icon"><i class="fas fa-star"></i></span>
     <span class="nav-text">Ad-Hoc Scorecard</span>
-</a></li> 
+</a></li>
 <li><a href="{% url 'control_dashboard:submitted_reports' %}">
     <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
     <span class="nav-text">Submitted Reports</span>
-</a></li> 
+</a></li>
 <li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
     <span class="nav-icon"><i class="fas fa-search"></i></span>
     <span class="nav-text">Activity Logs</span>
-</a></li> 
+</a></li>
 {% endblock %}
 
 {% block page_title %}Supervisor Dashboard{% endblock %}
@@ -1042,7 +965,8 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
     <div class="metric-card border-left-danger" onclick="window.location.href='{% url 'control_dashboard:analytics_dashboard' %}'">
         <div class="metric-card-content">
             <span class="card-metric-label">Total Exceptions</span>
-            <h3 class="card-metric-value text-danger">{{ total_exceptions|default:0 }}</h3>
+            <h3 class="card-metric-value text-danger"
+                data-summary-field="total_exceptions">{{ total_exceptions|default:0 }}</h3>
             <span class="card-metric-subtext">
                 <span class="badge-danger-dim">
                     <i class="fas fa-calendar-day"></i> {{ today_exceptions|default:0 }} new today
@@ -1056,7 +980,8 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
     <div class="metric-card border-left-warning" onclick="window.location.href='{% url 'control_dashboard:submitted_reports' %}'">
         <div class="metric-card-content">
             <span class="card-metric-label">Submitted Reports</span>
-            <h3 class="card-metric-value text-warning">{{ submitted_reports_count|default:0 }}</h3>
+            <h3 class="card-metric-value text-warning"
+                data-summary-field="submitted_reports_count">{{ submitted_reports_count|default:0 }}</h3>
             <span class="card-metric-subtext">
                 {% if submitted_reports_count|default:0 > 0 %}
                 <span class="badge-warning-dim"><i class="fas fa-file-alt"></i> {{ submitted_reports_count }} submitted</span>
@@ -1072,7 +997,8 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
     <div class="metric-card border-left-purple" onclick="window.location.href='{% url 'control_dashboard:team_performance' %}'">
         <div class="metric-card-content">
             <span class="card-metric-label">Team Members</span>
-            <h3 class="card-metric-value text-purple">{{ team_performance|length }}</h3>
+            <h3 class="card-metric-value text-purple"
+                data-summary-field="team_size">{{ team_performance|length }}</h3>
             <span class="card-metric-subtext">
                 <span class="badge-purple-dim"><i class="fas fa-users"></i> Active members</span>
             </span>
@@ -1084,7 +1010,8 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
     <div class="metric-card border-left-success" onclick="window.location.href='{% url 'control_dashboard:supervisor_checklist' %}'">
         <div class="metric-card-content">
             <span class="card-metric-label">Team Completion</span>
-            <h3 class="card-metric-value text-success">{{ completion_rate|default:0 }}%</h3>
+            <h3 class="card-metric-value text-success"
+                data-summary-field="completion_rate">{{ completion_rate|default:0 }}%</h3>
             <span class="card-metric-subtext">
                 {% if completion_rate|default:0 >= 90 %}
                 <span class="badge-success-dim"><i class="fas fa-trophy"></i> Excellent performance</span>
@@ -1104,10 +1031,17 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
 <div class="dashboard-split-layout">
     <div class="dashboard-panel-card">
         <div class="panel-card-header">
-            <h4>🏆 Top Performers</h4>
-            <a href="{% url 'control_dashboard:team_performance' %}" class="panel-header-link">View Full Team <i class="fas fa-arrow-right"></i></a>
+            <h4>
+                🏆 Top Performers
+                <span class="sv-live-pill" title="Auto-refreshes every 15 seconds">
+                    <span class="dot"></span> Live
+                </span>
+            </h4>
+            <a href="{% url 'control_dashboard:team_performance' %}" class="panel-header-link">
+                View Full Team <i class="fas fa-arrow-right"></i>
+            </a>
         </div>
-        
+
         <table class="users-table simple-clickable-table">
             <thead>
                 <tr>
@@ -1118,23 +1052,29 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
                     <th class="text-center" style="width: 50px;">Status</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="topPerformersBody">
                 {% for member in team_performance|slice:":5" %}
-                <tr onclick="window.location.href='{% url 'control_dashboard:team_performance' %}'" style="cursor: pointer;">
+                <tr onclick="window.location.href='{% url 'control_dashboard:team_performance' %}'"
+                    style="cursor: pointer;"
+                    data-member-id="{{ member.user.id }}">
                     <td class="text-center">
-                        <span class="rank-badge rank-{{ forloop.counter }}">
-                            {{ forloop.counter }}
-                        </span>
+                        <span class="rank-badge rank-{{ forloop.counter }}">{{ forloop.counter }}</span>
                     </td>
                     <td class="font-bold">{{ member.user.full_name|default:member.user.email }}</td>
-                    <td class="text-center">{{ member.submitted|default:0 }}</td>
                     <td class="text-center">
-                        <span class="simple-percentage text-{{ member.status }}">
-                            {{ member.percentage|default:0 }}%
-                        </span>
+                        <span data-field="submitted">{{ member.submitted|default:0 }}</span>
                     </td>
                     <td class="text-center">
-                        <span class="status-badge {% if member.status == 'success' %}active{% elif member.status == 'warning' %}pending{% else %}inactive{% endif %}" style="font-size: 10px; padding: 2px 8px;">
+                        <span class="simple-percentage text-{{ member.status }}"
+                              data-field="percentage">{{ member.percentage|default:0 }}%</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="status-badge
+                            {% if member.status == 'success' %}active
+                            {% elif member.status == 'warning' %}pending
+                            {% else %}inactive{% endif %}"
+                            style="font-size: 10px; padding: 2px 8px;"
+                            data-field="status-icon">
                             {% if member.status == 'success' %}🌟{% elif member.status == 'warning' %}📈{% else %}⚠️{% endif %}
                         </span>
                     </td>
@@ -1149,7 +1089,7 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
                 {% endfor %}
             </tbody>
         </table>
-        
+
         {% if team_performance|length > 5 %}
         <div style="text-align: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05);">
             <a href="{% url 'control_dashboard:team_performance' %}" class="panel-header-link">
@@ -1169,9 +1109,10 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div class="shortcut-text-box">
-                    <h5>Analytics 
+                    <h5>Analytics
                         {% if total_exceptions|default:0 > 0 %}
-                        <span class="exception-count-badge">{{ total_exceptions }}</span>
+                        <span class="exception-count-badge"
+                              data-summary-field="total_exceptions_badge">{{ total_exceptions }}</span>
                         {% endif %}
                     </h5>
                     <p class="shortcut-desc">View all exceptions</p>
@@ -1209,19 +1150,30 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
 
 {% block extra_js %}
 <script>
+    const TOP_PERFORMERS_ENDPOINT = "{% url 'control_dashboard:api_supervisor_top_performers_live' %}";
+    const TOP_PERFORMERS_INTERVAL_MS = 15000;
+
+    // ============================================
+    // CSRF helper
+    // ============================================
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
     // ============================================
     // TOAST NOTIFICATION
     // ============================================
     function showToast(message, title = 'Success!') {
         const toast = document.getElementById('toastNotification');
         if (!toast) return;
-        
+
         const msgEl = document.getElementById('toastMessage');
         const titleEl = toast.querySelector('.toast-title');
-        
+
         msgEl.textContent = message || 'Action completed successfully.';
         titleEl.textContent = title;
-        
+
         const icon = toast.querySelector('.toast-icon i');
         if (title.toLowerCase().includes('error') || title.toLowerCase().includes('warning')) {
             icon.className = 'fas fa-exclamation-circle';
@@ -1234,23 +1186,16 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
             toast.querySelector('.toast-icon').style.color = '#10b981';
             toast.querySelector('.toast-icon').style.background = 'rgba(16, 185, 129, 0.1)';
         }
-        
+
         toast.classList.add('show');
-        
-        if (window.toastTimeout) {
-            clearTimeout(window.toastTimeout);
-        }
-        
-        window.toastTimeout = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
     window.closeToast = function() {
         const toast = document.getElementById('toastNotification');
-        if (toast) {
-            toast.classList.remove('show');
-        }
+        if (toast) toast.classList.remove('show');
         if (window.toastTimeout) {
             clearTimeout(window.toastTimeout);
             window.toastTimeout = null;
@@ -1258,51 +1203,223 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
     };
 
     // ============================================
-    // SYNC DASHBOARD
+    // SYNC DASHBOARD (manual refresh)
     // ============================================
     function syncDashboard() {
         const btn = document.querySelector('.btn-refresh-header');
-        const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
         btn.disabled = true;
-        
         showToast('Refreshing dashboard data...', 'Refreshing');
-        
-        setTimeout(() => {
-            location.reload();
-        }, 1000);
+        setTimeout(() => location.reload(), 700);
     }
 
     // ============================================
-    // AUTO REFRESH (every 60 seconds)
+    // ANIMATED NUMBER (easeOutCubic)
+    // ============================================
+    function animateNumber(el, from, to, duration, suffix) {
+        suffix = suffix || '';
+        if (!el) return;
+        if (from === to) {
+            if (suffix) el.textContent = to + suffix;
+            return;
+        }
+        const start = performance.now();
+        (function tick(now) {
+            const t = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - t, 3);
+            el.textContent = Math.round(from + (to - from) * eased) + suffix;
+            if (t < 1) requestAnimationFrame(tick);
+            else el.textContent = to + suffix;
+        })(start);
+    }
+
+    function flashEl(el) {
+        if (!el) return;
+        el.classList.add('sv-cell-updated');
+        setTimeout(() => el.classList.remove('sv-cell-updated'), 1400);
+    }
+
+    // ============================================
+    // TOP PERFORMERS — LIVE REFRESH
+    // ============================================
+    async function refreshTopPerformers() {
+        const tbody = document.getElementById('topPerformersBody');
+        if (!tbody) return;
+
+        try {
+            const resp = await fetch(TOP_PERFORMERS_ENDPOINT, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+            });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (!data.success) return;
+
+            const performers = data.top_performers || [];
+            const teamUrl = "{% url 'control_dashboard:team_performance' %}";
+
+            // -------- Empty state --------
+            if (performers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            <i class="fas fa-users" style="display:block;font-size:24px;color:#d1d5db;margin-bottom:8px;"></i>
+                            No team members found
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            // -------- Remove rows that fell out of the top 5 --------
+            const keptIds = new Set(performers.map(p => String(p.id)));
+            Array.from(tbody.querySelectorAll('tr[data-member-id]')).forEach(tr => {
+                if (!keptIds.has(tr.getAttribute('data-member-id'))) {
+                    tr.remove();
+                }
+            });
+
+            // -------- Upsert each row in ranking order --------
+            performers.forEach((p, idx) => {
+                const rank = idx + 1;
+                let row = tbody.querySelector(`tr[data-member-id="${p.id}"]`);
+
+                // If missing, build the row
+                if (!row) {
+                    row = document.createElement('tr');
+                    row.setAttribute('data-member-id', p.id);
+                    row.style.cursor = 'pointer';
+                    row.onclick = () => { window.location.href = teamUrl; };
+                    row.innerHTML = `
+                        <td class="text-center"><span class="rank-badge rank-${rank}">${rank}</span></td>
+                        <td class="font-bold">${p.full_name}</td>
+                        <td class="text-center"><span data-field="submitted">0</span></td>
+                        <td class="text-center"><span class="simple-percentage" data-field="percentage">0%</span></td>
+                        <td class="text-center"><span class="status-badge" data-field="status-icon" style="font-size:10px;padding:2px 8px;">—</span></td>
+                    `;
+                }
+
+                // Ensure the row is at the correct position in the tbody
+                const currentlyAt = Array.from(tbody.children).indexOf(row);
+                if (currentlyAt !== idx) {
+                    if (idx >= tbody.children.length) {
+                        tbody.appendChild(row);
+                    } else {
+                        tbody.insertBefore(row, tbody.children[idx]);
+                    }
+                }
+
+                // -------- Rank badge --------
+                const rankBadge = row.querySelector('.rank-badge');
+                if (rankBadge) {
+                    rankBadge.classList.remove('rank-1','rank-2','rank-3','rank-4','rank-5');
+                    rankBadge.classList.add(`rank-${rank}`);
+                    rankBadge.textContent = rank;
+                }
+
+                // -------- Submitted --------
+                const subEl = row.querySelector('[data-field="submitted"]');
+                if (subEl) {
+                    const oldVal = parseInt(subEl.textContent, 10) || 0;
+                    if (oldVal !== p.submitted) {
+                        animateNumber(subEl, oldVal, p.submitted, 900);
+                        flashEl(subEl);
+                    }
+                }
+
+                // -------- Percentage --------
+                const pctEl = row.querySelector('[data-field="percentage"]');
+                if (pctEl) {
+                    const oldVal = parseInt(pctEl.textContent, 10) || 0;
+                    if (oldVal !== p.percentage) {
+                        animateNumber(pctEl, oldVal, p.percentage, 900, '%');
+                        flashEl(pctEl);
+                    }
+                    pctEl.classList.remove('text-success','text-warning','text-danger');
+                    pctEl.classList.add(`text-${p.status}`);
+                }
+
+                // -------- Status icon --------
+                const iconEl = row.querySelector('[data-field="status-icon"]');
+                if (iconEl) {
+                    iconEl.classList.remove('active','pending','inactive');
+                    iconEl.classList.add(
+                        p.status === 'success' ? 'active'
+                        : p.status === 'warning' ? 'pending'
+                        : 'inactive'
+                    );
+                    if (iconEl.textContent.trim() !== p.status_icon) {
+                        iconEl.textContent = p.status_icon;
+                        flashEl(iconEl);
+                    }
+                }
+            });
+
+            // -------- Summary card refresh --------
+            const summary = data.summary || {};
+
+            const upd = (field, value, suffix) => {
+                const el = document.querySelector(`[data-summary-field="${field}"]`);
+                if (!el || typeof value === 'undefined') return;
+                const oldVal = parseInt(el.textContent, 10) || 0;
+                if (oldVal !== value) {
+                    animateNumber(el, oldVal, value, 900, suffix || '');
+                    flashEl(el);
+                }
+            };
+
+            upd('total_exceptions', summary.total_exceptions);
+            upd('submitted_reports_count', summary.submitted_reports_count);
+            upd('team_size', summary.team_size);
+            upd('completion_rate', summary.completion_rate, '%');
+
+            // Small badge inside the Analytics quick action
+            const badge = document.querySelector('[data-summary-field="total_exceptions_badge"]');
+            if (badge && typeof summary.total_exceptions !== 'undefined') {
+                if (summary.total_exceptions > 0) {
+                    if (badge.textContent !== String(summary.total_exceptions)) {
+                        badge.textContent = summary.total_exceptions;
+                        flashEl(badge);
+                    }
+                    badge.style.display = '';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+
+        } catch (err) {
+            console.warn('Top Performers live refresh failed:', err);
+        }
+    }
+
+    // ============================================
+    // AUTO REFRESH (full page reload every 60s)
     // ============================================
     let autoRefreshInterval = null;
 
     function startAutoRefresh() {
-        if (autoRefreshInterval) {
-            clearInterval(autoRefreshInterval);
-        }
+        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
         autoRefreshInterval = setInterval(() => {
             if (!document.hidden) {
                 fetch(window.location.href, {
                     method: 'HEAD',
-                    headers: {
-                        'X-CSRFToken': getCsrfToken()
-                    }
+                    headers: { 'X-CSRFToken': getCsrfToken() }
                 })
-                .then(() => {
-                    location.reload();
-                })
-                .catch(() => {
-                    // Silent fail
-                });
+                .then(() => location.reload())
+                .catch(() => {});
             }
         }, 60000);
     }
 
+    // ============================================
+    // INITIALIZATION
+    // ============================================
     document.addEventListener('DOMContentLoaded', function() {
+        // Full page safety-net reload (still every 60s)
         startAutoRefresh();
-        
+
+        // Lightweight partial refresh for Top Performers + summary cards
+        setInterval(refreshTopPerformers, TOP_PERFORMERS_INTERVAL_MS);
+
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
                 if (autoRefreshInterval) {
@@ -1310,6 +1427,8 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
                     autoRefreshInterval = null;
                 }
             } else {
+                // Coming back from a hidden tab — refresh immediately
+                refreshTopPerformers();
                 startAutoRefresh();
             }
         });

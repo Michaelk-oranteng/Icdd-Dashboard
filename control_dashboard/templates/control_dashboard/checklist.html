@@ -1,978 +1,1341 @@
 {% extends 'control_dashboard/base.html' %}
 {% load static %}
 
-{% block title %}My Checklists{% endblock %}
+{% block title %}Checklist Builder{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'stylesheets/checklist-mem.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'stylesheets/admin.css' %}" type="text/css">
 <style>
-    /* Checklist page styles */
-    .checklist-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px 0;
-    }
-
-    .filter-bar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 24px;
-        padding: 16px 20px;
-        background: white;
-        border-radius: 12px;
-        border: 1px solid #e5e7eb;
-        align-items: center;
-    }
-
-    .filter-bar .filter-group {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .filter-bar .filter-group label {
-        font-size: 12px;
-        font-weight: 500;
-        color: #6b7280;
-        white-space: nowrap;
-    }
-
-    .filter-bar select {
-        padding: 6px 12px;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 6px;
-        font-size: 13px;
-        font-family: 'Poppins', sans-serif;
-        background: white;
-        color: #1a2332;
-        cursor: pointer;
-        min-width: 140px;
-    }
-
-    .filter-bar select:focus {
-        border-color: #0066cc;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.08);
-    }
-
-    .filter-bar .btn-reset {
-        padding: 6px 16px;
-        background: #f3f4f6;
-        border: 1px solid #e5e7eb;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 13px;
-        font-weight: 500;
-        color: #6b7280;
-        transition: all 0.2s;
-        font-family: 'Poppins', sans-serif;
-        margin-left: auto;
-    }
-
-    .filter-bar .btn-reset:hover {
-        background: #e5e7eb;
-        color: #1a2332;
-    }
-
-    .filter-bar .active-filter-label {
-        font-size: 12px;
-        color: #0066cc;
-        background: #f0f7ff;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-weight: 500;
-    }
-
-    /* Progress Overview Cards */
-    .progress-overview {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-
-    .progress-card {
-        background: white;
-        border-radius: 12px;
-        padding: 16px 20px;
-        border: 1px solid #e5e7eb;
-        text-align: center;
-    }
-
-    .progress-card .label {
-        font-size: 12px;
-        color: #6b7280;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .progress-card .value {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1a2332;
-        margin: 4px 0;
-    }
-
-    .progress-card .sub {
-        font-size: 12px;
-        color: #6b7280;
-    }
-
-    .progress-card .progress-bar {
-        width: 100%;
-        height: 6px;
-        background: #e5e7eb;
-        border-radius: 3px;
-        margin-top: 8px;
-        overflow: hidden;
-    }
-
-    .progress-card .progress-bar .fill {
-        height: 100%;
-        border-radius: 3px;
-        transition: width 0.5s ease;
-    }
-
-    .progress-card .progress-bar .fill.success {
-        background: #10b981;
-    }
-    .progress-card .progress-bar .fill.warning {
-        background: #f59e0b;
-    }
-    .progress-card .progress-bar .fill.danger {
-        background: #ef4444;
-    }
-
-    /* Checklist Grid */
-    .checklist-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-
-    .checklist-card {
-        background: white;
-        border-radius: 12px;
-        border: 1px solid #e5e7eb;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-
-    .checklist-card:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-    }
-
-    .checklist-card .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-        background: #f8fafc;
-        border-bottom: 1px solid #e5e7eb;
-        cursor: pointer;
-    }
-
-    .checklist-card .card-header .left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-
-    .checklist-card .card-header .left .name {
-        font-size: 15px;
-        font-weight: 600;
-        color: #1a2332;
-    }
-
-    .checklist-card .card-header .left .frequency-badge {
-        font-size: 11px;
-        font-weight: 500;
-        padding: 2px 12px;
-        border-radius: 12px;
-        background: #e5e7eb;
-        color: #6b7280;
-    }
-
-    .checklist-card .card-header .left .status-badge {
-        font-size: 11px;
-        font-weight: 600;
-        padding: 2px 12px;
-        border-radius: 12px;
-        text-transform: uppercase;
-    }
-
-    .status-badge.completed {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    .status-badge.on_track {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-    .status-badge.in_progress {
-        background: #fef3c7;
-        color: #92400e;
-    }
-    .status-badge.at_risk {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .checklist-card .card-header .right {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .checklist-card .card-header .right .progress-text {
-        font-size: 14px;
-        font-weight: 600;
-        color: #1a2332;
-    }
-
-    .checklist-card .card-body {
-        padding: 16px 20px;
-        display: none;
-    }
-
-    .checklist-card .card-body.open {
-        display: block;
-    }
-
-    .checklist-card .card-body .filter-info {
-        font-size: 12px;
-        color: #6b7280;
-        background: #f8fafc;
-        padding: 8px 12px;
-        border-radius: 6px;
-        margin-bottom: 12px;
-        border: 1px solid #e5e7eb;
-    }
-
-    .checklist-card .card-body .filter-info .highlight {
-        font-weight: 600;
-        color: #0066cc;
-    }
-
-    .checklist-card .card-body .task-list {
-        list-style: none;
-        padding: 0;
-        margin: 0 0 12px 0;
-    }
-
-    .checklist-card .card-body .task-list li {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 4px 0;
-        font-size: 13px;
-        color: #1a2332;
-    }
-
-    .checklist-card .card-body .task-list li .task-check {
-        width: 16px;
-        height: 16px;
-        accent-color: #0066cc;
-        cursor: pointer;
-    }
-
-    .checklist-card .card-body .task-list li .task-check:disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
-
-    .checklist-card .card-body .task-list li .task-text {
-        flex: 1;
-    }
-
-    .checklist-card .card-body .task-list li .task-text.done {
-        text-decoration: line-through;
-        color: #9ca3af;
-    }
-
-    .checklist-card .card-body .progress-details {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-        gap: 8px;
-        margin: 12px 0;
-        padding: 12px;
-        background: #f8fafc;
-        border-radius: 8px;
-    }
-
-    .checklist-card .card-body .progress-details .detail-item {
-        text-align: center;
-    }
-
-    .checklist-card .card-body .progress-details .detail-item .num {
-        font-size: 18px;
-        font-weight: 700;
-        color: #1a2332;
-    }
-
-    .checklist-card .card-body .progress-details .detail-item .lbl {
-        font-size: 10px;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-    }
-
-    .checklist-card .card-body .log-dates {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        margin-top: 8px;
-    }
-
-    .checklist-card .card-body .log-dates .log-date {
-        padding: 2px 8px;
-        background: #d1fae5;
-        border-radius: 4px;
-        font-size: 11px;
-        color: #065f46;
-    }
-
-    .checklist-card .card-body .log-dates .log-date.empty {
-        background: #f3f4f6;
-        color: #9ca3af;
-    }
-
-    .checklist-card .card-body .no-log-msg {
-        font-size: 12px;
-        color: #9ca3af;
-        font-style: italic;
-        margin: 4px 0;
-    }
-
-    .checklist-card .card-body .can-log-note {
-        font-size: 12px;
-        color: #dc2626;
-        background: #fee2e2;
-        padding: 6px 12px;
-        border-radius: 6px;
-        margin-top: 8px;
-    }
-
-    .checklist-card .card-body .can-log-note i {
-        margin-right: 6px;
-    }
-
-    /* No results */
-    .no-results {
-        text-align: center;
-        padding: 60px 20px;
-        color: #6b7280;
-    }
-
-    .no-results i {
-        font-size: 48px;
-        color: #d1d5db;
-        display: block;
-        margin-bottom: 16px;
-    }
-
-    .no-results p {
-        margin: 4px 0;
-    }
-
-    .no-results .sub {
-        font-size: 13px;
-        color: #9ca3af;
-    }
-
-    /* Toast */
-    .toast-notification {
-        position: fixed;
-        bottom: 24px;
-        right: 24px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        padding: 16px 20px;
-        max-width: 400px;
-        z-index: 99999;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        border-left: 4px solid #10b981;
-        transform: translateX(120%);
-        transition: transform 0.3s ease;
-        font-family: 'Poppins', sans-serif;
-    }
-
-    .toast-notification.show {
-        transform: translateX(0);
-    }
-
-    .toast-notification.error {
-        border-left-color: #ef4444;
-    }
-
-    .toast-notification .toast-icon {
-        flex-shrink: 0;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 18px;
-        background: rgba(16, 185, 129, 0.1);
-        color: #10b981;
-    }
-
-    .toast-notification.error .toast-icon {
-        background: rgba(239, 68, 68, 0.1);
-        color: #ef4444;
-    }
-
-    .toast-notification .toast-content {
-        flex: 1;
-    }
-
-    .toast-notification .toast-title {
-        font-weight: 600;
-        font-size: 14px;
-        color: #1a2332;
-        margin: 0;
-    }
-
-    .toast-notification .toast-message {
-        font-size: 13px;
-        color: #6b7280;
-        margin: 2px 0 0 0;
-    }
-
-    .toast-notification .toast-close {
-        background: none;
-        border: none;
-        font-size: 20px;
-        cursor: pointer;
-        color: #9ca3af;
-        padding: 0 4px;
-        line-height: 1;
-    }
-
-    .toast-notification .toast-close:hover {
-        color: #1a2332;
-    }
-
-    @media (max-width: 768px) {
-        .filter-bar {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .filter-bar .filter-group {
-            flex-wrap: wrap;
-        }
-
-        .filter-bar .btn-reset {
-            margin-left: 0;
-        }
-
-        .progress-overview {
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        }
-
-        .checklist-card .card-header {
-            flex-wrap: wrap;
-        }
-
-        .checklist-card .card-header .left {
-            width: 100%;
-        }
-
-        .checklist-card .card-header .right {
-            width: 100%;
-            justify-content: space-between;
-        }
-
-        .checklist-card .card-body .progress-details {
-            grid-template-columns: repeat(3, 1fr);
-        }
-    }
-
-    @media (max-width: 480px) {
-        .progress-overview {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .checklist-card .card-body .progress-details {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .filter-bar select {
-            min-width: 100px;
-            font-size: 12px;
-        }
-    }
+/* ============================================================
+   CHECKLIST BUILDER — Admin
+   ============================================================ */
+
+.clb-wrap {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 4px 0 40px;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    color: #0f1b33;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ---------- Stats strip ---------- */
+.clb-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.clb-stat {
+    background: #ffffff;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    border-radius: 16px;
+    padding: 18px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(15, 27, 51, 0.04),
+                0 1px 3px rgba(15, 27, 51, 0.03);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.clb-stat::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--clb-accent, #4f6ef7) 50%,
+        transparent 100%);
+    opacity: 0.85;
+}
+
+.clb-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(15, 27, 51, 0.08);
+}
+
+.clb-stat.primary { --clb-accent: #4f6ef7; }
+.clb-stat.success { --clb-accent: #17a673; }
+.clb-stat.warning { --clb-accent: #e08a17; }
+
+.clb-stat-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #8993a8;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 6px;
+}
+
+.clb-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.clb-stat.primary .clb-stat-value { color: #4f6ef7; }
+.clb-stat.success .clb-stat-value { color: #17a673; }
+.clb-stat.warning .clb-stat-value { color: #e08a17; }
+
+.clb-stat-icon {
+    font-size: 30px;
+    opacity: 0.18;
+    transition: all 0.3s ease;
+}
+
+.clb-stat:hover .clb-stat-icon {
+    opacity: 0.35;
+    transform: scale(1.08);
+}
+
+.clb-stat.primary .clb-stat-icon { color: #4f6ef7; }
+.clb-stat.success .clb-stat-icon { color: #17a673; }
+.clb-stat.warning .clb-stat-icon { color: #e08a17; }
+
+/* ---------- Toolbar ---------- */
+.clb-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(15, 27, 51, 0.04);
+}
+
+.clb-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f7f8fc;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    border-radius: 10px;
+    padding: 0 14px;
+    height: 38px;
+    min-width: 280px;
+    transition: all 0.2s ease;
+}
+
+.clb-search:focus-within {
+    border-color: #4f6ef7;
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    background: #ffffff;
+}
+
+.clb-search i {
+    color: #8993a8;
+    font-size: 12px;
+}
+
+.clb-search input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: inherit;
+    font-size: 13px;
+    width: 100%;
+    color: #0f1b33;
+}
+
+.clb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    height: 38px;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    border-radius: 10px;
+    background: #ffffff;
+    color: #46536b;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.clb-btn:hover {
+    background: #f7f8fc;
+    color: #0f1b33;
+    border-color: rgba(15, 27, 51, 0.16);
+    transform: translateY(-1px);
+}
+
+.clb-btn.primary {
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: #ffffff;
+    border-color: rgba(79, 110, 247, 0.4);
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+}
+
+.clb-btn.primary:hover {
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.clb-btn i { font-size: 12px; }
+
+/* ---------- Checklist grid ---------- */
+.clb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 16px;
+}
+
+.clb-card {
+    background: #ffffff;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(15, 27, 51, 0.04);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.clb-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        #4f6ef7 50%,
+        transparent 100%);
+    opacity: 0.7;
+}
+
+.clb-card:hover {
+    border-color: rgba(15, 27, 51, 0.16);
+    box-shadow: 0 8px 24px rgba(15, 27, 51, 0.08);
+    transform: translateY(-2px);
+}
+
+.clb-card.inactive { opacity: 0.6; }
+
+.clb-card-head {
+    padding: 16px 18px 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.clb-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f1b33;
+    margin: 0 0 6px 0;
+    line-height: 1.3;
+}
+
+.clb-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.clb-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    border: 1px solid;
+}
+
+.clb-badge.freq {
+    background: #eef1ff;
+    color: #4f6ef7;
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.clb-badge.assign {
+    background: #f0ebff;
+    color: #7c5cf0;
+    border-color: rgba(124, 92, 240, 0.22);
+}
+
+.clb-badge.off {
+    background: #fdeaf0;
+    color: #e0456a;
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.clb-card-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.clb-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    background: #ffffff;
+    color: #46536b;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.clb-icon-btn:hover {
+    background: #f7f8fc;
+    color: #0f1b33;
+    transform: translateY(-1px);
+}
+
+.clb-icon-btn.danger:hover {
+    background: #fdeaf0;
+    color: #e0456a;
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.clb-card-body {
+    padding: 0 18px 14px;
+    flex: 1;
+}
+
+.clb-card-desc {
+    font-size: 12px;
+    color: #46536b;
+    line-height: 1.5;
+    margin: 0 0 12px 0;
+}
+
+.clb-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.clb-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: #f7f8fc;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #46536b;
+    border: 1px solid rgba(15, 27, 51, 0.06);
+}
+
+.clb-meta-item i { font-size: 10px; color: #8993a8; }
+
+.clb-tasks {
+    background: #f7f8fc;
+    border-radius: 10px;
+    padding: 10px 12px;
+    border: 1px solid rgba(15, 27, 51, 0.06);
+}
+
+.clb-tasks-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #8993a8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+}
+
+.clb-tasks-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.clb-tasks-list li {
+    font-size: 12px;
+    color: #46536b;
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.4;
+}
+
+.clb-tasks-list li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 7px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #4f6ef7;
+    opacity: 0.6;
+}
+
+/* ---------- Empty state ---------- */
+.clb-empty {
+    text-align: center;
+    padding: 60px 24px;
+    background: #ffffff;
+    border: 1px dashed rgba(15, 27, 51, 0.16);
+    border-radius: 16px;
+}
+
+.clb-empty i {
+    font-size: 42px;
+    color: rgba(15, 27, 51, 0.16);
+    display: block;
+    margin-bottom: 14px;
+}
+
+.clb-empty h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f1b33;
+    margin: 0 0 6px 0;
+}
+
+.clb-empty p {
+    font-size: 13px;
+    color: #8993a8;
+    margin: 0 0 16px 0;
+}
+
+/* ---------- Modal ---------- */
+.clb-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 27, 51, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 20px;
+    overflow-y: auto;
+}
+
+.clb-modal-backdrop.show { display: flex; }
+
+.clb-modal {
+    background: #ffffff;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 640px;
+    box-shadow: 0 24px 64px rgba(15, 27, 51, 0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: clb-modal-in 0.25s ease;
+}
+
+@keyframes clb-modal-in {
+    from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.clb-modal-head {
+    padding: 18px 22px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(15, 27, 51, 0.06);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+}
+
+.clb-modal-head h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f1b33;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.clb-modal-head h3 i {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: #eef1ff;
+    color: #4f6ef7;
+    font-size: 13px;
+    border: 1px solid rgba(79, 110, 247, 0.2);
+}
+
+.clb-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    background: #ffffff;
+    color: #46536b;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: all 0.2s ease;
+}
+
+.clb-modal-close:hover {
+    background: #fdeaf0;
+    color: #e0456a;
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.clb-modal-body {
+    padding: 18px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 65vh;
+    overflow-y: auto;
+}
+
+.clb-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.clb-field label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8993a8;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.clb-field input[type="text"],
+.clb-field textarea,
+.clb-field select {
+    padding: 10px 14px;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    background: #ffffff;
+    color: #0f1b33;
+    outline: none;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.clb-field input:focus,
+.clb-field textarea:focus,
+.clb-field select:focus {
+    border-color: #4f6ef7;
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.clb-field textarea { resize: vertical; min-height: 70px; }
+
+.clb-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Tasks */
+.clb-tasks-editor { display: flex; flex-direction: column; gap: 8px; }
+
+.clb-task-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.clb-task-row input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+}
+
+.clb-task-row input:focus {
+    border-color: #4f6ef7;
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.clb-task-row button {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    background: #ffffff;
+    color: #e0456a;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.clb-task-row button:hover {
+    background: #fdeaf0;
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+/* Multi-select for units */
+.clb-multi {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    border-radius: 10px;
+    background: #fbfcff;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.clb-multi label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    border-radius: 8px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-transform: none;
+    letter-spacing: 0;
+    color: #46536b;
+    font-weight: 500;
+}
+
+.clb-multi label:hover {
+    border-color: #4f6ef7;
+    color: #0f1b33;
+}
+
+.clb-multi input[type="checkbox"] {
+    accent-color: #4f6ef7;
+    margin: 0;
+}
+
+.clb-modal-foot {
+    padding: 14px 22px;
+    border-top: 1px solid rgba(15, 27, 51, 0.06);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: #fbfcff;
+}
+
+/* ---------- Toast ---------- */
+.clb-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 27, 51, 0.08);
+    border-left: 4px solid #17a673;
+    border-radius: 14px;
+    padding: 14px 20px;
+    min-width: 300px;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 16px 40px rgba(15, 27, 51, 0.15);
+    transform: translateX(120%);
+    transition: transform 0.35s ease;
+    z-index: 10001;
+    font-family: inherit;
+}
+
+.clb-toast.show { transform: translateX(0); }
+.clb-toast.error { border-left-color: #e0456a; }
+
+.clb-toast-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: #e2f7ef;
+    color: #17a673;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.clb-toast.error .clb-toast-icon {
+    background: #fdeaf0;
+    color: #e0456a;
+}
+
+.clb-toast-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f1b33;
+    margin: 0;
+}
+
+.clb-toast-msg {
+    font-size: 12px;
+    color: #46536b;
+    margin: 2px 0 0 0;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .clb-grid { grid-template-columns: 1fr; }
+    .clb-field-row { grid-template-columns: 1fr; }
+    .clb-search { min-width: 100%; }
+    .clb-modal { max-width: 100%; }
+}
 </style>
 {% endblock %}
 
-{% block dashboard_url %}{% url 'control_dashboard:member_dashboard' %}{% endblock %}
+{% block dashboard_url %}{% url 'control_dashboard:admin_page' %}{% endblock %}
 
 {% block nav_links %}
-<li><a href="{% url 'control_dashboard:member_dashboard' %}">
-    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
-    <span class="nav-text">Dashboard</span>
-</a></li>
-<li><a href="{% url 'control_dashboard:drafts_page' %}">
-    <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
-    <span class="nav-text">Upload Report</span>
-</a></li>     
-<li><a href="{% url 'control_dashboard:reports_page' %}">
-    <span class="nav-icon"><i class="fas fa-file-pdf"></i></span>
-    <span class="nav-text">Reports</span>
-</a></li>       
-<li><a href="{% url 'control_dashboard:submit_page' %}">
-    <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
-    <span class="nav-text">Submit Report</span>
-</a></li>  
-<li class="active"><a href="{% url 'control_dashboard:member_checklist' %}">
-    <span class="nav-icon"><i class="fas fa-check-double"></i></span>
-    <span class="nav-text">Checklist</span>
-</a></li> 
-
+<li>
+    <a href="{% url 'control_dashboard:admin_page' %}">
+        <span class="nav-icon"><i class="fas fa-users-cog"></i></span>
+        <span class="nav-text">Admin Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:report_creation' %}">
+        <span class="nav-icon"><i class="fas fa-file-medical"></i></span>
+        <span class="nav-text">Create Report</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:report_center' %}">
+        <span class="nav-icon"><i class="fas fa-inbox"></i></span>
+        <span class="nav-text">Report Center</span>
+    </a>
+</li>
+<li class="active">
+    <a href="{% url 'control_dashboard:checklist_builder' %}">
+        <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+        <span class="nav-text">Checklist Builder</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:checklist_list' %}">
+        <span class="nav-icon"><i class="fas fa-list-check"></i></span>
+        <span class="nav-text">Checklist List</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:activity_logs' %}">
+        <span class="nav-icon"><i class="fas fa-search"></i></span>
+        <span class="nav-text">Activity Logs</span>
+    </a>
+</li>
 {% endblock %}
 
-{% block page_title %}My Checklists{% endblock %}
-
-{% block top_header_center %}
-<!-- Filter Bar in Header -->
-{% endblock %}
+{% block page_title %}Checklist Builder{% endblock %}
 
 {% block top_header_right %}
-<button class="btn-reset-header" onclick="resetFilters()">
-    <i class="fas fa-undo"></i> Reset Filters
+<button class="clb-btn primary" onclick="openChecklistModal()">
+    <i class="fas fa-plus"></i> New Checklist
 </button>
 {% endblock %}
 
 {% block content %}
-<div class="checklist-container">
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-        <div class="filter-group">
-            <label for="filter-branch-dept">Branch/Department</label>
-            <select id="filter-branch-dept" onchange="applyFilters()">
-                <option value="all">All</option>
-                {% for option in combined_filter_options %}
-                    {% if option.value != 'all' %}
-                        <option value="{{ option.value }}" {% if option.value == active_combined_filter %}selected{% endif %}>
-                            {{ option.display }}
-                        </option>
-                    {% endif %}
-                {% endfor %}
-            </select>
-        </div>
+<div class="clb-wrap">
 
-        <div class="filter-group">
-            <label for="filter-frequency">Frequency</label>
-            <select id="filter-frequency" onchange="applyFilters()">
-                <option value="all">All</option>
-                {% for value, label in available_frequencies %}
-                    <option value="{{ value }}" {% if value == frequency_filter %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="filter-month">Month</label>
-            <select id="filter-month" onchange="applyFilters()">
-                {% for value, label in month_names %}
-                    <option value="{{ value }}" {% if value == month_filter %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="filter-quarter">Quarter</label>
-            <select id="filter-quarter" onchange="applyFilters()">
-                {% for value, label in quarter_options %}
-                    <option value="{{ value }}" {% if value == quarter_filter %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label for="filter-year">Year</label>
-            <select id="filter-year" onchange="applyFilters()">
-                {% for year in years %}
-                    <option value="{{ year }}" {% if year|stringformat:"s" == year_filter %}selected{% endif %}>
-                        {{ year }}
-                    </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <button class="btn-reset" onclick="resetFilters()">
-            <i class="fas fa-undo"></i> Reset
-        </button>
-    </div>
-
-    <!-- Active Filter Display -->
-    {% if active_combined_filter != 'all' %}
-        <div style="margin-bottom: 16px; padding: 8px 16px; background: #f0f7ff; border-radius: 8px; border: 1px solid #0066cc;">
-            <span style="font-size: 13px; color: #1a2332;">
-                <i class="fas fa-filter" style="color: #0066cc;"></i>
-                Filtering by: <strong>{{ selected_combined_display }}</strong>
-                <span style="color: #6b7280; margin-left: 8px;">
-                    (You can only log checklists assigned to this {{ 'branch' if 'branch' in active_combined_filter else 'department' }})
-                </span>
-            </span>
-        </div>
-    {% endif %}
-
-    <!-- Progress Overview -->
-    <div class="progress-overview">
-        <div class="progress-card">
-            <div class="label">Monthly Progress</div>
-            <div class="value">{{ overall_month_progress }}%</div>
-            <div class="sub">{{ total_month_actual }} / {{ total_month_expected }} completed</div>
-            <div class="progress-bar">
-                <div class="fill {% if overall_month_progress >= 80 %}success{% elif overall_month_progress >= 50 %}warning{% else %}danger{% endif %}" style="width: {{ overall_month_progress }}%;"></div>
+    <!-- Stats strip -->
+    <div class="clb-stats">
+        <div class="clb-stat primary">
+            <div>
+                <span class="clb-stat-label">Total Checklists</span>
+                <div class="clb-stat-value">{{ checklists|length }}</div>
             </div>
+            <i class="fas fa-tasks clb-stat-icon"></i>
         </div>
-        <div class="progress-card">
-            <div class="label">Quarterly Progress</div>
-            <div class="value">{{ overall_quarter_progress }}%</div>
-            <div class="sub">{{ total_quarter_actual }} / {{ total_quarter_expected }} completed</div>
-            <div class="progress-bar">
-                <div class="fill {% if overall_quarter_progress >= 80 %}success{% elif overall_quarter_progress >= 50 %}warning{% else %}danger{% endif %}" style="width: {{ overall_quarter_progress }}%;"></div>
+        <div class="clb-stat success">
+            <div>
+                <span class="clb-stat-label">Active</span>
+                <div class="clb-stat-value" id="stat-active">0</div>
             </div>
+            <i class="fas fa-circle-check clb-stat-icon"></i>
         </div>
-        <div class="progress-card">
-            <div class="label">Year-to-Date Progress</div>
-            <div class="value">{{ overall_year_progress }}%</div>
-            <div class="sub">{{ total_year_actual }} / {{ total_year_expected }} completed</div>
-            <div class="progress-bar">
-                <div class="fill {% if overall_year_progress >= 80 %}success{% elif overall_year_progress >= 50 %}warning{% else %}danger{% endif %}" style="width: {{ overall_year_progress }}%;"></div>
+        <div class="clb-stat warning">
+            <div>
+                <span class="clb-stat-label">Assigned Users</span>
+                <div class="clb-stat-value">{{ users|length }}</div>
             </div>
-        </div>
-        <div class="progress-card">
-            <div class="label">Total Checklists</div>
-            <div class="value">{{ total_checklists }}</div>
-            <div class="sub">Active checklists</div>
+            <i class="fas fa-users clb-stat-icon"></i>
         </div>
     </div>
 
-    <!-- Checklist Grid -->
-    <div class="checklist-grid">
-        {% if checklist_data %}
-            {% for item in checklist_data %}
-                <div class="checklist-card">
-                    <div class="card-header" onclick="toggleChecklist(this)">
-                        <div class="left">
-                            <span class="name">{{ item.name }}</span>
-                            <span class="frequency-badge">{{ item.frequency_display }}</span>
-                            <span class="status-badge {{ item.status }}">
-                                {{ item.status|replace("_", " ")|title }}
+    <!-- Toolbar -->
+    <div class="clb-toolbar">
+        <div class="clb-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="clbSearchInput" placeholder="Search checklists by name..." onkeyup="filterChecklists()">
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="clb-btn" onclick="window.location.reload()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Checklist grid -->
+    <div class="clb-grid" id="clbGrid">
+        {% for cl in checklists %}
+            <div class="clb-card {% if not cl.is_active %}inactive{% endif %}"
+                 data-name="{{ cl.name|lower }}"
+                 data-id="{{ cl.id }}">
+                <div class="clb-card-head">
+                    <div style="flex:1; min-width:0;">
+                        <h3 class="clb-card-title">{{ cl.name }}</h3>
+                        <div class="clb-card-badges">
+                            <span class="clb-badge freq">
+                                <i class="fas fa-clock"></i> {{ cl.get_frequency_display }}
                             </span>
-                            {% if item.filter_display_name %}
-                                <span style="font-size: 11px; color: #0066cc; background: #f0f7ff; padding: 2px 10px; border-radius: 12px;">
-                                    <i class="fas fa-filter"></i> {{ item.filter_display_name }}
+                            <span class="clb-badge assign">
+                                <i class="fas fa-user-tag"></i> {{ cl.get_assignment_display }}
+                            </span>
+                            {% if not cl.is_active %}
+                                <span class="clb-badge off">
+                                    <i class="fas fa-ban"></i> Inactive
                                 </span>
                             {% endif %}
                         </div>
-                        <div class="right">
-                            <span class="progress-text">{{ item.month_progress }}%</span>
-                            <i class="fas fa-chevron-down" style="color: #9ca3af; transition: transform 0.3s;"></i>
-                        </div>
                     </div>
-                    <div class="card-body">
-                        <!-- Filter Info -->
-                        {% if item.filter_display_name %}
-                            <div class="filter-info">
-                                <i class="fas fa-info-circle"></i>
-                                Logging for: <span class="highlight">{{ item.filter_display_name }}</span>
-                                {% if item.assigned_branches %}
-                                    <span style="margin-left: 8px; font-size: 11px; color: #6b7280;">
-                                        (Assigned to: {{ item.assigned_branches|join:", " }})
-                                    </span>
-                                {% endif %}
-                                {% if item.assigned_departments %}
-                                    <span style="margin-left: 8px; font-size: 11px; color: #6b7280;">
-                                        (Assigned to: {{ item.assigned_departments|join:", " }})
-                                    </span>
-                                {% endif %}
-                            </div>
-                        {% endif %}
-
-                        <!-- Tasks -->
-                        <ul class="task-list">
-                            {% for task in item.tasks %}
-                                <li>
-                                    <input type="checkbox" class="task-check" 
-                                           data-checklist="{{ item.id }}" 
-                                           data-date="{{ today|date:'Y-m-d' }}"
-                                           onchange="toggleTask(this)"
-                                           {% if today|date:"Y-m-d" in item.logs %}checked{% endif %}
-                                           {% if not item.can_log %}disabled{% endif %}>
-                                    <span class="task-text {% if today|date:'Y-m-d' in item.logs %}done{% endif %}">
-                                        {{ task.description }}
-                                    </span>
-                                </li>
-                            {% endfor %}
-                        </ul>
-
-                        <!-- Can't log message -->
-                        {% if not item.can_log %}
-                            <div class="can-log-note">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                To log this checklist, please filter by a branch or department that is assigned to this checklist.
-                            </div>
-                        {% endif %}
-
-                        <!-- Progress Details -->
-                        <div class="progress-details">
-                            <div class="detail-item">
-                                <div class="num">{{ item.month_actual }}/{{ item.month_expected }}</div>
-                                <div class="lbl">Monthly</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="num">{{ item.quarter_actual }}/{{ item.quarter_expected }}</div>
-                                <div class="lbl">Quarterly</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="num">{{ item.year_actual }}/{{ item.year_expected }}</div>
-                                <div class="lbl">Yearly</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="num">{{ item.logs|length }}</div>
-                                <div class="lbl">Logs This Month</div>
-                            </div>
-                        </div>
-
-                        <!-- Log Dates -->
-                        {% if item.logs %}
-                            <div class="log-dates">
-                                {% for date in item.logs %}
-                                    <span class="log-date">{{ date }}</span>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="no-log-msg">No logs for this month</div>
-                        {% endif %}
-
-                        <!-- Next Due Date -->
-                        {% if item.next_due_date %}
-                            <div style="margin-top: 8px; font-size: 12px; color: #6b7280;">
-                                <i class="fas fa-calendar-alt"></i> Next Due: {{ item.next_due_date }}
-                            </div>
-                        {% endif %}
+                    <div class="clb-card-actions">
+                        <button class="clb-icon-btn"
+                                title="Edit"
+                                onclick="editChecklist({{ cl.id }})">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                        <button class="clb-icon-btn danger"
+                                title="Delete"
+                                onclick="deleteChecklist({{ cl.id }}, '{{ cl.name|escapejs }}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
-            {% endfor %}
-        {% else %}
-            <div class="no-results">
-                <i class="fas fa-check-double"></i>
-                <p>No checklists found</p>
-                <p class="sub">Try adjusting your filters or check back later.</p>
+                <div class="clb-card-body">
+                    {% if cl.description %}
+                        <p class="clb-card-desc">{{ cl.description }}</p>
+                    {% endif %}
+
+                    <div class="clb-meta">
+                        {% if cl.assigned_branches.all %}
+                            <span class="clb-meta-item">
+                                <i class="fas fa-building"></i>
+                                {{ cl.assigned_branches.count }} branch{{ cl.assigned_branches.count|pluralize:"es" }}
+                            </span>
+                        {% endif %}
+                        {% if cl.assigned_departments.all %}
+                            <span class="clb-meta-item">
+                                <i class="fas fa-sitemap"></i>
+                                {{ cl.assigned_departments.count }} department{{ cl.assigned_departments.count|pluralize }}
+                            </span>
+                        {% endif %}
+                        <span class="clb-meta-item">
+                            <i class="fas fa-list-check"></i>
+                            {{ cl.tasks.count }} task{{ cl.tasks.count|pluralize }}
+                        </span>
+                    </div>
+
+                    {% if cl.tasks.all %}
+                        <div class="clb-tasks">
+                            <div class="clb-tasks-head">
+                                <span>Tasks</span>
+                                <span>{{ cl.tasks.count }}</span>
+                            </div>
+                            <ul class="clb-tasks-list">
+                                {% for task in cl.tasks.all|slice:":4" %}
+                                    <li>{{ task.description|truncatechars:60 }}</li>
+                                {% endfor %}
+                                {% if cl.tasks.count > 4 %}
+                                    <li style="color:#8993a8; font-style:italic;">+{{ cl.tasks.count|add:"-4" }} more</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
-        {% endif %}
+        {% empty %}
+            <div class="clb-empty" style="grid-column: 1 / -1;">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>No checklists yet</h3>
+                <p>Create your first activity checklist to get started.</p>
+                <button class="clb-btn primary" onclick="openChecklistModal()">
+                    <i class="fas fa-plus"></i> Create Checklist
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- ============================================================
+     CREATE / EDIT MODAL
+     ============================================================ -->
+<div class="clb-modal-backdrop" id="clbModalBackdrop">
+    <div class="clb-modal" role="dialog" aria-modal="true">
+        <div class="clb-modal-head">
+            <h3>
+                <i class="fas fa-clipboard-list"></i>
+                <span id="clbModalTitle">New Checklist</span>
+            </h3>
+            <button class="clb-modal-close" onclick="closeChecklistModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="clb-modal-body">
+            <input type="hidden" id="clbChecklistId" value="">
+
+            <div class="clb-field">
+                <label for="clbName">Activity Name *</label>
+                <input type="text" id="clbName" placeholder="e.g. Daily Cash Reconciliation">
+            </div>
+
+            <div class="clb-field">
+                <label for="clbDescription">Description</label>
+                <textarea id="clbDescription" placeholder="What does this activity cover?"></textarea>
+            </div>
+
+            <div class="clb-field-row">
+                <div class="clb-field">
+                    <label for="clbFrequency">Frequency *</label>
+                    <select id="clbFrequency">
+                        {% for value, label in frequencies %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="clb-field">
+                    <label for="clbAssignment">Assignment Target *</label>
+                    <select id="clbAssignment" onchange="toggleSpecificUsers()">
+                        {% for value, label in assignments %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="clb-field" id="clbSpecificUsersField" style="display:none;">
+                <label>Specific Users</label>
+                <div class="clb-multi">
+                    {% for u in users %}
+                        <label>
+                            <input type="checkbox" class="clb-user-check" value="{{ u.id }}">
+                            {{ u.full_name|default:u.email }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="clb-field">
+                <label>Branches (optional)</label>
+                <div class="clb-multi" id="clbBranchesField">
+                    {% for b in branches %}
+                        <label>
+                            <input type="checkbox" class="clb-branch-check" value="{{ b.id }}">
+                            {{ b.name }}
+                        </label>
+                    {% empty %}
+                        <span style="font-size:12px; color:#8993a8;">No branches available</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="clb-field">
+                <label>Departments (optional)</label>
+                <div class="clb-multi" id="clbDepartmentsField">
+                    {% for d in departments %}
+                        <label>
+                            <input type="checkbox" class="clb-dept-check" value="{{ d.id }}">
+                            {{ d.name }}
+                        </label>
+                    {% empty %}
+                        <span style="font-size:12px; color:#8993a8;">No departments available</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="clb-field">
+                <label>Tasks *</label>
+                <div class="clb-tasks-editor" id="clbTasksEditor">
+                    <div class="clb-task-row">
+                        <input type="text" placeholder="Task description" class="clb-task-input">
+                        <button type="button" onclick="removeTaskRow(this)" title="Remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="clb-btn" style="align-self:flex-start; margin-top:6px;" onclick="addTaskRow()">
+                    <i class="fas fa-plus"></i> Add Task
+                </button>
+            </div>
+        </div>
+
+        <div class="clb-modal-foot">
+            <button class="clb-btn" onclick="closeChecklistModal()">Cancel</button>
+            <button class="clb-btn primary" id="clbSaveBtn" onclick="saveChecklist()">
+                <i class="fas fa-save"></i> <span id="clbSaveText">Create Checklist</span>
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- Toast Notification -->
-<div id="toastNotification" class="toast-notification">
-    <div class="toast-icon"><i class="fas fa-check"></i></div>
-    <div class="toast-content">
-        <p class="toast-title">Success</p>
-        <p class="toast-message" id="toastMessage">Action completed successfully</p>
+<!-- Toast -->
+<div class="clb-toast" id="clbToast">
+    <div class="clb-toast-icon"><i class="fas fa-check"></i></div>
+    <div style="flex:1; min-width:0;">
+        <p class="clb-toast-title" id="clbToastTitle">Success</p>
+        <p class="clb-toast-msg" id="clbToastMsg">Action completed</p>
     </div>
-    <button class="toast-close" onclick="closeToast()"><i class="fas fa-times"></i></button>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-    // ============================================
-    // CSRF Token Helper
-    // ============================================
-    function getCsrfToken() {
-        return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
-               document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+/* ============================================================
+   URL ENDPOINTS
+   ============================================================ */
+const CLB_URL_CREATE = "{% url 'control_dashboard:api_create_checklist' %}";
+const CLB_URL_GET    = "{% url 'control_dashboard:api_get_checklist' 0 %}".replace('/0/', '/__ID__/');
+const CLB_URL_EDIT   = "{% url 'control_dashboard:api_edit_checklist' 0 %}".replace('/0/', '/__ID__/');
+const CLB_URL_DELETE = "{% url 'control_dashboard:api_delete_checklist' 0 %}".replace('/0/', '/__ID__/');
+
+function clbUrl(template, id) {
+    return template.replace('__ID__', String(id));
+}
+
+/* ============================================================
+   CSRF
+   ============================================================ */
+function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta) return meta.getAttribute('content');
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : '';
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+function clbToast(title, message, isError) {
+    const t = document.getElementById('clbToast');
+    const tTitle = document.getElementById('clbToastTitle');
+    const tMsg = document.getElementById('clbToastMsg');
+    const icon = t.querySelector('.clb-toast-icon i');
+
+    tTitle.textContent = title;
+    tMsg.textContent = message || '';
+
+    if (isError) {
+        t.classList.add('error');
+        icon.className = 'fas fa-exclamation-circle';
+    } else {
+        t.classList.remove('error');
+        icon.className = 'fas fa-check';
     }
 
-    // ============================================
-    // TOAST NOTIFICATION
-    // ============================================
-    function showToast(message, title = 'Success', isError = false) {
-        const toast = document.getElementById('toastNotification');
-        const msgEl = document.getElementById('toastMessage');
-        const titleEl = toast.querySelector('.toast-title');
-        const iconEl = toast.querySelector('.toast-icon i');
-        
-        msgEl.textContent = message || 'Action completed successfully.';
-        titleEl.textContent = title;
-        
-        if (isError) {
-            toast.classList.add('error');
-            iconEl.className = 'fas fa-exclamation-circle';
+    t.classList.add('show');
+    if (window.clbToastTimer) clearTimeout(window.clbToastTimer);
+    window.clbToastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+/* ============================================================
+   MODAL OPEN / CLOSE
+   ============================================================ */
+function openChecklistModal() {
+    // Reset form
+    document.getElementById('clbChecklistId').value = '';
+    document.getElementById('clbName').value = '';
+    document.getElementById('clbDescription').value = '';
+    document.getElementById('clbFrequency').value = 'weekly';
+    document.getElementById('clbAssignment').value = 'all';
+    document.getElementById('clbModalTitle').textContent = 'New Checklist';
+    document.getElementById('clbSaveText').textContent = 'Create Checklist';
+
+    // Clear users / branches / departments selections
+    document.querySelectorAll('.clb-user-check').forEach(c => c.checked = false);
+    document.querySelectorAll('.clb-branch-check').forEach(c => c.checked = false);
+    document.querySelectorAll('.clb-dept-check').forEach(c => c.checked = false);
+
+    // Reset tasks
+    const editor = document.getElementById('clbTasksEditor');
+    editor.innerHTML = '';
+    addTaskRow();
+
+    toggleSpecificUsers();
+    document.getElementById('clbModalBackdrop').classList.add('show');
+    setTimeout(() => document.getElementById('clbName').focus(), 100);
+}
+
+function closeChecklistModal() {
+    document.getElementById('clbModalBackdrop').classList.remove('show');
+}
+
+/* Click outside modal closes it */
+document.addEventListener('click', function(e) {
+    const backdrop = document.getElementById('clbModalBackdrop');
+    if (e.target === backdrop) closeChecklistModal();
+});
+
+/* Escape closes it */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeChecklistModal();
+});
+
+/* ============================================================
+   TOGGLE SPECIFIC USERS FIELD
+   ============================================================ */
+function toggleSpecificUsers() {
+    const val = document.getElementById('clbAssignment').value;
+    document.getElementById('clbSpecificUsersField').style.display =
+        (val === 'specific') ? 'block' : 'none';
+}
+
+/* ============================================================
+   TASK ROWS
+   ============================================================ */
+function addTaskRow(value) {
+    const editor = document.getElementById('clbTasksEditor');
+    const row = document.createElement('div');
+    row.className = 'clb-task-row';
+    row.innerHTML = `
+        <input type="text" placeholder="Task description" class="clb-task-input" value="${value ? String(value).replace(/"/g, '&quot;') : ''}">
+        <button type="button" onclick="removeTaskRow(this)" title="Remove">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    editor.appendChild(row);
+}
+
+function removeTaskRow(btn) {
+    const row = btn.closest('.clb-task-row');
+    const editor = document.getElementById('clbTasksEditor');
+    if (editor.children.length > 1) {
+        row.remove();
+    } else {
+        // Keep at least one row, just clear the input
+        row.querySelector('.clb-task-input').value = '';
+    }
+}
+
+/* ============================================================
+   EDIT CHECKLIST
+   ============================================================ */
+async function editChecklist(id) {
+    try {
+        const resp = await fetch(clbUrl(CLB_URL_GET, id), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        });
+        const data = await resp.json();
+
+        if (!data.success || !data.checklist) {
+            clbToast('Error', data.error || 'Could not load checklist', true);
+            return;
+        }
+
+        const c = data.checklist;
+
+        document.getElementById('clbChecklistId').value = c.id;
+        document.getElementById('clbName').value = c.name || '';
+        document.getElementById('clbDescription').value = c.description || '';
+        document.getElementById('clbFrequency').value = c.frequency || 'weekly';
+        document.getElementById('clbAssignment').value = c.assignment_target || 'all';
+        document.getElementById('clbModalTitle').textContent = 'Edit Checklist';
+        document.getElementById('clbSaveText').textContent = 'Save Changes';
+
+        // Users
+        document.querySelectorAll('.clb-user-check').forEach(cb => {
+            cb.checked = (c.assigned_users || []).map(String).includes(cb.value);
+        });
+        // Branches
+        document.querySelectorAll('.clb-branch-check').forEach(cb => {
+            cb.checked = (c.assigned_branches || []).map(String).includes(cb.value);
+        });
+        // Departments
+        document.querySelectorAll('.clb-dept-check').forEach(cb => {
+            cb.checked = (c.assigned_departments || []).map(String).includes(cb.value);
+        });
+
+        // Tasks
+        const editor = document.getElementById('clbTasksEditor');
+        editor.innerHTML = '';
+        if (c.tasks && c.tasks.length) {
+            c.tasks.forEach(t => addTaskRow(t.description));
         } else {
-            toast.classList.remove('error');
-            iconEl.className = 'fas fa-check';
+            addTaskRow();
         }
-        
-        toast.classList.add('show');
-        
-        if (window.toastTimeout) {
-            clearTimeout(window.toastTimeout);
-        }
-        
-        window.toastTimeout = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 4000);
+
+        toggleSpecificUsers();
+        document.getElementById('clbModalBackdrop').classList.add('show');
+        setTimeout(() => document.getElementById('clbName').focus(), 100);
+    } catch (err) {
+        console.error(err);
+        clbToast('Error', 'Could not load checklist', true);
+    }
+}
+
+/* ============================================================
+   SAVE CHECKLIST (CREATE OR EDIT)
+   ============================================================ */
+async function saveChecklist() {
+    const id = document.getElementById('clbChecklistId').value;
+    const name = document.getElementById('clbName').value.trim();
+    const description = document.getElementById('clbDescription').value.trim();
+    const frequency = document.getElementById('clbFrequency').value;
+    const assignment_target = document.getElementById('clbAssignment').value;
+
+    if (!name) {
+        clbToast('Validation', 'Activity name is required', true);
+        return;
     }
 
-    function closeToast() {
-        const toast = document.getElementById('toastNotification');
-        toast.classList.remove('show');
-        if (window.toastTimeout) {
-            clearTimeout(window.toastTimeout);
-            window.toastTimeout = null;
-        }
+    const tasks = Array.from(document.querySelectorAll('#clbTasksEditor .clb-task-input'))
+        .map(inp => ({ description: inp.value.trim() }))
+        .filter(t => t.description);
+
+    if (!tasks.length) {
+        clbToast('Validation', 'Please add at least one task', true);
+        return;
     }
 
-    // ============================================
-    // TOGGLE CHECKLIST EXPAND
-    // ============================================
-    function toggleChecklist(header) {
-        const body = header.nextElementSibling;
-        const chevron = header.querySelector('.fa-chevron-down');
-        if (body) {
-            body.classList.toggle('open');
-            if (chevron) {
-                chevron.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
-            }
-        }
-    }
+    const assigned_users = Array.from(document.querySelectorAll('.clb-user-check:checked'))
+        .map(cb => parseInt(cb.value, 10));
 
-    // Open all by default
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.checklist-card .card-body').forEach(function(body) {
-            body.classList.add('open');
-        });
-        document.querySelectorAll('.checklist-card .fa-chevron-down').forEach(function(icon) {
-            icon.style.transform = 'rotate(180deg)';
-        });
-    });
+    const assigned_branches = Array.from(document.querySelectorAll('.clb-branch-check:checked'))
+        .map(cb => parseInt(cb.value, 10));
 
-    // ============================================
-    // TOGGLE TASK / LOG CHECKLIST
-    // ============================================
-    function toggleTask(checkbox) {
-        const checklistId = checkbox.dataset.checklist;
-        const logDate = checkbox.dataset.date;
-        const isChecked = checkbox.checked;
-        const row = checkbox.closest('.checklist-card');
-        const taskText = checkbox.nextElementSibling;
-        
-        // Show loading state
-        checkbox.disabled = true;
-        
-        const url = "/adminboard/api/checklists/log/";
-        const action = isChecked ? 'log' : 'unlog';
-        
-        fetch(url, {
-            method: 'POST',
+    const assigned_departments = Array.from(document.querySelectorAll('.clb-dept-check:checked'))
+        .map(cb => parseInt(cb.value, 10));
+
+    const payload = {
+        name,
+        description,
+        frequency,
+        assignment_target,
+        assigned_users,
+        assigned_branches,
+        assigned_departments,
+        tasks
+    };
+
+    const saveBtn = document.getElementById('clbSaveBtn');
+    saveBtn.disabled = true;
+    const originalHTML = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    try {
+        const isEdit = !!id;
+        const url = isEdit ? clbUrl(CLB_URL_EDIT, id) : CLB_URL_CREATE;
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const resp = await fetch(url, {
+            method,
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
+                'X-CSRFToken': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest'
             },
-            body: JSON.stringify({
-                checklist_id: parseInt(checklistId),
-                log_date: logDate,
-                action: action
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            checkbox.disabled = false;
-            if (data.success) {
-                if (isChecked) {
-                    taskText.classList.add('done');
-                    showToast('Checklist logged successfully!');
-                } else {
-                    taskText.classList.remove('done');
-                    showToast('Checklist unlogged.');
-                }
-                // Reload after a moment to update stats
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                showToast('Error: ' + (data.error || 'Failed to update'), 'Error', true);
-                // Revert checkbox state
-                checkbox.checked = !isChecked;
-            }
-        })
-        .catch(error => {
-            checkbox.disabled = false;
-            console.error('Error:', error);
-            showToast('An error occurred. Please try again.', 'Error', true);
-            checkbox.checked = !isChecked;
+            credentials: 'same-origin',
+            body: JSON.stringify(payload)
         });
-    }
 
-    // ============================================
-    // FILTER FUNCTIONS
-    // ============================================
-    function applyFilters() {
-        const params = new URLSearchParams();
-        
-        const branchDept = document.getElementById('filter-branch-dept').value;
-        if (branchDept && branchDept !== 'all') {
-            if (branchDept.startsWith('branch_')) {
-                params.set('branch', branchDept.replace('branch_', ''));
-            } else if (branchDept.startsWith('department_')) {
-                params.set('department', branchDept.replace('department_', ''));
-            }
-        }
-        
-        const frequency = document.getElementById('filter-frequency').value;
-        if (frequency && frequency !== 'all') {
-            params.set('frequency', frequency);
-        }
-        
-        const month = document.getElementById('filter-month').value;
-        if (month && month !== 'all') {
-            params.set('month', month);
-        }
-        
-        const quarter = document.getElementById('filter-quarter').value;
-        if (quarter && quarter !== 'all') {
-            params.set('quarter', quarter);
-        }
-        
-        const year = document.getElementById('filter-year').value;
-        if (year) {
-            params.set('year', year);
-        }
-        
-        const queryString = params.toString();
-        const url = queryString ? window.location.pathname + '?' + queryString : window.location.pathname;
-        window.location.href = url;
-    }
+        const data = await resp.json();
 
-    function resetFilters() {
-        window.location.href = window.location.pathname;
-    }
-
-    // ============================================
-    // KEYBOARD SHORTCUTS
-    // ============================================
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'r' || event.key === 'R') {
-            if (!event.ctrlKey && !event.metaKey) {
-                resetFilters();
-            }
+        if (data.success) {
+            clbToast('Success', data.message || 'Checklist saved');
+            closeChecklistModal();
+            setTimeout(() => window.location.reload(), 900);
+        } else {
+            clbToast('Error', data.error || 'Could not save checklist', true);
         }
+    } catch (err) {
+        console.error(err);
+        clbToast('Error', 'Network error while saving', true);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalHTML;
+    }
+}
+
+/* ============================================================
+   DELETE CHECKLIST
+   ============================================================ */
+async function deleteChecklist(id, name) {
+    if (!confirm(`Delete checklist "${name}"?\n\nThis action cannot be undone.`)) return;
+
+    try {
+        const resp = await fetch(clbUrl(CLB_URL_DELETE, id), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        const data = await resp.json();
+
+        if (data.success) {
+            clbToast('Deleted', 'Checklist removed');
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            clbToast('Error', data.error || 'Could not delete', true);
+        }
+    } catch (err) {
+        console.error(err);
+        clbToast('Error', 'Network error while deleting', true);
+    }
+}
+
+/* ============================================================
+   FILTER + STATS ON LOAD
+   ============================================================ */
+function filterChecklists() {
+    const q = document.getElementById('clbSearchInput').value.toLowerCase().trim();
+    document.querySelectorAll('#clbGrid .clb-card').forEach(card => {
+        const n = card.getAttribute('data-name') || '';
+        card.style.display = (q && !n.includes(q)) ? 'none' : '';
     });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Count active checklists
+    let active = 0;
+    document.querySelectorAll('#clbGrid .clb-card').forEach(c => {
+        if (!c.classList.contains('inactive')) active++;
+    });
+    const el = document.getElementById('stat-active');
+    if (el) el.textContent = active;
+});
 </script>
 {% endblock %}

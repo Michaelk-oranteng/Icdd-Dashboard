@@ -1446,6 +1446,8 @@ def api_delete_checklist(request, checklist_id):
 
 # ==================== MEMBER DASHBOARD VIEW ====================
 
+# ==================== MEMBER DASHBOARD VIEW ====================
+
 @login_required
 def member_dashboard(request):
     try:
@@ -1668,26 +1670,67 @@ def member_dashboard(request):
 
     display_checklists_with_progress.sort(key=lambda x: x.month_progress)
 
+    # ============================================================
+    # IRREGULAR GL POSITIONS — date-aware
+    # ------------------------------------------------------------
+    # Default (on login): TODAY. If today has no trial balance yet,
+    #                     fall back to the most recent available day.
+    # With ?gl_date=YYYY-MM-DD: show that specific day.
+    # ============================================================
     from .models import TrialBalanceEntry
 
     irregular_gls = []
     has_trial_balance = False
+    available_tb_dates = []
+    selectable_gl_dates = []
+    selected_gl_date = None
+    selected_gl_date_display = ''
+    is_today_gl = False
+    gl_date_param = request.GET.get('gl_date', '').strip()
+
     try:
         today_date = timezone.now().date()
 
-        target_date = today_date
-        if not TrialBalanceEntry.objects.filter(report_date=today_date).exists():
-            latest = (
-                TrialBalanceEntry.objects
-                .order_by('-report_date')
-                .values_list('report_date', flat=True)
-                .first()
-            )
-            if latest:
-                target_date = latest
+        # All distinct dates that actually have trial-balance data
+        # (most recent first, capped to keep the dropdown manageable)
+        available_tb_dates = list(
+            TrialBalanceEntry.objects
+            .values_list('report_date', flat=True)
+            .distinct()
+            .order_by('-report_date')[:90]
+        )
 
-        has_trial_balance = TrialBalanceEntry.objects.filter(report_date=target_date).exists()
+        # Resolve which date to display
+        if gl_date_param:
+            try:
+                target_date = datetime.strptime(gl_date_param, '%Y-%m-%d').date()
+            except ValueError:
+                target_date = today_date
+        else:
+            # Fresh page load → default to TODAY.
+            # If today has no TB data yet, fall back to the most recent day.
+            target_date = today_date
+            if not TrialBalanceEntry.objects.filter(report_date=today_date).exists():
+                if available_tb_dates:
+                    target_date = available_tb_dates[0]
 
+        selected_gl_date = target_date
+        selected_gl_date_display = target_date.strftime('%b %d, %Y')
+        is_today_gl = (target_date == today_date)
+
+        # Selectable dates for the dropdown:
+        # today first (so it's always visible), then every other
+        # available date, newest-first, without duplicates.
+        selectable_gl_dates = [today_date]
+        for d in available_tb_dates:
+            if d != today_date:
+                selectable_gl_dates.append(d)
+
+        has_trial_balance = TrialBalanceEntry.objects.filter(
+            report_date=target_date
+        ).exists()
+
+        # Branch / dept / role scoping (unchanged)
         code_to_name = dict(Branch.BRANCH_CODE_MAP)
         for b in Branch.objects.filter(is_active=True):
             if b.code:
@@ -1706,7 +1749,10 @@ def member_dashboard(request):
                         user_branch_codes.add(code)
                         break
 
-        user_dept_names = {str(d.name).strip().upper() for d in user_profile.departments.all() if d.name}
+        user_dept_names = {
+            str(d.name).strip().upper()
+            for d in user_profile.departments.all() if d.name
+        }
 
         has_branch_restriction = len(user_branch_codes) > 0
         has_dept_restriction = len(user_dept_names) > 0
@@ -1785,6 +1831,11 @@ def member_dashboard(request):
         logger.exception("Error computing irregular_gls in member_dashboard")
         irregular_gls = []
         has_trial_balance = False
+        available_tb_dates = []
+        selectable_gl_dates = []
+        selected_gl_date = None
+        selected_gl_date_display = ''
+        is_today_gl = False
 
     context = {
         'user_profile': user_profile,
@@ -1812,8 +1863,17 @@ def member_dashboard(request):
 
         'daily_checklists': display_checklists_with_progress[:5],
         'activity_logs': activity_logs,
+
+        # --- Irregular GL panel (date-aware) ---
         'irregular_gls': irregular_gls,
         'has_trial_balance': has_trial_balance,
+        'available_tb_dates': available_tb_dates,
+        'selectable_gl_dates': selectable_gl_dates,
+        'selected_gl_date': selected_gl_date,
+        'selected_gl_date_display': selected_gl_date_display,
+        'is_today_gl': is_today_gl,
+        'gl_date_param': gl_date_param,
+
         'user_branches': user_profile.branches.all(),
         'user_departments': user_profile.departments.all(),
 
@@ -1824,7 +1884,6 @@ def member_dashboard(request):
     }
 
     return render(request, 'control_dashboard/memberboard.html', context)
-
 
 # ==================== SUBMIT REPORT VIEWS ====================
 
@@ -3117,17 +3176,23 @@ def api_export_logs(request):
 
 # ==================== SUPERVISOR VIEWS (CONTINUED) ====================
 
+# ==================== SUPERVISOR VIEWS (CONTINUED) ====================
+
 @login_required
 def team_performance(request):
     """
     Team Performance.
-    
-    Since email submissions have been removed, performance is now
-    measured purely by:
-      - Expected report occurrences (denominator)
-      - Ad-hoc deductions/bonuses (numerator adjustment)
-    
-    Excel uploads (status='uploaded') are EXCLUDED from both sides.
+
+    Scoring model (from AdHocDeduction):
+      • Total Credits = Σ points_added
+      • Total Debits  = Σ points
+      • Net Score     = Credits − Debits  (can be negative)
+      • Performance % = clamp(Net Score, 0, 100)
+
+    The performance percentage is the NET of credits minus debits,
+    capped at 100% so it can never exceed the ceiling.
+    Excel uploads (status='uploaded') are EXCLUDED from the task
+    denominator.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -3147,12 +3212,16 @@ def team_performance(request):
     total_members = team_members.count()
     grand_total_tasks = 0
     grand_total_completed = 0
-    grand_total_deducted = 0
-    grand_total_added = 0
+    grand_total_debits = 0
+    grand_total_credits = 0
     sum_of_percentages = 0
 
     for member in team_members:
-        # 1. Total Tasks (denominator) — expected occurrences across Reports
+        # ------------------------------------------------------------
+        # 1. Total Tasks (denominator) — expected occurrences across
+        #    every Report assigned to this member (excluding uploads
+        #    and the internal trial balance container).
+        # ------------------------------------------------------------
         assigned_reports = Report.objects.filter(
             Q(assigned_to=member) | Q(is_assigned_to_all=True)
         ).exclude(
@@ -3165,41 +3234,43 @@ def team_performance(request):
         for report in assigned_reports:
             member_total_tasks += count_expected_report_occurrences(report, until=today)
 
-        # 2. Ad-hoc adjustments
-        member_deducted = (
+        # ------------------------------------------------------------
+        # 2. Total Debits (deductions) and Total Credits (bonuses)
+        #    pulled live from control_dashboard_adhocdeduction.
+        # ------------------------------------------------------------
+        member_debits = (
             AdHocDeduction.objects
             .filter(user=member)
             .aggregate(total=Sum('points'))
             .get('total') or 0
         )
-        member_added = (
+        member_credits = (
             AdHocDeduction.objects
             .filter(user=member)
             .aggregate(total=Sum('points_added'))
             .get('total') or 0
         )
 
-        # 3. Performance score
-        #    Since there's no email submission score anymore, start from 0
-        #    and apply only ad-hoc adjustments. You may want to replace this
-        #    with a different metric (e.g. checklist completion, exception
-        #    resolution rate, etc.).
-        if member_total_tasks > 0:
-            numerator = member_added - member_deducted
-            raw_pct = (numerator / member_total_tasks) * 100
-            percentage = max(0, int(raw_pct))
-        else:
-            percentage = 0
+        # ------------------------------------------------------------
+        # 3. Net Score = Credits − Debits
+        #    The difference is CAPPED at 100% and floored at 0%.
+        # ------------------------------------------------------------
+        net_score = member_credits - member_debits
+        raw_percentage = net_score              # signed, for the "Net" column
+        percentage = max(0, min(100, net_score))  # 0 ≤ performance ≤ 100
 
-        if percentage >= 100:
+        if percentage >= 90:
             status = 'success'
             status_text = 'Outstanding'
-        elif percentage >= 80:
+        elif percentage >= 70:
             status = 'success'
             status_text = 'Excellent'
         elif percentage >= 50:
             status = 'warning'
             status_text = 'In Progress'
+        elif percentage > 0:
+            status = 'warning'
+            status_text = 'Building Up'
         else:
             status = 'danger'
             status_text = 'Needs Attention'
@@ -3207,21 +3278,21 @@ def team_performance(request):
         team_data.append({
             'user': member,
             'total_tasks': member_total_tasks,
-            'completed': 0,  # No email submissions to count
-            'deductions': member_deducted,
-            'bonuses': member_added,
-            'raw_score': 0,
-            'final_score': member_added - member_deducted,
+            'completed': 0,
+            'debits': member_debits,
+            'credits': member_credits,
+            'net_score': net_score,
+            'raw_percentage': raw_percentage,
             'percentage': percentage,
-            'percentage_bar': min(100, percentage),
+            'percentage_bar': percentage,
             'status': status,
             'status_text': status_text,
         })
 
         grand_total_tasks += member_total_tasks
         grand_total_completed += 0
-        grand_total_deducted += member_deducted
-        grand_total_added += member_added
+        grand_total_debits += member_debits
+        grand_total_credits += member_credits
         sum_of_percentages += percentage
 
     team_data.sort(key=lambda x: x['percentage'], reverse=True)
@@ -3236,12 +3307,61 @@ def team_performance(request):
         'total_members': total_members,
         'total_tasks': grand_total_tasks,
         'total_completed': grand_total_completed,
-        'total_deductions': grand_total_deducted,
-        'total_bonuses': grand_total_added,
+        'total_debits': grand_total_debits,
+        'total_credits': grand_total_credits,
         'overall_completion': overall_completion,
     }
 
     return render(request, 'control_dashboard/team.html', context)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_team_performance_live(request):
+    """
+    Lightweight JSON endpoint for real-time team performance refreshes.
+
+    Returns the same scoring model used by `team_performance`:
+      Net = Credits − Debits,  Performance % = clamp(Net, 0, 100).
+    """
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+        if user_profile.role not in ('supervisor', 'admin'):
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+    today = timezone.now()
+    team_members = UserProfile.objects.filter(role='member', status='active').order_by('full_name')
+
+    members_payload = []
+    for member in team_members:
+        member_debits = (
+            AdHocDeduction.objects
+            .filter(user=member)
+            .aggregate(total=Sum('points'))
+            .get('total') or 0
+        )
+        member_credits = (
+            AdHocDeduction.objects
+            .filter(user=member)
+            .aggregate(total=Sum('points_added'))
+            .get('total') or 0
+        )
+
+        net_score = member_credits - member_debits
+        percentage = max(0, min(100, net_score))
+
+        members_payload.append({
+            'id': member.id,
+            'full_name': member.full_name or member.email,
+            'debits': member_debits,
+            'credits': member_credits,
+            'net_score': net_score,
+            'percentage': percentage,
+        })
+
+    return JsonResponse({'success': True, 'members': members_payload})
 
 @login_required
 def submitted_reports(request):
@@ -4911,28 +5031,147 @@ def api_download_trial_balance_template(request):
 
 @login_required
 def consolidated_reports(request):
+    """
+    Consolidated Reports — cross-user view of exception data.
+
+    Access rule:
+        The logged-in user may open this page ONLY if they have at
+        least one Report assigned to them whose report_type contains
+        the word "consolidated" (case-insensitive).
+
+    Data rule:
+        The consolidated report is a VIEW over the underlying
+        exception data, not a data container of its own. When the
+        report name implies a scope:
+
+          • "Head Office" / "Headoffice" / "Head-Office"
+                → aggregate EVERY non-TB exception record uploaded by
+                  users with position='hc' (across all their reports)
+          • "Cluster"
+                → same, but for position='cc'
+
+        When no scope can be derived from the name, fall back to
+        exact report_type matching.
+    """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
     except UserProfile.DoesNotExist:
         return redirect('control_dashboard:member_dashboard')
 
-    available_report_types = list(
-        Report.objects
-        .filter(created_by=user_profile)
-        .exclude(report_type=TRIAL_BALANCE_REPORT_TYPE)
-        .exclude(status=UPLOADED_STATUS)
-        .values_list('report_type', flat=True)
-        .distinct()
-        .order_by('report_type')
+    # ------------------------------------------------------------------
+    # Determine which consolidated report types this user may access
+    # ------------------------------------------------------------------
+    assigned_consolidated_qs = Report.objects.filter(
+        Q(assigned_to=user_profile) |
+        Q(is_assigned_to_all=True) |
+        Q(created_by=user_profile)
+    ).exclude(
+        report_type=TRIAL_BALANCE_REPORT_TYPE
+    ).exclude(
+        status=UPLOADED_STATUS
+    ).filter(
+        report_type__icontains='consolidated'
     )
+
+    available_report_types = sorted(
+        {rt for rt in assigned_consolidated_qs.values_list('report_type', flat=True) if rt}
+    )
+
+    has_access = len(available_report_types) > 0
+
+    # ------------------------------------------------------------------
+    # Resolve the selected report type
+    # ------------------------------------------------------------------
+    selected_report_type = (request.GET.get('report_type') or '').strip()
+    if not selected_report_type or selected_report_type == 'all':
+        if available_report_types:
+            selected_report_type = available_report_types[0]
+
+    if selected_report_type not in available_report_types:
+        selected_report_type = available_report_types[0] if available_report_types else ''
+
+    # ------------------------------------------------------------------
+    # Derive uploader scope from the report name
+    # ------------------------------------------------------------------
+    def _derive_position_scope(report_type):
+        name = (report_type or '').lower()
+        if 'head office' in name or 'headoffice' in name or 'head-office' in name:
+            return 'hc'
+        if 'cluster' in name:
+            return 'cc'
+        return None
+
+    uploader_scope = _derive_position_scope(selected_report_type)
+
+    # ------------------------------------------------------------------
+    # Build the preview across ALL matching exception records
+    # ------------------------------------------------------------------
+    exception_rows = []
+    total_count = 0
+    total_cost = 0
+    distinct_uploaders = 0
+
+    if has_access and selected_report_type:
+        er_qs = ExceptionRecord.objects.filter(
+            report__isnull=False,
+        ).exclude(
+            report__report_type=TRIAL_BALANCE_REPORT_TYPE,
+        )
+
+        if uploader_scope:
+            # CONSOLIDATED VIEW: aggregate from every report
+            # uploaded by users of the scoped position.
+            er_qs = er_qs.filter(
+                report__created_by__position=uploader_scope,
+            )
+        else:
+            # No scope derivable → exact report_type match only
+            er_qs = er_qs.filter(
+                report__report_type=selected_report_type,
+            )
+
+        er_qs = er_qs.select_related(
+            'report', 'report__created_by'
+        ).order_by('-report__created_at', 'source_row_index')
+
+        total_count = er_qs.count()
+
+        cost_agg = er_qs.aggregate(total=Sum('income_cost_saved'))
+        try:
+            total_cost = float(cost_agg.get('total') or 0)
+        except (TypeError, ValueError):
+            total_cost = 0.0
+
+        distinct_uploaders = er_qs.values('report__created_by').distinct().count()
+
+        for rec in er_qs[:100]:
+            exception_rows.append({
+                'serial_number': rec.serial_number,
+                'branch_unit': rec.branch_unit or '—',
+                'exception': rec.exception or '—',
+                'date_noted': rec.date_noted,
+                'target_closure_date': rec.target_closure_date,
+                'category': rec.category or '—',
+                'responsible_officer': rec.responsible_officer or '—',
+                'supervisor': rec.supervisor or '—',
+                'status': rec.get_status_display() or rec.status_raw or '—',
+                'income_cost_saved': rec.income_cost_saved,
+                'source_report': (rec.report.report_type if rec.report else '—'),
+            })
 
     context = {
         'user_profile': user_profile,
         'today': timezone.now(),
+        'has_access': has_access,
         'available_report_types': available_report_types,
+        'selected_report_type': selected_report_type,
+        'uploader_scope': uploader_scope,
+        'exception_rows': exception_rows,
+        'total_count': total_count,
+        'total_cost': total_cost,
+        'distinct_uploaders': distinct_uploaders,
     }
     return render(request, 'control_dashboard/consolidated.html', context)
-
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -4954,142 +5193,179 @@ def api_consolidated_filter_options(request):
 
     return JsonResponse({'success': True, 'report_types': report_types})
 
-
 @login_required
 @require_http_methods(["GET"])
 def generate_consolidated_excel(request):
+    """
+    Export a consolidated report as Excel.
+
+    Uses the same aggregation logic as `consolidated_reports`:
+    when the report name implies Head Office / Cluster, ALL
+    exception records from that scope are pulled in — not just
+    rows whose report_type matches the consolidated name.
+    """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
     except UserProfile.DoesNotExist:
         messages.error(request, 'User profile not found.')
         return redirect('control_dashboard:consolidated_reports')
 
-    report_type_filter = request.GET.get('report_type', 'all').strip()
-    start_date_str = request.GET.get('start_date', '').strip()
-    end_date_str = request.GET.get('end_date', '').strip()
-
-    qs = Report.objects.filter(
-        created_by=user_profile
+    # ------------------------------------------------------------------
+    # Access check
+    # ------------------------------------------------------------------
+    assigned_consolidated_qs = Report.objects.filter(
+        Q(assigned_to=user_profile) |
+        Q(is_assigned_to_all=True) |
+        Q(created_by=user_profile)
     ).exclude(
         report_type=TRIAL_BALANCE_REPORT_TYPE
     ).exclude(
         status=UPLOADED_STATUS
-    ).order_by('-created_at')
+    ).filter(
+        report_type__icontains='consolidated'
+    )
 
-    if report_type_filter and report_type_filter != 'all':
-        qs = qs.filter(report_type=report_type_filter)
+    allowed_report_types = {
+        rt for rt in assigned_consolidated_qs.values_list('report_type', flat=True) if rt
+    }
+
+    if not allowed_report_types:
+        messages.error(request, 'You do not have access to consolidated reports.')
+        return redirect('control_dashboard:consolidated_reports')
+
+    report_type_filter = (request.GET.get('report_type') or '').strip()
+    start_date_str = (request.GET.get('start_date') or '').strip()
+    end_date_str = (request.GET.get('end_date') or '').strip()
+
+    if not report_type_filter or report_type_filter == 'all':
+        report_type_filter = sorted(allowed_report_types)[0]
+
+    if report_type_filter not in allowed_report_types:
+        messages.error(request, f'You do not have access to "{report_type_filter}".')
+        return redirect('control_dashboard:consolidated_reports')
+
+    # ------------------------------------------------------------------
+    # Derive position scope
+    # ------------------------------------------------------------------
+    def _derive_position_scope(report_type):
+        name = (report_type or '').lower()
+        if 'head office' in name or 'headoffice' in name or 'head-office' in name:
+            return 'hc'
+        if 'cluster' in name:
+            return 'cc'
+        return None
+
+    uploader_scope = _derive_position_scope(report_type_filter)
+
+    # ------------------------------------------------------------------
+    # Query — same aggregation logic as the preview view
+    # ------------------------------------------------------------------
+    er_qs = ExceptionRecord.objects.filter(
+        report__isnull=False,
+    ).exclude(
+        report__report_type=TRIAL_BALANCE_REPORT_TYPE,
+    )
+
+    if uploader_scope:
+        er_qs = er_qs.filter(
+            report__created_by__position=uploader_scope,
+        )
+    else:
+        er_qs = er_qs.filter(
+            report__report_type=report_type_filter,
+        )
+
+    er_qs = er_qs.select_related(
+        'report', 'report__created_by'
+    ).order_by('-report__created_at', 'source_row_index')
 
     if start_date_str:
         try:
             start_d = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            qs = qs.filter(created_at__date__gte=start_d)
+            er_qs = er_qs.filter(date_noted__gte=start_d)
         except ValueError:
             pass
 
     if end_date_str:
         try:
             end_d = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-            qs = qs.filter(created_at__date__lte=end_d)
+            er_qs = er_qs.filter(date_noted__lte=end_d)
         except ValueError:
             pass
 
-    reports = list(qs)
+    records = list(er_qs)
 
-    if not reports:
-        messages.warning(request, 'No reports match the selected filters.')
+    if not records:
+        messages.warning(request, f'No exception records found for "{report_type_filter}".')
         return redirect('control_dashboard:consolidated_reports')
 
-    grouped = {}
-    for r in reports:
-        grouped.setdefault(r.report_type, []).append(r)
-
+    # ------------------------------------------------------------------
+    # Workbook
+    # ------------------------------------------------------------------
     wb = openpyxl.Workbook()
-    wb.remove(wb.active)
+    ws = wb.active
+    safe_title = re.sub(r'[\[\]\:\*\?\/\\]', '_', report_type_filter)[:31] or 'Consolidated'
+    ws.title = safe_title
 
-    for report_type, report_list in grouped.items():
-        safe_title = re.sub(r'[\[\]\:\*\?\/\\]', '_', report_type)[:31] or 'Report'
-        ws = wb.create_sheet(title=safe_title)
+    headers = [
+        'S/N', 'Branch / Unit', 'Exception',
+        'Date Noted', 'Target Closure', 'Category',
+        'Responsible Officer', 'Supervisor', 'Status',
+        "Auditee's Response", 'Remarks',
+        'Income / Cost Saved',
+        'Source Report',
+    ]
 
-        all_headers = []
-        seen = set()
-        per_report_rows = []
+    for col, h in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=h)
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.fill = PatternFill(start_color='0066CC', end_color='0066CC', fill_type='solid')
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
 
-        for report in report_list:
-            display = report.get_display_data()
-            headers = display.get('headers') or []
-            rows = display.get('rows') or []
+    row_idx = 2
+    for rec in records:
+        ws.cell(row=row_idx, column=1,  value=rec.serial_number)
+        ws.cell(row=row_idx, column=2,  value=rec.branch_unit or '')
+        ws.cell(row=row_idx, column=3,  value=rec.exception or '')
+        ws.cell(row=row_idx, column=4,  value=rec.date_noted.strftime('%Y-%m-%d') if rec.date_noted else (rec.date_noted_raw or ''))
+        ws.cell(row=row_idx, column=5,  value=rec.target_closure_date.strftime('%Y-%m-%d') if rec.target_closure_date else (rec.target_closure_date_raw or ''))
+        ws.cell(row=row_idx, column=6,  value=rec.category or '')
+        ws.cell(row=row_idx, column=7,  value=rec.responsible_officer or '')
+        ws.cell(row=row_idx, column=8,  value=rec.supervisor or '')
+        ws.cell(row=row_idx, column=9,  value=rec.get_status_display() or rec.status_raw or '')
+        ws.cell(row=row_idx, column=10, value=rec.auditee_response or '')
+        ws.cell(row=row_idx, column=11, value=rec.remarks or '')
+        try:
+            ws.cell(row=row_idx, column=12, value=float(rec.income_cost_saved) if rec.income_cost_saved is not None else 0)
+        except (TypeError, ValueError):
+            ws.cell(row=row_idx, column=12, value=0)
+        ws.cell(row=row_idx, column=13, value=(rec.report.report_type if rec.report else ''))
+        row_idx += 1
 
-            normalised_rows = []
-            if rows:
-                if isinstance(rows[0], dict):
-                    normalised_rows = rows
-                else:
-                    for r in rows:
-                        rd = {}
-                        for i, h in enumerate(headers):
-                            rd[h] = r[i] if i < len(r) else ''
-                        normalised_rows.append(rd)
-            else:
-                rd = {}
-                for field in report.data_fields.all():
-                    rd[field.field_name] = field.field_value or ''
-                    if field.field_name not in seen:
-                        seen.add(field.field_name)
-                        all_headers.append(field.field_name)
-                normalised_rows = [rd] if rd else []
+    for col in range(1, len(headers) + 1):
+        letter = get_column_letter(col)
+        max_len = 12
+        for r in range(1, min(ws.max_row + 1, 80)):
+            v = ws.cell(row=r, column=col).value
+            if v is not None:
+                max_len = max(max_len, len(str(v)))
+        ws.column_dimensions[letter].width = min(max_len + 2, 45)
 
-            for h in headers:
-                if h and h not in seen:
-                    seen.add(h)
-                    all_headers.append(h)
-
-            per_report_rows.append((report, headers or list(rd.keys()), normalised_rows))
-
-        meta_headers = ['Report ID', 'Report Type', 'Status', 'Created At']
-        full_headers = meta_headers + all_headers
-
-        for col, h in enumerate(full_headers, 1):
-            cell = ws.cell(row=1, column=col, value=h)
-            cell.font = Font(bold=True, color='FFFFFF')
-            cell.fill = PatternFill(start_color='0066CC', end_color='0066CC', fill_type='solid')
-            cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-
-        row_idx = 2
-        for report, headers, rows in per_report_rows:
-            for r in rows:
-                ws.cell(row=row_idx, column=1, value=report.id)
-                ws.cell(row=row_idx, column=2, value=report.report_type)
-                ws.cell(row=row_idx, column=3, value=report.get_status_display() or report.status)
-                ws.cell(row=row_idx, column=4, value=report.created_at.strftime('%Y-%m-%d %H:%M'))
-
-                for col_offset, h in enumerate(all_headers):
-                    value = r.get(h, '')
-                    ws.cell(row=row_idx, column=len(meta_headers) + 1 + col_offset, value=value)
-                row_idx += 1
-
-        for col in range(1, len(full_headers) + 1):
-            letter = get_column_letter(col)
-            max_len = 12
-            for r in range(1, min(ws.max_row + 1, 60)):
-                v = ws.cell(row=r, column=col).value
-                if v is not None:
-                    max_len = max(max_len, len(str(v)))
-            ws.column_dimensions[letter].width = min(max_len + 2, 45)
-
-        ws.freeze_panes = 'A2'
+    ws.freeze_panes = 'A2'
 
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
 
-    filename = f'Consolidated_Reports_{timezone.now().strftime("%Y%m%d_%H%M")}.xlsx'
+    safe_filename_part = re.sub(r'[^A-Za-z0-9_-]', '_', report_type_filter)[:40]
+    filename = f'Consolidated_{safe_filename_part}_{timezone.now().strftime("%Y%m%d_%H%M")}.xlsx'
+
     response = HttpResponse(
         output.getvalue(),
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
-
 
 # ==================== TRIAL BALANCE READ APIs ====================
 
@@ -5937,3 +6213,117 @@ def api_edit_excel_row(request, row_id):
         logger.exception("Error in api_edit_excel_row")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_supervisor_top_performers_live(request):
+    """
+    Lightweight JSON endpoint for the Supervisor Dashboard's
+    'Top Performers' widget.
+
+    Returns the top 5 members ranked by the same score model used
+    in the initial render:
+        final_score = max(0, submitted − deductions)
+        percentage  = min(100, final_score / max_submissions × 100)
+
+    Also returns the summary aggregates so the KPI header cards can
+    refresh in the same round-trip.
+    """
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+        if user_profile.role not in ('supervisor', 'admin'):
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+    today = timezone.now().date()
+
+    # -------- Summary counters (mirrors supervisor_dashboard) --------
+    exceptions_qs = ExceptionRecord.objects.filter(
+        report__isnull=False,
+    ).exclude(
+        report__report_type=TRIAL_BALANCE_REPORT_TYPE,
+    )
+    total_exceptions = exceptions_qs.count()
+    today_exceptions = exceptions_qs.filter(created_at__date=today).count()
+
+    submitted_qs = Report.objects.filter(status='submitted').exclude(
+        report_type=TRIAL_BALANCE_REPORT_TYPE
+    )
+    submitted_reports_count = submitted_qs.count()
+
+    team_members = (
+        UserProfile.objects
+        .filter(role='member', status='active')
+        .order_by('full_name')
+    )
+
+    max_submissions = (
+        submitted_qs.values('created_by')
+        .annotate(c=Count('id'))
+        .order_by('-c')
+        .values_list('c', flat=True)
+        .first()
+    ) or 1
+
+    performers = []
+    sum_of_percentages = 0
+    total_members = 0
+
+    for member in team_members:
+        member_submitted = submitted_qs.filter(created_by=member).count()
+        member_deductions = (
+            AdHocDeduction.objects
+            .filter(user=member)
+            .aggregate(total=Sum('points'))
+            .get('total') or 0
+        )
+        final_score = max(0, member_submitted - member_deductions)
+        percentage = int((final_score / max_submissions) * 100) if max_submissions > 0 else 0
+        percentage = min(percentage, 100)
+
+        if percentage >= 80:
+            status = 'success'
+            status_icon = '🌟'
+            status_text = 'Excellent'
+        elif percentage >= 50:
+            status = 'warning'
+            status_icon = '📈'
+            status_text = 'Good'
+        else:
+            status = 'danger'
+            status_icon = '⚠️'
+            status_text = 'Needs Attention'
+
+        performers.append({
+            'id': member.id,
+            'full_name': member.full_name or member.email,
+            'submitted': member_submitted,
+            'deductions': member_deductions,
+            'final_score': final_score,
+            'percentage': percentage,
+            'status': status,
+            'status_text': status_text,
+            'status_icon': status_icon,
+        })
+
+        total_members += 1
+        sum_of_percentages += percentage
+
+    performers.sort(key=lambda x: x['percentage'], reverse=True)
+    top_performers = performers[:5]
+
+    completion_rate = (
+        int(sum_of_percentages / total_members) if total_members else 0
+    )
+
+    return JsonResponse({
+        'success': True,
+        'top_performers': top_performers,
+        'summary': {
+            'total_exceptions': total_exceptions,
+            'today_exceptions': today_exceptions,
+            'submitted_reports_count': submitted_reports_count,
+            'completion_rate': completion_rate,
+            'team_size': total_members,
+        },
+    })

@@ -13,11 +13,66 @@
 /* Prevent the score text from wrapping when it has three digits */
 .score-text {
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.5s ease;
 }
 
 /* Prevent the number badges from ever wrapping */
 .task-count-badge {
     white-space: nowrap;
+}
+
+/* Debit / credit / net cells */
+.cell-debit  { color: #dc2626; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cell-credit { color: #059669; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cell-net    { font-weight: 700; font-variant-numeric: tabular-nums; }
+.cell-net.positive { color: #059669; }
+.cell-net.negative { color: #dc2626; }
+.cell-net.zero     { color: #94a3b8; }
+
+/* Smooth live pulse when a cell updates */
+@keyframes fx-cell-update {
+    0%   { background: rgba(79, 110, 247, 0.16); }
+    100% { background: transparent; }
+}
+.cell-updated {
+    animation: fx-cell-update 1.4s ease-out;
+}
+
+/* Progress bar transitions smoothly when values change */
+.progress-bar {
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Small live indicator in the table header */
+.live-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #059669;
+    background: rgba(16, 185, 129, 0.10);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 3px 9px;
+    border-radius: 999px;
+    margin-left: 10px;
+}
+
+.live-indicator .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+    animation: fx-pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes fx-pulse-dot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.3); opacity: 0.7; }
 }
 
 /* Slight breathing room below the metric grid */
@@ -33,7 +88,7 @@
 <li><a href="{% url 'control_dashboard:supervisor_dashboard' %}">
     <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
     <span class="nav-text">Dashboard</span>
-</a></li>  
+</a></li>
 <li><a href="{% url 'control_dashboard:analytics_dashboard' %}">
     <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
     <span class="nav-text">Analytics</span>
@@ -49,15 +104,15 @@
 <li><a href="{% url 'control_dashboard:ad_hoc_scorecard' %}">
     <span class="nav-icon"><i class="fas fa-star"></i></span>
     <span class="nav-text">Ad-Hoc Scorecard</span>
-</a></li> 
+</a></li>
 <li><a href="{% url 'control_dashboard:submitted_reports' %}">
     <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
     <span class="nav-text">Submitted Reports</span>
-</a></li> 
+</a></li>
 <li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
     <span class="nav-icon"><i class="fas fa-search"></i></span>
     <span class="nav-text">Activity Logs</span>
-</a></li> 
+</a></li>
 {% endblock %}
 
 {% block page_title %}Team Member Performance{% endblock %}
@@ -87,28 +142,28 @@
         <div class="metric-card-icon text-primary-dim"><i class="fas fa-users"></i></div>
     </div>
 
-    <div class="metric-card border-left-success">
+    <div class="metric-card border-left-danger">
         <div class="metric-card-content">
-            <span class="card-metric-label">Total Tasks</span>
-            <h3 class="card-metric-value text-success">{{ total_tasks|default:0 }}</h3>
-            <span class="card-metric-subtext">Expected submissions to date</span>
+            <span class="card-metric-label">Total Debits</span>
+            <h3 class="card-metric-value text-danger" id="grand-total-debits">{{ total_debits|default:0 }}</h3>
+            <span class="card-metric-subtext">Sum of all deduction points</span>
         </div>
-        <div class="metric-card-icon text-success-dim"><i class="fas fa-tasks"></i></div>
+        <div class="metric-card-icon text-danger-dim"><i class="fas fa-arrow-down"></i></div>
     </div>
 
-    <div class="metric-card border-left-warning">
+    <div class="metric-card border-left-success">
         <div class="metric-card-content">
-            <span class="card-metric-label">Completed Tasks</span>
-            <h3 class="card-metric-value text-warning">{{ total_completed|default:0 }}</h3>
-            <span class="card-metric-subtext">Email submissions received</span>
+            <span class="card-metric-label">Total Credits</span>
+            <h3 class="card-metric-value text-success" id="grand-total-credits">{{ total_credits|default:0 }}</h3>
+            <span class="card-metric-subtext">Sum of all bonus points</span>
         </div>
-        <div class="metric-card-icon text-warning-dim"><i class="fas fa-check-circle"></i></div>
+        <div class="metric-card-icon text-success-dim"><i class="fas fa-arrow-up"></i></div>
     </div>
 
     <div class="metric-card border-left-info">
         <div class="metric-card-content">
             <span class="card-metric-label">Overall Completion</span>
-            <h3 class="card-metric-value text-info">{{ overall_completion|default:0 }}%</h3>
+            <h3 class="card-metric-value text-info" id="overall-completion">{{ overall_completion|default:0 }}%</h3>
             <span class="card-metric-subtext">Average performance score</span>
         </div>
         <div class="metric-card-icon text-info-dim"><i class="fas fa-chart-pie"></i></div>
@@ -118,56 +173,88 @@
 <!-- Team Performance Table -->
 <div class="table-container">
     <div class="table-header">
-        <h4>Team Members ({{ team_data|length }})</h4>
+        <h4>
+            Team Members ({{ team_data|length }})
+            <span class="live-indicator" title="Auto-refreshes every 20 seconds">
+                <span class="dot"></span> Live
+            </span>
+        </h4>
     </div>
-    
+
     <table class="users-table" id="teamTable">
         <thead>
             <tr>
                 <th>Full Name</th>
                 <th>Position</th>
-                <th class="text-center" title="Expected submissions to date (recurrence count across all assigned reports)">Total Tasks</th>
-                <th class="text-center" title="Email submissions received (one row per send)">Completed</th>
-                <th class="text-center" title="Points added via Ad-Hoc Scorecard">Bonuses</th>
-                <th class="text-center" title="Points deducted via Ad-Hoc Scorecard">Deductions</th>
-                <th style="width: 25%;" title="(Σ submission final scores + Bonuses − Deductions) / Total Tasks × 100 — no upper cap">Performance Score</th>
+                <th class="text-center"
+                    title="Expected submissions to date (recurrence count across all assigned reports)">Total Tasks</th>
+                <th class="text-center"
+                    title="Sum of deduction points from the Ad-Hoc Scorecard">Total Debits</th>
+                <th class="text-center"
+                    title="Sum of bonus points from the Ad-Hoc Scorecard">Total Credits</th>
+                <th class="text-center"
+                    title="Credits − Debits (can be negative)">Net</th>
+                <th style="width: 25%;"
+                    title="clamp(Credits − Debits, 0, 100) — real-time score, capped at 100%">Performance Score</th>
                 <th class="text-center">Status</th>
             </tr>
         </thead>
         <tbody>
             {% for member in team_data %}
-            <tr data-name="{{ member.user.full_name|lower }}">
+            <tr data-name="{{ member.user.full_name|lower }}"
+                data-member-id="{{ member.user.id }}">
                 <td class="font-bold">{{ member.user.full_name|default:member.user.email }}</td>
                 <td>{{ member.user.get_position_display|default:"-" }}</td>
-                <td class="text-center"><span class="task-count-badge">{{ member.total_tasks }}</span></td>
-                <td class="text-center"><span class="task-count-badge">{{ member.completed }}</span></td>
+
                 <td class="text-center">
-                    {% if member.bonuses %}
-                        <span style="color:#059669;font-weight:600;">+{{ member.bonuses }}</span>
-                    {% else %}
-                        <span style="color:#cbd5e1;">—</span>
-                    {% endif %}
+                    <span class="task-count-badge">{{ member.total_tasks }}</span>
                 </td>
+
                 <td class="text-center">
-                    {% if member.deductions %}
-                        <span style="color:#dc2626;font-weight:600;">−{{ member.deductions }}</span>
-                    {% else %}
-                        <span style="color:#cbd5e1;">—</span>
-                    {% endif %}
+                    <span class="cell-debit" data-field="debits">
+                        {% if member.debits %}−{{ member.debits }}{% else %}—{% endif %}
+                    </span>
                 </td>
+
+                <td class="text-center">
+                    <span class="cell-credit" data-field="credits">
+                        {% if member.credits %}+{{ member.credits }}{% else %}—{% endif %}
+                    </span>
+                </td>
+
+                <td class="text-center">
+                    <span class="cell-net {% if member.net_score > 0 %}positive{% elif member.net_score < 0 %}negative{% else %}zero{% endif %}"
+                          data-field="net">
+                        {% if member.net_score > 0 %}+{% endif %}{{ member.net_score }}
+                    </span>
+                </td>
+
                 <td>
                     <div class="performance-metric-wrapper">
-                        <span class="score-text {% if member.percentage >= 90 %}text-success{% elif member.percentage >= 70 %}text-warning{% else %}text-danger{% endif %}">
+                        <span class="score-text
+                            {% if member.percentage >= 90 %}text-success
+                            {% elif member.percentage >= 70 %}text-warning
+                            {% else %}text-danger{% endif %}"
+                            data-field="percentage">
                             {{ member.percentage }}%
                         </span>
                         <div class="progress-track">
-                            <div class="progress-bar {% if member.percentage >= 90 %}bar-success{% elif member.percentage >= 70 %}bar-warning{% else %}bar-danger{% endif %}" 
-                                 style="width: {{ member.percentage_bar }}%;"></div>
+                            <div class="progress-bar
+                                {% if member.percentage >= 90 %}bar-success
+                                {% elif member.percentage >= 70 %}bar-warning
+                                {% else %}bar-danger{% endif %}"
+                                data-field="percentage-bar"
+                                style="width: {{ member.percentage_bar }}%;"></div>
                         </div>
                     </div>
                 </td>
+
                 <td class="text-center">
-                    <span class="status-badge {% if member.status == 'success' %}active{% elif member.status == 'warning' %}pending{% else %}inactive{% endif %}">
+                    <span class="status-badge
+                        {% if member.status == 'success' %}active
+                        {% elif member.status == 'warning' %}pending
+                        {% else %}inactive{% endif %}"
+                        data-field="status">
                         {{ member.status_text }}
                     </span>
                 </td>
@@ -187,26 +274,27 @@
 
 {% block extra_js %}
 <script>
+    const LIVE_ENDPOINT = "{% url 'control_dashboard:api_team_performance_live' %}";
+    const REFRESH_INTERVAL_MS = 20000;
+
     function getCsrfToken() {
-        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
     }
 
     // ============================================
     // TOAST NOTIFICATION
     // ============================================
-
     function showToast(message, title = 'Success!') {
         const toast = document.getElementById('toastNotification');
+        if (!toast) return;
         const msgEl = document.getElementById('toastMessage');
         const titleEl = toast.querySelector('.toast-title');
-        msgEl.textContent = message || 'Action completed successfully.';
-        titleEl.textContent = title;
+        if (msgEl)    msgEl.textContent = message || 'Action completed successfully.';
+        if (titleEl)  titleEl.textContent = title;
         toast.classList.add('show');
-        
-        if (window.toastTimeout) {
-            clearTimeout(window.toastTimeout);
-        }
-        
+
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
         window.toastTimeout = setTimeout(() => {
             toast.classList.remove('show');
         }, 3000);
@@ -214,6 +302,7 @@
 
     window.closeToast = function() {
         const toast = document.getElementById('toastNotification');
+        if (!toast) return;
         toast.classList.remove('show');
         if (window.toastTimeout) {
             clearTimeout(window.toastTimeout);
@@ -224,7 +313,6 @@
     // ============================================
     // FILTER TEAM MEMBERS
     // ============================================
-
     function filterTeamMembers() {
         const input = document.getElementById('search-member');
         const filter = input.value.toLowerCase();
@@ -241,32 +329,170 @@
     }
 
     // ============================================
+    // ANIMATED NUMBER (for smooth transitions)
+    // ============================================
+    function animateNumber(el, from, to, duration) {
+        if (!el || from === to) return;
+        const start = performance.now();
+        function tick(now) {
+            const t = Math.min(1, (now - start) / duration);
+            // easeOutCubic
+            const eased = 1 - Math.pow(1 - t, 3);
+            el.textContent = Math.round(from + (to - from) * eased);
+            if (t < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+    }
+
+    // ============================================
+    // LIVE REFRESH
+    // ============================================
+    async function refreshPerformance() {
+        try {
+            const resp = await fetch(LIVE_ENDPOINT, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+            });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (!data.success) return;
+
+            let totalDebits = 0;
+            let totalCredits = 0;
+            let sumPct = 0;
+            let count = 0;
+
+            data.members.forEach(m => {
+                totalDebits += m.debits;
+                totalCredits += m.credits;
+                sumPct += m.percentage;
+                count += 1;
+
+                const row = document.querySelector(
+                    `tr[data-member-id="${m.id}"]`
+                );
+                if (!row) return;
+
+                // ---------- Debits ----------
+                const debitEl = row.querySelector('[data-field="debits"]');
+                if (debitEl) {
+                    const newText = m.debits ? `−${m.debits}` : '—';
+                    if (debitEl.textContent.trim() !== newText) {
+                        debitEl.textContent = newText;
+                        debitEl.classList.add('cell-updated');
+                        setTimeout(() => debitEl.classList.remove('cell-updated'), 1400);
+                    }
+                }
+
+                // ---------- Credits ----------
+                const creditEl = row.querySelector('[data-field="credits"]');
+                if (creditEl) {
+                    const newText = m.credits ? `+${m.credits}` : '—';
+                    if (creditEl.textContent.trim() !== newText) {
+                        creditEl.textContent = newText;
+                        creditEl.classList.add('cell-updated');
+                        setTimeout(() => creditEl.classList.remove('cell-updated'), 1400);
+                    }
+                }
+
+                // ---------- Net ----------
+                const netEl = row.querySelector('[data-field="net"]');
+                if (netEl) {
+                    const signed = (m.net_score > 0 ? '+' : '') + m.net_score;
+                    if (netEl.textContent.trim() !== signed) {
+                        netEl.textContent = signed;
+                        netEl.classList.remove('positive', 'negative', 'zero');
+                        netEl.classList.add(
+                            m.net_score > 0 ? 'positive'
+                            : m.net_score < 0 ? 'negative'
+                            : 'zero'
+                        );
+                        netEl.classList.add('cell-updated');
+                        setTimeout(() => netEl.classList.remove('cell-updated'), 1400);
+                    }
+                }
+
+                // ---------- Percentage ----------
+                const scoreEl = row.querySelector('[data-field="percentage"]');
+                const barEl   = row.querySelector('[data-field="percentage-bar"]');
+                if (scoreEl && barEl) {
+                    // Smoothly animate the numeric text if it changed
+                    const oldVal = parseInt(scoreEl.textContent, 10) || 0;
+                    if (oldVal !== m.percentage) {
+                        animateNumber(scoreEl, oldVal, m.percentage, 900);
+                        // Append % after animation
+                        setTimeout(() => {
+                            scoreEl.textContent = m.percentage + '%';
+                        }, 950);
+
+                        // Colour class swap
+                        scoreEl.classList.remove('text-success', 'text-warning', 'text-danger');
+                        if (m.percentage >= 90)      scoreEl.classList.add('text-success');
+                        else if (m.percentage >= 70) scoreEl.classList.add('text-warning');
+                        else                         scoreEl.classList.add('text-danger');
+                    }
+
+                    // Progress bar: CSS transition handles the smooth width change
+                    barEl.style.width = m.percentage + '%';
+                    barEl.classList.remove('bar-success', 'bar-warning', 'bar-danger');
+                    if (m.percentage >= 90)      barEl.classList.add('bar-success');
+                    else if (m.percentage >= 70) barEl.classList.add('bar-warning');
+                    else                         barEl.classList.add('bar-danger');
+                }
+            });
+
+            // ---------- Grand totals ----------
+            const gtDebits   = document.getElementById('grand-total-debits');
+            const gtCredits  = document.getElementById('grand-total-credits');
+            const gtOverall  = document.getElementById('overall-completion');
+
+            if (gtDebits) {
+                const prev = parseInt(gtDebits.textContent, 10) || 0;
+                if (prev !== totalDebits) animateNumber(gtDebits, prev, totalDebits, 900);
+            }
+            if (gtCredits) {
+                const prev = parseInt(gtCredits.textContent, 10) || 0;
+                if (prev !== totalCredits) animateNumber(gtCredits, prev, totalCredits, 900);
+            }
+            if (gtOverall && count > 0) {
+                const newOverall = Math.min(100, Math.round(sumPct / count));
+                const prev = parseInt(gtOverall.textContent, 10) || 0;
+                if (prev !== newOverall) {
+                    animateNumber(gtOverall, prev, newOverall, 900);
+                    setTimeout(() => { gtOverall.textContent = newOverall + '%'; }, 950);
+                }
+            }
+        } catch (e) {
+            console.warn('Live refresh failed:', e);
+        }
+    }
+
+    // ============================================
     // EXPORT TEAM DATA
     // ============================================
-
     function exportTeamData() {
         showToast('Exporting team data...', 'Exporting');
-        
-        let csv = 'Full Name,Position,Total Tasks,Completed,Bonuses,Deductions,Performance Score,Status\n';
+
+        let csv = 'Full Name,Position,Total Tasks,Total Debits,Total Credits,Net,Performance Score,Status\n';
         const rows = document.querySelectorAll('#teamTable tbody tr');
-        
+
         rows.forEach(row => {
             if (row.style.display !== 'none') {
                 const cells = row.querySelectorAll('td');
-                if (cells.length >= 7) {
-                    const name = cells[0].textContent.trim();
-                    const position = cells[1].textContent.trim();
-                    const tasks = cells[2].textContent.trim();
-                    const completed = cells[3].textContent.trim();
-                    const bonuses = cells[4].textContent.trim();
-                    const deductions = cells[5].textContent.trim();
-                    const score = cells[6].querySelector('.score-text')?.textContent?.trim() || '0%';
-                    const status = cells[7]?.textContent?.trim() || '';
-                    csv += `"${name}","${position}","${tasks}","${completed}","${bonuses}","${deductions}","${score}","${status}"\n`;
+                if (cells.length >= 8) {
+                    const name       = cells[0].textContent.trim();
+                    const position   = cells[1].textContent.trim();
+                    const tasks      = cells[2].textContent.trim();
+                    const debits     = cells[3].textContent.trim();
+                    const credits    = cells[4].textContent.trim();
+                    const net        = cells[5].textContent.trim();
+                    const score      = cells[6].querySelector('.score-text')?.textContent?.trim() || '0%';
+                    const status     = cells[7]?.textContent?.trim() || '';
+                    csv += `"${name}","${position}","${tasks}","${debits}","${credits}","${net}","${score}","${status}"\n`;
                 }
             }
         });
-        
+
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -276,32 +502,28 @@
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        
-        setTimeout(() => {
-            showToast('Team data exported successfully!', 'Exported');
-        }, 500);
+
+        setTimeout(() => showToast('Team data exported successfully!', 'Exported'), 500);
     }
 
     // ============================================
     // ENTER KEY SUPPORT FOR SEARCH
     // ============================================
-
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            const target = e.target;
-            if (target.id === 'search-member') {
-                filterTeamMembers();
-            }
+        if (e.key === 'Enter' && e.target.id === 'search-member') {
+            filterTeamMembers();
         }
     });
 
     // ============================================
     // INITIALIZATION
     // ============================================
-
     document.addEventListener('DOMContentLoaded', function() {
         console.log('Team Performance page loaded');
         console.log('Total team members:', {{ team_data|length }});
+
+        // Kick off the live refresh loop
+        setInterval(refreshPerformance, REFRESH_INTERVAL_MS);
     });
 </script>
 {% endblock %}

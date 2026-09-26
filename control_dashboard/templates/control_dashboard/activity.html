@@ -4,120 +4,1058 @@
 {% block title %}Activity Logs{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'stylesheets/activity.css' %}" type="text/css">
 <style>
-    /* Activity Logs Dashboard Styles */
-    .activity-stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
+/* ==========================================================================
+   ACTIVITY LOGS — Premium Light Theme (inline)
+   ========================================================================== */
+
+:root {
+    --al-bg-0: #eef1f8;
+    --al-bg-1: #ffffff;
+    --al-bg-2: #f7f8fc;
+    --al-bg-3: #f1f3f9;
+
+    --al-border: rgba(15, 27, 51, 0.08);
+    --al-border-strong: rgba(15, 27, 51, 0.16);
+    --al-hairline: rgba(15, 27, 51, 0.06);
+
+    --al-text-0: #0f1b33;
+    --al-text-1: #46536b;
+    --al-text-2: #8993a8;
+
+    --al-accent: #4f6ef7;
+    --al-accent-soft: #eef1ff;
+    --al-emerald: #17a673;
+    --al-emerald-soft: #e2f7ef;
+    --al-amber: #e08a17;
+    --al-amber-soft: #fdf2e0;
+    --al-rose: #e0456a;
+    --al-rose-soft: #fdeaf0;
+    --al-violet: #7c5cf0;
+    --al-violet-soft: #f0ebff;
+
+    --al-accent-rgb: 79, 110, 247;
+    --al-emerald-rgb: 23, 166, 115;
+    --al-amber-rgb: 224, 138, 23;
+    --al-violet-rgb: 124, 92, 240;
+
+    --al-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --al-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+
+    --al-font: 'Poppins', system-ui, -apple-system, sans-serif;
+    --al-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ============================================================
+   1. STATS GRID
+   ============================================================ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    position: relative;
+    background: var(--al-bg-1);
+    border: 1px solid var(--al-border);
+    border-radius: 18px;
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--al-shadow-sm);
+    min-width: 0;
+    overflow: hidden;
+    isolation: isolate;
+
+    --stat-accent: var(--al-accent);
+    --stat-accent-rgb: var(--al-accent-rgb);
+}
+
+.stat-card.primary { --stat-accent: var(--al-accent);  --stat-accent-rgb: var(--al-accent-rgb); }
+.stat-card.success { --stat-accent: var(--al-emerald); --stat-accent-rgb: var(--al-emerald-rgb); }
+.stat-card.warning { --stat-accent: var(--al-amber);   --stat-accent-rgb: var(--al-amber-rgb); }
+.stat-card.info    { --stat-accent: var(--al-violet);  --stat-accent-rgb: var(--al-violet-rgb); }
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--stat-accent) 50%,
+        transparent 100%);
+    opacity: 0.85;
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: -50%; right: -30%;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(var(--stat-accent-rgb), 0.22) 0%,
+        rgba(var(--stat-accent-rgb), 0.06) 45%,
+        transparent 70%);
+    opacity: 0.55;
+    z-index: -1;
+    transition: opacity 0.4s ease, transform 0.6s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(var(--stat-accent-rgb), 0.35);
+    box-shadow:
+        0 12px 28px rgba(15, 27, 51, 0.10),
+        0 2px 6px rgba(15, 27, 51, 0.04);
+}
+
+.stat-card:hover::after {
+    opacity: 0.9;
+    transform: scale(1.15);
+}
+
+.stat-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    border: 1px solid;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.06) rotate(-3deg);
+}
+
+.stat-icon.primary {
+    background: var(--al-accent-soft);
+    color: var(--al-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.stat-icon.success {
+    background: var(--al-emerald-soft);
+    color: var(--al-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.stat-icon.warning {
+    background: var(--al-amber-soft);
+    color: var(--al-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.stat-icon.info {
+    background: var(--al-violet-soft);
+    color: var(--al-violet);
+    border-color: rgba(124, 92, 240, 0.22);
+}
+
+.stat-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-value {
+    display: block;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--al-text-0);
+    line-height: 1.15;
+    letter-spacing: -0.6px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-value.stat-value-sm {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    line-height: 1.3;
+}
+
+.stat-label {
+    display: block;
+    font-size: 10px;
+    color: var(--al-text-2);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   2. TABLE CONTAINER
+   ============================================================ */
+.table-container {
+    position: relative;
+    background: var(--al-bg-1);
+    border-radius: 18px;
+    border: 1px solid var(--al-border);
+    box-shadow: var(--al-shadow-sm);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.table-container:last-child { margin-bottom: 0; }
+
+.table-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--al-accent) 50%,
+        transparent 100%);
+    opacity: 0.7;
+    z-index: 2;
+}
+
+.table-container:hover {
+    box-shadow: var(--al-shadow-md);
+    border-color: var(--al-border-strong);
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--al-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    flex-wrap: wrap;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.table-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--al-text-0);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+}
+
+.table-header h4 i {
+    font-size: 13px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--al-accent-soft);
+    color: var(--al-accent);
+    border: 1px solid rgba(79, 110, 247, 0.2);
+}
+
+/* ============================================================
+   3. TABLE
+   ============================================================ */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 27, 51, 0.15) transparent;
+}
+
+.table-responsive::-webkit-scrollbar { height: 8px; }
+.table-responsive::-webkit-scrollbar-track { background: var(--al-bg-2); }
+.table-responsive::-webkit-scrollbar-thumb {
+    background: rgba(15, 27, 51, 0.18);
+    border-radius: 4px;
+}
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 27, 51, 0.28);
+}
+
+.activity-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+    font-size: 12px;
+    font-family: var(--al-font);
+    font-variant-numeric: tabular-nums;
+}
+
+.activity-table thead { background: var(--al-bg-2); }
+
+.activity-table thead th {
+    color: var(--al-text-2);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--al-border);
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.activity-table tbody td {
+    padding: 14px 16px;
+    color: var(--al-text-1);
+    border-bottom: 1px solid var(--al-hairline);
+    vertical-align: middle;
+    line-height: 1.5;
+}
+
+.activity-table tbody tr { transition: background 0.2s ease; }
+.activity-table tbody tr:hover { background: var(--al-bg-2); }
+.activity-table tbody tr:last-child td { border-bottom: none; }
+
+.activity-table .font-bold {
+    font-weight: 600;
+    color: var(--al-text-0);
+    font-size: 13px;
+}
+
+/* ============================================================
+   4. TIME STAMP
+   ============================================================ */
+.time-stamp {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 12px;
+    color: var(--al-text-0);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.4;
+}
+
+.time-stamp i {
+    color: var(--al-text-2);
+    width: 14px;
+    font-size: 11px;
+    margin-right: 4px;
+}
+
+/* ============================================================
+   5. ACTIVITY TAGS
+   ============================================================ */
+.activity-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    border: 1px solid var(--al-border);
+    line-height: 1.35;
+    background: var(--al-bg-2);
+    color: var(--al-text-1);
+}
+
+.activity-tag i {
+    font-size: 10px;
+    opacity: 0.9;
+}
+
+.activity-tag.login,
+.activity-tag.report_submitted,
+.activity-tag.report_approved,
+.activity-tag.user_created,
+.activity-tag.draft_saved,
+.activity-tag.score_updated {
+    background: var(--al-emerald-soft);
+    color: var(--al-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.activity-tag.report_created,
+.activity-tag.template_created,
+.activity-tag.user_updated,
+.activity-tag.email_sent {
+    background: var(--al-accent-soft);
+    color: var(--al-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.activity-tag.report_updated,
+.activity-tag.template_updated,
+.activity-tag.deduction_updated {
+    background: var(--al-amber-soft);
+    color: var(--al-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.activity-tag.logout,
+.activity-tag.report_deleted,
+.activity-tag.report_rejected,
+.activity-tag.template_deleted,
+.activity-tag.user_deleted,
+.activity-tag.draft_deleted,
+.activity-tag.deduction_deleted {
+    background: var(--al-rose-soft);
+    color: var(--al-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.activity-tag.checklist_completed,
+.activity-tag.deduction_created {
+    background: var(--al-violet-soft);
+    color: var(--al-violet);
+    border-color: rgba(124, 92, 240, 0.22);
+}
+
+.activity-tag.default {
+    background: var(--al-bg-2);
+    color: var(--al-text-1);
+    border-color: var(--al-border);
+}
+
+/* ============================================================
+   6. ACTIVITY DETAILS
+   ============================================================ */
+.activity-details {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--al-text-1);
+    line-height: 1.5;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: 520px;
+}
+
+.activity-details i {
+    color: var(--al-text-2);
+    font-size: 12px;
+    flex-shrink: 0;
+    margin-top: 3px;
+}
+
+/* ============================================================
+   7. IP ADDRESS
+   ============================================================ */
+.ip-address {
+    font-size: 11px;
+    color: var(--al-text-1);
+    font-family: var(--al-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.3px;
+}
+
+/* ============================================================
+   8. EMPTY STATE
+   ============================================================ */
+.empty-row {
+    padding: 60px 20px !important;
+    text-align: center !important;
+}
+
+.empty-row i {
+    font-size: 44px;
+    width: 80px;
+    height: 80px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(79, 110, 247, 0.14) 0%,
+        rgba(79, 110, 247, 0.04) 60%,
+        transparent 70%);
+    color: var(--al-accent);
+    animation: al-float 3s ease-in-out infinite;
+}
+
+@keyframes al-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.empty-row p {
+    margin: 0;
+    color: var(--al-text-2);
+    font-size: 13px;
+}
+
+/* ============================================================
+   9. HEADER FILTERS
+   ============================================================ */
+.header-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-filter-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--al-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.header-select {
+    padding: 8px 34px 8px 14px;
+    border: 1px solid var(--al-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--al-font);
+    background: var(--al-bg-1);
+    color: var(--al-text-0);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 13px;
+    height: 38px;
+    box-sizing: border-box;
+    min-width: 150px;
+    box-shadow: var(--al-shadow-sm);
+}
+
+.header-select:hover { border-color: var(--al-border-strong); }
+
+.header-select:focus {
+    border-color: var(--al-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.header-select option {
+    background: var(--al-bg-1);
+    color: var(--al-text-0);
+}
+
+.header-date-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-date-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--al-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.header-date-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--al-bg-1);
+    border: 1px solid var(--al-border);
+    border-radius: 10px;
+    box-shadow: var(--al-shadow-sm);
+    transition: all 0.25s ease;
+}
+
+.header-date-wrapper:focus-within {
+    border-color: var(--al-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.header-date-input {
+    background: transparent;
+    color: var(--al-text-0);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--al-font);
+    padding: 4px 6px;
+    border: none;
+    outline: none;
+    min-width: 115px;
+    color-scheme: light;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+}
+
+.header-date-input::placeholder { color: var(--al-text-2); }
+
+.header-date-wrapper span {
+    font-size: 11px;
+    color: var(--al-text-2);
+    font-weight: 500;
+}
+
+.header-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--al-border);
+    margin: 0 4px;
+}
+
+/* ============================================================
+   10. HEADER BUTTONS
+   ============================================================ */
+.btn-export-header {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: #ffffff;
+    border: 1px solid rgba(79, 110, 247, 0.4);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--al-font);
+    letter-spacing: 0.3px;
+    height: 38px;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-right: 8px;
+}
+
+.btn-export-header:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.btn-export-header i { font-size: 12px; }
+
+.btn-reset-header,
+.btn-refresh-header {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--al-bg-1);
+    color: var(--al-text-1);
+    border: 1px solid var(--al-border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--al-font);
+    letter-spacing: 0.3px;
+    height: 38px;
+    white-space: nowrap;
+    box-shadow: var(--al-shadow-sm);
+    transition: all 0.25s ease;
+}
+
+.btn-reset-header:hover,
+.btn-refresh-header:hover {
+    background: var(--al-bg-2);
+    color: var(--al-text-0);
+    border-color: var(--al-border-strong);
+    transform: translateY(-1px);
+}
+
+.btn-reset-header i,
+.btn-refresh-header i { font-size: 12px; }
+
+/* ============================================================
+   11. TOAST
+   ============================================================ */
+.toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--al-bg-1);
+    border: 1px solid var(--al-border);
+    border-left: 4px solid var(--al-emerald);
+    border-radius: 14px;
+    padding: 16px 20px;
+    max-width: 420px;
+    min-width: 320px;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--al-font);
+    box-shadow:
+        0 16px 40px rgba(15, 27, 51, 0.15),
+        0 4px 12px rgba(15, 27, 51, 0.08);
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast-notification.show { transform: translateX(0); }
+.toast-notification.error { border-left-color: var(--al-rose); }
+
+.toast-notification .toast-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    background: var(--al-emerald-soft);
+    color: var(--al-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.28);
+}
+
+.toast-notification.error .toast-icon {
+    background: var(--al-rose-soft);
+    color: var(--al-rose);
+    border-color: rgba(224, 69, 106, 0.28);
+}
+
+.toast-notification .toast-content { flex: 1; min-width: 0; }
+
+.toast-notification .toast-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--al-text-0);
+    margin: 0 0 2px 0;
+    letter-spacing: 0.2px;
+}
+
+.toast-notification .toast-message {
+    font-size: 12px;
+    color: var(--al-text-1);
+    margin: 0;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.toast-notification .toast-close {
+    background: none;
+    border: none;
+    color: var(--al-text-2);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.toast-notification .toast-close:hover {
+    color: var(--al-text-0);
+    background: var(--al-bg-2);
+}
+
+/* ============================================================
+   12. TABLE HEADER BADGE
+   ============================================================ */
+.badge-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--al-accent-soft);
+    color: var(--al-accent);
+    border: 1px solid rgba(79, 110, 247, 0.22);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   13. BREAKDOWN PANELS
+   ============================================================ */
+.breakdown-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.breakdown-card {
+    background: var(--al-bg-1);
+    border: 1px solid var(--al-border);
+    border-radius: 16px;
+    padding: 18px 22px;
+    box-shadow: var(--al-shadow-sm);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.breakdown-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--al-accent) 50%,
+        transparent 100%);
+    opacity: 0.7;
+}
+
+.breakdown-card:hover {
+    border-color: var(--al-border-strong);
+    box-shadow: var(--al-shadow-md);
+}
+
+.breakdown-card h5 {
+    margin: 0 0 14px 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--al-text-0);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+}
+
+.breakdown-card h5 i {
+    font-size: 13px;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: var(--al-accent-soft);
+    color: var(--al-accent);
+    border: 1px solid rgba(79, 110, 247, 0.22);
+}
+
+.breakdown-card:nth-child(2) h5 i {
+    background: var(--al-violet-soft);
+    color: var(--al-violet);
+    border-color: rgba(124, 92, 240, 0.22);
+}
+
+.breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--al-hairline);
+    font-size: 12px;
+}
+
+.breakdown-item:last-child { border-bottom: none; }
+
+.breakdown-label {
+    flex: 1;
+    min-width: 0;
+    color: var(--al-text-0);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.breakdown-role {
+    color: var(--al-text-2);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.breakdown-bar {
+    flex: 1;
+    max-width: 140px;
+    height: 6px;
+    background: var(--al-bg-3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.breakdown-bar .fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--al-accent) 0%, #3b56d8 100%);
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.breakdown-count {
+    min-width: 40px;
+    text-align: right;
+    font-weight: 700;
+    color: var(--al-text-0);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+}
+
+.breakdown-empty {
+    text-align: center;
+    color: var(--al-text-2);
+    padding: 20px 0;
+    font-size: 12px;
+    font-style: italic;
+    margin: 0;
+}
+
+/* ============================================================
+   14. RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+    .header-select { min-width: 130px; font-size: 11px; }
+    .header-date-input { min-width: 100px; font-size: 11px; }
+}
+
+@media (max-width: 900px) {
+    .header-filter-group,
+    .header-date-group {
+        width: 100%;
+        flex-wrap: wrap;
     }
-    
-    .stat-card {
-        background: rgba(255,255,255,0.75);
-        backdrop-filter: blur(12px);
+    .header-select,
+    .header-date-wrapper {
+        flex: 1;
+        width: 100%;
+        min-width: unset;
+    }
+    .header-divider { display: none; }
+
+    .breakdown-grid { grid-template-columns: 1fr; }
+
+    .activity-table thead { display: none; }
+    .activity-table tbody tr {
+        display: block;
+        border: 1px solid var(--al-border);
         border-radius: 12px;
-        padding: 16px 20px;
-        border: 1px solid rgba(255,255,255,0.3);
-        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        margin-bottom: 10px;
+        padding: 8px 4px;
+        background: var(--al-bg-1);
+        box-shadow: var(--al-shadow-sm);
     }
-    
-    .stat-card .stat-label {
-        font-size: 12px;
-        font-weight: 500;
-        color: #6b7280;
+    .activity-table tbody tr:last-child { margin-bottom: 0; }
+    .activity-table tbody td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px;
+        border-bottom: none;
+        gap: 12px;
+        text-align: left;
+    }
+    .activity-table tbody td::before {
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--al-text-2);
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        flex-shrink: 0;
     }
-    
-    .stat-card .stat-value {
-        font-size: 24px;
-        font-weight: 700;
-        color: #1a2332;
-        margin-top: 4px;
+    .activity-table tbody td[data-label="Date & Time"]::before,
+    .activity-table tbody td[data-label="User"]::before { display: none; }
+
+    .activity-details { text-align: right; max-width: none; }
+}
+
+@media (max-width: 768px) {
+    .table-header { padding: 14px 16px 12px; }
+    .table-header h4 { font-size: 12px; }
+    .table-header h4 i { width: 24px; height: 24px; font-size: 11px; }
+
+    .activity-table tbody td { padding: 8px 12px; font-size: 11px; }
+
+    .time-stamp { font-size: 11px; }
+    .activity-tag { font-size: 10px; padding: 3px 10px; }
+    .activity-tag i { font-size: 9px; }
+    .activity-details { font-size: 11px; }
+
+    .btn-export-header { margin-right: 0; }
+
+    .toast-notification {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        max-width: none;
+        min-width: auto;
     }
-    
-    .stat-card .stat-sub {
-        font-size: 12px;
-        color: #9ca3af;
-        margin-top: 2px;
+}
+
+@media (max-width: 480px) {
+    .table-container { border-radius: 14px; }
+    .table-header { padding: 12px 14px; }
+    .activity-table tbody td { padding: 7px 10px; font-size: 10px; }
+
+    .time-stamp {
+        font-size: 10px;
+        flex-direction: row;
+        gap: 8px;
+        flex-wrap: wrap;
     }
-    
-    .activity-breakdown {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 24px;
+    .time-stamp br { display: none; }
+
+    .activity-tag { font-size: 9px; padding: 2px 8px; }
+    .activity-details { font-size: 10px; }
+
+    .empty-row i { width: 68px; height: 68px; font-size: 32px; }
+    .empty-row p { font-size: 12px; }
+
+    .breakdown-card { padding: 14px 16px; }
+    .breakdown-card h5 { font-size: 12px; }
+    .breakdown-item { font-size: 11px; }
+    .breakdown-bar { max-width: 80px; }
+}
+
+/* ============================================================
+   15. PRINT
+   ============================================================ */
+@media print {
+    .nav-bar,
+    .top-header,
+    .btn-export-header,
+    .btn-reset-header,
+    .btn-refresh-header,
+    .stats-grid,
+    .breakdown-grid {
+        display: none !important;
     }
-    
-    .breakdown-card {
-        background: rgba(255,255,255,0.6);
-        backdrop-filter: blur(8px);
-        border-radius: 12px;
-        padding: 16px 20px;
-        border: 1px solid rgba(255,255,255,0.3);
+
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
     }
-    
-    .breakdown-card h5 {
-        font-size: 14px;
-        font-weight: 600;
-        color: #1a2332;
-        margin: 0 0 12px 0;
+
+    .table-container {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        background: #fff !important;
+        padding: 10px !important;
+        border-radius: 0 !important;
     }
-    
-    .breakdown-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 4px 0;
-        border-bottom: 1px solid #f3f4f6;
-        font-size: 13px;
+
+    .table-container::before { display: none !important; }
+
+    .activity-table thead th {
+        background: #f5f5f5 !important;
+        color: #333 !important;
+        border-bottom: 2px solid #ddd !important;
     }
-    
-    .breakdown-item:last-child {
-        border-bottom: none;
+
+    .activity-table tbody td {
+        border-bottom: 1px solid #eee !important;
     }
-    
-    .breakdown-item .activity-label {
-        color: #6b7280;
-    }
-    
-    .breakdown-item .activity-count {
-        font-weight: 600;
-        color: #1a2332;
-    }
-    
-    .breakdown-item .activity-bar {
-        flex: 1;
-        height: 4px;
-        background: #e5e7eb;
-        border-radius: 2px;
-        margin: 0 12px;
-        overflow: hidden;
-    }
-    
-    .breakdown-item .activity-bar .fill {
-        height: 100%;
-        background: #0066cc;
-        border-radius: 2px;
-        transition: width 0.6s ease;
-    }
-    
-    @media (max-width: 768px) {
-        .activity-breakdown {
-            grid-template-columns: 1fr;
-        }
-        .activity-stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .activity-stats-grid {
-            grid-template-columns: 1fr;
-        }
-    }
+}
 </style>
 {% endblock %}
 
@@ -127,19 +1065,19 @@
 <li><a href="{% url 'control_dashboard:admin_page' %}">
     <span class="nav-icon"><i class="fas fa-user-cog"></i></span>
     <span class="nav-text">User Management</span>
-</a></li> 
+</a></li>
 <li><a href="{% url 'control_dashboard:report_creation' %}">
     <span class="nav-icon"><i class="fas fa-flag"></i></span>
     <span class="nav-text">Report Creation</span>
-</a></li>  
+</a></li>
 <li><a href="{% url 'control_dashboard:report_center' %}">
     <span class="nav-icon"><i class="fas fa-flag"></i></span>
     <span class="nav-text">Report Center</span>
-</a></li>   
+</a></li>
 <li><a href="{% url 'control_dashboard:checklist_builder' %}">
     <span class="nav-icon"><i class="fas fa-cubes"></i></span>
     <span class="nav-text">Checklist Builder</span>
-</a></li>   
+</a></li>
 <li><a href="{% url 'control_dashboard:checklist_list' %}">
     <span class="nav-icon"><i class="fas fa-tools"></i></span>
     <span class="nav-text">Checklist Activities</span>
@@ -147,10 +1085,10 @@
 <li class="active"><a href="{% url 'control_dashboard:activity_logs' %}">
     <span class="nav-icon"><i class="fas fa-key"></i></span>
     <span class="nav-text">Activity Logs</span>
-</a></li> 
+</a></li>
 {% endblock %}
 
-{% block page_title %}Activity Logs Dashboard{% endblock %}
+{% block page_title %}Activity Logs{% endblock %}
 
 {% block page_subtitle %}
 <span class="page-subtitle">Monitor all user activities across the system</span>
@@ -180,11 +1118,13 @@
 </div>
 <div class="header-divider"></div>
 <div class="header-date-group">
-    <label for="start-date">Date Range</label>
+    <label>Date Range</label>
     <div class="header-date-wrapper">
-        <input type="date" id="start-date" class="header-date-input" value="{{ start_date }}" onchange="applyFilters()">
+        <input type="date" id="start-date" class="header-date-input"
+               value="{{ start_date }}" onchange="applyFilters()">
         <span>to</span>
-        <input type="date" id="end-date" class="header-date-input" value="{{ end_date }}" onchange="applyFilters()">
+        <input type="date" id="end-date" class="header-date-input"
+               value="{{ end_date }}" onchange="applyFilters()">
     </div>
 </div>
 {% endblock %}
@@ -199,169 +1139,216 @@
 {% endblock %}
 
 {% block content %}
-<!-- Stats Cards -->
-<div class="activity-stats-grid">
-    <div class="stat-card">
-        <div class="stat-label">Total Activities</div>
-        <div class="stat-value">{{ activity_logs|length }}</div>
-        <div class="stat-sub">{{ today_logs }} today</div>
+
+<!-- ============================================================
+     STATS STRIP
+     ============================================================ -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-icon primary"><i class="fas fa-list-ul"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ activity_logs|length }}</span>
+            <span class="stat-label">Total Activities &middot; {{ today_logs }} today</span>
+        </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-label">Active Users</div>
-        <div class="stat-value">{{ unique_users }}</div>
-        <div class="stat-sub">Users with activity</div>
+
+    <div class="stat-card success">
+        <div class="stat-icon success"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ unique_users }}</span>
+            <span class="stat-label">Active Users</span>
+        </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-label">Latest Activity</div>
-        <div class="stat-value">{{ last_activity|default:"-" }}</div>
-        <div class="stat-sub">Most recent log</div>
+
+    <div class="stat-card warning">
+        <div class="stat-icon warning"><i class="fas fa-clock"></i></div>
+        <div class="stat-info">
+            <span class="stat-value stat-value-sm">{{ last_activity|default:"—" }}</span>
+            <span class="stat-label">Latest Activity</span>
+        </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-label">Activity Types</div>
-        <div class="stat-value">{{ activity_breakdown|length }}</div>
-        <div class="stat-sub">Unique activity types</div>
+
+    <div class="stat-card info">
+        <div class="stat-icon info"><i class="fas fa-diagram-project"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ activity_breakdown|length }}</span>
+            <span class="stat-label">Activity Types</span>
+        </div>
     </div>
 </div>
 
-<!-- Activity Breakdown -->
-<div class="activity-breakdown">
+<!-- ============================================================
+     BREAKDOWN: Activity types + Top users
+     ============================================================ -->
+<div class="breakdown-grid">
     <div class="breakdown-card">
-        <h5><i class="fas fa-chart-bar" style="color: #0066cc;"></i> Activity Breakdown</h5>
+        <h5><i class="fas fa-chart-bar"></i> Activity Breakdown</h5>
         {% for item in activity_breakdown|slice:":8" %}
-        <div class="breakdown-item">
-            <span class="activity-label">{{ item.activity_type|title }}</span>
-            <div class="activity-bar">
-                <div class="fill" style="width: {% widthratio item.count activity_breakdown.0.count 100 %}%;"></div>
+            <div class="breakdown-item">
+                <span class="breakdown-label">{{ item.activity_type|title }}</span>
+                <div class="breakdown-bar">
+                    <div class="fill" style="width: {% widthratio item.count activity_breakdown.0.count 100 %}%;"></div>
+                </div>
+                <span class="breakdown-count">{{ item.count }}</span>
             </div>
-            <span class="activity-count">{{ item.count }}</span>
-        </div>
         {% empty %}
-        <p style="text-align:center;color:#9ca3af;padding:20px 0;">No activity data available</p>
+            <p class="breakdown-empty">No activity data available</p>
         {% endfor %}
     </div>
+
     <div class="breakdown-card">
-        <h5><i class="fas fa-users" style="color: #8b5cf6;"></i> Top Users by Activity</h5>
+        <h5><i class="fas fa-trophy"></i> Top Users by Activity</h5>
         {% for item in user_activity_summary|slice:":8" %}
-        <div class="breakdown-item">
-            <span class="activity-label">{{ item.user__full_name|default:item.user__email }}</span>
-            <span style="color:#9ca3af;font-size:12px;">{{ item.user__role|title }}</span>
-            <span class="activity-count">{{ item.total_activities }}</span>
-        </div>
+            <div class="breakdown-item">
+                <span class="breakdown-label">{{ item.user__full_name|default:item.user__email }}</span>
+                <span class="breakdown-role">{{ item.user__role|title }}</span>
+                <span class="breakdown-count">{{ item.total_activities }}</span>
+            </div>
         {% empty %}
-        <p style="text-align:center;color:#9ca3af;padding:20px 0;">No user activity data available</p>
+            <p class="breakdown-empty">No user activity data available</p>
         {% endfor %}
     </div>
 </div>
 
-<!-- Activity Logs Table -->
+<!-- ============================================================
+     ACTIVITY TABLE
+     ============================================================ -->
 <div class="table-container">
     <div class="table-header">
-        <h4>Activity Logs</h4>
+        <h4>
+            <i class="fas fa-key"></i>
+            Activity Log
+        </h4>
         <span class="badge-count">{{ activity_logs|length }} records</span>
     </div>
 
-    {% if activity_logs %}
-    <table class="users-table">
-        <thead>
-            <tr>
-                <th>Date &amp; Time</th>
-                <th>User</th>
-                <th>Role</th>
-                <th>Activity Type</th>
-                <th>Details</th>
-                <th>IP Address</th>
-            </tr>
-        </thead>
-<tbody>
-    {% for log in activity_logs %}
-    <tr>
-        <td data-label="Date & Time">
-            <span class="time-stamp">
-                <i class="far fa-calendar-alt"></i> {{ log.created_at|date:"M d, Y" }}
-                <br>
-                <i class="far fa-clock"></i> {{ log.created_at|date:"H:i" }}
-            </span>
-        </td>
-        <td class="font-bold" data-label="User">{{ log.user.full_name|default:log.user.email }}</td>
-        <td data-label="Activity">
-            <span class="activity-tag {{ log.activity_type }}">
-                <i class="fas {{ log.get_activity_icon }}"></i>
-                {{ log.get_activity_type_display }}
-            </span>
-        </td>
-        <td data-label="Details">
-            <div class="activity-details">
-                <i class="fas fa-info-circle"></i>
-                {{ log.details|default:"No details available" }}
-            </div>
-        </td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="4" class="text-center empty-row">
-            <i class="fas fa-clipboard-list"></i>
-            <p>No activity logs found.</p>
-        </td>
-    </tr>
-    {% endfor %}
-</tbody>
+    <div class="table-responsive">
+        <table class="activity-table">
+            <thead>
+                <tr>
+                    <th style="min-width: 150px;">Date &amp; Time</th>
+                    <th style="min-width: 180px;">User</th>
+                    <th style="min-width: 160px;">Activity Type</th>
+                    <th style="min-width: 320px;">Details</th>
+                    <th style="min-width: 130px;">IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in activity_logs %}
+                <tr>
+                    <td data-label="Date & Time">
+                        <span class="time-stamp">
+                            <i class="far fa-calendar-alt"></i> {{ log.created_at|date:"M d, Y" }}
+                            <br>
+                            <i class="far fa-clock"></i> {{ log.created_at|date:"H:i" }}
+                        </span>
+                    </td>
+
+                    <td data-label="User">
+                        <span class="font-bold">{{ log.user.full_name|default:log.user.email }}</span>
+                    </td>
+
+                    <td data-label="Activity">
+                        <span class="activity-tag {{ log.activity_type }}">
+                            <i class="fas {{ log.get_activity_icon }}"></i>
+                            {{ log.get_activity_type_display }}
+                        </span>
+                    </td>
+
+                    <td data-label="Details">
+                        <div class="activity-details">
+                            <i class="fas fa-info-circle"></i>
+                            <span>{{ log.details|default:"No details available" }}</span>
+                        </div>
+                    </td>
+
+                    <td data-label="IP Address">
+                        <span class="ip-address">{{ log.ip_address|default:"—" }}</span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-row">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>No activity logs found for the selected filters.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    {% endif %}
+</div>
+
+<!-- Toast (kept in case other pages use it) -->
+<div id="toastNotification" class="toast-notification">
+    <div class="toast-icon"><i class="fas fa-check"></i></div>
+    <div class="toast-content">
+        <p class="toast-title">Success</p>
+        <p class="toast-message" id="toastMessage">Action completed successfully</p>
+    </div>
+    <button class="toast-close" onclick="closeToast()"><i class="fas fa-times"></i></button>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // ============================================
-    // CSRF Token Helper
-    // ============================================
+    /* ============================================================
+       CSRF helper
+       ============================================================ */
     function getCsrfToken() {
-        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) return meta.getAttribute('content');
+        const m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? m[1] : '';
     }
 
-    // ============================================
-    // FILTERS
-    // ============================================
+    /* ============================================================
+       FILTERS
+       ============================================================ */
     function applyFilters() {
         const user = document.getElementById('user-filter').value;
         const activity = document.getElementById('activity-filter').value;
         const startDate = document.getElementById('start-date').value;
         const endDate = document.getElementById('end-date').value;
-        
-        let url = window.location.pathname + '?';
-        if (user !== 'all') url += `user=${user}&`;
-        if (activity !== 'all') url += `activity=${activity}&`;
-        if (startDate) url += `start_date=${startDate}&`;
-        if (endDate) url += `end_date=${endDate}&`;
-        
-        window.location.href = url;
+
+        const params = new URLSearchParams();
+        if (user !== 'all')       params.set('user', user);
+        if (activity !== 'all')   params.set('activity', activity);
+        if (startDate)            params.set('start_date', startDate);
+        if (endDate)              params.set('end_date', endDate);
+
+        const qs = params.toString();
+        window.location.href = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
     }
 
     function resetFilters() {
         window.location.href = window.location.pathname;
     }
 
-    // ============================================
-    // EXPORT LOGS
-    // ============================================
+    /* ============================================================
+       EXPORT CSV
+       ============================================================ */
     function exportLogs() {
         const user = document.getElementById('user-filter').value;
         const activity = document.getElementById('activity-filter').value;
         const startDate = document.getElementById('start-date').value;
         const endDate = document.getElementById('end-date').value;
-        
-        let url = '/adminboard/api/export-logs/?';
-        if (user !== 'all') url += `user=${user}&`;
-        if (activity !== 'all') url += `activity=${activity}&`;
-        if (startDate) url += `start_date=${startDate}&`;
-        if (endDate) url += `end_date=${endDate}&`;
-        
-        window.location.href = url;
+
+        const params = new URLSearchParams();
+        if (user !== 'all')       params.set('user', user);
+        if (activity !== 'all')   params.set('activity', activity);
+        if (startDate)            params.set('start_date', startDate);
+        if (endDate)              params.set('end_date', endDate);
+
+        const qs = params.toString();
+        window.location.href = `/adminboard/api/export-logs/${qs ? '?' + qs : ''}`;
     }
 
-    // ============================================
-    // TOAST NOTIFICATION
-    // ============================================
+    /* ============================================================
+       TOAST
+       ============================================================ */
     function showToast(message, title = 'Success!') {
         const toast = document.getElementById('toastNotification');
         if (!toast) return;
@@ -370,25 +1357,35 @@
         msgEl.textContent = message || 'Action completed successfully.';
         titleEl.textContent = title;
         toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // ============================================
-    // AUTO REFRESH (every 30 seconds)
-    // ============================================
+    function closeToast() {
+        const toast = document.getElementById('toastNotification');
+        if (!toast) return;
+        toast.classList.remove('show');
+        if (window.toastTimeout) {
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = null;
+        }
+    }
+
+    /* ============================================================
+       AUTO REFRESH (every 30s, only when filters are active)
+       ============================================================ */
     let autoRefreshInterval = null;
 
     function startAutoRefresh() {
         if (autoRefreshInterval) clearInterval(autoRefreshInterval);
         autoRefreshInterval = setInterval(() => {
-            if (!document.hidden) {
-                // Only refresh if there are filters applied
-                const hasFilters = window.location.search.length > 0;
-                if (hasFilters) {
-                    fetch(window.location.href, { method: 'HEAD' })
-                        .then(() => location.reload())
-                        .catch(() => {});
-                }
+            if (!document.hidden && window.location.search.length > 0) {
+                fetch(window.location.href, {
+                    method: 'HEAD',
+                    headers: { 'X-CSRFToken': getCsrfToken() }
+                })
+                .then(() => location.reload())
+                .catch(() => {});
             }
         }, 30000);
     }

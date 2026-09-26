@@ -44,18 +44,17 @@ DEBUG = os.environ.get('DEBUG', 'False').lower() in ('1', 'true', 'yes')
 ALLOWED_HOSTS = [
     h.strip() for h in os.environ.get(
         'ALLOWED_HOSTS',
-        'localhost,127.0.0.1,.onrender.com'          # ← CHANGED
+        'localhost,127.0.0.1,.onrender.com,.railway.app,.up.railway.app'
     ).split(',') if h.strip()
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.environ.get(
         'CSRF_TRUSTED_ORIGINS',
-        'http://localhost:8000,http://127.0.0.1:8000,https://*.onrender.com'  # ← CHANGED
+        'http://localhost:8000,http://127.0.0.1:8000,'
+        'https://*.onrender.com,https://*.railway.app,https://*.up.railway.app'
     ).split(',') if o.strip()
 ]
-
-
 # ============================================================
 # AUTH REDIRECTS
 # ============================================================
@@ -173,7 +172,8 @@ STORAGES = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        # 'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',  # no manifest
     },
 }
 

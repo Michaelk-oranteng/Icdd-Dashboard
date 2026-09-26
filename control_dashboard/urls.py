@@ -111,4 +111,6 @@ urlpatterns = [
     # ==================== API - EXCEL ROWS ====================
     path('api/excel-rows/<int:row_id>/delete/', views.api_delete_excel_row, name='excel_row_delete'),
     path('api/excel-rows/<int:row_id>/edit/',   views.api_edit_excel_row,   name='excel_row_edit'),
+    path('api/team-performance-live/', views.api_team_performance_live, name='api_team_performance_live'),
+    path('api/supervisor-top-performers-live/',views.api_supervisor_top_performers_live,name='api_supervisor_top_performers_live'),
 ]

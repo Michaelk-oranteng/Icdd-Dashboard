@@ -29,18 +29,18 @@
     --fx-text-1: #46536b;
     --fx-text-2: #8993a8;
 
-    /* Accents — pastel-friendly, high-contrast on white */
-    --fx-accent: #4f6ef7;     /* indigo */
+    /* Accents */
+    --fx-accent: #4f6ef7;
     --fx-accent-soft: #eef1ff;
-    --fx-cyan: #0ea5a4;       /* teal */
+    --fx-cyan: #0ea5a4;
     --fx-cyan-soft: #e0f7f6;
-    --fx-violet: #7c5cf0;     /* violet */
+    --fx-violet: #7c5cf0;
     --fx-violet-soft: #f0ebff;
-    --fx-amber: #e08a17;      /* warm amber */
+    --fx-amber: #e08a17;
     --fx-amber-soft: #fdf2e0;
-    --fx-rose: #e0456a;       /* coral rose */
+    --fx-rose: #e0456a;
     --fx-rose-soft: #fdeaf0;
-    --fx-emerald: #17a673;    /* emerald */
+    --fx-emerald: #17a673;
     --fx-emerald-soft: #e2f7ef;
 
     /* Shadows */
@@ -88,7 +88,6 @@
     box-shadow: var(--fx-shadow-sm);
 }
 
-/* Top accent line */
 .fx-metric::before {
     content: '';
     position: absolute;
@@ -101,7 +100,6 @@
     opacity: 0.85;
 }
 
-/* Soft aura bloom */
 .fx-metric::after {
     content: '';
     position: absolute;
@@ -202,8 +200,7 @@
     gap: 16px;
     padding: 18px;
     border-radius: 20px;
-    background:
-        linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
     border: 1px solid var(--fx-border);
     box-shadow: var(--fx-shadow-sm);
     position: relative;
@@ -326,6 +323,8 @@
     padding: 18px 22px 14px;
     border-bottom: 1px solid var(--fx-hairline);
     background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .fx-panel-title {
@@ -369,6 +368,108 @@
 }
 
 .fx-panel-body { padding: 4px 0 0; }
+
+/* ============================================================
+   IRREGULAR GL — date selector
+   ============================================================ */
+.fx-gl-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fx-gl-date-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.fx-gl-date-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--fx-text-2);
+    white-space: nowrap;
+}
+
+.fx-gl-date-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 6px 28px 6px 12px;
+    height: 32px;
+    font-family: var(--fx-font);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fx-text-0);
+    background-color: var(--fx-bg-1);
+    border: 1px solid var(--fx-border);
+    border-radius: 8px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    box-shadow: var(--fx-shadow-sm);
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+}
+
+.fx-gl-date-select:hover {
+    border-color: var(--fx-border-strong);
+}
+
+.fx-gl-date-select:focus {
+    border-color: var(--fx-rose);
+    box-shadow: 0 0 0 3px rgba(224, 69, 106, 0.12);
+}
+
+.fx-gl-today-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    background: var(--fx-emerald-soft);
+    color: var(--fx-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.25);
+}
+
+.fx-gl-today-pill .fx-gl-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fx-emerald);
+    box-shadow: 0 0 6px rgba(23, 166, 115, 0.6);
+    animation: fx-pulse 2.4s ease-in-out infinite;
+}
+
+.fx-gl-meta {
+    padding: 10px 22px 12px;
+    font-size: 11px;
+    color: var(--fx-text-2);
+    border-bottom: 1px solid var(--fx-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fx-gl-meta strong {
+    color: var(--fx-text-0);
+    font-weight: 700;
+}
+
+.fx-gl-meta .fx-gl-meta-sep {
+    color: var(--fx-border-strong);
+}
 
 /* ============================================================
    SECTION 4 — DATA TABLE
@@ -544,7 +645,6 @@
     transition: opacity 0.3s ease;
 }
 
-/* Soft aura on the right */
 .fx-action::after {
     content: '';
     position: absolute;
@@ -714,6 +814,9 @@
     .fx-footer-strip { grid-template-columns: 1fr 1fr; }
     .fx-footer-cell { padding: 14px 16px; }
     .fx-footer-value { font-size: 18px; }
+    .fx-gl-controls { width: 100%; }
+    .fx-gl-date-form { width: 100%; }
+    .fx-gl-date-select { flex: 1; }
 }
 </style>
 {% endblock %}
@@ -921,19 +1024,63 @@
          ============================================================ -->
     <section class="fx-bento">
 
-        <!-- Irregular GLs panel -->
+        <!-- Irregular GLs panel (date-aware) -->
         <div class="fx-panel">
             <header class="fx-panel-head">
                 <div class="fx-panel-title rose">
                     <i class="fas fa-exclamation-triangle"></i>
                     <span>Irregular GL Positions</span>
                 </div>
-                {% if irregular_gls %}
-                    <span class="fx-panel-badge">{{ irregular_gls|length }} flagged</span>
-                {% else %}
-                    <span class="fx-panel-badge" style="background: rgba(52,211,153,0.1); color: var(--fx-emerald); border-color: rgba(52,211,153,0.25);">Clean</span>
-                {% endif %}
+
+                <div class="fx-gl-controls">
+                    {% if selectable_gl_dates %}
+                    <form method="get" class="fx-gl-date-form">
+                        <label for="gl_date" class="fx-gl-date-label">As at</label>
+                        <select name="gl_date"
+                                id="gl_date"
+                                class="fx-gl-date-select"
+                                onchange="this.form.submit()">
+                            {% for d in selectable_gl_dates %}
+                                <option value="{{ d|date:'Y-m-d' }}"
+                                        {% if d == selected_gl_date %}selected{% endif %}>
+                                    {% if d == today %}Today — {% endif %}{{ d|date:"M d, Y" }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    {% endif %}
+
+                    {% if is_today_gl %}
+                        <span class="fx-gl-today-pill">
+                            <span class="fx-gl-dot"></span> Today
+                        </span>
+                    {% endif %}
+
+                    {% if irregular_gls %}
+                        <span class="fx-panel-badge">{{ irregular_gls|length }} flagged</span>
+                    {% else %}
+                        <span class="fx-panel-badge"
+                              style="background: rgba(52,211,153,0.1); color: var(--fx-emerald); border-color: rgba(52,211,153,0.25);">
+                            Clean
+                        </span>
+                    {% endif %}
+                </div>
             </header>
+
+            {% if has_trial_balance %}
+            <div class="fx-gl-meta">
+                <span>
+                    Showing positions for
+                    <strong>{{ selected_gl_date_display }}</strong>
+                </span>
+                <span class="fx-gl-meta-sep">•</span>
+                <span>
+                    {{ irregular_gls|length }} irregular
+                    GL{{ irregular_gls|length|pluralize }}
+                    detected
+                </span>
+            </div>
+            {% endif %}
 
             <div class="fx-panel-body">
                 {% if irregular_gls %}
@@ -963,14 +1110,26 @@
                             </tbody>
                         </table>
                     </div>
+                {% elif not has_trial_balance %}
+                    <div class="fx-empty">
+                        <div class="fx-empty-glyph"
+                             style="background: radial-gradient(circle, rgba(224,138,23,0.16) 0%, rgba(224,138,23,0.04) 60%, transparent 70%); color: var(--fx-amber);">
+                            <i class="fas fa-calendar-times"></i>
+                        </div>
+                        <div class="fx-empty-title">No trial balance for {{ selected_gl_date_display }}</div>
+                        <div class="fx-empty-desc">
+                            There is no uploaded trial balance for this date yet.
+                            Pick another day from the dropdown above.
+                        </div>
+                    </div>
                 {% else %}
                     <div class="fx-empty">
                         <div class="fx-empty-glyph">
                             <i class="fas fa-shield-alt"></i>
                         </div>
-                        <div class="fx-empty-title">All GL positions balanced</div>
+                        <div class="fx-empty-title">All GL positions balanced on {{ selected_gl_date_display }}</div>
                         <div class="fx-empty-desc">
-                            No irregular GL entries detected in the latest uploaded trial balance.
+                            No irregular GL entries detected in the trial balance for this date.
                         </div>
                     </div>
                 {% endif %}
@@ -1082,11 +1241,9 @@
        Animate progress rings + bars on load
        ============================================================ */
     function animateOnLoad() {
-        // Progress rings — read the final offset from data attribute
         document.querySelectorAll('.fx-orbit-ring .ring-fill').forEach(function (ring) {
             var target = ring.getAttribute('data-target-offset');
             if (target === null) return;
-            // Start fully empty, then animate to target
             ring.style.strokeDashoffset = '150.8';
             requestAnimationFrame(function () {
                 requestAnimationFrame(function () {
@@ -1095,7 +1252,6 @@
             });
         });
 
-        // Progress bars — read final width from data attribute
         document.querySelectorAll('.fx-footer-bar-fill').forEach(function (bar) {
             var target = bar.getAttribute('data-width') || '0%';
             requestAnimationFrame(function () {

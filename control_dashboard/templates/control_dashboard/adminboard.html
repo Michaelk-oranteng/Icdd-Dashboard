@@ -6,196 +6,517 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'stylesheets/admin.css' %}" type="text/css">
 <style>
-    /* Additional styles for department/branch fields */
-    .field-group {
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-    
-    .field-group .field-item {
-        flex: 1;
-        min-width: 150px;
-    }
-    
-    .field-group .field-item label {
-        display: block;
-        font-size: 11px;
-        font-weight: 500;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 2px;
-    }
-    
-    .field-group .field-item .table-select {
-        width: 100%;
-        min-height: 38px;
-    }
-    
-    .field-group .field-item .table-select[multiple] {
-        min-height: 60px;
-        padding: 4px;
-    }
-    
-    .field-group .field-item .table-select[multiple] option {
-        padding: 4px 8px;
-        border-radius: 3px;
-        margin: 1px 0;
-    }
-    
-    .field-group .field-item .table-select[multiple] option:checked {
-        background: #0066cc;
-        color: white;
-    }
-    
-    .field-group .field-item .help-text {
-        font-size: 10px;
-        color: #9ca3af;
-        margin-top: 2px;
-        display: block;
-    }
-    
-    .status-toggle-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    
-    /* Switch styling */
-    .switch {
-        position: relative;
-        display: inline-block;
-        width: 44px;
-        height: 24px;
-        flex-shrink: 0;
-    }
-    
-    .switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-    
-    .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: #ccc;
-        transition: .3s;
-        border-radius: 24px;
-    }
-    
-    .slider:before {
-        position: absolute;
-        content: "";
-        height: 18px;
-        width: 18px;
-        left: 3px;
-        bottom: 3px;
-        background: white;
-        transition: .3s;
-        border-radius: 50%;
-    }
-    
-    input:checked + .slider {
-        background: #0066cc;
-    }
-    
-    input:checked + .slider:before {
-        transform: translateX(20px);
-    }
-    
-    .status-text {
-        font-size: 13px;
-        font-weight: 500;
-        color: #1a2332;
-        min-width: 48px;
-    }
-    
-    /* User table enhancements */
-    .users-table .user-info {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .users-table .user-info .user-email {
-        font-weight: 600;
-        color: #1a2332;
-    }
-    
-    .users-table .user-info .user-badge {
-        font-size: 11px;
-        color: #6b7280;
-        background: #f3f4f6;
-        padding: 1px 8px;
-        border-radius: 10px;
-        display: inline-block;
-        margin-top: 2px;
-    }
-    
-    .users-table .user-assignments {
-        font-size: 12px;
-        color: #6b7280;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 2px;
-        align-items: center;
-    }
-    
-    .users-table .user-assignments .tag {
-        display: inline-block;
-        background: #f3f4f6;
-        padding: 1px 8px;
-        border-radius: 10px;
-        font-size: 10px;
-        white-space: nowrap;
-    }
-    
-    .users-table .user-assignments .tag.branch {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-    
-    .users-table .user-assignments .tag.department {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    
-    .users-table .user-assignments .tag.more {
-        background: #f3f4f6;
-        color: #6b7280;
-        font-size: 9px;
-        cursor: help;
-    }
-    
-    .users-table .no-assignment {
-        color: #9ca3af;
-        font-size: 12px;
-        font-style: italic;
-    }
-    
-    /* Responsive */
-    @media (max-width: 1024px) {
-        .field-group {
-            flex-direction: column;
-        }
-        .field-group .field-item {
-            min-width: 100%;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .users-table {
-            min-width: 800px;
-        }
-        .field-group .field-item .table-select[multiple] {
-            min-height: 50px;
-        }
-    }
+/* ============================================================
+   ADMIN — User Management enhancements
+   ============================================================ */
+
+:root {
+    --adm-bg-1: #ffffff;
+    --adm-bg-2: #f7f8fc;
+    --adm-bg-3: #f1f3f9;
+    --adm-border: rgba(15, 27, 51, 0.08);
+    --adm-border-strong: rgba(15, 27, 51, 0.16);
+    --adm-hairline: rgba(15, 27, 51, 0.06);
+    --adm-text-0: #0f1b33;
+    --adm-text-1: #46536b;
+    --adm-text-2: #8993a8;
+    --adm-accent: #4f6ef7;
+    --adm-accent-soft: #eef1ff;
+    --adm-emerald: #17a673;
+    --adm-emerald-soft: #e2f7ef;
+    --adm-amber: #e08a17;
+    --adm-amber-soft: #fdf2e0;
+    --adm-rose: #e0456a;
+    --adm-rose-soft: #fdeaf0;
+    --adm-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                     0 1px 3px rgba(15, 27, 51, 0.03);
+    --adm-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                     0 2px 4px rgba(15, 27, 51, 0.03);
+}
+
+/* ============================================================
+   TABLE CONTAINER
+   ============================================================ */
+.table-container {
+    background: var(--adm-bg-1);
+    border-radius: 18px;
+    border: 1px solid var(--adm-border);
+    padding: 22px 24px;
+    overflow-x: auto;
+    box-shadow: var(--adm-shadow-sm);
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.table-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--adm-accent) 50%,
+        transparent 100%);
+    opacity: 0.7;
+    border-radius: 18px 18px 0 0;
+}
+
+.table-container:last-child { margin-bottom: 0; }
+
+.table-container h4 {
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--adm-text-0);
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--adm-hairline);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
+}
+
+.table-container h4::before {
+    content: '';
+    width: 4px;
+    height: 16px;
+    border-radius: 2px;
+    background: var(--adm-accent);
+}
+
+.table-divider {
+    height: 1px;
+    background: var(--adm-hairline);
+    margin: 24px 0;
+}
+
+/* ============================================================
+   USERS TABLE
+   ============================================================ */
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+
+.users-table thead th {
+    background: var(--adm-bg-2);
+    color: var(--adm-text-2);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--adm-border);
+    white-space: nowrap;
+}
+
+.users-table thead th:first-child { border-radius: 10px 0 0 0; }
+.users-table thead th:last-child  { border-radius: 0 10px 0 0; }
+
+.users-table tbody td {
+    padding: 14px 16px;
+    color: var(--adm-text-1);
+    font-size: 13px;
+    border-bottom: 1px solid var(--adm-hairline);
+    vertical-align: middle;
+    line-height: 1.5;
+}
+
+.users-table tbody tr { transition: background 0.2s ease; }
+.users-table tbody tr:hover { background: var(--adm-bg-2); }
+.users-table tbody tr:last-child td { border-bottom: none; }
+.users-table tbody tr.editing { background: var(--adm-accent-soft); }
+.users-table tbody tr.editing td { padding: 10px 16px; }
+
+.users-table .font-bold {
+    font-weight: 600;
+    color: var(--adm-text-0);
+}
+
+.text-center { text-align: center; }
+
+/* ============================================================
+   TABLE INPUTS
+   ============================================================ */
+.table-input,
+.table-select {
+    width: 100%;
+    padding: 9px 14px;
+    border: 1px solid var(--adm-border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    background: var(--adm-bg-1);
+    color: var(--adm-text-0);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    outline: none;
+    height: 38px;
+}
+
+.table-select {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 34px;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+}
+
+.table-input:hover,
+.table-select:hover { border-color: var(--adm-border-strong); }
+
+.table-input:focus,
+.table-select:focus {
+    border-color: var(--adm-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.table-input::placeholder {
+    color: var(--adm-text-2);
+    font-size: 12px;
+}
+
+.table-select[multiple] {
+    height: auto;
+    min-height: 100px;
+    padding: 6px;
+    background-image: none;
+    overflow-y: auto;
+}
+
+.table-select[multiple] option {
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin: 2px 0;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.table-select[multiple] option:checked {
+    background: linear-gradient(135deg, var(--adm-accent) 0%, #3b56d8 100%);
+    color: #ffffff;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn-create,
+.btn-edit,
+.btn-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    border: 1px solid transparent;
+    text-decoration: none;
+}
+
+.btn-create {
+    padding: 9px 18px;
+    background: linear-gradient(135deg, #17a673 0%, #108a5e 100%);
+    color: #ffffff;
+    border-radius: 10px;
+    font-size: 12px;
+    border-color: rgba(23, 166, 115, 0.4);
+    box-shadow: 0 4px 12px rgba(23, 166, 115, 0.25);
+    height: 38px;
+}
+
+.btn-create:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(23, 166, 115, 0.4);
+}
+
+.btn-create:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-edit {
+    padding: 7px 14px;
+    background: var(--adm-amber-soft);
+    color: var(--adm-amber);
+    border-radius: 10px;
+    font-size: 11px;
+    border-color: rgba(224, 138, 23, 0.22);
+    height: 32px;
+}
+
+.btn-edit:hover {
+    background: #fce8c9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(224, 138, 23, 0.2);
+}
+
+.btn-delete {
+    padding: 7px 14px;
+    background: var(--adm-rose-soft);
+    color: var(--adm-rose);
+    border-radius: 10px;
+    font-size: 11px;
+    border-color: rgba(224, 69, 106, 0.22);
+    height: 32px;
+}
+
+.btn-delete:hover {
+    background: #fbdce4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(224, 69, 106, 0.2);
+}
+
+/* ============================================================
+   STATUS TOGGLE
+   ============================================================ */
+.status-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.status-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--adm-text-0);
+    transition: color 0.3s ease;
+    min-width: 50px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #cbd5e1;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #ffffff;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.slider.round { border-radius: 22px; }
+.slider.round:before { border-radius: 50%; }
+
+.switch input:checked + .slider {
+    background: linear-gradient(135deg, #17a673 0%, #108a5e 100%);
+    box-shadow: 0 0 0 3px rgba(23, 166, 115, 0.12);
+}
+
+.switch input:checked + .slider:before {
+    transform: translateX(18px);
+}
+
+.switch input:focus + .slider {
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.25);
+}
+
+/* ============================================================
+   ACTIONS CELL
+   ============================================================ */
+.actions-cell {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    min-width: 120px;
+}
+
+/* ============================================================
+   FIELD GROUP (Departments / Branches)
+   ============================================================ */
+.field-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.field-group .field-item {
+    flex: 1;
+    min-width: 130px;
+}
+
+.field-group .field-item label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--adm-text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 5px;
+}
+
+.field-group .help-text {
+    font-size: 10px;
+    color: var(--adm-text-2);
+    margin-top: 4px;
+    display: block;
+    font-style: italic;
+}
+
+/* ============================================================
+   USER INFO CELL
+   ============================================================ */
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.user-info .user-email {
+    font-weight: 600;
+    color: var(--adm-text-0);
+    font-size: 13px;
+    word-break: break-word;
+}
+
+.user-info .user-fullname {
+    font-size: 11px;
+    color: var(--adm-text-2);
+    word-break: break-word;
+}
+
+.user-info .user-badge {
+    font-size: 11px;
+    color: var(--adm-text-2);
+    background: var(--adm-bg-3);
+    padding: 2px 10px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 2px;
+    border: 1px solid var(--adm-hairline);
+    width: fit-content;
+}
+
+/* ============================================================
+   ASSIGNMENT CHIPS
+   ============================================================ */
+.user-assignments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    line-height: 1.6;
+}
+
+.user-assignments .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    line-height: 1.4;
+}
+
+.user-assignments .tag.department {
+    background: var(--adm-emerald-soft);
+    color: var(--adm-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.user-assignments .tag.branch {
+    background: var(--adm-accent-soft);
+    color: var(--adm-accent);
+    border-color: rgba(79, 110, 247, 0.22);
+}
+
+.user-assignments .tag.more {
+    background: var(--adm-bg-3);
+    color: var(--adm-text-2);
+    border-color: var(--adm-hairline);
+    font-size: 9px;
+    cursor: help;
+}
+
+.no-assignment {
+    color: var(--adm-text-2);
+    font-size: 11px;
+    font-style: italic;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.users-table .text-center i {
+    font-size: 36px;
+    display: block;
+    margin-bottom: 10px;
+    opacity: 0.25;
+    color: var(--adm-text-2);
+}
+
+.users-table tbody td[colspan] {
+    padding: 40px 20px;
+    color: var(--adm-text-2);
+    font-size: 13px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px) {
+    .users-table { font-size: 12px; }
+    .users-table thead th,
+    .users-table tbody td { padding: 10px 12px; }
+    .field-group { flex-direction: column; }
+    .field-group .field-item { min-width: 100%; }
+}
+
+@media (max-width: 768px) {
+    .table-container { padding: 16px; border-radius: 14px; }
+    .table-container h4 { font-size: 13px; }
+    .users-table { min-width: 700px; }
+}
+
+@media (max-width: 480px) {
+    .table-container { padding: 12px; }
+    .users-table thead th,
+    .users-table tbody td { padding: 8px 10px; font-size: 11px; }
+    .table-input,
+    .table-select { font-size: 12px; padding: 8px 10px; }
+    .btn-create,
+    .btn-edit,
+    .btn-delete { font-size: 10px; padding: 5px 10px; height: auto; }
+}
 </style>
 {% endblock %}
 
@@ -209,15 +530,15 @@
 <li><a href="{% url 'control_dashboard:report_creation' %}">
     <span class="nav-icon"><i class="fas fa-flag"></i></span>
     <span class="nav-text">Report Creation</span>
-</a></li>  
+</a></li>
 <li><a href="{% url 'control_dashboard:report_center' %}">
     <span class="nav-icon"><i class="fas fa-flag"></i></span>
     <span class="nav-text">Report Center</span>
-</a></li> 
+</a></li>
 <li><a href="{% url 'control_dashboard:checklist_builder' %}">
     <span class="nav-icon"><i class="fas fa-cubes"></i></span>
     <span class="nav-text">Checklist Builder</span>
-</a></li>   
+</a></li>
 <li><a href="{% url 'control_dashboard:checklist_list' %}">
     <span class="nav-icon"><i class="fas fa-tools"></i></span>
     <span class="nav-text">Checklist Activities</span>
@@ -225,7 +546,7 @@
 <li><a href="{% url 'control_dashboard:activity_logs' %}">
     <span class="nav-icon"><i class="fas fa-key"></i></span>
     <span class="nav-text">Activity Logs</span>
-</a></li> 
+</a></li>
 {% endblock %}
 
 {% block page_title %}Create and Manage Users{% endblock %}
@@ -244,7 +565,7 @@
                     <th style="min-width: 100px;">Role</th>
                     <th style="min-width: 220px;">Department / Branch</th>
                     <th style="min-width: 80px;">Status</th>
-                    <th style="min-width: 60px;" class="text-center">Action</th>
+                    <th style="min-width: 80px;" class="text-center">Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -274,7 +595,7 @@
                                     <option value="{{ department.id }}">{{ department.name }}</option>
                                     {% endfor %}
                                 </select>
-                                <small class="help-text">Hold Ctrl (Win) / Cmd (Mac) to select multiple</small>
+                                <small class="help-text">Ctrl/Cmd + click to multi-select</small>
                             </div>
                             <div class="field-item">
                                 <label for="newBranches">Branches</label>
@@ -283,7 +604,7 @@
                                     <option value="{{ branch.id }}">{{ branch.name }}</option>
                                     {% endfor %}
                                 </select>
-                                <small class="help-text">Hold Ctrl (Win) / Cmd (Mac) to select multiple</small>
+                                <small class="help-text">Ctrl/Cmd + click to multi-select</small>
                             </div>
                         </div>
                     </td>
@@ -307,16 +628,16 @@
     <div class="table-divider"></div>
 
     <h4>Existing Users ({{ users|length }})</h4>
-    
+
     <table class="users-table">
         <thead>
             <tr>
-                <th style="min-width: 160px;">User</th>
+                <th style="min-width: 180px;">User</th>
                 <th style="min-width: 100px;">Position</th>
                 <th style="min-width: 100px;">Role</th>
-                <th style="min-width: 200px;">Department / Branch</th>
-                <th style="min-width: 80px;">Status</th>
-                <th style="min-width: 60px;" class="text-center">Actions</th>
+                <th style="min-width: 220px;">Department / Branch</th>
+                <th style="min-width: 110px;">Status</th>
+                <th style="min-width: 140px;" class="text-center">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -340,11 +661,8 @@
                                 {% if departments|length > 3 %}
                                     <span class="tag more" title="{{ departments|join:', ' }}">+{{ departments|length|add:"-3" }} more</span>
                                 {% endif %}
-                            {% else %}
-                                <span class="no-assignment">No departments</span>
                             {% endif %}
                         {% endwith %}
-                        <br>
                         {% with branches=user.branches.all %}
                             {% if branches %}
                                 {% for branch in branches|slice:":3" %}
@@ -353,16 +671,17 @@
                                 {% if branches|length > 3 %}
                                     <span class="tag more" title="{{ branches|join:', ' }}">+{{ branches|length|add:"-3" }} more</span>
                                 {% endif %}
-                            {% else %}
-                                <span class="no-assignment">No branches</span>
                             {% endif %}
                         {% endwith %}
+                        {% if not user.departments.all and not user.branches.all %}
+                            <span class="no-assignment">No assignments</span>
+                        {% endif %}
                     </div>
                 </td>
                 <td>
                     <div class="status-toggle-container">
                         <label class="switch">
-                            <input type="checkbox" 
+                            <input type="checkbox"
                                    {% if user.status == 'active' %}checked{% endif %}
                                    onchange="toggleStatus('{{ user.id }}', this.checked)">
                             <span class="slider round"></span>
@@ -382,7 +701,7 @@
             <tr>
                 <td colspan="6" class="text-center">
                     <i class="fas fa-users"></i>
-                    No users found. Create your first user!
+                    No users found. Create your first user above.
                 </td>
             </tr>
             {% endfor %}
@@ -391,7 +710,9 @@
 </div>
 
 <script>
-    // Store choice positions and roles dynamically from context for inline building
+    /* ============================================
+       CONTEXT DATA
+       ============================================ */
     const POSITIONS = [
         {% for value, label in positions %}
         { value: "{{ value }}", label: "{{ label }}" },
@@ -402,8 +723,6 @@
         { value: "{{ value }}", label: "{{ label }}" },
         {% endfor %}
     ];
-    
-    // Store departments and branches for inline editing
     const DEPARTMENTS = [
         {% for department in departments %}
         { id: {{ department.id }}, name: "{{ department.name }}" },
@@ -415,9 +734,9 @@
         {% endfor %}
     ];
 
-    // ============================================
-    // CSRF TOKEN HELPER
-    // ============================================
+    /* ============================================
+       CSRF HELPER
+       ============================================ */
     function getCsrfToken() {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -433,24 +752,21 @@
         return cookieValue || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
     }
 
-    // ============================================
-    // USER MANAGEMENT FUNCTIONS
-    // ============================================
-
+    /* ============================================
+       ADD USER
+       ============================================ */
     function addUser(event) {
         event.preventDefault();
-        
+
         const email = document.getElementById('newEmail').value;
         const fullName = document.getElementById('newFullName').value;
         const position = document.getElementById('newPosition').value;
         const role = document.getElementById('newRole').value;
         const status = document.getElementById('newStatus').value;
-        
-        // Get selected departments
+
         const deptSelect = document.getElementById('newDepartments');
         const departmentIds = Array.from(deptSelect.selectedOptions).map(opt => parseInt(opt.value));
-        
-        // Get selected branches
+
         const branchSelect = document.getElementById('newBranches');
         const branchIds = Array.from(branchSelect.selectedOptions).map(opt => parseInt(opt.value));
 
@@ -472,11 +788,8 @@
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Error: ' + data.error);
-            }
+            if (data.success) location.reload();
+            else alert('Error: ' + data.error);
         })
         .catch(error => {
             console.error('Error:', error);
@@ -484,6 +797,9 @@
         });
     }
 
+    /* ============================================
+       EDIT USER (inline)
+       ============================================ */
     function editUser(userId) {
         const row = document.getElementById(`user-row-${userId}`);
         if (!row || row.classList.contains('editing')) return;
@@ -500,148 +816,117 @@
         const origFullName = row.querySelector('.user-fullname').dataset.val;
         const origPosition = positionCell.dataset.val;
         const origRole = roleCell.dataset.val;
-        
-        // Get current departments and branches from tags
+
         const deptTags = row.querySelectorAll('.tag.department');
         const branchTags = row.querySelectorAll('.tag.branch');
         const origDepartmentIds = [];
         const origBranchIds = [];
-        
+
         deptTags.forEach(tag => {
             DEPARTMENTS.forEach(d => {
                 if (d.name === tag.textContent) origDepartmentIds.push(d.id);
             });
         });
-        
         branchTags.forEach(tag => {
             BRANCHES.forEach(b => {
                 if (b.name === tag.textContent) origBranchIds.push(b.id);
             });
         });
 
-        // Replace user info cell with inputs
         userInfoCell.innerHTML = `
             <div class="user-info">
-                <input type="email" id="edit-email-${userId}" class="table-input" value="${origEmail}" required style="margin-bottom:4px;">
+                <input type="email" id="edit-email-${userId}" class="table-input" value="${origEmail}" required>
                 <input type="text" id="edit-fullname-${userId}" class="table-input" value="${origFullName}" placeholder="Full name">
             </div>
         `;
 
-        // Position dropdown
-        let positionOptions = POSITIONS.map(opt => 
-            `<option value="${opt.value}" ${opt.value === origPosition ? 'selected' : ''}>${opt.label}</option>`
-        ).join('');
-        positionCell.innerHTML = `<select id="edit-position-${userId}" class="table-select">${positionOptions}</select>`;
+        positionCell.innerHTML = `<select id="edit-position-${userId}" class="table-select">${
+            POSITIONS.map(opt => `<option value="${opt.value}" ${opt.value === origPosition ? 'selected' : ''}>${opt.label}</option>`).join('')
+        }</select>`;
 
-        // Role dropdown
-        let roleOptions = ROLES.map(opt => 
-            `<option value="${opt.value}" ${opt.value === origRole ? 'selected' : ''}>${opt.label}</option>`
-        ).join('');
-        roleCell.innerHTML = `<select id="edit-role-${userId}" class="table-select">${roleOptions}</select>`;
+        roleCell.innerHTML = `<select id="edit-role-${userId}" class="table-select">${
+            ROLES.map(opt => `<option value="${opt.value}" ${opt.value === origRole ? 'selected' : ''}>${opt.label}</option>`).join('')
+        }</select>`;
 
-        // Department and Branch multi-select fields
-        let deptOptions = '';
-        DEPARTMENTS.forEach(d => {
-            const selected = origDepartmentIds.includes(d.id) ? 'selected' : '';
-            deptOptions += `<option value="${d.id}" ${selected}>${d.name}</option>`;
-        });
-        
-        let branchOptions = '';
-        BRANCHES.forEach(b => {
-            const selected = origBranchIds.includes(b.id) ? 'selected' : '';
-            branchOptions += `<option value="${b.id}" ${selected}>${b.name}</option>`;
-        });
+        const deptOptions = DEPARTMENTS.map(d =>
+            `<option value="${d.id}" ${origDepartmentIds.includes(d.id) ? 'selected' : ''}>${d.name}</option>`
+        ).join('');
+        const branchOptions = BRANCHES.map(b =>
+            `<option value="${b.id}" ${origBranchIds.includes(b.id) ? 'selected' : ''}>${b.name}</option>`
+        ).join('');
 
         assignCell.innerHTML = `
-            <div class="field-group" style="gap: 6px;">
-                <div class="field-item" style="min-width: 120px;">
-                    <label style="font-size:10px;color:#6b7280;">Departments</label>
-                    <select id="edit-departments-${userId}" class="table-select" multiple style="min-height:50px;font-size:12px;">
-                        ${deptOptions}
-                    </select>
-                    <small style="font-size:9px;color:#9ca3af;">Ctrl/Cmd + click to multi-select</small>
+            <div class="field-group">
+                <div class="field-item">
+                    <label>Departments</label>
+                    <select id="edit-departments-${userId}" class="table-select" multiple>${deptOptions}</select>
                 </div>
-                <div class="field-item" style="min-width: 120px;">
-                    <label style="font-size:10px;color:#6b7280;">Branches</label>
-                    <select id="edit-branches-${userId}" class="table-select" multiple style="min-height:50px;font-size:12px;">
-                        ${branchOptions}
-                    </select>
-                    <small style="font-size:9px;color:#9ca3af;">Ctrl/Cmd + click to multi-select</small>
+                <div class="field-item">
+                    <label>Branches</label>
+                    <select id="edit-branches-${userId}" class="table-select" multiple>${branchOptions}</select>
                 </div>
             </div>
         `;
 
         actionsCell.innerHTML = `
-            <button class="btn-create" onclick="submitEditUserInline('${userId}')" style="padding: 6px 12px; font-size: 11px;">
+            <button class="btn-create" onclick="submitEditUserInline('${userId}')">
                 <i class="fas fa-save"></i> Save
             </button>
-            <button class="btn-edit" onclick="location.reload()" style="padding: 6px 12px; font-size: 11px; background: rgba(0,0,0,0.05); color: #1a2332; border-color: rgba(0,0,0,0.1); margin-left: 4px;">
-                Cancel
+            <button class="btn-edit" onclick="location.reload()">
+                <i class="fas fa-times"></i> Cancel
             </button>
         `;
     }
 
-function submitEditUserInline(userId) {
-    const email = document.getElementById(`edit-email-${userId}`).value;
-    const fullName = document.getElementById(`edit-fullname-${userId}`).value;
-    const position = document.getElementById(`edit-position-${userId}`).value;
-    const role = document.getElementById(`edit-role-${userId}`).value;
-    
-    const deptSelect = document.getElementById(`edit-departments-${userId}`);
-    const departmentIds = Array.from(deptSelect.selectedOptions).map(opt => parseInt(opt.value));
-    
-    const branchSelect = document.getElementById(`edit-branches-${userId}`);
-    const branchIds = Array.from(branchSelect.selectedOptions).map(opt => parseInt(opt.value));
+    function submitEditUserInline(userId) {
+        const email = document.getElementById(`edit-email-${userId}`).value;
+        const fullName = document.getElementById(`edit-fullname-${userId}`).value;
+        const position = document.getElementById(`edit-position-${userId}`).value;
+        const role = document.getElementById(`edit-role-${userId}`).value;
 
-    const row = document.getElementById(`user-row-${userId}`);
-    const statusCheckbox = row.querySelector('input[type="checkbox"]');
-    const status = statusCheckbox.checked ? 'active' : 'inactive';
+        const deptSelect = document.getElementById(`edit-departments-${userId}`);
+        const departmentIds = Array.from(deptSelect.selectedOptions).map(opt => parseInt(opt.value));
 
-    console.log('Saving user:', {
-        userId,
-        email,
-        fullName,
-        position,
-        role,
-        status,
-        departmentIds,
-        branchIds
-    });
+        const branchSelect = document.getElementById(`edit-branches-${userId}`);
+        const branchIds = Array.from(branchSelect.selectedOptions).map(opt => parseInt(opt.value));
 
-    fetch("{% url 'control_dashboard:api_edit_user' 0 %}".replace('0', userId), {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
-        },
-        body: JSON.stringify({
-            email: email,
-            full_name: fullName,
-            position: position,
-            role: role,
-            status: status,
-            department_ids: departmentIds,
-            branch_ids: branchIds
+        const row = document.getElementById(`user-row-${userId}`);
+        const statusCheckbox = row.querySelector('input[type="checkbox"]');
+        const status = statusCheckbox.checked ? 'active' : 'inactive';
+
+        fetch("{% url 'control_dashboard:api_edit_user' 0 %}".replace('0', userId), {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                email: email,
+                full_name: fullName,
+                position: position,
+                role: role,
+                status: status,
+                department_ids: departmentIds,
+                branch_ids: branchIds
+            })
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Response:', data);
-        if (data.success) {
-            location.reload();
-        } else {
-            alert('Error: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred. Please try again. Check console for details.');
-    });
-}
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) location.reload();
+            else alert('Error: ' + data.error);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
 
+    /* ============================================
+       TOGGLE STATUS
+       ============================================ */
     function toggleStatus(userId, isChecked) {
         const status = isChecked ? 'active' : 'inactive';
-        
+
         fetch("{% url 'control_dashboard:api_update_status' 0 %}".replace('0', userId), {
             method: 'POST',
             headers: {
@@ -653,8 +938,7 @@ function submitEditUserInline(userId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const statusText = document.getElementById('status-text-' + userId);
-                statusText.textContent = isChecked ? 'Active' : 'Inactive';
+                document.getElementById('status-text-' + userId).textContent = isChecked ? 'Active' : 'Inactive';
             } else {
                 alert('Error: ' + data.error);
                 location.reload();
