@@ -1,5 +1,8 @@
 """
 Django settings for ICDD project.
+
+Configuration is entirely environment-driven so the same file works
+locally, on Railway, and anywhere else without modification.
 """
 
 import os
@@ -20,31 +23,36 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # CORE
 # ============================================================
 
-SECRET_KEY = os.environ.get('SECRET_KEY')
-if not SECRET_KEY:
-    raise RuntimeError(
-        "SECRET_KEY environment variable is required. "
-        "Generate one with: python -c "
-        "\"from django.core.management.utils import get_random_secret_key; "
-        "print(get_random_secret_key())\""
-    )
-
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('1', 'true', 'yes')
+
+SECRET_KEY = os.environ.get('SECRET_KEY')
+
+if not SECRET_KEY:
+    if DEBUG:
+        # Local dev only — never used in production.
+        SECRET_KEY = 'django-insecure-local-dev-only-do-not-use-in-production'
+    else:
+        raise RuntimeError(
+            "SECRET_KEY environment variable is required in production. "
+            "Generate one with: python -c "
+            "\"from django.core.management.utils import get_random_secret_key; "
+            "print(get_random_secret_key())\""
+        )
 
 
 # ============================================================
 # HOSTS / CSRF
 # ============================================================
-# Defaults now include '.onrender.com' (leading dot = wildcard subdomain).
-# Set ALLOWED_HOSTS env var on Render to override (e.g. custom domain).
+# Override these in production by setting the ALLOWED_HOSTS and
+# CSRF_TRUSTED_ORIGINS environment variables.
 #
-# IMPORTANT: When you attach a custom domain on Render, add it here too:
-#   ALLOWED_HOSTS=.onrender.com,example.com,www.example.com
+#   ALLOWED_HOSTS=.up.railway.app,mycustomdomain.com
+#   CSRF_TRUSTED_ORIGINS=https://*.up.railway.app,https://mycustomdomain.com
 
 ALLOWED_HOSTS = [
     h.strip() for h in os.environ.get(
         'ALLOWED_HOSTS',
-        'localhost,127.0.0.1,.onrender.com,.railway.app,.up.railway.app'
+        'localhost,127.0.0.1,.up.railway.app,.railway.app'
     ).split(',') if h.strip()
 ]
 
@@ -52,9 +60,11 @@ CSRF_TRUSTED_ORIGINS = [
     o.strip() for o in os.environ.get(
         'CSRF_TRUSTED_ORIGINS',
         'http://localhost:8000,http://127.0.0.1:8000,'
-        'https://*.onrender.com,https://*.railway.app,https://*.up.railway.app'
+        'https://*.up.railway.app,https://*.railway.app'
     ).split(',') if o.strip()
 ]
+
+
 # ============================================================
 # AUTH REDIRECTS
 # ============================================================
@@ -112,11 +122,8 @@ WSGI_APPLICATION = 'ICDD.wsgi.application'
 # ============================================================
 # DATABASE
 # ============================================================
-# Local dev: SQLite (via .env or default)
-# Production: reads DATABASE_URL (Postgres on Render)
-#
-# NOTE: dj_database_url.config() ignores `default=` when DATABASE_URL
-# is defined-but-empty. We guard against that by checking explicitly.
+# If DATABASE_URL is set → connect to that (PostgreSQL in production).
+# Otherwise           → fall back to local SQLite.
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 
@@ -129,7 +136,6 @@ if DATABASE_URL:
         )
     }
 else:
-    # Fallback — no DATABASE_URL, use SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -188,18 +194,15 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024   # 50 MB
 # ============================================================
 # SECURITY
 # ============================================================
-# SECURE_SSL_REDIRECT is env-driven so we can disable it if Render's
-# health check ever gets caught in a redirect loop. By default it's on
-# in production, off in debug.
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Optional env override: set DISABLE_SSL_REDIRECT=True on Render ONLY if
-# health checks fail with 301 loops. Defaults to the previous behavior.
+# Set DISABLE_SSL_REDIRECT=True in the environment only if the
+# platform's health checks get caught in a redirect loop.
 SECURE_SSL_REDIRECT = (
     not DEBUG
     and os.environ.get('DISABLE_SSL_REDIRECT', 'False').lower() not in ('1', 'true', 'yes')
-)                                                                    # ← CHANGED (env override)
+)
 
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
@@ -5,13 +6,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    # The project package is named `ICDD`, not `api`.
-    SETTINGS_MODULE = (
-        'ICDD.deployment_settings'
-        if "RENDER_EXTERNAL_HOSTNAME" in os.environ
-        else 'ICDD.settings'
-    )
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', SETTINGS_MODULE)
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ICDD.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
