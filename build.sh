@@ -7,10 +7,4 @@ pip install -r requirements.txt
 python manage.py collectstatic --no-input
 python manage.py migrate
 
-# Optional: auto-create superuser from env vars
-# python manage.py createsuperuser --no-input || true
-
-if [[$CREATE_SUPERUSER]]; 
-then
-    python manage.py createsuperuser --no-input || true
-fi
+python manage.py createsuperuser --no-input || true
