@@ -162,7 +162,7 @@ class UserProfile(models.Model):
         return ', '.join([b.name for b in self.branches.all()])
 
     # ============================================================
-    # AVATAR
+    # AVATAR & NAME HELPERS
     # ============================================================
     @property
     def avatar_url(self):
@@ -201,6 +201,19 @@ class UserProfile(models.Model):
         if len(parts) >= 2:
             return (parts[0][0] + parts[-1][0]).upper()
         return name[:2].upper()
+
+    @property
+    def first_name(self):
+        """
+        First name only — e.g. 'Michael Koranteng' → 'Michael'.
+        Falls back to the email prefix if full_name is empty.
+        """
+        if not self.full_name:
+            if self.email and '@' in self.email:
+                return self.email.split('@')[0]
+            return 'User'
+        parts = [p for p in self.full_name.strip().split() if p]
+        return parts[0] if parts else 'User'
 
     class Meta:
         db_table = 'user_profiles'
