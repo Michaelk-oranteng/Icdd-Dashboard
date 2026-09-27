@@ -2,38 +2,44 @@
 
 from django.contrib import admin
 from django.contrib import messages
-from .models import UserProfile, Checklist, ChecklistTask, ChecklistLog
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
+from django.utils.html import format_html
+
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin
 from import_export.formats.base_formats import CSV
+
 import re
+
+from .models import UserProfile, Checklist, ChecklistTask, ChecklistLog
 
 
 # ==================== CHECKLIST RESOURCE ====================
 
 class ChecklistResource(resources.ModelResource):
     """Resource for importing Checklist data from CSV"""
-    
+
     name = fields.Field(attribute='name', column_name='ACTIVITY')
     description = fields.Field(attribute='description', column_name='TASK / DESCRIPTION')
     frequency = fields.Field(attribute='frequency', column_name='FREQUENCY')
     assignment_target = fields.Field(attribute='assignment_target', column_name='ASSIGNMENT TARGET')
-    
+
     class Meta:
         model = Checklist
         fields = ('name', 'description', 'frequency', 'assignment_target')
         import_id_fields = ('name',)
         skip_unchanged = True
         report_skipped = False
-        
+
     def before_import_row(self, row, **kwargs):
         """Clean and prepare data before import"""
-        
+
         # Clean activity name
         if 'ACTIVITY' in row:
             row['ACTIVITY'] = str(row['ACTIVITY']).strip()
             row['ACTIVITY'] = ' '.join(row['ACTIVITY'].split())
-        
+
         # Clean description - keep the full text
         if 'TASK / DESCRIPTION' in row:
             desc = str(row['TASK / DESCRIPTION'])
@@ -43,7 +49,7 @@ class ChecklistResource(resources.ModelResource):
             desc = desc.replace('"', '').strip()
             desc = ' '.join(desc.split())
             row['TASK / DESCRIPTION'] = desc
-        
+
         # Map frequency values
         if 'FREQUENCY' in row:
             freq = str(row['FREQUENCY']).strip().lower()
@@ -54,7 +60,7 @@ class ChecklistResource(resources.ModelResource):
                 'quarterly': 'quarterly',
             }
             row['FREQUENCY'] = freq_map.get(freq, 'weekly')
-        
+
         # Map assignment target values
         if 'ASSIGNMENT TARGET' in row:
             target = str(row['ASSIGNMENT TARGET']).strip().lower()
@@ -67,31 +73,28 @@ class ChecklistResource(resources.ModelResource):
                 'all': 'all',
             }
             row['ASSIGNMENT TARGET'] = target_map.get(target, 'all')
-        
+
         return row
-    
+
     def after_import_row(self, row, row_result, **kwargs):
         """After each row is imported, create tasks and assign users"""
         if not row_result.errors:
             try:
                 checklist = Checklist.objects.get(name=row['ACTIVITY'])
-                
+
                 # 1. Set assignment target
                 assignment_target = row.get('ASSIGNMENT TARGET', 'all')
                 checklist.assignment_target = assignment_target
                 checklist.is_active = True
                 checklist.save()
-                
+
                 # 2. Create tasks from the description
                 description = row.get('TASK / DESCRIPTION', '')
                 if description:
-                    # Split into individual tasks
                     tasks = self.split_into_tasks(description)
-                    
-                    # Clear existing tasks
+
                     ChecklistTask.objects.filter(checklist=checklist).delete()
-                    
-                    # Create new tasks
+
                     for order, task_text in enumerate(tasks, start=1):
                         ChecklistTask.objects.create(
                             checklist=checklist,
@@ -100,7 +103,7 @@ class ChecklistResource(resources.ModelResource):
                             is_completed=False
                         )
                     print(f"✅ Created {len(tasks)} tasks for: {checklist.name}")
-                
+
                 # 3. Assign users based on target
                 if assignment_target == 'cc':
                     cc_users = UserProfile.objects.filter(
@@ -117,35 +120,35 @@ class ChecklistResource(resources.ModelResource):
                     all_users = UserProfile.objects.filter(is_active=True)
                     checklist.assigned_users.set(all_users)
                     print(f"✅ Assigned {all_users.count()} users to: {checklist.name}")
-                
+
             except Checklist.DoesNotExist:
                 print(f"❌ Checklist not found: {row.get('ACTIVITY')}")
             except Exception as e:
                 print(f"❌ Error: {e}")
-    
+
     def split_into_tasks(self, text):
         """Split description into individual tasks"""
         # Try splitting by bullet points
         if '•' in text:
             tasks = [t.strip() for t in text.split('•') if t.strip()]
             return tasks
-        
+
         # Try splitting by numbered items
         if re.search(r'\d+\.', text):
             tasks = re.split(r'\d+\.\s*', text)
             tasks = [t.strip() for t in tasks if t.strip()]
             return tasks
-        
+
         # Try splitting by periods (sentences)
         if '.' in text:
             tasks = [t.strip() + '.' for t in text.split('.') if t.strip()]
             return tasks
-        
+
         # If nothing works, return as single task
         return [text]
 
 
-# ==================== CHECKLIST TASK INLINE (Define BEFORE ChecklistAdmin) ====================
+# ==================== CHECKLIST TASK INLINE ====================
 
 class ChecklistTaskInline(admin.TabularInline):
     """Inline admin for ChecklistTask - shows tasks inside Checklist"""
@@ -161,25 +164,24 @@ class ChecklistTaskInline(admin.TabularInline):
 @admin.register(Checklist)
 class ChecklistAdmin(ImportExportModelAdmin):
     resource_class = ChecklistResource
-    
+
     list_display = ['name', 'get_frequency_display', 'get_assignment_display', 'is_active', 'created_at']
     list_filter = ['frequency', 'assignment_target', 'is_active']
     search_fields = ['name', 'description']
     readonly_fields = ['created_at', 'updated_at']
     fields = ['name', 'description', 'frequency', 'assignment_target', 'assigned_users', 'is_active']
-    inlines = [ChecklistTaskInline]  # Now this is defined!
-    
+    inlines = [ChecklistTaskInline]
+
     def get_import_formats(self):
-        from import_export.formats.base_formats import CSV
         return [CSV]
-    
+
     def process_import(self, request, *args, **kwargs):
         try:
             result = super().process_import(request, *args, **kwargs)
             count = Checklist.objects.count()
             tasks_count = ChecklistTask.objects.count()
             messages.success(
-                request, 
+                request,
                 f"✅ Import completed! {count} checklists and {tasks_count} tasks created."
             )
             return result
@@ -206,29 +208,106 @@ class ChecklistLogAdmin(admin.ModelAdmin):
     search_fields = ['checklist__name', 'user__full_name']
 
 
-# control_dashboard/admin.py
-
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User
-from .models import UserProfile
+# ==================== USER PROFILE INLINE ====================
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
     verbose_name_plural = 'Profile'
+    fk_name = 'user'
+    fields = (
+        'email', 'full_name', 'position', 'role', 'status',
+        'branches', 'departments', 'avatar',
+    )
+
 
 class CustomUserAdmin(UserAdmin):
     inlines = (UserProfileInline,)
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff')
     search_fields = ('username', 'email', 'first_name', 'last_name')
 
+
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 
+
+# ==================== USER PROFILE ADMIN (with avatar upload) ====================
+
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'email', 'username', 'position', 'role', 'status')
+    list_display = ('avatar_preview', 'full_name', 'email', 'username', 'position', 'role', 'status')
     search_fields = ('full_name', 'email', 'username')
     list_filter = ('position', 'role', 'status')
-    readonly_fields = ('username', 'created_at', 'updated_at')
+    readonly_fields = ('username', 'created_at', 'updated_at', 'avatar_preview_large')
+
+    fieldsets = (
+        ('Identity', {
+            'fields': ('email', 'username', 'full_name')
+        }),
+        ('Roles & Permissions', {
+            'fields': ('role', 'position', 'status')
+        }),
+        ('Assignments', {
+            'fields': ('branches', 'departments')
+        }),
+        ('Profile Picture', {
+            'fields': ('avatar', 'avatar_preview_large'),
+            'description': (
+                'Upload a square image (recommended: 400×400 px, under 200 KB). '
+                'If left blank, the user will get an auto-generated Gravatar '
+                'based on their email.'
+            ),
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
+
+    def avatar_preview(self, obj):
+        """Tiny round avatar shown in the list view."""
+        if obj.avatar and getattr(obj.avatar, 'url', None):
+            try:
+                return format_html(
+                    '<img src="{}" style="width:32px;height:32px;'
+                    'border-radius:50%;object-fit:cover;'
+                    'border:1px solid #ddd;vertical-align:middle;" />',
+                    obj.avatar.url
+                )
+            except ValueError:
+                pass
+
+        # No uploaded avatar — show initials in a gold circle
+        return format_html(
+            '<span style="display:inline-grid;place-items:center;'
+            'width:32px;height:32px;border-radius:50%;'
+            'background:#D4AF37;color:#001F3D;'
+            'font-weight:700;font-size:12px;'
+            'vertical-align:middle;">{}</span>',
+            obj.initials or '?'
+        )
+    avatar_preview.short_description = 'Avatar'
+
+    def avatar_preview_large(self, obj):
+        """Larger preview on the edit page."""
+        if obj.avatar and getattr(obj.avatar, 'url', None):
+            try:
+                return format_html(
+                    '<img src="{}" style="width:120px;height:120px;'
+                    'border-radius:50%;object-fit:cover;'
+                    'border:2px solid #D4AF37;" />',
+                    obj.avatar.url
+                )
+            except ValueError:
+                pass
+
+        return format_html(
+            '<div style="display:inline-grid;place-items:center;'
+            'width:120px;height:120px;border-radius:50%;'
+            'background:#D4AF37;color:#001F3D;'
+            'font-weight:700;font-size:36px;letter-spacing:2px;">{}</div>'
+            '<p style="margin-top:8px;color:#6B7280;font-size:12px;">'
+            'No custom avatar — Gravatar will be used.</p>',
+            obj.initials or '?'
+        )
+    avatar_preview_large.short_description = 'Current avatar'

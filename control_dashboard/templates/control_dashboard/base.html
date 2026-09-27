@@ -32,7 +32,11 @@
                 <div class="nav-footer">
                     <div class="nav-profile-card" onclick="logoutUser()" style="cursor: pointer;" title="Click to logout">
                         <div class="nav-profile-img-wrapper">
-                            <img src="{% static 'images/user-avatar.jpg' %}" alt="User Profile Image">
+                            <img src="{{ user_profile.avatar_url }}"
+                                alt="{{ user_profile.full_name|default:'User' }}"
+                                loading="lazy"
+                                referrerpolicy="no-referrer"
+                                onerror="this.style.display='none'; this.parentElement.classList.add('avatar-fallback'); this.parentElement.setAttribute('data-initials', '{{ user_profile.initials }}');">
                         </div>
                         <div class="nav-profile-info">
                             <h4 class="nav-user-name">{{ user_profile.full_name|default:"User" }}</h4>

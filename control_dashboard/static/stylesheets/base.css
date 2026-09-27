@@ -15,32 +15,32 @@
     --omnibsic-blue-medium: #1A4B7A;
     --omnibsic-blue-light: #4A7FA7;
     --omnibsic-blue-rgb: 0, 51, 102;
-    
+
     --omnibsic-gold: #D4AF37;
     --omnibsic-gold-light: #F5E6B8;
     --omnibsic-gold-dark: #B8960F;
     --omnibsic-gold-rgb: 212, 175, 55;
-    
+
     /* UI Colors */
     --success: #28A745;
     --success-light: #34d399;
     --success-dark: #1e7e34;
-    
+
     --warning: #FFC107;
     --warning-light: #fbbf24;
     --warning-dark: #d48c1a;
-    
+
     --danger: #DC3545;
     --danger-light: #fb7185;
     --danger-dark: #b91c1c;
-    
+
     --info: #17A2B8;
     --info-light: #60a5fa;
     --info-dark: #0d6efd;
-    
+
     --purple: #8b5cf6;
     --purple-light: #a78bfa;
-    
+
     /* Neutral Colors */
     --dark: #1A2332;
     --gray-900: #1F2937;
@@ -50,13 +50,13 @@
     --gray-200: #E5E7EB;
     --gray-100: #F3F4F6;
     --white: #FFFFFF;
-    
+
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, #003366 0%, #1A4B7A 100%);
     --gradient-gold: linear-gradient(135deg, #D4AF37 0%, #F5E6B8 100%);
     --gradient-sidebar: linear-gradient(180deg, #001F3D 0%, #003366 100%);
     --gradient-header: linear-gradient(135deg, #003366, #1A4B7A);
-    
+
     /* Glass Effects */
     --glass-bg: rgba(255, 255, 255, 0.7);
     --glass-bg-dark: rgba(255, 255, 255, 0.4);
@@ -64,7 +64,7 @@
     --glass-border-dark: rgba(0, 51, 102, 0.06);
     --glass-shadow: rgba(0, 51, 102, 0.06);
     --glass-shadow-hover: rgba(0, 51, 102, 0.12);
-    
+
     /* Spacing */
     --space-xs: 4px;
     --space-sm: 8px;
@@ -73,7 +73,7 @@
     --space-xl: 32px;
     --space-2xl: 48px;
     --space-3xl: 64px;
-    
+
     /* Layout */
     --sidebar-width: 260px;
     --sidebar-collapsed-width: 72px;
@@ -95,7 +95,7 @@ html, body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    background: 
+    background:
         radial-gradient(ellipse at 0% 0%, rgba(0, 51, 102, 0.04) 0%, transparent 50%),
         radial-gradient(ellipse at 100% 100%, rgba(212, 175, 55, 0.04) 0%, transparent 50%),
         var(--gray-100);
@@ -238,7 +238,7 @@ html, body {
 }
 
 /* ==========================================================================
-   6. PROFILE AT BOTTOM
+   6. PROFILE AT BOTTOM — with avatar support
    ========================================================================== */
 
 .nav-footer {
@@ -252,12 +252,12 @@ html, body {
 .nav-profile-card {
     display: flex;
     align-items: center;
-    padding: 12px 14px;
-    border-radius: 10px;
+    padding: 14px 16px;
+    border-radius: 12px;
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.04);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    gap: 12px;
+    gap: 14px;
     cursor: pointer;
     width: 100%;
 }
@@ -268,29 +268,70 @@ html, body {
     transform: translateX(4px);
 }
 
+/* ---------- Avatar wrapper ---------- */
 .nav-profile-img-wrapper {
-    width: 40px;
-    height: 40px;
+    position: relative;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
-    border: 2px solid rgba(212, 175, 55, 0.3);
-    background: var(--omnibsic-gold);
+    border: 2px solid rgba(212, 175, 55, 0.5);
+    background: linear-gradient(135deg, var(--omnibsic-gold) 0%, var(--omnibsic-gold-dark) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.nav-profile-card:hover .nav-profile-img-wrapper {
+    box-shadow:
+        0 0 0 4px rgba(212, 175, 55, 0.28),
+        0 4px 14px rgba(0, 0, 0, 0.28);
+    transform: scale(1.05);
+    border-color: var(--omnibsic-gold);
 }
 
 .nav-profile-img-wrapper img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+    border-radius: 50%;
+    background: var(--omnibsic-gold);
+    transition: opacity 0.2s ease;
 }
 
+/* Legacy initials helper (if template renders a span) */
 .nav-profile-img-wrapper .initials {
     color: var(--omnibsic-blue-dark);
     font-weight: 700;
-    font-size: 16px;
+    font-size: 22px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+/* ---------- Fallback when image fails to load ----------
+   The <img> tag in base.html has an onerror handler that adds
+   .avatar-fallback to this wrapper and sets data-initials.
+   The ::before pseudo-element renders the initials instead. */
+.nav-profile-img-wrapper.avatar-fallback::before {
+    content: attr(data-initials);
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--omnibsic-gold) 0%, var(--omnibsic-gold-dark) 100%);
+    color: var(--omnibsic-blue-dark);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    line-height: 1;
+    border-radius: 50%;
+    font-family: 'Poppins', sans-serif;
 }
 
 .nav-profile-info {
@@ -299,21 +340,21 @@ html, body {
 }
 
 .nav-user-name {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--white);
     margin: 0;
-    line-height: 1.2;
+    line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .nav-user-role {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 400;
-    color: rgba(255,255,255,0.4);
-    margin: 0;
+    color: rgba(255,255,255,0.5);
+    margin: 2px 0 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -633,8 +674,9 @@ body.sidebar-collapsed .nav-profile-card:hover {
 
 body.sidebar-collapsed .nav-profile-img-wrapper {
     margin: 0 auto;
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 }
 
 /* Shrink logo */
@@ -1747,15 +1789,15 @@ small {
         --sidebar-width: 220px;
         --sidebar-collapsed-width: 68px;
     }
-    
+
     .top-header {
         padding: 16px 20px;
     }
-    
+
     .main-content {
         padding: 20px;
     }
-    
+
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
@@ -1768,16 +1810,16 @@ small {
         transform: translateX(-100%);
         width: 280px;
     }
-    
+
     .nav-bar.open {
         transform: translateX(0);
     }
-    
+
     .main-content-wrapper,
     body.sidebar-collapsed .main-content-wrapper {
         margin-left: 0;
     }
-    
+
     /* Force-expand nav content on mobile even if collapsed */
     body.sidebar-collapsed .nav-links li a .nav-text,
     body.sidebar-collapsed .nav-section,
@@ -1785,43 +1827,43 @@ small {
     body.sidebar-collapsed .nav-profile-logout-icon {
         display: block;
     }
-    
+
     body.sidebar-collapsed .nav-links li a {
         justify-content: flex-start;
         padding: 11px 16px;
     }
-    
+
     body.sidebar-collapsed .nav-links li a .nav-icon {
         margin-right: 12px;
         width: 32px;
         font-size: 17px;
     }
-    
+
     body.sidebar-collapsed .nav-profile-card {
         justify-content: flex-start;
         padding: 12px 14px;
         gap: 12px;
     }
-    
+
     body.sidebar-collapsed .nav-profile-img-wrapper {
         margin: 0;
         width: 40px;
         height: 40px;
     }
-    
+
     body.sidebar-collapsed .logo {
         padding: 24px 20px 20px;
     }
-    
+
     body.sidebar-collapsed .logo img {
         max-width: 160px;
     }
-    
+
     /* Hide tooltips on mobile */
     body.sidebar-collapsed .nav-links li a::after {
         display: none;
     }
-    
+
     .top-header {
         flex-direction: column;
         align-items: stretch;
@@ -1829,94 +1871,94 @@ small {
         min-height: auto;
         gap: 12px;
     }
-    
+
     .top-header-left {
         align-items: center;
         text-align: center;
         justify-content: center;
     }
-    
+
     .top-header-left .page-subtitle {
         display: none;
     }
-    
+
     .top-header-center {
         order: 3;
         width: 100%;
         justify-content: flex-start;
         flex-wrap: wrap;
     }
-    
+
     .top-header-right {
         justify-content: center;
     }
-    
+
     .page-title {
         font-size: 1.2rem;
     }
-    
+
     .main-content {
         padding: 15px;
     }
-    
+
     .messages-container {
         padding: 15px;
     }
-    
+
     .metrics-grid,
     .stats-grid {
         grid-template-columns: 1fr 1fr;
     }
-    
+
     .chart-header {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .chart-controls {
         flex-wrap: wrap;
     }
-    
+
     .chart-btn {
         flex: 1;
         text-align: center;
     }
-    
+
     .chart-wrapper {
         height: 220px;
     }
-    
+
     .modal-content {
         padding: 30px 20px;
         margin: 20px;
     }
-    
+
     .modal-actions {
         flex-direction: column;
     }
-    
+
     .btn-cancel,
     .btn-logout {
         width: 100%;
         justify-content: center;
     }
-    
+
     .header-select {
         min-width: 100px;
         font-size: 11px;
         padding: 4px 24px 4px 8px;
     }
-    
+
     .btn-create-header {
         font-size: 11px;
         padding: 4px 12px;
     }
-    
+
     .btn-refresh-header {
         font-size: 11px;
         padding: 4px 10px;
     }
-    
+
     .quick-actions-grid {
         grid-template-columns: 1fr 1fr;
     }
@@ -1928,41 +1970,41 @@ small {
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .metric-card,
     .stat-card {
         padding: 16px;
     }
-    
+
     .metric-value,
     .stat-number {
         font-size: 1.4rem;
     }
-    
+
     .nav-profile-card {
         padding: 10px 12px;
     }
-    
+
     .nav-user-name {
         font-size: 12px;
     }
-    
+
     .top-header {
         padding: 12px;
     }
-    
+
     .page-title {
         font-size: 1rem;
     }
-    
+
     .main-content {
         padding: 10px;
     }
-    
+
     .table-container {
         padding: var(--space-md);
     }
-    
+
     .dashboard-table thead th,
     .dashboard-table tbody td,
     .users-table thead th,
@@ -1970,11 +2012,11 @@ small {
         padding: 8px 10px;
         font-size: 11px;
     }
-    
+
     .quick-actions-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .sidebar-toggle {
         width: 34px;
         height: 34px;
