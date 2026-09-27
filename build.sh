@@ -10,6 +10,7 @@ python manage.py migrate
 # Optional: auto-create superuser from env vars
 # python manage.py createsuperuser --no-input || true
 
-if [[$CREATE_SUPERUSER == "true"]]; then
+if [[$CREATE_SUPERUSER]]; 
+then
     python manage.py createsuperuser --no-input || true
 fi
