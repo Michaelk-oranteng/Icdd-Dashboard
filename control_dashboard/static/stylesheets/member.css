@@ -327,6 +327,8 @@
     padding: 18px 22px 14px;
     border-bottom: 1px solid var(--fx-hairline);
     background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .fx-panel-title {
@@ -372,7 +374,181 @@
 .fx-panel-body { padding: 4px 0 0; }
 
 /* ============================================================
-   5. DATA TABLE
+   5. IRREGULAR GL — date selector (calendar picker)
+   ============================================================ */
+.fx-gl-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fx-gl-date-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.fx-gl-date-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--fx-text-2);
+    white-space: nowrap;
+}
+
+/* ---------- Native date input (calendar picker) ---------- */
+.fx-gl-date-input {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 6px 12px;
+    height: 32px;
+    min-width: 155px;
+    font-family: var(--fx-font);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--fx-text-0);
+    background-color: var(--fx-bg-1);
+    border: 1px solid var(--fx-border);
+    border-radius: 8px;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    box-shadow: var(--fx-shadow-sm);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2px;
+}
+
+.fx-gl-date-input:hover {
+    border-color: var(--fx-border-strong);
+    background-color: var(--fx-bg-2);
+}
+
+.fx-gl-date-input:focus {
+    border-color: var(--fx-rose);
+    box-shadow: 0 0 0 3px rgba(224, 69, 106, 0.12);
+    background-color: var(--fx-bg-1);
+}
+
+/* Selected day has no uploaded trial balance */
+.fx-gl-date-input.is-empty {
+    border-color: rgba(224, 138, 23, 0.35);
+    background-color: var(--fx-amber-soft);
+    color: var(--fx-amber);
+}
+
+.fx-gl-date-input.is-empty:hover {
+    background-color: #fcebd0;
+}
+
+.fx-gl-date-input.is-empty:focus {
+    border-color: var(--fx-amber);
+    box-shadow: 0 0 0 3px rgba(224, 138, 23, 0.15);
+}
+
+/* Calendar trigger icon */
+.fx-gl-date-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.55;
+    padding: 2px;
+    border-radius: 4px;
+    transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.fx-gl-date-input::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    background: var(--fx-accent-soft);
+}
+
+/* ---------- "Jump to today" quick button ---------- */
+.fx-gl-today-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 10px;
+    height: 32px;
+    border-radius: 8px;
+    font-family: var(--fx-font);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    background: var(--fx-bg-1);
+    color: var(--fx-text-1);
+    border: 1px solid var(--fx-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--fx-shadow-sm);
+    white-space: nowrap;
+}
+
+.fx-gl-today-btn:hover {
+    background: var(--fx-accent-soft);
+    color: var(--fx-accent);
+    border-color: rgba(79, 110, 247, 0.28);
+    transform: translateY(-1px);
+}
+
+.fx-gl-today-btn:active {
+    transform: translateY(0);
+}
+
+.fx-gl-today-btn i {
+    font-size: 10px;
+}
+
+/* ---------- "Today" green pill ---------- */
+.fx-gl-today-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    background: var(--fx-emerald-soft);
+    color: var(--fx-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.25);
+    white-space: nowrap;
+}
+
+.fx-gl-today-pill .fx-gl-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fx-emerald);
+    box-shadow: 0 0 6px rgba(23, 166, 115, 0.6);
+    animation: fx-pulse 2.4s ease-in-out infinite;
+}
+
+.fx-gl-meta {
+    padding: 10px 22px 12px;
+    font-size: 11px;
+    color: var(--fx-text-2);
+    border-bottom: 1px solid var(--fx-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fx-gl-meta strong {
+    color: var(--fx-text-0);
+    font-weight: 700;
+}
+
+.fx-gl-meta .fx-gl-meta-sep {
+    color: var(--fx-border-strong);
+}
+
+/* ============================================================
+   6. DATA TABLE
    ============================================================ */
 .fx-table-scroll {
     max-height: 380px;
@@ -456,7 +632,7 @@
 .fx-table .fcy-cell { color: var(--fx-text-2); }
 
 /* ============================================================
-   6. EMPTY STATE
+   7. EMPTY STATE
    ============================================================ */
 .fx-empty {
     display: flex;
@@ -502,7 +678,7 @@
 }
 
 /* ============================================================
-   7. QUICK ACTIONS
+   8. QUICK ACTIONS
    ============================================================ */
 .fx-actions {
     display: flex;
@@ -617,7 +793,7 @@
 }
 
 /* ============================================================
-   8. FOOTER STATS STRIP
+   9. FOOTER STATS STRIP
    ============================================================ */
 .fx-footer-strip {
     display: grid;
@@ -680,7 +856,7 @@
 }
 
 /* ============================================================
-   9. LEGACY CLASS COMPATIBILITY
+   10. LEGACY CLASS COMPATIBILITY
    ============================================================ */
 .users-table {
     width: 100%;
@@ -751,7 +927,7 @@
 .status-badge.danger  { background: var(--fx-rose-soft); color: var(--fx-rose); }
 
 /* ============================================================
-   10. RESPONSIVE
+   11. RESPONSIVE
    ============================================================ */
 @media (max-width: 1200px) {
     .fx-metrics-strip { grid-template-columns: repeat(2, 1fr); }
@@ -775,4 +951,11 @@
     .fx-footer-strip { grid-template-columns: 1fr 1fr; }
     .fx-footer-cell { padding: 14px 16px; }
     .fx-footer-value { font-size: 18px; }
+
+    /* Calendar controls stack on small screens */
+    .fx-gl-controls { width: 100%; gap: 8px; }
+    .fx-gl-date-form { width: 100%; }
+    .fx-gl-date-input { flex: 1; min-width: 0; }
+    .fx-gl-date-label { font-size: 9px; }
+    .fx-gl-today-btn { flex-shrink: 0; }
 }

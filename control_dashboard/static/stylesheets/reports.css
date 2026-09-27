@@ -198,8 +198,7 @@
 }
 
 /* ==========================================================================
-   2. REPORT DETAILS TABLE — same pattern as draft.html preview table
-   Long cells wrap in place with a max-width cap so rows don't explode.
+   2. REPORT DETAILS TABLE
    ========================================================================== */
 .report-details-table {
     width: max-content;
@@ -219,6 +218,10 @@
     z-index: 2;
 }
 
+/* ----------------------------------------------------------------
+   HEADER CELLS — allow text to WRAP so long header labels do not
+   overflow into neighbouring columns.
+   ---------------------------------------------------------------- */
 .report-details-table thead th {
     color: var(--rp-text-2);
     font-size: 10px;
@@ -228,12 +231,17 @@
     text-align: left;
     padding: 12px 14px;
     border-bottom: 1px solid var(--rp-border);
-    white-space: nowrap;
-    vertical-align: top;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+    vertical-align: bottom;
     background: var(--rp-bg-2);
 }
 
-/* Default cells — wrap in place with a normal cap */
+/* ----------------------------------------------------------------
+   BODY CELLS — default wrap behaviour
+   ---------------------------------------------------------------- */
 .report-details-table tbody td {
     padding: 12px 14px;
     color: var(--rp-text-1);
@@ -245,13 +253,10 @@
     overflow-wrap: anywhere;
     line-height: 1.55;
     min-width: 90px;
-    max-width: 420px;
 }
 
 /* ============================================================
    WIDE — exception, description, remarks, response
-   Higher cap than normal cells, but STILL CAPPED so it wraps
-   instead of creating one long horizontal row.
    ============================================================ */
 .report-details-table thead th.wide-cell,
 .report-details-table tbody td.wide-cell {
@@ -266,28 +271,48 @@
 
 /* ============================================================
    COMPACT — S/N, officer, branch, status, category
+   ------------------------------------------------------------
+   Header: wraps.
+   Body:   nowrap + ellipsis so rows stay short.
    ============================================================ */
 .report-details-table thead th.narrow-cell,
 .report-details-table tbody td.narrow-cell {
-    min-width: 80px;
+    min-width: 90px;
     max-width: 180px;
+}
+
+.report-details-table thead th.narrow-cell {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.report-details-table tbody td.narrow-cell {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 /* ============================================================
-   DATE cells
+   DATE — header wraps, body stays single-line
    ============================================================ */
 .report-details-table thead th.date-cell,
 .report-details-table tbody td.date-cell {
     min-width: 110px;
-    max-width: 140px;
-    white-space: nowrap;
+    max-width: 150px;
     font-variant-numeric: tabular-nums;
     font-family: var(--rp-mono);
     font-size: 11px;
     color: var(--rp-text-1);
+}
+
+.report-details-table thead th.date-cell {
+    white-space: normal;
+    word-break: break-word;
+    font-family: var(--rp-font);
+}
+
+.report-details-table tbody td.date-cell {
+    white-space: nowrap;
 }
 
 /* ============================================================
@@ -296,14 +321,25 @@
 .report-details-table thead th.num-cell,
 .report-details-table tbody td.num-cell {
     min-width: 100px;
-    max-width: 160px;
-    white-space: nowrap;
-    text-align: right;
+    max-width: 170px;
     font-variant-numeric: tabular-nums;
     font-family: var(--rp-mono);
     font-size: 12px;
     font-weight: 600;
     color: var(--rp-emerald);
+}
+
+.report-details-table thead th.num-cell {
+    white-space: normal;
+    word-break: break-word;
+    text-align: right;
+    font-family: var(--rp-font);
+    font-size: 10px;
+}
+
+.report-details-table tbody td.num-cell {
+    white-space: nowrap;
+    text-align: right;
 }
 
 /* Zebra + hover */
@@ -325,25 +361,6 @@
 
 .report-details-table tbody tr.selected:hover td {
     background: #e3e9ff;
-}
-
-/* Checkbox column */
-.checkbox-cell {
-    width: 44px;
-    min-width: 44px;
-    max-width: 44px;
-    text-align: center;
-    padding: 4px 8px !important;
-    vertical-align: middle !important;
-    background: var(--rp-bg-2);
-}
-
-.checkbox-cell input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--rp-accent);
-    cursor: pointer;
-    vertical-align: middle;
 }
 
 /* Actions cell — fixed width */
@@ -877,104 +894,7 @@
 }
 
 /* ==========================================================================
-   10. SELECTION CONTROLS
-   ========================================================================== */
-.selection-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 18px;
-    background: var(--rp-bg-1);
-    border-radius: 14px;
-    border: 1px solid var(--rp-border);
-    flex-wrap: wrap;
-    gap: 12px;
-    box-shadow: var(--rp-shadow-sm);
-}
-
-.selection-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.selection-left .checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--rp-text-0);
-    cursor: pointer;
-    letter-spacing: 0.2px;
-}
-
-.selection-left .checkbox-label input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--rp-accent);
-    cursor: pointer;
-}
-
-.selected-count-badge {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--rp-text-2);
-    background: var(--rp-bg-2);
-    padding: 4px 12px;
-    border-radius: 10px;
-    border: 1px solid var(--rp-border);
-    font-variant-numeric: tabular-nums;
-}
-
-.btn-submit-selected {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 20px;
-    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
-    color: white;
-    border: 1px solid rgba(79, 110, 247, 0.4);
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    font-family: var(--rp-font);
-    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-submit-selected::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
-    opacity: 0;
-    transition: opacity 0.25s ease;
-}
-
-.btn-submit-selected:hover:not(:disabled)::before { opacity: 1; }
-
-.btn-submit-selected:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
-}
-
-.btn-submit-selected:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-.btn-submit-selected i { font-size: 13px; }
-
-/* ==========================================================================
-   11. LOADING STATE
+   10. LOADING STATE
    ========================================================================== */
 #editFormFields .loading {
     text-align: center;
@@ -990,7 +910,7 @@
 }
 
 /* ==========================================================================
-   12. SCROLLBAR FOR MODAL
+   11. SCROLLBAR FOR MODAL
    ========================================================================== */
 .modal-wrapper .modal-content::-webkit-scrollbar {
     width: 6px;
@@ -1015,7 +935,7 @@
 }
 
 /* ==========================================================================
-   13. RESPONSIVE
+   12. RESPONSIVE
    ========================================================================== */
 @media (max-width: 1024px) {
     .report-details-table thead th,

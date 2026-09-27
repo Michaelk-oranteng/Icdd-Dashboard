@@ -728,51 +728,55 @@ def supervisor_dashboard(request):
 
     today = timezone.now().date()
 
-    # ============================================================
-    # TOTAL EXCEPTIONS — fed from ExceptionRecord (matches Analytics)
-    # ============================================================
+    # ---- Total exceptions (unchanged) ----
     exceptions_qs = ExceptionRecord.objects.filter(
         report__isnull=False,
     ).exclude(
         report__report_type=TRIAL_BALANCE_REPORT_TYPE,
     )
-
     total_exceptions = exceptions_qs.count()
     today_exceptions = exceptions_qs.filter(created_at__date=today).count()
 
-    # ============================================================
-    # SUBMITTED REPORTS — still counts Report containers
-    # (a "submitted report" is a container-level concept)
-    # ============================================================
+    # ---- Submitted reports count (unchanged) ----
     submitted_qs = Report.objects.filter(status='submitted').exclude(
         report_type=TRIAL_BALANCE_REPORT_TYPE
     )
     submitted_reports_count = submitted_qs.count()
 
-    # ============================================================
-    # TEAM PERFORMANCE — unchanged logic
-    # ============================================================
-    team_members = UserProfile.objects.filter(role='member', status='active').order_by('full_name')
-
-    max_submissions = (
-        submitted_qs.values('created_by').annotate(c=Count('id'))
-        .order_by('-c').values_list('c', flat=True).first()
-    ) or 1
+    # ---- Team performance — RANKED BY NET SCORE ----
+    team_members = (
+        UserProfile.objects
+        .filter(role='member', status='active')
+        .order_by('full_name')
+    )
 
     team_performance = []
     for member in team_members:
         member_submitted = submitted_qs.filter(created_by=member).count()
-        member_deductions = (
-            AdHocDeduction.objects.filter(user=member)
-            .aggregate(total=Sum('points')).get('total') or 0
-        )
-        final_score = max(0, member_submitted - member_deductions)
-        percentage = int((final_score / max_submissions) * 100) if max_submissions > 0 else 0
-        percentage = min(percentage, 100)
 
-        if percentage >= 80:
+        member_debits = (
+            AdHocDeduction.objects
+            .filter(user=member)
+            .aggregate(total=Sum('points'))
+            .get('total') or 0
+        )
+        member_credits = (
+            AdHocDeduction.objects
+            .filter(user=member)
+            .aggregate(total=Sum('points_added'))
+            .get('total') or 0
+        )
+
+        net_score = member_credits - member_debits
+        percentage = max(0, min(100, net_score))
+
+        if percentage >= 90:
+            status = 'success'
+        elif percentage >= 70:
             status = 'success'
         elif percentage >= 50:
+            status = 'warning'
+        elif percentage > 0:
             status = 'warning'
         else:
             status = 'danger'
@@ -780,18 +784,24 @@ def supervisor_dashboard(request):
         team_performance.append({
             'user': member,
             'submitted': member_submitted,
-            'deductions': member_deductions,
-            'final_score': final_score,
+            'deductions': member_debits,
+            'credits': member_credits,
+            'net_score': net_score,
+            'final_score': net_score,
             'percentage': percentage,
             'status': status,
         })
 
-    team_performance.sort(key=lambda x: x['percentage'], reverse=True)
+    # Rank: highest net score first, tie-break on submissions
+    team_performance.sort(
+        key=lambda x: (x['net_score'], x['submitted']),
+        reverse=True,
+    )
 
-    if team_performance:
-        completion_rate = int(sum(m['percentage'] for m in team_performance) / len(team_performance))
-    else:
-        completion_rate = 0
+    completion_rate = (
+        int(sum(m['percentage'] for m in team_performance) / len(team_performance))
+        if team_performance else 0
+    )
 
     context = {
         'user_profile': user_profile,
@@ -804,7 +814,6 @@ def supervisor_dashboard(request):
     }
 
     return render(request, 'control_dashboard/supervisorboard.html', context)
-
 # ==================== REPORT CREATION & CENTER VIEWS ====================
 
 @login_required
@@ -6216,6 +6225,107 @@ def api_edit_excel_row(request, row_id):
 @csrf_exempt
 @require_http_methods(["GET"])
 def api_supervisor_top_performers_live(request):
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+        if user_profile.role not in ('supervisor', 'admin'):
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+    today = timezone.now().date()
+
+    exceptions_qs = ExceptionRecord.objects.filter(
+        report__isnull=False,
+    ).exclude(
+        report__report_type=TRIAL_BALANCE_REPORT_TYPE,
+    )
+    total_exceptions = exceptions_qs.count()
+    today_exceptions = exceptions_qs.filter(created_at__date=today).count()
+
+    submitted_qs = Report.objects.filter(status='submitted').exclude(
+        report_type=TRIAL_BALANCE_REPORT_TYPE
+    )
+    submitted_reports_count = submitted_qs.count()
+
+    team_members = (
+        UserProfile.objects
+        .filter(role='member', status='active')
+        .order_by('full_name')
+    )
+
+    performers = []
+    sum_of_percentages = 0
+    total_members = 0
+
+    for member in team_members:
+        member_submitted = submitted_qs.filter(created_by=member).count()
+
+        member_debits = (
+            AdHocDeduction.objects
+            .filter(user=member)
+            .aggregate(total=Sum('points'))
+            .get('total') or 0
+        )
+        member_credits = (
+            AdHocDeduction.objects
+            .filter(user=member)
+            .aggregate(total=Sum('points_added'))
+            .get('total') or 0
+        )
+
+        net_score = member_credits - member_debits
+        percentage = max(0, min(100, net_score))
+
+        if percentage >= 90:
+            status, status_icon, status_text = 'success', '🌟', 'Outstanding'
+        elif percentage >= 70:
+            status, status_icon, status_text = 'success', '🌟', 'Excellent'
+        elif percentage >= 50:
+            status, status_icon, status_text = 'warning', '📈', 'In Progress'
+        elif percentage > 0:
+            status, status_icon, status_text = 'warning', '📈', 'Building Up'
+        else:
+            status, status_icon, status_text = 'danger', '⚠️', 'Needs Attention'
+
+        performers.append({
+            'id': member.id,
+            'full_name': member.full_name or member.email,
+            'submitted': member_submitted,
+            'deductions': member_debits,
+            'credits': member_credits,
+            'net_score': net_score,
+            'final_score': net_score,
+            'percentage': percentage,
+            'status': status,
+            'status_text': status_text,
+            'status_icon': status_icon,
+        })
+
+        total_members += 1
+        sum_of_percentages += percentage
+
+    # Rank: highest net score first, tie-break on submissions
+    performers.sort(
+        key=lambda x: (x['net_score'], x['submitted']),
+        reverse=True,
+    )
+    top_performers = performers[:5]
+
+    completion_rate = (
+        int(sum_of_percentages / total_members) if total_members else 0
+    )
+
+    return JsonResponse({
+        'success': True,
+        'top_performers': top_performers,
+        'summary': {
+            'total_exceptions': total_exceptions,
+            'today_exceptions': today_exceptions,
+            'submitted_reports_count': submitted_reports_count,
+            'completion_rate': completion_rate,
+            'team_size': total_members,
+        },
+    })
     """
     Lightweight JSON endpoint for the Supervisor Dashboard's
     'Top Performers' widget.

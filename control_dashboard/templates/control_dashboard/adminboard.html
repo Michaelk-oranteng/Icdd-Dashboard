@@ -523,30 +523,42 @@
 {% block dashboard_url %}{% url 'control_dashboard:admin_page' %}{% endblock %}
 
 {% block nav_links %}
-<li class="active"><a href="{% url 'control_dashboard:admin_page' %}">
-    <span class="nav-icon"><i class="fas fa-user-cog"></i></span>
-    <span class="nav-text">User Management</span>
-</a></li>
-<li><a href="{% url 'control_dashboard:report_creation' %}">
-    <span class="nav-icon"><i class="fas fa-flag"></i></span>
-    <span class="nav-text">Report Creation</span>
-</a></li>
-<li><a href="{% url 'control_dashboard:report_center' %}">
-    <span class="nav-icon"><i class="fas fa-flag"></i></span>
-    <span class="nav-text">Report Center</span>
-</a></li>
-<li><a href="{% url 'control_dashboard:checklist_builder' %}">
-    <span class="nav-icon"><i class="fas fa-cubes"></i></span>
-    <span class="nav-text">Checklist Builder</span>
-</a></li>
-<li><a href="{% url 'control_dashboard:checklist_list' %}">
-    <span class="nav-icon"><i class="fas fa-tools"></i></span>
-    <span class="nav-text">Checklist Activities</span>
-</a></li>
-<li><a href="{% url 'control_dashboard:activity_logs' %}">
-    <span class="nav-icon"><i class="fas fa-key"></i></span>
-    <span class="nav-text">Activity Logs</span>
-</a></li>
+<li class="active">
+    <a href="{% url 'control_dashboard:admin_page' %}">
+        <span class="nav-icon"><i class="fas fa-users-cog"></i></span>
+        <span class="nav-text">Admin Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:report_creation' %}">
+        <span class="nav-icon"><i class="fas fa-file-medical"></i></span>
+        <span class="nav-text">Create Report</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:report_center' %}">
+        <span class="nav-icon"><i class="fas fa-inbox"></i></span>
+        <span class="nav-text">Report Center</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:checklist_builder' %}">
+        <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+        <span class="nav-text">Checklist Builder</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:checklist_list' %}">
+        <span class="nav-icon"><i class="fas fa-list-check"></i></span>
+        <span class="nav-text">Checklist List</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:activity_logs' %}">
+        <span class="nav-icon"><i class="fas fa-search"></i></span>
+        <span class="nav-text">Activity Logs</span>
+    </a>
+</li>
 {% endblock %}
 
 {% block page_title %}Create and Manage Users{% endblock %}

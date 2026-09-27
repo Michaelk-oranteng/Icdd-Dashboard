@@ -211,39 +211,18 @@
 <script id="reports-config" type="application/json">
 {
   "urls": {
-    "submitSelected": "{% url 'control_dashboard:submit_selected' %}",
     "draftDetail":    "{% url 'control_dashboard:draft_detail' 0 %}",
     "draftEdit":      "{% url 'control_dashboard:draft_edit' 0 %}",
     "draftDelete":    "{% url 'control_dashboard:draft_delete' 0 %}",
     "excelEdit":      "{% url 'control_dashboard:excel_row_edit' 0 %}",
     "excelDelete":    "{% url 'control_dashboard:excel_row_delete' 0 %}"
-  },
-  "openSubmitInNewTab": false
+  }
 }
 </script>
 
 <div class="table-container">
 
     {% if exception_uploads %}
-
-        <!-- Selection Controls -->
-        <div class="selection-controls">
-            <div class="selection-left">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="selectAllReports" onchange="toggleSelectAllReports()">
-                    <span>Select All</span>
-                </label>
-                <span class="selected-count-badge" id="selectedReportsCountBadge">0 selected</span>
-            </div>
-            <div class="selection-right">
-                <button class="btn-submit-selected"
-                        onclick="submitSelectedReports()"
-                        id="submitSelectedReportsBtn"
-                        disabled>
-                    <i class="fas fa-paper-plane"></i> Submit Selected
-                </button>
-            </div>
-        </div>
 
         {% regroup exception_uploads by report_type as exc_groups %}
         {% for type_group in exc_groups %}
@@ -268,12 +247,6 @@
                                 <table class="report-details-table">
                                     <thead>
                                         <tr>
-                                            <th class="checkbox-cell">
-                                                <input type="checkbox"
-                                                       class="select-all-in-group"
-                                                       data-group="{{ type_group.grouper }}"
-                                                       onchange="toggleGroupSelection(this)">
-                                            </th>
                                             {% if display.is_excel %}
                                                 {% for header in display.headers %}
                                                     {% with h=header|upper %}
@@ -312,13 +285,6 @@
                                         data-row-id="{{ row.row_id }}"
                                         data-kind="excel"
                                         class="report-row">
-                                        <td class="checkbox-cell">
-                                            <input type="checkbox"
-                                                   class="report-checkbox"
-                                                   data-id="{{ report_item.id }}"
-                                                   data-group="{{ type_group.grouper }}"
-                                                   onchange="toggleReportSelection(this)">
-                                        </td>
                                         {% for header in display.headers %}
                                             {% with h=header|upper %}
                                                 {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
@@ -353,7 +319,7 @@
                                     </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="{{ display.headers|length|default:0|add:2 }}" class="empty-row">
+                                        <td colspan="{{ display.headers|length|default:0|add:1 }}" class="empty-row">
                                             No data rows found in this Excel import.
                                         </td>
                                     </tr>
@@ -364,13 +330,6 @@
                                         data-id="{{ report_item.id }}"
                                         data-kind="form"
                                         class="report-row">
-                                        <td class="checkbox-cell">
-                                            <input type="checkbox"
-                                                   class="report-checkbox"
-                                                   data-id="{{ report_item.id }}"
-                                                   data-group="{{ type_group.grouper }}"
-                                                   onchange="toggleReportSelection(this)">
-                                        </td>
                                         {% if row %}
                                             <td class="narrow-cell">
                                                 {% with value=row.Branch|default:row.branch|default:row.BRANCH|default:row.BRANCH_UNIT|default:row.branch_unit|default:row.Unit|default:row.unit|default:"-" %}
@@ -412,8 +371,8 @@
                                                 {% endwith %}
                                             </td>
                                         {% else %}
-                                            {# checkbox + 5 fields + actions = 7 #}
-                                            <td colspan="7" class="empty-row">No data available</td>
+                                            {# 5 data columns only — the separate actions cell below covers column 6 #}
+                                            <td colspan="5" class="empty-row">No data available</td>
                                         {% endif %}
                                         <td class="text-center">
                                             <div class="table-actions-cluster">
@@ -576,129 +535,6 @@
     }
 
     // ============================================
-    // REPORT SELECTION
-    //   The Set stores unique report IDs.
-    //   All rows belonging to the same report toggle together.
-    // ============================================
-    const selectedReportIds = new Set();
-
-    function eachCheckbox(cb) {
-        return document.querySelectorAll(
-            '.report-checkbox[data-id="' + cb.dataset.id + '"]'
-        );
-    }
-
-    function toggleSelectAllReports() {
-        const selectAll = document.getElementById('selectAllReports');
-        const allChecked = selectAll.checked;
-        document.querySelectorAll('.report-checkbox').forEach(cb => {
-            cb.checked = allChecked;
-            const id = parseInt(cb.dataset.id, 10);
-            if (allChecked) selectedReportIds.add(id);
-            else            selectedReportIds.delete(id);
-            cb.closest('tr').classList.toggle('selected', allChecked);
-        });
-        document.querySelectorAll('.select-all-in-group').forEach(g => {
-            g.checked = allChecked;
-            g.indeterminate = false;
-        });
-        updateReportSelectionCount();
-    }
-
-    function toggleGroupSelection(groupCheckbox) {
-        const group = groupCheckbox.dataset.group;
-        const isChecked = groupCheckbox.checked;
-        document.querySelectorAll('.report-checkbox[data-group="' + group + '"]').forEach(cb => {
-            cb.checked = isChecked;
-            const id = parseInt(cb.dataset.id, 10);
-            if (isChecked) selectedReportIds.add(id);
-            else           selectedReportIds.delete(id);
-            cb.closest('tr').classList.toggle('selected', isChecked);
-        });
-        updateReportSelectionCount();
-        syncSelectAllReportsCheckbox();
-    }
-
-    function toggleReportSelection(cb) {
-        const id = parseInt(cb.dataset.id, 10);
-        const checked = cb.checked;
-        if (checked) selectedReportIds.add(id);
-        else         selectedReportIds.delete(id);
-
-        // Reflect state across all rows of the same report
-        eachCheckbox(cb).forEach(c => {
-            c.checked = checked;
-            c.closest('tr').classList.toggle('selected', checked);
-        });
-
-        syncSelectAllReportsCheckbox();
-        syncGroupCheckboxes(cb.dataset.group);
-        updateReportSelectionCount();
-    }
-
-    function syncSelectAllReportsCheckbox() {
-        const all = document.querySelectorAll('.report-checkbox');
-        const checked = document.querySelectorAll('.report-checkbox:checked');
-        const selectAll = document.getElementById('selectAllReports');
-        if (!selectAll) return;
-        selectAll.checked = all.length > 0 && checked.length === all.length;
-        selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
-    }
-
-    function syncGroupCheckboxes(group) {
-        if (!group) return;
-        const groupCheckbox = document.querySelector('.select-all-in-group[data-group="' + group + '"]');
-        if (!groupCheckbox) return;
-        const groupRows = document.querySelectorAll('.report-checkbox[data-group="' + group + '"]');
-        const groupChecked = document.querySelectorAll('.report-checkbox[data-group="' + group + '"]:checked');
-        groupCheckbox.checked = groupRows.length > 0 && groupChecked.length === groupRows.length;
-        groupCheckbox.indeterminate = groupChecked.length > 0 && groupChecked.length < groupRows.length;
-    }
-
-    function updateReportSelectionCount() {
-        const count = selectedReportIds.size;
-        const badge = document.getElementById('selectedReportsCountBadge');
-        const btn = document.getElementById('submitSelectedReportsBtn');
-        if (badge) badge.textContent = count + ' selected';
-        if (btn) {
-            btn.disabled = (count === 0);
-            btn.innerHTML = (count > 0)
-                ? '<i class="fas fa-paper-plane"></i> Submit ' + count + ' Selected'
-                : '<i class="fas fa-paper-plane"></i> Submit Selected';
-        }
-    }
-
-    function submitSelectedReports() {
-        if (selectedReportIds.size === 0) {
-            showToast('Please select at least one report to submit.', 'error');
-            return;
-        }
-
-        const selectedIds = Array.from(selectedReportIds);
-
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = CFG.urls.submitSelected;
-        if (CFG.openSubmitInNewTab) form.target = '_blank';
-
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = getCsrfToken();
-        form.appendChild(csrfInput);
-
-        const dataInput = document.createElement('input');
-        dataInput.type = 'hidden';
-        dataInput.name = 'selected_reports';
-        dataInput.value = JSON.stringify(selectedIds);
-        form.appendChild(dataInput);
-
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
-    }
-
-    // ============================================
     // DELETE — single Excel row
     // ============================================
     function deleteExcelRow(rowId) {
@@ -845,8 +681,7 @@
 
         const table = tr.closest('table');
         const headers = [];
-        table.querySelectorAll('thead th').forEach((th, idx) => {
-            if (idx === 0) return;                          // checkbox col
+        table.querySelectorAll('thead th').forEach(th => {
             const txt = th.textContent.trim();
             if (txt.toLowerCase() === 'actions') return;
             headers.push(txt);
@@ -854,7 +689,6 @@
 
         const cells = [];
         tr.querySelectorAll('td').forEach(td => {
-            if (td.classList.contains('checkbox-cell')) return;
             if (td.querySelector('.table-actions-cluster')) return;
             cells.push(td.textContent.trim());
         });
@@ -1092,7 +926,7 @@
         if (end) end.setHours(23, 59, 59, 999);
 
         document.querySelectorAll('.report-details-table tbody tr').forEach(row => {
-            if (row.dataset.kind === 'excel') return;      // Excel rows have per-row dates in arbitrary columns
+            if (row.dataset.kind === 'excel') return;
             if (row.querySelector('.empty-row')) return;
 
             const dateCell = row.querySelector('td.date-cell');
@@ -1136,22 +970,18 @@
     // ============================================
     // EXPOSE HANDLERS TO INLINE onclick
     // ============================================
-    window.showToast                = showToast;
-    window.closeToast               = closeToast;
-    window.toggleGroup              = toggleGroup;
-    window.resetFilters             = resetFilters;
-    window.toggleSelectAllReports   = toggleSelectAllReports;
-    window.toggleGroupSelection     = toggleGroupSelection;
-    window.toggleReportSelection    = toggleReportSelection;
-    window.submitSelectedReports    = submitSelectedReports;
-    window.deleteExcelRow           = deleteExcelRow;
-    window.deleteReport             = deleteReport;
-    window.closeDeleteModal         = closeDeleteModal;
-    window.confirmDelete            = confirmDelete;
-    window.openEditModal            = openEditModal;
-    window.openEditRowModal         = openEditRowModal;
-    window.closeEditModal           = closeEditModal;
-    window.submitEditReport         = submitEditReport;
+    window.showToast         = showToast;
+    window.closeToast        = closeToast;
+    window.toggleGroup       = toggleGroup;
+    window.resetFilters      = resetFilters;
+    window.deleteExcelRow    = deleteExcelRow;
+    window.deleteReport      = deleteReport;
+    window.closeDeleteModal  = closeDeleteModal;
+    window.confirmDelete     = confirmDelete;
+    window.openEditModal     = openEditModal;
+    window.openEditRowModal  = openEditRowModal;
+    window.closeEditModal    = closeEditModal;
+    window.submitEditReport  = submitEditReport;
 
 })();
 </script>

@@ -197,7 +197,6 @@
     position: relative;
 }
 
-/* Subtle top gradient on the glass card */
 .glass-card::before {
     content: '';
     position: absolute;
@@ -355,7 +354,6 @@
     hyphens: auto;
 }
 
-/* Long descriptive columns — full text, wraps generously */
 .preview-table tbody td.wide-cell {
     min-width: 320px;
     max-width: 800px;
@@ -367,14 +365,12 @@
     color: var(--up-text-0);
 }
 
-/* Compact columns */
 .preview-table tbody td.narrow-cell {
     min-width: 80px;
     max-width: 160px;
     white-space: nowrap;
 }
 
-/* Date columns */
 .preview-table tbody td.date-cell {
     min-width: 110px;
     max-width: 130px;
@@ -385,7 +381,6 @@
     color: var(--up-text-1);
 }
 
-/* Numeric columns */
 .preview-table tbody td.num-cell {
     min-width: 100px;
     max-width: 160px;
@@ -398,7 +393,6 @@
     color: var(--up-emerald);
 }
 
-/* Zebra striping for readability */
 .preview-table tbody tr:nth-child(even) td {
     background: rgba(15, 27, 51, 0.012);
 }
@@ -411,7 +405,6 @@
     border-bottom: none;
 }
 
-/* Status pill styling inside cells */
 .preview-table tbody td.status-pill {
     white-space: nowrap;
     text-align: center;
@@ -458,7 +451,6 @@
     padding: 40px 20px;
 }
 
-/* Custom scrollbar */
 .table-wrapper::-webkit-scrollbar { height: 10px; width: 10px; }
 .table-wrapper::-webkit-scrollbar-track {
     background: var(--up-bg-2);
@@ -962,19 +954,15 @@
     function classifyColumn(header) {
         const h = String(header || '').toUpperCase().replace(/\s+/g, ' ').trim();
 
-        // Long-text columns — full text, wraps
         if (h.includes('EXCEPTION') && !h.includes('CATEGORY')) return 'wide-cell';
         if (h.includes('AUDITEE') || h.includes('RESPONSE')) return 'wide-cell';
         if (h.includes('REMARK') || h.includes('COMMENT') || h.includes('NOTE')) return 'wide-cell';
 
-        // Date columns
         if (h.includes('DATE')) return 'date-cell';
 
-        // Numeric columns
         if (h.includes('INCOME') || h.includes('COST') || h.includes('SAVED')) return 'num-cell';
         if (h === 'S/N' || h === 'SN' || h === 'SERIAL NUMBER' || h === 'SERIAL NO') return 'narrow-cell';
 
-        // Name / branch / status
         if (h.includes('OFFICER') || h.includes('SUPERVISOR')) return 'narrow-cell';
         if (h.includes('BRANCH') || h.includes('UNIT')) return 'narrow-cell';
         if (h === 'STATUS' || h === 'STATE') return 'narrow-cell';
@@ -987,7 +975,6 @@
     // EXCEL SERIAL DATE → STRING
     // ============================================
     function excelSerialToDate(serial) {
-        // Excel epoch is 1899-12-30 (accounting for the 1900 leap year bug)
         const excelEpoch = Date.UTC(1899, 11, 30);
         const ms = serial * 24 * 60 * 60 * 1000;
         const d = new Date(excelEpoch + ms);
@@ -998,8 +985,6 @@
     }
 
     function normalizeCellValue(value) {
-        // Only convert numbers that fall in the Excel serial date range
-        // (roughly 2000-01-01 through 2100-01-01)
         if (typeof value === 'number' && value > 36526 && value < 73415) {
             return excelSerialToDate(value);
         }
@@ -1059,17 +1044,15 @@
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {
                     type: 'array',
-                    cellDates: true,          // parse dates as JS Date objects where possible
+                    cellDates: true,
                     cellNF: false,
                     cellText: false,
                 });
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
 
-                // raw: false makes SheetJS use the cell's formatted value
-                // (which shows dates as they appear in Excel)
                 const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
                     header: 1,
-                    raw: false,               // ← respects Excel date formatting
+                    raw: false,
                     dateNF: 'yyyy-mm-dd',
                     defval: '',
                 });
@@ -1139,7 +1122,6 @@
 
         const columnClasses = headers.map(h => classifyColumn(h));
 
-        // Header row
         let headerHTML = '<tr>';
         headers.forEach(header => {
             const displayHeader = header || 'Column';
@@ -1148,7 +1130,6 @@
         headerHTML += '</tr>';
         thead.innerHTML = headerHTML;
 
-        // Data rows — up to 100, wrapping enabled
         const MAX_ROWS = 100;
         const displayData = data.slice(0, MAX_ROWS);
         let bodyHTML = '';
@@ -1166,7 +1147,6 @@
                     const cls = columnClasses[i];
                     const clsAttr = cls ? ` class="${cls}"` : '';
 
-                    // Render status as a pill
                     const header = String(headers[i] || '').toUpperCase();
                     if (header === 'STATUS' || header === 'STATE') {
                         const badge = statusBadgeClass(value);
@@ -1193,10 +1173,6 @@
     // CLEAR
     // ============================================
     function clearData() {
-        if (importedData && importedData.length > 0) {
-            if (!confirm('Are you sure you want to clear the loaded data?')) return;
-        }
-
         importedData = null;
         importedHeaders = [];
         fileName = '';
@@ -1232,7 +1208,6 @@
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
-        // Normalize dates in the payload so the backend stores clean strings
         const normalizedData = importedData.map(row =>
             row.map(cell => normalizeCellValue(cell))
         );

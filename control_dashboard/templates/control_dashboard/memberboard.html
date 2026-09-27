@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="{% static 'stylesheets/member.css' %}" type="text/css">
 <style>
 /* ============================================================
-   MEMBER DASHBOARD — Premium Light Theme
+   MEMBER DASHBOARD — Premium Light Theme (page-scoped overrides)
    ============================================================ */
 
 :root {
@@ -370,7 +370,7 @@
 .fx-panel-body { padding: 4px 0 0; }
 
 /* ============================================================
-   IRREGULAR GL — date selector
+   IRREGULAR GL — date selector (calendar picker)
    ============================================================ */
 .fx-gl-controls {
     display: flex;
@@ -395,11 +395,13 @@
     white-space: nowrap;
 }
 
-.fx-gl-date-select {
+/* ---------- Native date input (calendar picker) ---------- */
+.fx-gl-date-input {
     appearance: none;
     -webkit-appearance: none;
-    padding: 6px 28px 6px 12px;
+    padding: 6px 12px;
     height: 32px;
+    min-width: 155px;
     font-family: var(--fx-font);
     font-size: 11px;
     font-weight: 600;
@@ -411,20 +413,80 @@
     outline: none;
     transition: all 0.2s ease;
     box-shadow: var(--fx-shadow-sm);
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 12px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2px;
 }
 
-.fx-gl-date-select:hover {
+.fx-gl-date-input:hover {
     border-color: var(--fx-border-strong);
+    background-color: var(--fx-bg-2);
 }
 
-.fx-gl-date-select:focus {
+.fx-gl-date-input:focus {
     border-color: var(--fx-rose);
     box-shadow: 0 0 0 3px rgba(224, 69, 106, 0.12);
+    background-color: var(--fx-bg-1);
 }
+
+.fx-gl-date-input.is-empty {
+    border-color: rgba(224, 138, 23, 0.35);
+    background-color: var(--fx-amber-soft);
+    color: var(--fx-amber);
+}
+
+.fx-gl-date-input.is-empty:hover {
+    background-color: #fcebd0;
+}
+
+.fx-gl-date-input.is-empty:focus {
+    border-color: var(--fx-amber);
+    box-shadow: 0 0 0 3px rgba(224, 138, 23, 0.15);
+}
+
+.fx-gl-date-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.55;
+    padding: 2px;
+    border-radius: 4px;
+    transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.fx-gl-date-input::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    background: var(--fx-accent-soft);
+}
+
+.fx-gl-today-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 10px;
+    height: 32px;
+    border-radius: 8px;
+    font-family: var(--fx-font);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    background: var(--fx-bg-1);
+    color: var(--fx-text-1);
+    border: 1px solid var(--fx-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--fx-shadow-sm);
+    white-space: nowrap;
+}
+
+.fx-gl-today-btn:hover {
+    background: var(--fx-accent-soft);
+    color: var(--fx-accent);
+    border-color: rgba(79, 110, 247, 0.28);
+    transform: translateY(-1px);
+}
+
+.fx-gl-today-btn:active { transform: translateY(0); }
+.fx-gl-today-btn i { font-size: 10px; }
 
 .fx-gl-today-pill {
     display: inline-flex;
@@ -439,6 +501,7 @@
     background: var(--fx-emerald-soft);
     color: var(--fx-emerald);
     border: 1px solid rgba(23, 166, 115, 0.25);
+    white-space: nowrap;
 }
 
 .fx-gl-today-pill .fx-gl-dot {
@@ -814,9 +877,12 @@
     .fx-footer-strip { grid-template-columns: 1fr 1fr; }
     .fx-footer-cell { padding: 14px 16px; }
     .fx-footer-value { font-size: 18px; }
-    .fx-gl-controls { width: 100%; }
+
+    .fx-gl-controls { width: 100%; gap: 8px; }
     .fx-gl-date-form { width: 100%; }
-    .fx-gl-date-select { flex: 1; }
+    .fx-gl-date-input { flex: 1; min-width: 0; }
+    .fx-gl-date-label { font-size: 9px; }
+    .fx-gl-today-btn { flex-shrink: 0; }
 }
 </style>
 {% endblock %}
@@ -1024,7 +1090,7 @@
          ============================================================ -->
     <section class="fx-bento">
 
-        <!-- Irregular GLs panel (date-aware) -->
+        <!-- Irregular GLs panel (date-aware, calendar picker) -->
         <div class="fx-panel">
             <header class="fx-panel-head">
                 <div class="fx-panel-title rose">
@@ -1033,22 +1099,24 @@
                 </div>
 
                 <div class="fx-gl-controls">
-                    {% if selectable_gl_dates %}
                     <form method="get" class="fx-gl-date-form">
                         <label for="gl_date" class="fx-gl-date-label">As at</label>
-                        <select name="gl_date"
-                                id="gl_date"
-                                class="fx-gl-date-select"
-                                onchange="this.form.submit()">
-                            {% for d in selectable_gl_dates %}
-                                <option value="{{ d|date:'Y-m-d' }}"
-                                        {% if d == selected_gl_date %}selected{% endif %}>
-                                    {% if d == today %}Today — {% endif %}{{ d|date:"M d, Y" }}
-                                </option>
-                            {% endfor %}
-                        </select>
+                        <input type="date"
+                               name="gl_date"
+                               id="gl_date"
+                               class="fx-gl-date-input{% if not has_trial_balance %} is-empty{% endif %}"
+                               value="{{ selected_gl_date|date:'Y-m-d' }}"
+                               max="{{ today|date:'Y-m-d' }}"
+                               onchange="this.form.submit()">
+
+                        {% if not is_today_gl %}
+                            <a href="?gl_date={{ today|date:'Y-m-d' }}"
+                               class="fx-gl-today-btn"
+                               title="Jump to today's trial balance">
+                                <i class="fas fa-calendar-day"></i> Today
+                            </a>
+                        {% endif %}
                     </form>
-                    {% endif %}
 
                     {% if is_today_gl %}
                         <span class="fx-gl-today-pill">
@@ -1119,7 +1187,7 @@
                         <div class="fx-empty-title">No trial balance for {{ selected_gl_date_display }}</div>
                         <div class="fx-empty-desc">
                             There is no uploaded trial balance for this date yet.
-                            Pick another day from the dropdown above.
+                            Pick another day from the calendar above.
                         </div>
                     </div>
                 {% else %}
