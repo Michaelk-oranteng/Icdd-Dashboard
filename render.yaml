@@ -1,37 +1,28 @@
 databases:
-  - name: omnibsic-db
-    databaseName: omnibsic
-    user: omnibsic_user
+  - name: icdd-db
     plan: free
-    region: oregon
+    databaseName: icdd
+    user: icdd
 
 services:
   - type: web
-    name: omnibsic-dashboard
-    runtime: python
+    name: icdd-dashboard
     plan: free
-    region: oregon
-    branch: main
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn ICDD.wsgi:application"
-    healthCheckPath: /
-    autoDeploy: true
+    runtime: python
+    buildCommand: './build.sh'
+    startCommand: 'gunicorn ICDD.wsgi:application --bind 0.0.0.0:$PORT --workers 3'
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: omnibsic-db
+          name: icdd-db
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
-      - key: DEBUG
-        value: "False"
       - key: PYTHON_VERSION
-        value: "3.11.9"
-      - key: WEB_CONCURRENCY
-        value: "4"
+        value: 3.12.11
+      - key: DEBUG
+        value: False
       - key: ALLOWED_HOSTS
-        value: ".onrender.com"
-      - key: CSRF_TRUSTED_ORIGINS
-        value: "https://*.onrender.com"
-      - key: LOG_LEVEL
-        value: "INFO"
+        value: '.onrender.com'
+      - key: WEB_CONCURRENCY
+        value: 3
