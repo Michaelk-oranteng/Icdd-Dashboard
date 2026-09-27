@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
-# Exit immediately if any command fails
+# Exit on error
 set -o errexit
 
-echo "==> Installing Python dependencies..."
+# Install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "==> Collecting static files..."
+# Collect static files into STATIC_ROOT
 python manage.py collectstatic --no-input
 
-echo "==> Running database migrations..."
+# Apply database migrations
 python manage.py migrate
 
-echo "==> Build complete."
+# Optional: create a superuser automatically from env vars
+# (uncomment if you set DJANGO_SUPERUSER_* env vars on Render)
+# python manage.py createsuperuser --no-input || true
