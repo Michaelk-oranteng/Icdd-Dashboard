@@ -115,6 +115,20 @@
     box-shadow: 0 1px 2px rgba(15, 27, 51, 0.04);
 }
 
+.clb-toolbar-left {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.clb-toolbar-right {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .clb-search {
     display: flex;
     align-items: center;
@@ -137,6 +151,7 @@
 .clb-search i {
     color: #8993a8;
     font-size: 12px;
+    flex-shrink: 0;
 }
 
 .clb-search input {
@@ -147,6 +162,25 @@
     font-size: 13px;
     width: 100%;
     color: #0f1b33;
+}
+
+.clb-search select {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: inherit;
+    font-size: 13px;
+    width: 100%;
+    color: #0f1b33;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 18px;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0 center;
+    background-size: 12px;
 }
 
 .clb-btn {
@@ -185,6 +219,18 @@
 
 .clb-btn.primary:hover {
     box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+}
+
+.clb-btn.ghost-danger {
+    color: #e0456a;
+    border-color: rgba(224, 69, 106, 0.22);
+    background: #fff5f8;
+}
+
+.clb-btn.ghost-danger:hover {
+    background: #fdeaf0;
+    color: #c4365c;
+    border-color: rgba(224, 69, 106, 0.35);
 }
 
 .clb-btn i { font-size: 12px; }
@@ -712,6 +758,9 @@
     .clb-field-row { grid-template-columns: 1fr; }
     .clb-search { min-width: 100%; }
     .clb-modal { max-width: 100%; }
+    .clb-toolbar-left { flex-direction: column; align-items: stretch; }
+    .clb-toolbar-right { width: 100%; }
+    .clb-toolbar-right .clb-btn { flex: 1; }
 }
 </style>
 {% endblock %}
@@ -773,7 +822,7 @@
         <div class="clb-stat primary">
             <div>
                 <span class="clb-stat-label">Total Checklists</span>
-                <div class="clb-stat-value">{{ checklists|length }}</div>
+                <div class="clb-stat-value" id="stat-total">{{ checklists|length }}</div>
             </div>
             <i class="fas fa-tasks clb-stat-icon"></i>
         </div>
@@ -795,11 +844,30 @@
 
     <!-- Toolbar -->
     <div class="clb-toolbar">
-        <div class="clb-search">
-            <i class="fas fa-search"></i>
-            <input type="text" id="clbSearchInput" placeholder="Search checklists by name..." onkeyup="filterChecklists()">
+        <div class="clb-toolbar-left">
+            <div class="clb-search">
+                <i class="fas fa-search"></i>
+                <input type="text" id="clbSearchInput"
+                       placeholder="Search checklists by name..."
+                       oninput="filterChecklists()">
+            </div>
+
+            <div class="clb-search" style="min-width:220px;">
+                <i class="fas fa-sitemap"></i>
+                <select id="clbDeptFilter" onchange="filterChecklists()">
+                    <option value="">All Departments</option>
+                    {% for d in departments %}
+                        <option value="{{ d.id }}">{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+
+        <div class="clb-toolbar-right">
+            <button class="clb-btn ghost-danger" id="clbClearFilters"
+                    onclick="clearFilters()" style="display:none;">
+                <i class="fas fa-filter-circle-xmark"></i> Clear
+            </button>
             <button class="clb-btn" onclick="window.location.reload()">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
@@ -811,7 +879,9 @@
         {% for cl in checklists %}
             <div class="clb-card {% if not cl.is_active %}inactive{% endif %}"
                  data-name="{{ cl.name|lower }}"
-                 data-id="{{ cl.id }}">
+                 data-id="{{ cl.id }}"
+                 data-departments="{% for d in cl.assigned_departments.all %}{{ d.id }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                 data-branches="{% for b in cl.assigned_branches.all %}{{ b.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
                 <div class="clb-card-head">
                     <div style="flex:1; min-width:0;">
                         <h3 class="clb-card-title">{{ cl.name }}</h3>
@@ -1318,24 +1388,103 @@ async function deleteChecklist(id, name) {
 }
 
 /* ============================================================
-   FILTER + STATS ON LOAD
+   FILTER (SEARCH + DEPARTMENT) + LIVE STATS
    ============================================================ */
 function filterChecklists() {
-    const q = document.getElementById('clbSearchInput').value.toLowerCase().trim();
+    const q      = document.getElementById('clbSearchInput').value.toLowerCase().trim();
+    const deptId = document.getElementById('clbDeptFilter').value;
+
+    let visibleCount = 0;
+
     document.querySelectorAll('#clbGrid .clb-card').forEach(card => {
-        const n = card.getAttribute('data-name') || '';
-        card.style.display = (q && !n.includes(q)) ? 'none' : '';
+        const name    = card.getAttribute('data-name') || '';
+        const deptRaw = card.getAttribute('data-departments') || '';
+        const deptIds = deptRaw ? deptRaw.split(',') : [];
+
+        const matchesSearch = !q || name.includes(q);
+        const matchesDept   = !deptId || deptIds.includes(deptId);
+        const visible       = matchesSearch && matchesDept;
+
+        card.style.display = visible ? '' : 'none';
+        if (visible) visibleCount++;
     });
+
+    // Toggle "Clear filters" button
+    const clearBtn = document.getElementById('clbClearFilters');
+    if (clearBtn) {
+        clearBtn.style.display = (q || deptId) ? 'inline-flex' : 'none';
+    }
+
+    // Empty-filter state
+    toggleFilterEmptyState(visibleCount);
+
+    // Live update the counters
+    updateStats();
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Count active checklists
-    let active = 0;
-    document.querySelectorAll('#clbGrid .clb-card').forEach(c => {
-        if (!c.classList.contains('inactive')) active++;
+function clearFilters() {
+    document.getElementById('clbSearchInput').value = '';
+    document.getElementById('clbDeptFilter').value = '';
+    filterChecklists();
+}
+
+function toggleFilterEmptyState(visibleCount) {
+    const grid = document.getElementById('clbGrid');
+    if (!grid) return;
+
+    let empty = document.getElementById('clbFilterEmpty');
+
+    // Only show the "no results" panel if there were originally checklists
+    const totalCards = grid.querySelectorAll('.clb-card').length;
+    const shouldShow = totalCards > 0 && visibleCount === 0;
+
+    if (shouldShow) {
+        if (!empty) {
+            empty = document.createElement('div');
+            empty.id = 'clbFilterEmpty';
+            empty.className = 'clb-empty';
+            empty.style.gridColumn = '1 / -1';
+            empty.innerHTML = `
+                <i class="fas fa-magnifying-glass"></i>
+                <h3>No matching checklists</h3>
+                <p>Try a different search term or department.</p>
+                <button class="clb-btn primary" onclick="clearFilters()">
+                    <i class="fas fa-filter-circle-xmark"></i> Clear Filters
+                </button>
+            `;
+            grid.appendChild(empty);
+        }
+        empty.style.display = '';
+    } else if (empty) {
+        empty.style.display = 'none';
+    }
+}
+
+/* ============================================================
+   STATS
+   ============================================================ */
+function updateStats() {
+    let visibleTotal = 0;
+    let visibleActive = 0;
+
+    document.querySelectorAll('#clbGrid .clb-card').forEach(card => {
+        if (card.style.display === 'none') return;
+        visibleTotal++;
+        if (!card.classList.contains('inactive')) visibleActive++;
     });
-    const el = document.getElementById('stat-active');
-    if (el) el.textContent = active;
+
+    const totalEl  = document.getElementById('stat-total');
+    const activeEl = document.getElementById('stat-active');
+
+    if (totalEl)  totalEl.textContent  = visibleTotal;
+    if (activeEl) activeEl.textContent = visibleActive;
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function() {
+    updateStats();
 });
 </script>
 {% endblock %}

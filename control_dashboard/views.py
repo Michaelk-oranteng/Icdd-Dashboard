@@ -484,17 +484,29 @@ def api_create_user(request):
             position=position, role=role, status=status
         )
 
-        if department_id:
-            try:
-                user.departments.add(Department.objects.get(id=department_id, is_active=True))
-            except Department.DoesNotExist:
-                pass
+        # ---------- Assign departments (accepts BOTH singular and plural) ----------
+        dept_ids = []
+        if isinstance(data.get('department_ids'), list):
+            dept_ids = [int(x) for x in data['department_ids'] if str(x).strip().isdigit()]
+        elif department_id:
+            dept_ids = [int(department_id)]
 
-        if branch_id:
-            try:
-                user.branches.add(Branch.objects.get(id=branch_id, is_active=True))
-            except Branch.DoesNotExist:
-                pass
+        if dept_ids:
+            depts = Department.objects.filter(id__in=dept_ids, is_active=True)
+            if depts.exists():
+                user.departments.set(depts)
+
+        # ---------- Assign branches (accepts BOTH singular and plural) ----------
+        br_ids = []
+        if isinstance(data.get('branch_ids'), list):
+            br_ids = [int(x) for x in data['branch_ids'] if str(x).strip().isdigit()]
+        elif branch_id:
+            br_ids = [int(branch_id)]
+
+        if br_ids:
+            branches_qs = Branch.objects.filter(id__in=br_ids, is_active=True)
+            if branches_qs.exists():
+                user.branches.set(branches_qs)
 
         user.save()
 
@@ -1474,19 +1486,22 @@ def member_dashboard(request):
     week_start = get_week_start(today)
     week_end = week_start + timedelta(days=6)
 
+        # Compute the user's unit IDs first — the checklist query below needs them.
+    user_branch_ids = set(user_profile.branches.values_list('id', flat=True))
+    user_dept_ids = set(user_profile.departments.values_list('id', flat=True))
+
     user_checklists = Checklist.objects.filter(
         is_active=True
     ).filter(
         Q(assigned_users=user_profile) |
         Q(assignment_target='all') |
-        Q(assignment_target=user_profile.position)
+        Q(assignment_target=user_profile.position) |
+        Q(assigned_departments__in=user_dept_ids) |
+        Q(assigned_branches__in=user_branch_ids)
     ).distinct()
 
     total_checklist_rows = 0
     frequency_counts = {}
-
-    user_branch_ids = set(user_profile.branches.values_list('id', flat=True))
-    user_dept_ids = set(user_profile.departments.values_list('id', flat=True))
 
     for checklist in user_checklists:
         branches = set(checklist.assigned_branches.values_list('id', flat=True))
@@ -2300,7 +2315,9 @@ def member_checklist(request):
     ).filter(
         Q(assigned_users=user_profile) |
         Q(assignment_target='all') |
-        Q(assignment_target=user_profile.position)
+        Q(assignment_target=user_profile.position) |
+        Q(assigned_departments__in=user_department_ids) |
+        Q(assigned_branches__in=user_branch_ids)
     ).distinct()
 
     if branch_filter != 'all':
@@ -3782,10 +3799,15 @@ def supervisor_checklist(request):
     sum_of_rates = 0
 
     for member in team_members:
+        member_branch_ids = set(member.branches.values_list('id', flat=True))
+        member_dept_ids = set(member.departments.values_list('id', flat=True))
+
         member_checklists = all_checklists.filter(
             Q(assigned_users=member) |
             Q(assignment_target='all') |
-            Q(assignment_target=member.position)
+            Q(assignment_target=member.position) |
+            Q(assigned_departments__in=member_dept_ids) |
+            Q(assigned_branches__in=member_branch_ids)
         ).distinct()
 
         member_branch_ids = set(member.branches.values_list('id', flat=True))
@@ -3950,16 +3972,18 @@ def api_checklist_detail(request, user_id):
         month_start = today.replace(day=1)
         year_start = today.replace(month=1, day=1)
 
+        member_branch_ids = set(user.branches.values_list('id', flat=True))
+        member_dept_ids = set(user.departments.values_list('id', flat=True))
+
         member_checklists = Checklist.objects.filter(
             is_active=True
         ).filter(
             Q(assigned_users=user) |
             Q(assignment_target='all') |
-            Q(assignment_target=user.position)
+            Q(assignment_target=user.position) |
+            Q(assigned_departments__in=member_dept_ids) |
+            Q(assigned_branches__in=member_branch_ids)
         ).distinct()
-
-        member_branch_ids = set(user.branches.values_list('id', flat=True))
-        member_dept_ids = set(user.departments.values_list('id', flat=True))
 
         overall_expected = 0
         overall_actual = 0

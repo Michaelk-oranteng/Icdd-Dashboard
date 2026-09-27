@@ -387,6 +387,24 @@
     font-style: italic;
 }
 
+.field-group .count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    margin-left: 6px;
+    border-radius: 9px;
+    background: var(--adm-accent-soft);
+    color: var(--adm-accent);
+    border: 1px solid rgba(79, 110, 247, 0.22);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
 /* ============================================================
    USER INFO CELL
    ============================================================ */
@@ -601,8 +619,12 @@
                     <td>
                         <div class="field-group">
                             <div class="field-item">
-                                <label for="newDepartments">Departments</label>
-                                <select id="newDepartments" class="table-select" multiple>
+                                <label for="newDepartments">
+                                    Departments
+                                    <span class="count-badge" id="newDeptCount">0</span>
+                                </label>
+                                <select id="newDepartments" class="table-select" multiple
+                                        onchange="updateCount('newDepartments','newDeptCount')">
                                     {% for department in departments %}
                                     <option value="{{ department.id }}">{{ department.name }}</option>
                                     {% endfor %}
@@ -610,8 +632,12 @@
                                 <small class="help-text">Ctrl/Cmd + click to multi-select</small>
                             </div>
                             <div class="field-item">
-                                <label for="newBranches">Branches</label>
-                                <select id="newBranches" class="table-select" multiple>
+                                <label for="newBranches">
+                                    Branches
+                                    <span class="count-badge" id="newBranchCount">0</span>
+                                </label>
+                                <select id="newBranches" class="table-select" multiple
+                                        onchange="updateCount('newBranches','newBranchCount')">
                                     {% for branch in branches %}
                                     <option value="{{ branch.id }}">{{ branch.name }}</option>
                                     {% endfor %}
@@ -654,7 +680,15 @@
         </thead>
         <tbody>
             {% for user in users %}
-            <tr id="user-row-{{ user.id }}">
+            <tr id="user-row-{{ user.id }}"
+                data-user-id="{{ user.id }}"
+                data-user-email="{{ user.email }}"
+                data-user-fullname="{{ user.full_name|default:'' }}"
+                data-user-position="{{ user.position }}"
+                data-user-role="{{ user.role }}"
+                data-user-status="{{ user.status }}"
+                data-dept-ids="{% for d in user.departments.all %}{{ d.id }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                data-branch-ids="{% for b in user.branches.all %}{{ b.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
                 <td>
                     <div class="user-info">
                         <span class="user-email" data-val="{{ user.email }}">{{ user.email }}</span>
@@ -666,24 +700,14 @@
                 <td>
                     <div class="user-assignments">
                         {% with departments=user.departments.all %}
-                            {% if departments %}
-                                {% for dept in departments|slice:":3" %}
-                                    <span class="tag department">{{ dept.name }}</span>
-                                {% endfor %}
-                                {% if departments|length > 3 %}
-                                    <span class="tag more" title="{{ departments|join:', ' }}">+{{ departments|length|add:"-3" }} more</span>
-                                {% endif %}
-                            {% endif %}
+                            {% for dept in departments %}
+                                <span class="tag department">{{ dept.name }}</span>
+                            {% endfor %}
                         {% endwith %}
                         {% with branches=user.branches.all %}
-                            {% if branches %}
-                                {% for branch in branches|slice:":3" %}
-                                    <span class="tag branch">{{ branch.name }}</span>
-                                {% endfor %}
-                                {% if branches|length > 3 %}
-                                    <span class="tag more" title="{{ branches|join:', ' }}">+{{ branches|length|add:"-3" }} more</span>
-                                {% endif %}
-                            {% endif %}
+                            {% for branch in branches %}
+                                <span class="tag branch">{{ branch.name }}</span>
+                            {% endfor %}
                         {% endwith %}
                         {% if not user.departments.all and not user.branches.all %}
                             <span class="no-assignment">No assignments</span>
@@ -765,6 +789,17 @@
     }
 
     /* ============================================
+       COUNT BADGE HELPER (used by Add form + Edit form)
+       ============================================ */
+    function updateCount(selectId, badgeId) {
+        const select = document.getElementById(selectId);
+        const badge = document.getElementById(badgeId);
+        if (!select || !badge) return;
+        const n = select.selectedOptions ? select.selectedOptions.length : 0;
+        badge.textContent = n;
+    }
+
+    /* ============================================
        ADD USER
        ============================================ */
     function addUser(event) {
@@ -810,7 +845,7 @@
     }
 
     /* ============================================
-       EDIT USER (inline)
+       EDIT USER (inline) — reads from data attributes
        ============================================ */
     function editUser(userId) {
         const row = document.getElementById(`user-row-${userId}`);
@@ -818,48 +853,44 @@
 
         row.classList.add('editing');
 
+        // ---- Read everything from data attributes (the source of truth) ----
+        const origEmail    = row.dataset.userEmail || '';
+        const origFullName = row.dataset.userFullname || '';
+        const origPosition = row.dataset.userPosition || 'member';
+        const origRole     = row.dataset.userRole || 'member';
+
+        const origDepartmentIds = (row.dataset.deptIds || '')
+            .split(',').filter(Boolean).map(Number);
+        const origBranchIds = (row.dataset.branchIds || '')
+            .split(',').filter(Boolean).map(Number);
+
         const userInfoCell = row.querySelector('td:first-child');
         const positionCell = row.querySelector('.user-position');
-        const roleCell = row.querySelector('.user-role');
-        const assignCell = row.querySelector('.user-assignments')?.parentElement || row.querySelector('td:nth-child(4)');
-        const actionsCell = row.querySelector('.actions-cell');
+        const roleCell     = row.querySelector('.user-role');
+        const assignCell   = row.querySelector('td:nth-child(4)');
+        const actionsCell  = row.querySelector('.actions-cell');
 
-        const origEmail = row.querySelector('.user-email').dataset.val;
-        const origFullName = row.querySelector('.user-fullname').dataset.val;
-        const origPosition = positionCell.dataset.val;
-        const origRole = roleCell.dataset.val;
-
-        const deptTags = row.querySelectorAll('.tag.department');
-        const branchTags = row.querySelectorAll('.tag.branch');
-        const origDepartmentIds = [];
-        const origBranchIds = [];
-
-        deptTags.forEach(tag => {
-            DEPARTMENTS.forEach(d => {
-                if (d.name === tag.textContent) origDepartmentIds.push(d.id);
-            });
-        });
-        branchTags.forEach(tag => {
-            BRANCHES.forEach(b => {
-                if (b.name === tag.textContent) origBranchIds.push(b.id);
-            });
-        });
-
+        // ---- User info cell ----
         userInfoCell.innerHTML = `
             <div class="user-info">
-                <input type="email" id="edit-email-${userId}" class="table-input" value="${origEmail}" required>
-                <input type="text" id="edit-fullname-${userId}" class="table-input" value="${origFullName}" placeholder="Full name">
+                <input type="email" id="edit-email-${userId}" class="table-input"
+                       value="${origEmail}" required>
+                <input type="text" id="edit-fullname-${userId}" class="table-input"
+                       value="${origFullName}" placeholder="Full name">
             </div>
         `;
 
+        // ---- Position ----
         positionCell.innerHTML = `<select id="edit-position-${userId}" class="table-select">${
             POSITIONS.map(opt => `<option value="${opt.value}" ${opt.value === origPosition ? 'selected' : ''}>${opt.label}</option>`).join('')
         }</select>`;
 
+        // ---- Role ----
         roleCell.innerHTML = `<select id="edit-role-${userId}" class="table-select">${
             ROLES.map(opt => `<option value="${opt.value}" ${opt.value === origRole ? 'selected' : ''}>${opt.label}</option>`).join('')
         }</select>`;
 
+        // ---- Departments / Branches — pre-select using the ID lists ----
         const deptOptions = DEPARTMENTS.map(d =>
             `<option value="${d.id}" ${origDepartmentIds.includes(d.id) ? 'selected' : ''}>${d.name}</option>`
         ).join('');
@@ -870,16 +901,27 @@
         assignCell.innerHTML = `
             <div class="field-group">
                 <div class="field-item">
-                    <label>Departments</label>
-                    <select id="edit-departments-${userId}" class="table-select" multiple>${deptOptions}</select>
+                    <label>
+                        Departments
+                        <span class="count-badge" id="edit-dept-count-${userId}">${origDepartmentIds.length}</span>
+                    </label>
+                    <select id="edit-departments-${userId}" class="table-select" multiple
+                            onchange="updateCount('edit-departments-${userId}','edit-dept-count-${userId}')">${deptOptions}</select>
+                    <small class="help-text">Ctrl/Cmd + click to multi-select</small>
                 </div>
                 <div class="field-item">
-                    <label>Branches</label>
-                    <select id="edit-branches-${userId}" class="table-select" multiple>${branchOptions}</select>
+                    <label>
+                        Branches
+                        <span class="count-badge" id="edit-branch-count-${userId}">${origBranchIds.length}</span>
+                    </label>
+                    <select id="edit-branches-${userId}" class="table-select" multiple
+                            onchange="updateCount('edit-branches-${userId}','edit-branch-count-${userId}')">${branchOptions}</select>
+                    <small class="help-text">Ctrl/Cmd + click to multi-select</small>
                 </div>
             </div>
         `;
 
+        // ---- Actions ----
         actionsCell.innerHTML = `
             <button class="btn-create" onclick="submitEditUserInline('${userId}')">
                 <i class="fas fa-save"></i> Save
@@ -890,11 +932,14 @@
         `;
     }
 
+    /* ============================================
+       SUBMIT EDIT
+       ============================================ */
     function submitEditUserInline(userId) {
-        const email = document.getElementById(`edit-email-${userId}`).value;
+        const email    = document.getElementById(`edit-email-${userId}`).value;
         const fullName = document.getElementById(`edit-fullname-${userId}`).value;
         const position = document.getElementById(`edit-position-${userId}`).value;
-        const role = document.getElementById(`edit-role-${userId}`).value;
+        const role     = document.getElementById(`edit-role-${userId}`).value;
 
         const deptSelect = document.getElementById(`edit-departments-${userId}`);
         const departmentIds = Array.from(deptSelect.selectedOptions).map(opt => parseInt(opt.value));

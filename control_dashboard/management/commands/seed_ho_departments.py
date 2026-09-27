@@ -252,7 +252,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'TROPs': [
+    'TROPS': [
         ('Call over FDs Booked', 'weekly', [
             'Request for FDs request forms/instructions processed by the TROPs officer',
             'Review the form for completeness and confirm signature in line with account mandate',
