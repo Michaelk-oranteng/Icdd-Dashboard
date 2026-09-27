@@ -397,8 +397,8 @@ html, body {
 
 .header-profile-avatar {
     position: relative;
-    width: 90px;
-    height: 90px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
