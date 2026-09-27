@@ -27,6 +27,29 @@
                     </a></li>
                     {% endblock %}
                 </ul>
+
+                <!-- ==================== PROFILE AT BOTTOM ==================== -->
+                <div class="nav-footer">
+                    <div class="nav-profile-card" onclick="logoutUser()" title="Click to logout">
+                        <div class="nav-profile-img-wrapper">
+                            <img src="{{ user_profile.avatar_url }}"
+                                 alt="{{ user_profile.full_name|default:'User' }}"
+                                 loading="lazy"
+                                 referrerpolicy="no-referrer"
+                                 onerror="this.style.display='none'; this.parentElement.classList.add('avatar-fallback'); this.parentElement.setAttribute('data-initials', '{{ user_profile.initials }}');">
+                        </div>
+                        <div class="nav-profile-info">
+                            <h4 class="nav-user-name">{{ user_profile.first_name|default:"User" }}</h4>
+                            <p class="nav-user-role">
+                                <i class="fas fa-sign-out-alt" style="font-size: 11px; margin-right: 4px;"></i>
+                                logout
+                            </p>
+                        </div>
+                        <div class="nav-profile-logout-icon">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- ==================== MAIN CONTENT WRAPPER ==================== -->
@@ -59,23 +82,6 @@
                             <span class="notification-badge">0</span>
                         </div>
                         {% endblock %}
-
-                        <!-- ==================== PROFILE CARD ==================== -->
-                        <div class="header-profile-card" onclick="logoutUser()" title="Click to logout">
-                            <div class="header-profile-avatar">
-                                <img src="{{ user_profile.avatar_url }}"
-                                     alt="{{ user_profile.full_name|default:'User' }}"
-                                     loading="lazy"
-                                     referrerpolicy="no-referrer"
-                                     onerror="this.style.display='none'; this.parentElement.classList.add('avatar-fallback'); this.parentElement.setAttribute('data-initials', '{{ user_profile.initials }}');">
-                            </div>
-                            <div class="header-profile-info">
-                                <span class="header-profile-name">{{ user_profile.first_name|default:"User" }}</span>
-                                <span class="header-profile-role">
-                                    <i class="fas fa-sign-out-alt"></i> logout
-                                </span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -166,7 +172,6 @@
                     } else if (saved === '0') {
                         applySidebarState(false);
                     }
-                    // If no saved state, leave default (expanded)
                 } catch (e) { /* ignore */ }
             })();
 
@@ -188,7 +193,6 @@
                 window.location.href = "{% url 'control_dashboard:logout' %}";
             }
 
-            // Close modal on outside click
             document.addEventListener('click', function(event) {
                 const modal = document.getElementById('logoutModal');
                 if (event.target === modal) {
@@ -196,14 +200,12 @@
                 }
             });
 
-            // Close modal on ESC key
             document.addEventListener('keydown', function(event) {
                 if (event.key === 'Escape') {
                     closeLogoutModal();
                 }
             });
 
-            // Auto-close messages after 5 seconds
             document.addEventListener('DOMContentLoaded', function() {
                 const alerts = document.querySelectorAll('.alert');
                 alerts.forEach(function(alert) {

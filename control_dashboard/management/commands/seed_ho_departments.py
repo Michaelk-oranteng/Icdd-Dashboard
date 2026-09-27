@@ -11,7 +11,7 @@ on every run.
 Usage:
     python manage.py seed_ho_departments --dry-run
     python manage.py seed_ho_departments
-    python manage.py seed_ho_departments --team "IT CONTROL"
+    python manage.py seed_ho_departments --team "IT"
     python manage.py seed_ho_departments --reset
 """
 
@@ -48,7 +48,7 @@ def norm_freq(raw):
 # Format per team: list of (activity, frequency, [tasks])
 # ============================================================
 TEAM_DATA = {
-    'IT CONTROL': [
+    'IT': [
         ('User Access and Privileges Management Reviews', 'monthly', [
             'Validate user roles vs job functions',
             'Review access changes and approvals',
@@ -235,7 +235,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'ICDD': [
+    'BRANCH SUPPORT': [
         ('VISA STATEMENT VERIFICATION', 'daily', [
             'Receive request via corporate email for Visa Verification (Embassy or accredited Institution)',
             'Capture the details of the request on the VISA statement schedule (date, name, account number, embassy name and indicate the status of the request Yes/No); thus consistency with bank details.',
@@ -334,7 +334,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'TRANSPORT': [
+    'TRANSPORT & LOGISTICS': [
         ('Review of list of vehicles/motor bike and locations', 'monthly', [
             'Confirm whether the master list has been updated to reflect all vehicles/motor bikes held by the bank and their locations',
             'Confirm the existence of vehicle spare keys held by the department and how they are managed.',
@@ -401,7 +401,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'TRADE': [
+    'TRADE SERVICES': [
         ('GL REVIEW', 'daily', [
             'Spool GLs to identify any mispostings and wrong GL balances',
             'Escalate any discrepancy identified',
@@ -462,7 +462,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'RECON UNIT': [
+    'RECONCILIATION': [
         ('Review of Recon Report', 'weekly', [
             'Request for Nostro and Central Bank account statement via email for review the Recon team.',
             'Match the balances per Bank statement with balances that have been captured in the recon report',
@@ -556,7 +556,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'GENERAL SERVICES': [
+    'GENERAL SERVICES & PROCUREMENT': [
         ('Store Room Management', 'monthly', [
             'Count the physical stock held by the department and compare with the schedule kept by the department.',
             'Any difference should be addressed',
@@ -701,7 +701,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'HEAD OFFICE': [
+    'CPU': [
         ('Expense Review (Requests <= GHS20,000)', 'daily', [
             'Capture details of expense on expense review schedule/tracker.',
             'Check expense schedule to confirm whether PV has been represented.',
@@ -759,7 +759,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'CORPORATE COMMUNICATIONS': [
+    'CORPORATE COMMS': [
         ('Stock Count', 'monthly', [
             'Request for the list of merchandise from the Corporate Communications Department.',
             'The list should include the opening stock',
@@ -958,7 +958,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'CENTRAL ACCOUNT': [
+    'CENTRALIZED ACCOUNT OPENING': [
         ('ACCOUNT OPEN', 'weekly', [
             'Request for account opening packs or documentation.',
             'Review for completeness. Ensure all information captured in the account pack have been accurately captured in the CBA.',
@@ -968,7 +968,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'SBUs': [
+    'BRANCH SUPPORT': [
         ('Balance Confirmation', 'daily', [
             'Review of balance confirmation requests sent by auditors.',
             'Review request to confirm if the signature has been verified and cross-check from the CBA.',
@@ -978,7 +978,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'AMA&D': [
+    'ASSET MANAGEMENT & ASSEST TAGGING': [
         ('ASSET MANAGEMENT', 'weekly', [
             'Maintain an accurate and up-to-date fixed asset register for all bank assets.',
             'Track asset location and custody.',
@@ -997,7 +997,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'ICDD - KORANTENG': [
+    'E-BUSINESS': [
         ('GL Proofs Review', 'monthly', [
             'Reconcile balances in the reports against OBI balances.',
             'Identify and escalate overaged, unrecognized or unexplained entries.',
@@ -1064,7 +1064,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'ICDD - MICHAEL': [
+    'E-BUSINESS': [
         ('POS Chargeback Review', 'monthly', [
             'Reconcile chargeback entries against dispute resolution documentation.',
             'Investigate reasons for chargebacks and identify preventable patterns.',
@@ -1154,7 +1154,7 @@ TEAM_DATA = {
         ]),
     ],
 
-    'FACILITIES': [
+    'FACILITIES MANAGEMENT': [
         ('MAINTENANCE & REPAIRS', 'monthly', [
             'Review scheduled maintenance for Fire panels',
             'Review scheduled maintenance for Smoke Detectors',
