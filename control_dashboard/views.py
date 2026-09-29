@@ -1,8 +1,7 @@
-# control_dashboard/views.py
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.models import User as DjangoUser
+from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
@@ -11,16 +10,16 @@ from django.db import transaction
 from django.db.models import Q, Count, Sum
 from django.db.models.functions import Coalesce
 from django.contrib.auth.decorators import login_required
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from PIL import Image
 import json
 from datetime import datetime, timedelta, date
 import base64
 import io
+import os, logging
+import uuid
 import openpyxl
-from openpyxl.styles import Font, Alignment, PatternFill
-from openpyxl.utils import get_column_letter
-from django.utils import timezone
-import re
-import logging
 
 from .models import (
     UserProfile,

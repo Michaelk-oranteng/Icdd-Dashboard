@@ -892,44 +892,50 @@
 {% block nav_links %}
 <li class="active">
     <a href="{% url 'control_dashboard:member_dashboard' %}" data-tooltip="Dashboard">
-        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-icon"><i class="fas fa-gauge"></i></span>
         <span class="nav-text">Dashboard</span>
     </a>
 </li>
 <li>
-    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
-        <span class="nav-icon"><i class="fas fa-balance-scale"></i></span>
-        <span class="nav-text">Daily Trial Balance</span>
-    </a>
-</li>
-<li>
-    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
-        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
-        <span class="nav-text">Analytics</span>
-    </a>
-</li>
-<li>
     <a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
-        <span class="nav-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+        <span class="nav-icon"><i class="fas fa-folder-plus"></i></span>
         <span class="nav-text">Upload Report</span>
     </a>
 </li>
 <li>
     <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
-        <span class="nav-icon"><i class="fas fa-folder-open"></i></span>
+        <span class="nav-icon"><i class="fas fa-file-lines"></i></span>
         <span class="nav-text">My Reports</span>
     </a>
 </li>
 <li>
-    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
-        <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
-        <span class="nav-text">Consolidated Reports</span>
+    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+        <span class="nav-icon"><i class="fas fa-envelope"></i></span>
+        <span class="nav-text">Email</span>
     </a>
 </li>
 <li>
     <a href="{% url 'control_dashboard:member_checklist' %}" data-tooltip="Checklist">
-        <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+        <span class="nav-icon"><i class="fas fa-rectangle-list"></i></span>
         <span class="nav-text">Activity Checklist</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
+        <span class="nav-icon"><i class="fas fa-cash-register"></i></span>
+        <span class="nav-text">Daily Trial Balance</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
+        <span class="nav-icon"><i class="fas fa-chart-area"></i></span>
+        <span class="nav-text">Analytics</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
+        <span class="nav-icon"><i class="fas fa-database"></i></span>
+        <span class="nav-text">Consolidated Reports</span>
     </a>
 </li>
 {% endblock %}
@@ -1125,29 +1131,12 @@
                     {% endif %}
 
                     {% if irregular_gls %}
-                        <span class="fx-panel-badge">{{ irregular_gls|length }} flagged</span>
                     {% else %}
-                        <span class="fx-panel-badge"
-                              style="background: rgba(52,211,153,0.1); color: var(--fx-emerald); border-color: rgba(52,211,153,0.25);">
-                            Clean
-                        </span>
                     {% endif %}
                 </div>
             </header>
 
             {% if has_trial_balance %}
-            <div class="fx-gl-meta">
-                <span>
-                    Showing positions for
-                    <strong>{{ selected_gl_date_display }}</strong>
-                </span>
-                <span class="fx-gl-meta-sep">•</span>
-                <span>
-                    {{ irregular_gls|length }} irregular
-                    GL{{ irregular_gls|length|pluralize }}
-                    detected
-                </span>
-            </div>
             {% endif %}
 
             <div class="fx-panel-body">
@@ -1156,7 +1145,6 @@
                         <table class="fx-table">
                             <thead>
                                 <tr>
-                                    <th>Branch Code</th>
                                     <th>Branch Name</th>
                                     <th>GL Code</th>
                                     <th>Description</th>
@@ -1167,7 +1155,6 @@
                             <tbody>
                                 {% for row in irregular_gls %}
                                 <tr>
-                                    <td class="code-cell">{{ row.branch_code|default:"—" }}</td>
                                     <td>{{ row.branch_name|default:"—" }}</td>
                                     <td class="code-cell">{{ row.gl_code|default:"—" }}</td>
                                     <td class="descr-cell" title="{{ row.descr }}">{{ row.descr|default:"—" }}</td>

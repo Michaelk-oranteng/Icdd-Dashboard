@@ -3,14 +3,21 @@
 <html>
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+        <meta name="theme-color" content="#003366">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="mobile-web-app-capable" content="yes">
         <title>{% block title %}OmniBSIC Control Dashboard{% endblock %}</title>
         <link rel="stylesheet" href="{% static 'stylesheets/base.css' %}" type="text/css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         <meta name="csrf-token" content="{{ csrf_token }}">
         {% block extra_css %}{% endblock %}
+        <link rel="stylesheet" href="{% static 'stylesheets/responsive-core.css' %}" type="text/css">
     </head>
     <body>
         <div class="page-wrapper">
+            <div class="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
             <!-- ==================== SIDEBAR NAVIGATION ==================== -->
             <div class="nav-bar" id="navBar">
                 <div class="logo">
@@ -136,44 +143,121 @@
             }
 
             // ============================================
-            // SIDEBAR COLLAPSE / EXPAND
+            // RESPONSIVE SIDEBAR
             // ============================================
-            const SIDEBAR_STATE_KEY = 'omnibsic_sidebar_collapsed';
+            (function() {
+                'use strict';
 
-            function applySidebarState(collapsed) {
-                const body = document.body;
-                const navBar = document.getElementById('navBar');
-                const toggleIcon = document.querySelector('#sidebarToggle i');
+                const MOBILE_BP = 992;
+                const STORAGE_KEY = 'omnibsic_sidebar_collapsed';
 
-                if (collapsed) {
-                    body.classList.add('sidebar-collapsed');
-                    if (toggleIcon) toggleIcon.className = 'fas fa-chevron-right';
-                } else {
-                    body.classList.remove('sidebar-collapsed');
-                    if (toggleIcon) toggleIcon.className = 'fas fa-bars';
+                function isMobile() {
+                    return window.innerWidth < MOBILE_BP;
                 }
-            }
 
-            function toggleSidebar() {
-                const isCollapsed = document.body.classList.contains('sidebar-collapsed');
-                const newState = !isCollapsed;
-                applySidebarState(newState);
-                try {
-                    localStorage.setItem(SIDEBAR_STATE_KEY, newState ? '1' : '0');
-                } catch (e) { /* ignore */ }
-            }
-
-            // On page load — restore sidebar state from localStorage
-            (function restoreSidebarState() {
-                try {
-                    const saved = localStorage.getItem(SIDEBAR_STATE_KEY);
-                    if (saved === '1') {
-                        applySidebarState(true);
-                    } else if (saved === '0') {
-                        applySidebarState(false);
+                function applySidebarState(collapsed) {
+                    const icon = document.querySelector('#sidebarToggle i');
+                    if (collapsed) {
+                        document.body.classList.add('sidebar-collapsed');
+                        if (icon) icon.className = 'fas fa-chevron-right';
+                    } else {
+                        document.body.classList.remove('sidebar-collapsed');
+                        if (icon) icon.className = 'fas fa-bars';
                     }
-                } catch (e) { /* ignore */ }
+                }
+
+                window.toggleSidebar = function() {
+                    if (isMobile()) {
+                        const navBar = document.getElementById('navBar');
+                        const isOpen = navBar.classList.contains('open');
+                        if (isOpen) {
+                            window.closeMobileSidebar();
+                        } else {
+                            navBar.classList.add('open');
+                            document.body.classList.add('sidebar-open');
+                            document.body.style.overflow = 'hidden';
+                        }
+                    } else {
+                        const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+                        applySidebarState(!isCollapsed);
+                        try {
+                            localStorage.setItem(STORAGE_KEY, !isCollapsed ? '1' : '0');
+                        } catch (e) {}
+                    }
+                };
+
+                window.closeMobileSidebar = function() {
+                    const navBar = document.getElementById('navBar');
+                    if (navBar) navBar.classList.remove('open');
+                    document.body.classList.remove('sidebar-open');
+                    document.body.style.overflow = '';
+                };
+
+                function restoreState() {
+                    if (isMobile()) {
+                        applySidebarState(true);
+                    } else {
+                        try {
+                            const saved = localStorage.getItem(STORAGE_KEY);
+                            applySidebarState(saved === '1');
+                        } catch (e) {}
+                    }
+                }
+
+                let resizeTimer;
+                window.addEventListener('resize', function() {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(function() {
+                        if (isMobile()) {
+                            window.closeMobileSidebar();
+                            applySidebarState(true);
+                        } else {
+                            window.closeMobileSidebar();
+                            try {
+                                const saved = localStorage.getItem(STORAGE_KEY);
+                                applySidebarState(saved === '1');
+                            } catch (e) {}
+                        }
+                    }, 150);
+                });
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') window.closeMobileSidebar();
+                });
+
+                document.querySelectorAll('.nav-links li a').forEach(function(link) {
+                    link.addEventListener('click', function() {
+                        if (isMobile()) {
+                            setTimeout(window.closeMobileSidebar, 150);
+                        }
+                    });
+                });
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', restoreState);
+                } else {
+                    restoreState();
+                }
             })();
+
+            // ============================================
+            // AUTO DATA-LABEL FOR RESPONSIVE TABLES
+            // ============================================
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('table').forEach(function(table) {
+                    const headers = Array.from(table.querySelectorAll('thead th')).map(function(th) {
+                        return th.textContent.trim();
+                    });
+                    if (!headers.length) return;
+                    table.querySelectorAll('tbody tr').forEach(function(row) {
+                        row.querySelectorAll('td').forEach(function(cell, i) {
+                            if (headers[i] && !cell.hasAttribute('data-label')) {
+                                cell.setAttribute('data-label', headers[i]);
+                            }
+                        });
+                    });
+                });
+            });
 
             // ============================================
             // LOGOUT FUNCTIONS

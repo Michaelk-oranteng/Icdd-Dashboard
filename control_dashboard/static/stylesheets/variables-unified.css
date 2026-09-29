@@ -1,0 +1,382 @@
+/* ==========================================================================
+   UNIFIED DESIGN TOKENS
+   Single source of truth for all design variables
+   Import FIRST, before all other CSS files
+   ========================================================================== */
+
+:root {
+    /* ========================================
+       SURFACES
+       ======================================== */
+    --bg-0: #eef1f8;
+    --bg-1: #ffffff;
+    --bg-2: #f7f8fc;
+    --bg-3: #f1f3f9;
+    --bg-hover: #f1f3f9;
+
+    /* ========================================
+       BORDERS
+       ======================================== */
+    --border: rgba(15, 27, 51, 0.08);
+    --border-strong: rgba(15, 27, 51, 0.16);
+    --hairline: rgba(15, 27, 51, 0.06);
+
+    /* ========================================
+       TEXT
+       ======================================== */
+    --text-0: #0f1b33;
+    --text-1: #46536b;
+    --text-2: #8993a8;
+    --text-inverse: #ffffff;
+
+    /* ========================================
+       ACCENTS
+       ======================================== */
+    --accent: #4f6ef7;
+    --accent-soft: #eef1ff;
+    --accent-hover: #3b56d8;
+    
+    --emerald: #17a673;
+    --emerald-soft: #e2f7ef;
+    --emerald-dark: #0f8a5e;
+    
+    --amber: #e08a17;
+    --amber-soft: #fdf2e0;
+    --amber-dark: #c46e0c;
+    
+    --rose: #e0456a;
+    --rose-soft: #fdeaf0;
+    --rose-dark: #c82d52;
+    
+    --violet: #7c5cf0;
+    --violet-soft: #f0ebff;
+    --violet-dark: #6344d4;
+
+    /* ========================================
+       SHADOWS
+       ======================================== */
+    --shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                 0 1px 3px rgba(15, 27, 51, 0.03);
+    --shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                 0 2px 4px rgba(15, 27, 51, 0.03);
+    --shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
+                 0 4px 12px rgba(15, 27, 51, 0.04);
+    --shadow-xl: 0 24px 64px rgba(15, 27, 51, 0.22),
+                 0 8px 24px rgba(15, 27, 51, 0.10);
+
+    /* ========================================
+       TYPOGRAPHY
+       ======================================== */
+    --font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+
+    /* ========================================
+       FLUID SPACING
+       ======================================== */
+    --space-2xs: clamp(2px, 0.3vw, 4px);
+    --space-xs: clamp(4px, 0.5vw, 6px);
+    --space-sm: clamp(6px, 1vw, 10px);
+    --space-md: clamp(10px, 1.5vw, 16px);
+    --space-lg: clamp(16px, 2vw, 24px);
+    --space-xl: clamp(20px, 3vw, 32px);
+    --space-2xl: clamp(32px, 4vw, 48px);
+    --space-3xl: clamp(48px, 5vw, 64px);
+
+    /* ========================================
+       FLUID RADII
+       ======================================== */
+    --radius-xs: clamp(4px, 0.4vw, 6px);
+    --radius-sm: clamp(6px, 0.6vw, 8px);
+    --radius-md: clamp(10px, 0.8vw, 12px);
+    --radius-lg: clamp(14px, 1vw, 18px);
+    --radius-xl: clamp(18px, 1.2vw, 22px);
+    --radius-full: 9999px;
+
+    /* ========================================
+       FLUID TYPOGRAPHY SCALE
+       ======================================== */
+    --fs-2xs: clamp(8px, 0.6vw, 10px);
+    --fs-xs: clamp(9px, 0.7vw, 11px);
+    --fs-sm: clamp(10px, 0.8vw, 12px);
+    --fs-base: clamp(12px, 0.9vw, 14px);
+    --fs-md: clamp(13px, 1vw, 15px);
+    --fs-lg: clamp(15px, 1.2vw, 18px);
+    --fs-xl: clamp(18px, 1.5vw, 24px);
+    --fs-2xl: clamp(22px, 2vw, 32px);
+    --fs-3xl: clamp(28px, 2.5vw, 42px);
+
+    /* ========================================
+       LAYOUT
+       ======================================== */
+    --sidebar-width: clamp(200px, 18vw, 260px);
+    --sidebar-collapsed-width: clamp(56px, 5vw, 72px);
+    --header-height: clamp(56px, 5vw, 80px);
+    --content-max-width: 1600px;
+    --content-padding: clamp(12px, 2vw, 32px);
+
+    /* ========================================
+       TRANSITIONS
+       ======================================== */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+    --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ========================================
+       Z-INDEX SCALE
+       ======================================== */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-fixed: 300;
+    --z-modal-backdrop: 9000;
+    --z-modal: 9999;
+    --z-toast: 10000;
+    --z-tooltip: 11000;
+}
+
+/* ==========================================================================
+   VARIABLE ALIASES FOR BACKWARD COMPATIBILITY
+   Maps old variable names to new unified names
+   ========================================================================== */
+
+:root {
+    /* Activity Logs aliases */
+    --al-bg-0: var(--bg-0);
+    --al-bg-1: var(--bg-1);
+    --al-bg-2: var(--bg-2);
+    --al-bg-3: var(--bg-3);
+    --al-border: var(--border);
+    --al-border-strong: var(--border-strong);
+    --al-hairline: var(--hairline);
+    --al-text-0: var(--text-0);
+    --al-text-1: var(--text-1);
+    --al-text-2: var(--text-2);
+    --al-accent: var(--accent);
+    --al-accent-soft: var(--accent-soft);
+    --al-emerald: var(--emerald);
+    --al-emerald-soft: var(--emerald-soft);
+    --al-amber: var(--amber);
+    --al-amber-soft: var(--amber-soft);
+    --al-rose: var(--rose);
+    --al-rose-soft: var(--rose-soft);
+    --al-violet: var(--violet);
+    --al-violet-soft: var(--violet-soft);
+    --al-shadow-sm: var(--shadow-sm);
+    --al-shadow-md: var(--shadow-md);
+    --al-shadow-lg: var(--shadow-lg);
+    --al-font: var(--font-family);
+    --al-mono: var(--font-mono);
+
+    /* Ad-hoc Scorecard aliases */
+    --ah-bg-0: var(--bg-0);
+    --ah-bg-1: var(--bg-1);
+    --ah-bg-2: var(--bg-2);
+    --ah-bg-3: var(--bg-3);
+    --ah-border: var(--border);
+    --ah-border-strong: var(--border-strong);
+    --ah-hairline: var(--hairline);
+    --ah-text-0: var(--text-0);
+    --ah-text-1: var(--text-1);
+    --ah-text-2: var(--text-2);
+    --ah-accent: var(--accent);
+    --ah-accent-soft: var(--accent-soft);
+    --ah-emerald: var(--emerald);
+    --ah-emerald-soft: var(--emerald-soft);
+    --ah-amber: var(--amber);
+    --ah-amber-soft: var(--amber-soft);
+    --ah-rose: var(--rose);
+    --ah-rose-soft: var(--rose-soft);
+    --ah-violet: var(--violet);
+    --ah-violet-soft: var(--violet-soft);
+    --ah-shadow-sm: var(--shadow-sm);
+    --ah-shadow-md: var(--shadow-md);
+    --ah-shadow-lg: var(--shadow-lg);
+    --ah-font: var(--font-family);
+
+    /* Admin aliases */
+    --adm-bg-0: var(--bg-0);
+    --adm-bg-1: var(--bg-1);
+    --adm-bg-2: var(--bg-2);
+    --adm-bg-3: var(--bg-3);
+    --adm-border: var(--border);
+    --adm-border-strong: var(--border-strong);
+    --adm-hairline: var(--hairline);
+    --adm-text-0: var(--text-0);
+    --adm-text-1: var(--text-1);
+    --adm-text-2: var(--text-2);
+    --adm-accent: var(--accent);
+    --adm-accent-soft: var(--accent-soft);
+    --adm-emerald: var(--emerald);
+    --adm-emerald-soft: var(--emerald-soft);
+    --adm-amber: var(--amber);
+    --adm-amber-soft: var(--amber-soft);
+    --adm-rose: var(--rose);
+    --adm-rose-soft: var(--rose-soft);
+    --adm-violet: var(--violet);
+    --adm-violet-soft: var(--violet-soft);
+    --adm-shadow-sm: var(--shadow-sm);
+    --adm-shadow-md: var(--shadow-md);
+    --adm-shadow-lg: var(--shadow-lg);
+
+    /* Supervisor Checklist aliases */
+    --sc-bg-0: var(--bg-0);
+    --sc-bg-1: var(--bg-1);
+    --sc-bg-2: var(--bg-2);
+    --sc-bg-3: var(--bg-3);
+    --sc-border: var(--border);
+    --sc-border-strong: var(--border-strong);
+    --sc-hairline: var(--hairline);
+    --sc-text-0: var(--text-0);
+    --sc-text-1: var(--text-1);
+    --sc-text-2: var(--text-2);
+    --sc-accent: var(--accent);
+    --sc-accent-soft: var(--accent-soft);
+    --sc-emerald: var(--emerald);
+    --sc-emerald-soft: var(--emerald-soft);
+    --sc-amber: var(--amber);
+    --sc-amber-soft: var(--amber-soft);
+    --sc-rose: var(--rose);
+    --sc-rose-soft: var(--rose-soft);
+    --sc-violet: var(--violet);
+    --sc-violet-soft: var(--violet-soft);
+    --sc-shadow-sm: var(--shadow-sm);
+    --sc-shadow-md: var(--shadow-md);
+    --sc-shadow-lg: var(--shadow-lg);
+    --sc-font: var(--font-family);
+
+    /* Submitted Reports aliases */
+    --sr-bg-0: var(--bg-0);
+    --sr-bg-1: var(--bg-1);
+    --sr-bg-2: var(--bg-2);
+    --sr-bg-3: var(--bg-3);
+    --sr-border: var(--border);
+    --sr-border-strong: var(--border-strong);
+    --sr-hairline: var(--hairline);
+    --sr-text-0: var(--text-0);
+    --sr-text-1: var(--text-1);
+    --sr-text-2: var(--text-2);
+    --sr-accent: var(--accent);
+    --sr-accent-soft: var(--accent-soft);
+    --sr-emerald: var(--emerald);
+    --sr-emerald-soft: var(--emerald-soft);
+    --sr-amber: var(--amber);
+    --sr-amber-soft: var(--amber-soft);
+    --sr-rose: var(--rose);
+    --sr-rose-soft: var(--rose-soft);
+    --sr-violet: var(--violet);
+    --sr-violet-soft: var(--violet-soft);
+    --sr-shadow-sm: var(--shadow-sm);
+    --sr-shadow-md: var(--shadow-md);
+    --sr-font: var(--font-family);
+
+    /* Supervisor Dashboard aliases */
+    --sv-bg-0: var(--bg-0);
+    --sv-bg-1: var(--bg-1);
+    --sv-bg-2: var(--bg-2);
+    --sv-bg-3: var(--bg-3);
+    --sv-border: var(--border);
+    --sv-border-strong: var(--border-strong);
+    --sv-hairline: var(--hairline);
+    --sv-text-0: var(--text-0);
+    --sv-text-1: var(--text-1);
+    --sv-text-2: var(--text-2);
+    --sv-accent: var(--accent);
+    --sv-accent-soft: var(--accent-soft);
+    --sv-emerald: var(--emerald);
+    --sv-emerald-soft: var(--emerald-soft);
+    --sv-amber: var(--amber);
+    --sv-amber-soft: var(--amber-soft);
+    --sv-rose: var(--rose);
+    --sv-rose-soft: var(--rose-soft);
+    --sv-violet: var(--violet);
+    --sv-violet-soft: var(--violet-soft);
+    --sv-shadow-sm: var(--shadow-sm);
+    --sv-shadow-md: var(--shadow-md);
+    --sv-shadow-lg: var(--shadow-lg);
+    --sv-font: var(--font-family);
+    --sv-mono: var(--font-mono);
+
+    /* Team Performance aliases */
+    --tp-bg-0: var(--bg-0);
+    --tp-bg-1: var(--bg-1);
+    --tp-bg-2: var(--bg-2);
+    --tp-bg-3: var(--bg-3);
+    --tp-border: var(--border);
+    --tp-border-strong: var(--border-strong);
+    --tp-hairline: var(--hairline);
+    --tp-text-0: var(--text-0);
+    --tp-text-1: var(--text-1);
+    --tp-text-2: var(--text-2);
+    --tp-accent: var(--accent);
+    --tp-accent-soft: var(--accent-soft);
+    --tp-emerald: var(--emerald);
+    --tp-emerald-soft: var(--emerald-soft);
+    --tp-amber: var(--amber);
+    --tp-amber-soft: var(--amber-soft);
+    --tp-rose: var(--rose);
+    --tp-rose-soft: var(--rose-soft);
+    --tp-violet: var(--violet);
+    --tp-violet-soft: var(--violet-soft);
+    --tp-shadow-sm: var(--shadow-sm);
+    --tp-shadow-md: var(--shadow-md);
+    --tp-shadow-lg: var(--shadow-lg);
+    --tp-font: var(--font-family);
+    --tp-mono: var(--font-mono);
+
+    /* Reports aliases */
+    --rp-bg-0: var(--bg-0);
+    --rp-bg-1: var(--bg-1);
+    --rp-bg-2: var(--bg-2);
+    --rp-bg-3: var(--bg-3);
+    --rp-border: var(--border);
+    --rp-border-strong: var(--border-strong);
+    --rp-hairline: var(--hairline);
+    --rp-text-0: var(--text-0);
+    --rp-text-1: var(--text-1);
+    --rp-text-2: var(--text-2);
+    --rp-accent: var(--accent);
+    --rp-accent-soft: var(--accent-soft);
+    --rp-emerald: var(--emerald);
+    --rp-emerald-soft: var(--emerald-soft);
+    --rp-amber: var(--amber);
+    --rp-amber-soft: var(--amber-soft);
+    --rp-rose: var(--rose);
+    --rp-rose-soft: var(--rose-soft);
+    --rp-violet: var(--violet);
+    --rp-violet-soft: var(--violet-soft);
+    --rp-shadow-sm: var(--shadow-sm);
+    --rp-shadow-md: var(--shadow-md);
+    --rp-shadow-lg: var(--shadow-lg);
+    --rp-font: var(--font-family);
+    --rp-mono: var(--font-mono);
+
+    /* Member Dashboard aliases */
+    --fx-bg-0: var(--bg-0);
+    --fx-bg-1: var(--bg-1);
+    --fx-bg-2: var(--bg-2);
+    --fx-bg-3: var(--bg-3);
+    --fx-glass: rgba(255, 255, 255, 0.85);
+    --fx-glass-hover: rgba(255, 255, 255, 1);
+    --fx-border: var(--border);
+    --fx-border-strong: var(--border-strong);
+    --fx-hairline: var(--hairline);
+    --fx-text-0: var(--text-0);
+    --fx-text-1: var(--text-1);
+    --fx-text-2: var(--text-2);
+    --fx-accent: var(--accent);
+    --fx-accent-soft: var(--accent-soft);
+    --fx-cyan: #0ea5a4;
+    --fx-cyan-soft: #e0f7f6;
+    --fx-violet: var(--violet);
+    --fx-violet-soft: var(--violet-soft);
+    --fx-amber: var(--amber);
+    --fx-amber-soft: var(--amber-soft);
+    --fx-rose: var(--rose);
+    --fx-rose-soft: var(--rose-soft);
+    --fx-emerald: var(--emerald);
+    --fx-emerald-soft: var(--emerald-soft);
+    --fx-shadow-sm: var(--shadow-sm);
+    --fx-shadow-md: var(--shadow-md);
+    --fx-shadow-lg: var(--shadow-lg);
+    --fx-font: var(--font-family);
+    --fx-mono: var(--font-mono);
+}

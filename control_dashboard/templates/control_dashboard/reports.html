@@ -132,44 +132,50 @@
 {% block nav_links %}
 <li>
     <a href="{% url 'control_dashboard:member_dashboard' %}" data-tooltip="Dashboard">
-        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+        <span class="nav-icon"><i class="fas fa-gauge"></i></span>
         <span class="nav-text">Dashboard</span>
     </a>
 </li>
 <li>
-    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
-        <span class="nav-icon"><i class="fas fa-balance-scale"></i></span>
-        <span class="nav-text">Daily Trial Balance</span>
-    </a>
-</li>
-<li>
-    <a href="{% url 'control_dashboard:analytics_dashboard' %}" data-tooltip="Analytics">
-        <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
-        <span class="nav-text">Analytics</span>
-    </a>
-</li>
-<li>
     <a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
-        <span class="nav-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+        <span class="nav-icon"><i class="fas fa-folder-plus"></i></span>
         <span class="nav-text">Upload Report</span>
     </a>
 </li>
 <li class="active">
     <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
-        <span class="nav-icon"><i class="fas fa-folder-open"></i></span>
+        <span class="nav-icon"><i class="fas fa-file-lines"></i></span>
         <span class="nav-text">My Reports</span>
     </a>
 </li>
 <li>
-    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
-        <span class="nav-icon"><i class="fas fa-layer-group"></i></span>
-        <span class="nav-text">Consolidated Reports</span>
+    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+        <span class="nav-icon"><i class="fas fa-envelope"></i></span>
+        <span class="nav-text">Email</span>
     </a>
 </li>
 <li>
     <a href="{% url 'control_dashboard:member_checklist' %}" data-tooltip="Checklist">
-        <span class="nav-icon"><i class="fas fa-check-double"></i></span>
+        <span class="nav-icon"><i class="fas fa-rectangle-list"></i></span>
         <span class="nav-text">Activity Checklist</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
+        <span class="nav-icon"><i class="fas fa-cash-register"></i></span>
+        <span class="nav-text">Daily Trial Balance</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
+        <span class="nav-icon"><i class="fas fa-chart-area"></i></span>
+        <span class="nav-text">Analytics</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
+        <span class="nav-icon"><i class="fas fa-database"></i></span>
+        <span class="nav-text">Consolidated Reports</span>
     </a>
 </li>
 {% endblock %}

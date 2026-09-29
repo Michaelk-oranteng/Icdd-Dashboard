@@ -715,14 +715,10 @@ body.analytics-fullscreen { overflow: hidden; }
 <li><a href="{% url 'control_dashboard:supervisor_dashboard' %}">
     <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
     <span class="nav-text">Dashboard</span>
-</a></li>  
+</a></li>
 <li class="active"><a href="{% url 'control_dashboard:analytics_dashboard' %}">
     <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
     <span class="nav-text">Analytics</span>
-</a></li>
-<li><a href="{% url 'control_dashboard:supervisor_checklist' %}">
-    <span class="nav-icon"><i class="fas fa-tasks"></i></span>
-    <span class="nav-text">Activity Checklist</span>
 </a></li>
 <li><a href="{% url 'control_dashboard:team_performance' %}">
     <span class="nav-icon"><i class="fas fa-users"></i></span>
@@ -731,15 +727,19 @@ body.analytics-fullscreen { overflow: hidden; }
 <li><a href="{% url 'control_dashboard:ad_hoc_scorecard' %}">
     <span class="nav-icon"><i class="fas fa-star"></i></span>
     <span class="nav-text">Ad-Hoc Scorecard</span>
-</a></li> 
+</a></li>
 <li><a href="{% url 'control_dashboard:submitted_reports' %}">
     <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
     <span class="nav-text">Submitted Reports</span>
-</a></li> 
+</a></li>
+<li><a href="{% url 'control_dashboard:supervisor_checklist' %}">
+    <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+    <span class="nav-text">Activity Checklist</span>
+</a></li>
 <li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
     <span class="nav-icon"><i class="fas fa-search"></i></span>
     <span class="nav-text">Activity Logs</span>
-</a></li> 
+</a></li>
 {% endblock %}
 
 {% block page_title %}Analytics Dashboard{% endblock %}

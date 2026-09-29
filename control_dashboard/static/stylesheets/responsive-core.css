@@ -1,0 +1,558 @@
+/* ==========================================================================
+   RESPONSIVE CORE — Master responsive layer
+   Loaded LAST so it overrides all conflicting template rules
+   ========================================================================== */
+
+/* ==========================================================================
+   1. FLUID ROOT VARIABLES
+   ========================================================================== */
+:root {
+    --sidebar-width: clamp(200px, 18vw, 260px);
+    --sidebar-collapsed-width: clamp(56px, 5vw, 72px);
+    --header-height: clamp(56px, 6vw, 80px);
+
+    --space-xs: clamp(2px, 0.4vw, 6px);
+    --space-sm: clamp(6px, 0.8vw, 10px);
+    --space-md: clamp(10px, 1.2vw, 16px);
+    --space-lg: clamp(16px, 1.8vw, 24px);
+    --space-xl: clamp(20px, 2.5vw, 32px);
+
+    --fs-xs: clamp(9px, 0.7vw, 11px);
+    --fs-sm: clamp(10px, 0.8vw, 12px);
+    --fs-base: clamp(12px, 0.9vw, 14px);
+    --fs-md: clamp(13px, 1vw, 15px);
+    --fs-lg: clamp(15px, 1.2vw, 18px);
+    --fs-xl: clamp(18px, 1.5vw, 24px);
+    --fs-2xl: clamp(22px, 2vw, 32px);
+
+    --radius-sm: clamp(6px, 0.5vw, 8px);
+    --radius-md: clamp(10px, 0.7vw, 12px);
+    --radius-lg: clamp(14px, 1vw, 18px);
+    --radius-xl: clamp(18px, 1.2vw, 22px);
+}
+
+/* ==========================================================================
+   2. FLUID SIDEBAR OVERRIDE
+   ========================================================================== */
+.nav-bar {
+    width: var(--sidebar-width) !important;
+    min-width: 200px;
+    max-width: 280px;
+    transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.sidebar-collapsed .nav-bar {
+    width: var(--sidebar-collapsed-width) !important;
+    min-width: 56px;
+}
+
+.main-content-wrapper {
+    margin-left: var(--sidebar-width) !important;
+    min-width: 0;
+    overflow-x: clip;
+    transition: margin-left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.sidebar-collapsed .main-content-wrapper {
+    margin-left: var(--sidebar-collapsed-width) !important;
+}
+
+/* ==========================================================================
+   3. MOBILE SIDEBAR BEHAVIOR
+   ========================================================================== */
+@media (max-width: 991px) {
+    .nav-bar {
+        transform: translateX(-100%) !important;
+        width: 280px !important;
+        max-width: 85vw !important;
+        z-index: 1001;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+    }
+    .nav-bar.open {
+        transform: translateX(0) !important;
+    }
+    .main-content-wrapper {
+        margin-left: 0 !important;
+    }
+    body.sidebar-open::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 27, 51, 0.45);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+    }
+    .sidebar-overlay {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   4. FLUID MAIN CONTENT
+   ========================================================================== */
+.main-content {
+    padding: clamp(12px, 1.8vw, 30px);
+    width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+}
+
+.top-header {
+    padding: clamp(10px, 1.2vw, 16px) clamp(14px, 1.8vw, 30px);
+    min-height: var(--header-height);
+    gap: clamp(6px, 0.8vw, 12px);
+    flex-wrap: wrap;
+}
+
+.page-title {
+    font-size: clamp(14px, 1.4vw, 24px);
+    line-height: 1.2;
+}
+
+.page-subtitle {
+    font-size: clamp(10px, 0.85vw, 14px);
+}
+
+/* ==========================================================================
+   5. AUTO-ADJUSTING STATS GRIDS
+   ========================================================================== */
+.stats-grid,
+.metrics-grid,
+.analytics-metrics-grid,
+.kpi-grid,
+.tb-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)) !important;
+    gap: clamp(10px, 1.2vw, 18px) !important;
+    width: 100%;
+    container-type: inline-size;
+}
+
+.fx-metrics-strip {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)) !important;
+    gap: clamp(12px, 1.2vw, 16px) !important;
+}
+
+.fx-orbit-strip {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)) !important;
+    gap: clamp(10px, 1vw, 16px) !important;
+    padding: clamp(12px, 1.2vw, 18px) !important;
+}
+
+.fx-footer-strip {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)) !important;
+}
+
+.chart-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)) !important;
+    gap: clamp(12px, 1.2vw, 16px) !important;
+}
+
+/* ==========================================================================
+   6. FLUID CARDS
+   ========================================================================== */
+.stat-card,
+.metric-card,
+.fx-metric,
+.kpi-card,
+.tb-summary-tile,
+.dashboard-panel-card,
+.table-container,
+.builder-card,
+.glass-card,
+.sr-table-container,
+.tb-card,
+.exc-table-card {
+    padding: clamp(14px, 1.5vw, 24px);
+    container-type: inline-size;
+}
+
+.stat-value,
+.card-metric-value,
+.fx-metric-value,
+.tile-value,
+.kpi-ring-value {
+    font-size: clamp(20px, 2.2vw, 32px) !important;
+    line-height: 1.1;
+}
+
+.stat-icon,
+.metric-card-icon,
+.fx-metric-glyph {
+    width: clamp(34px, 3.5vw, 48px) !important;
+    height: clamp(34px, 3.5vw, 48px) !important;
+    font-size: clamp(14px, 1.4vw, 20px) !important;
+}
+
+/* ==========================================================================
+   7. FLUID FILTER BARS
+   ========================================================================== */
+.an-filter-bar,
+.header-upload-controls,
+.tb-control-bar {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: clamp(8px, 1vw, 12px);
+    align-items: center;
+}
+
+.an-filter-group,
+.tb-filter-group,
+.header-filter-group,
+.header-date-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.an-filter-group select,
+.an-filter-group input,
+.header-select,
+.header-date-input,
+.tb-filter-select {
+    min-width: clamp(110px, 12vw, 160px);
+    flex: 1 1 auto;
+    max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    .an-filter-group,
+    .tb-filter-group,
+    .header-filter-group,
+    .header-date-group {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+    .an-filter-group select,
+    .an-filter-group input,
+    .header-select,
+    .header-date-input,
+    .tb-filter-select {
+        flex: 1;
+        width: 100%;
+        min-width: unset;
+    }
+    .header-divider,
+    .tb-filter-divider,
+    .an-filter-spacer {
+        display: none !important;
+    }
+    .an-btn-reset,
+    .tb-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ==========================================================================
+   8. FLUID TABLES — scroll on small screens
+   ========================================================================== */
+.table-responsive,
+.tb-table-wrapper,
+.exc-table-wrap,
+.fx-table-scroll,
+.table-container,
+.sr-table-container,
+.tb-card,
+.exc-table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+@media (max-width: 767px) {
+    .sr-table { min-width: 720px; }
+    .exc-table { min-width: 900px; }
+    .report-details-table { min-width: 800px; }
+    .checklist-table { min-width: 700px; }
+    .users-table { min-width: 640px; }
+}
+
+/* ==========================================================================
+   9. CARD-STYLE TABLES ON MOBILE (container queries)
+   ========================================================================== */
+.table-container,
+.sr-table-container,
+.tb-card,
+.exc-table-card {
+    container-type: inline-size;
+    container-name: table-wrap;
+}
+
+@container table-wrap (max-width: 720px) {
+    .users-table thead,
+    .activity-table thead,
+    .checklist-table thead,
+    .deductions-table thead,
+    .report-table thead,
+    .sr-table thead,
+    .exc-table thead {
+        display: none;
+    }
+    .users-table tbody tr,
+    .activity-table tbody tr,
+    .checklist-table tbody tr,
+    .deductions-table tbody tr,
+    .report-table tbody tr,
+    .sr-table tbody tr {
+        display: block;
+        border: 1px solid rgba(15, 27, 51, 0.08);
+        border-radius: 12px;
+        margin-bottom: 10px;
+        padding: 8px 4px;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(15, 27, 51, 0.04);
+    }
+    .users-table tbody td,
+    .activity-table tbody td,
+    .checklist-table tbody td,
+    .deductions-table tbody td,
+    .report-table tbody td,
+    .sr-table tbody td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px;
+        border-bottom: none;
+        gap: 12px;
+        text-align: left;
+        white-space: normal;
+    }
+    .users-table tbody td::before,
+    .activity-table tbody td::before,
+    .checklist-table tbody td::before,
+    .deductions-table tbody td::before,
+    .report-table tbody td::before,
+    .sr-table tbody td::before {
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        color: #8993a8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+    }
+}
+
+/* ==========================================================================
+   10. FLUID BUTTONS
+   ========================================================================== */
+.btn-create-header,
+.btn-export-header,
+.btn-reset-header,
+.btn-refresh-header,
+.btn-sync-header,
+.btn-send-header,
+.btn-submit-header,
+.btn-upload,
+.btn-submit,
+.tb-btn,
+.clb-btn,
+.an-btn-reset,
+.sr-btn-save,
+.btn-back-dashboard,
+.fullscreen-btn {
+    padding: clamp(7px, 0.8vw, 10px) clamp(12px, 1.2vw, 20px) !important;
+    font-size: clamp(11px, 0.85vw, 13px) !important;
+    min-height: 36px;
+    height: auto !important;
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .btn-export-header span,
+    .btn-refresh-header span,
+    .btn-reset-header span,
+    .btn-sync-header span {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   11. FLUID MODALS
+   ========================================================================== */
+.modal-content,
+.clb-modal,
+.modal-wrapper .modal-content {
+    width: min(92vw, 600px) !important;
+    max-width: min(92vw, 600px) !important;
+    max-height: min(90vh, 800px);
+    padding: clamp(16px, 2vw, 32px);
+    margin: auto;
+}
+
+.modal-content-wide,
+.modal-wrapper .modal-content.modal-content-wide {
+    width: min(94vw, 900px) !important;
+    max-width: min(94vw, 900px) !important;
+}
+
+@media (max-width: 640px) {
+    .modal-content,
+    .clb-modal,
+    .modal-wrapper .modal-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 16px 16px 0 0 !important;
+        max-height: 92vh;
+        margin: 0;
+    }
+}
+
+/* ==========================================================================
+   12. FLUID TOASTS
+   ========================================================================== */
+.toast-notification,
+.clb-toast,
+.toast {
+    width: min(90vw, 420px);
+    max-width: min(90vw, 420px);
+    min-width: auto !important;
+    padding: clamp(12px, 1.4vw, 20px);
+}
+
+@media (max-width: 640px) {
+    .toast-notification,
+    .clb-toast,
+    .toast {
+        left: clamp(10px, 2vw, 16px) !important;
+        right: clamp(10px, 2vw, 16px) !important;
+        bottom: clamp(10px, 2vw, 16px) !important;
+        width: auto;
+        max-width: none;
+    }
+}
+
+/* ==========================================================================
+   13. SPLIT LAYOUTS
+   ========================================================================== */
+.dashboard-split-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: clamp(14px, 1.4vw, 20px);
+}
+
+.fx-bento {
+    display: grid !important;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: clamp(14px, 1.4vw, 20px);
+}
+
+.email-builder-grid,
+.template-builder-grid,
+.drafts-config-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+    gap: clamp(14px, 1.4vw, 20px);
+}
+
+@media (max-width: 1023px) {
+    .dashboard-split-layout,
+    .fx-bento,
+    .email-builder-grid,
+    .template-builder-grid,
+    .drafts-config-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ==========================================================================
+   14. ASPECT RATIO OVERRIDES
+   ========================================================================== */
+@media (max-aspect-ratio: 1/1) {
+    .dashboard-split-layout,
+    .fx-bento,
+    .email-builder-grid,
+    .template-builder-grid,
+    .drafts-config-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .stats-grid,
+    .metrics-grid,
+    .analytics-metrics-grid,
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-grid,
+    .metrics-grid,
+    .analytics-metrics-grid,
+    .kpi-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ==========================================================================
+   15. HEIGHT-BASED
+   ========================================================================== */
+@media (max-height: 700px) {
+    .nav-links li a {
+        padding: 7px 12px !important;
+    }
+    .stat-card,
+    .metric-card,
+    .fx-metric {
+        min-height: 80px;
+        padding: 12px 16px !important;
+    }
+}
+
+/* ==========================================================================
+   16. OVERFLOW SAFETY
+   ========================================================================== */
+.page-wrapper,
+.main-content-wrapper,
+.main-content {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: clip;
+}
+
+.user-info .user-email,
+.exc-table .cell-wide,
+.activity-details,
+.report-details-table .wide-cell {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   17. PRINT
+   ========================================================================== */
+@media print {
+    .nav-bar,
+    .top-header,
+    .sidebar-toggle,
+    .btn-export-header,
+    .btn-reset-header,
+    .btn-refresh-header,
+    .btn-create-header,
+    .btn-sync-header,
+    .btn-send-header,
+    .btn-submit-header,
+    .stats-grid,
+    .metrics-grid,
+    .analytics-metrics-grid,
+    .breakdown-grid,
+    .fx-metrics-strip,
+    .fx-orbit-strip,
+    .fx-footer-strip,
+    .kpi-grid {
+        display: none !important;
+    }
+    .main-content-wrapper,
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+}
