@@ -7,6 +7,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import Http404
+from django.views.generic import RedirectView
 from django.views.static import serve as serve_static
 
 
@@ -20,8 +21,19 @@ def serve_media(request, path):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Root → redirect to your dashboard
+    path(
+        '',
+        RedirectView.as_view(
+            pattern_name='control_dashboard:landing_page',
+            permanent=False,
+        ),
+        name='root',
+    ),
+
     path('adminboard/', include('control_dashboard.urls')),
 
-    # Media files served at the root — matches MEDIA_URL = '/media/'
+    # Media files
     path('media/<path:path>', serve_media, name='serve_media'),
 ]
