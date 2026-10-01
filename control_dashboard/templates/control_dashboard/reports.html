@@ -299,6 +299,7 @@
         transition: max-height 0.25s ease, opacity 0.2s ease;
         max-height: 20000px;
         opacity: 1;
+        overflow-x: auto;
     }
 
     .report-type-body.collapsed {
@@ -308,17 +309,21 @@
     }
 
     /* ============================================================
-       TABLE
+       REPORT DETAILS TABLE
        ============================================================ */
     .report-details-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 12.5px;
+        /* Fixed layout lets us control column widths precisely.
+           Wide columns (EXCEPTION, REMARKS, etc.) get the space;
+           narrow ones (S/N, dates, status) are locked down. */
+        table-layout: fixed;
     }
 
     .report-details-table thead th {
         text-align: left;
-        padding: 11px 16px;
+        padding: 12px 16px;
         background: #f8fafc;
         font-size: 10.5px;
         font-weight: 700;
@@ -327,44 +332,79 @@
         letter-spacing: 0.5px;
         border-bottom: 1px solid var(--rp-border);
         white-space: nowrap;
+        vertical-align: middle;
     }
 
     .report-details-table thead th.text-center { text-align: center; }
 
     .report-details-table tbody td {
-        padding: 12px 16px;
+        padding: 14px 16px;
         border-bottom: 1px solid #f1f5f9;
         color: var(--rp-text-0);
         vertical-align: top;
-        line-height: 1.45;
+        line-height: 1.55;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     .report-details-table tbody tr:last-child td { border-bottom: none; }
     .report-details-table tbody tr:hover { background: #fafbfd; }
 
-    .report-details-table td.narrow-cell { white-space: nowrap; }
-    .report-details-table td.date-cell {
+    /* ---------- Cell variants ---------- */
+
+    /* Narrow: S/N, dates, status, category, supervisor, officer */
+    .report-details-table td.narrow-cell,
+    .report-details-table th.narrow-cell {
+        white-space: nowrap;
+        vertical-align: top;
+    }
+
+    /* Date cells: keep tight */
+    .report-details-table td.date-cell,
+    .report-details-table th.date-cell {
         white-space: nowrap;
         color: var(--rp-text-2);
         font-variant-numeric: tabular-nums;
     }
-    .report-details-table td.num-cell {
+
+    /* Numbers: right-aligned, tabular */
+    .report-details-table td.num-cell,
+    .report-details-table th.num-cell {
         text-align: right;
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
-    .report-details-table td.wide-cell {
-        max-width: 340px;
+
+    /* Wide cells — EXCEPTION, OBSERVATION, REMARKS, AUDITEE'S RESPONSE.
+       These get the bulk of the table's horizontal space. Padding is
+       boosted so multi-line text has room to breathe. */
+    .report-details-table td.wide-cell,
+    .report-details-table th.wide-cell {
         white-space: normal;
         word-break: break-word;
+        overflow-wrap: anywhere;
+        padding-top: 16px;
+        padding-bottom: 16px;
+        line-height: 1.6;
+        color: var(--rp-text-1);
     }
-    .report-details-table td.text-center { text-align: center; }
+
+    /* The EXCEPTION column gets the most room and a slightly
+       darker text colour so it reads as the "primary" column. */
+    .report-details-table td.wide-cell.cell-exception,
+    .report-details-table th.wide-cell.cell-exception {
+        font-size: 13px;
+        color: var(--rp-text-0);
+    }
+
+    .report-details-table td.text-center,
+    .report-details-table th.text-center { text-align: center; }
 
     .report-details-table tr.empty-row td {
         text-align: center;
         color: var(--rp-text-3);
         font-style: italic;
-        padding: 24px;
+        padding: 28px 16px;
         background: #fbfcff;
     }
 
@@ -677,11 +717,39 @@
     }
     .toast-close:hover { background: #f3f4f6; color: var(--rp-text-0); }
 
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 1000px) {
+        .report-details-table {
+            table-layout: auto;
+        }
+        .report-details-table td.wide-cell,
+        .report-details-table th.wide-cell {
+            min-width: 220px;
+        }
+        .report-details-table td.narrow-cell,
+        .report-details-table th.narrow-cell,
+        .report-details-table td.date-cell,
+        .report-details-table th.date-cell {
+            min-width: 90px;
+        }
+    }
+
     @media (max-width: 720px) {
         .rp-toolbar { flex-direction: column; align-items: stretch; }
         .rp-toolbar-section { flex-direction: column; align-items: stretch; }
         .rp-select { min-width: 100%; }
         .toast-notification { left: 16px; right: 16px; min-width: 0; }
+
+        /* let the group body scroll horizontally instead of squishing */
+        .report-type-body {
+            overflow-x: auto;
+        }
+        .report-details-table {
+            min-width: 820px;
+            table-layout: auto;
+        }
     }
 </style>
 {% endblock %}
@@ -824,6 +892,43 @@
                             {% with display=report_item.get_display_data %}
                                 {% if forloop.first %}
                                     <table class="report-details-table">
+                                        {% if display.is_excel %}
+                                        <colgroup>
+                                            {% for header in display.headers %}
+                                                {% with h=header|upper %}
+                                                    {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
+                                                        <col style="width: 56px;">
+                                                    {% elif "DATE" in h %}
+                                                        <col style="width: 120px;">
+                                                    {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "CATEGORY" in h %}
+                                                        <col style="width: 150px;">
+                                                    {% elif "OFFICER" in h or h == "SUPERVISOR" %}
+                                                        <col style="width: 160px;">
+                                                    {% elif h == "STATUS" %}
+                                                        <col style="width: 110px;">
+                                                    {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
+                                                        <col style="width: 130px;">
+                                                    {% elif "EXCEPTION" in h or "OBSERVATION" in h or "DESCRIPTION" in h or "DETAIL" in h %}
+                                                        <col style="width: 32%;">
+                                                    {% elif "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h %}
+                                                        <col style="width: 22%;">
+                                                    {% else %}
+                                                        <col>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% endfor %}
+                                            <col style="width: 96px;">
+                                        </colgroup>
+                                        {% else %}
+                                        <colgroup>
+                                            <col style="width: 22%;">
+                                            <col style="width: 14%;">
+                                            <col style="width: 32%;">
+                                            <col style="width: 18%;">
+                                            <col style="width: 10%;">
+                                            <col style="width: 96px;">
+                                        </colgroup>
+                                        {% endif %}
                                         <thead>
                                             <tr>
                                                 {% if display.is_excel %}
@@ -874,8 +979,10 @@
                                                         <td class="narrow-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
                                                     {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
                                                         <td class="num-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
-                                                    {% elif "EXCEPTION" in h or "DESCRIPTION" in h or "OBSERVATION" in h or "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h or "DETAIL" in h %}
-                                                        <td class="wide-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                    {% elif "EXCEPTION" in h or "OBSERVATION" in h or "DESCRIPTION" in h or "DETAIL" in h %}
+                                                        <td class="wide-cell cell-exception">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                    {% elif "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h %}
+                                                        <td class="wide-cell cell-remarks">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
                                                     {% else %}
                                                         <td>{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
                                                     {% endif %}
@@ -920,7 +1027,7 @@
                                                         {{ value }}
                                                     {% endwith %}
                                                 </td>
-                                                <td class="wide-cell">
+                                                <td class="wide-cell cell-exception">
                                                     {% with value=row.Observation|default:row.observation|default:row.OBSERVATION|default:row.Comments|default:row.comments|default:"-" %}
                                                         {{ value }}
                                                     {% endwith %}
