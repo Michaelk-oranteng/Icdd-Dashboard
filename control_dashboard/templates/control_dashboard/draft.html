@@ -4,762 +4,607 @@
 {% block title %}Upload Exception Report{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'stylesheets/member.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'stylesheets/draft.css' %}" type="text/css">
+
 <style>
-/* ============================================================
-   UPLOAD EXCEPTION REPORT — Premium Light Theme
-   ============================================================ */
-
-:root {
-    /* Surfaces */
-    --up-bg-0: #eef1f8;
-    --up-bg-1: #ffffff;
-    --up-bg-2: #f7f8fc;
-    --up-bg-3: #f1f3f9;
-
-    /* Glass & borders */
-    --up-glass: rgba(255, 255, 255, 0.85);
-    --up-border: rgba(15, 27, 51, 0.08);
-    --up-border-strong: rgba(15, 27, 51, 0.16);
-    --up-hairline: rgba(15, 27, 51, 0.06);
-
-    /* Text */
-    --up-text-0: #0f1b33;
-    --up-text-1: #46536b;
-    --up-text-2: #8993a8;
-
-    /* Accents */
-    --up-accent: #4f6ef7;
-    --up-accent-soft: #eef1ff;
-    --up-emerald: #17a673;
-    --up-emerald-soft: #e2f7ef;
-    --up-emerald-dark: #0f8a5e;
-    --up-amber: #e08a17;
-    --up-amber-soft: #fdf2e0;
-    --up-rose: #e0456a;
-    --up-rose-soft: #fdeaf0;
-    --up-violet: #7c5cf0;
-    --up-violet-soft: #f0ebff;
-
-    /* Shadows */
-    --up-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
-                    0 1px 3px rgba(15, 27, 51, 0.03);
-    --up-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
-                    0 2px 4px rgba(15, 27, 51, 0.03);
-    --up-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
-                    0 4px 12px rgba(15, 27, 51, 0.04);
-
-    --up-font: 'Poppins', system-ui, -apple-system, sans-serif;
-    --up-mono: 'JetBrains Mono', 'Fira Code', monospace;
-}
-
-/* ============================================================
-   HEADER CONTROLS — proper control surface pill
-   ============================================================ */
-.header-upload-controls {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px;
-    background: var(--up-bg-1);
-    border: 1px solid var(--up-border);
-    border-radius: 14px;
-    box-shadow: var(--up-shadow-sm);
-    flex-wrap: wrap;
-}
-
-.header-upload-controls .form-control {
-    padding: 8px 34px 8px 14px;
-    border: 1px solid var(--up-border);
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 500;
-    font-family: var(--up-font);
-    background: var(--up-bg-1);
-    color: var(--up-text-0);
-    transition: all 0.25s ease;
-    min-width: 240px;
-    height: 38px;
-    box-sizing: border-box;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 14px;
-    cursor: pointer;
-}
-
-.header-upload-controls .form-control:hover {
-    border-color: var(--up-border-strong);
-}
-
-.header-upload-controls .form-control:focus {
-    border-color: var(--up-accent);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
-}
-
-.header-upload-controls .form-control option {
-    background: var(--up-bg-1);
-    color: var(--up-text-0);
-}
-
-.header-upload-controls .btn-upload {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 8px 18px;
-    background: linear-gradient(135deg, #17a673 0%, #0f8a5e 100%);
-    color: white;
-    border: 1px solid rgba(23, 166, 115, 0.4);
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    font-family: var(--up-font);
-    white-space: nowrap;
-    height: 38px;
-    box-shadow: 0 4px 14px rgba(23, 166, 115, 0.25);
-    position: relative;
-    overflow: hidden;
-}
-
-.header-upload-controls .btn-upload::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
-    opacity: 0;
-    transition: opacity 0.25s ease;
-}
-
-.header-upload-controls .btn-upload:hover:not(:disabled)::before { opacity: 1; }
-
-.header-upload-controls .btn-upload:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(23, 166, 115, 0.42);
-}
-
-.header-upload-controls .btn-upload:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-.header-upload-controls .btn-upload .spinner {
-    display: none;
-    animation: up-spin 1s linear infinite;
-}
-
-.header-upload-controls .btn-upload.loading .spinner { display: inline-block; }
-.header-upload-controls .btn-upload.loading .btn-text { display: none; }
-
-@keyframes up-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* ============================================================
-   BOUNDARY CHAIN — nothing pushes page wider than viewport
-   ============================================================ */
-.submit-container,
-.glass-card,
-.preview-container,
-.table-wrapper {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-}
-
-.submit-container {
-    margin: 0 auto;
-    padding: 4px 0 40px;
-    overflow-x: hidden;
-    position: relative;
-    max-width: 1600px;
-    font-family: var(--up-font);
-    color: var(--up-text-0);
-}
-
-.glass-card {
-    background: var(--up-bg-1);
-    border: 1px solid var(--up-border);
-    border-radius: 20px;
-    padding: 24px;
-    box-shadow: var(--up-shadow-sm);
-    overflow-x: hidden;
-    position: relative;
-}
-
-.glass-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--up-emerald) 50%,
-        transparent 100%);
-    opacity: 0.7;
-    border-radius: 20px 20px 0 0;
-}
-
-/* ============================================================
-   PREVIEW CONTAINER
-   ============================================================ */
-.preview-container {
-    display: none;
-    overflow: hidden;
-}
-
-.preview-container.show {
-    display: block;
-    animation: up-fade 0.4s ease;
-}
-
-@keyframes up-fade {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-.preview-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--up-hairline);
-}
-
-.preview-header h4 {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--up-text-0);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    letter-spacing: 0.2px;
-}
-
-.preview-header h4 i {
-    font-size: 13px;
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
-    background: var(--up-emerald-soft);
-    color: var(--up-emerald);
-    border: 1px solid rgba(23, 166, 115, 0.2);
-}
-
-.preview-header .record-count {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    color: var(--up-emerald);
-    background: var(--up-emerald-soft);
-    border: 1px solid rgba(23, 166, 115, 0.22);
-    padding: 5px 12px;
-    border-radius: 10px;
-    font-variant-numeric: tabular-nums;
-    display: inline-flex;
-    align-items: center;
-}
-
-.preview-header .btn-clear-inline {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 14px;
-    background: var(--up-bg-1);
-    color: var(--up-rose);
-    border: 1px solid rgba(224, 69, 106, 0.25);
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    font-family: var(--up-font);
-    transition: all 0.2s ease;
-}
-
-.preview-header .btn-clear-inline:hover {
-    background: var(--up-rose-soft);
-    border-color: rgba(224, 69, 106, 0.4);
-}
-
-/* ============================================================
-   SCROLL WINDOW — locked width; table can be wider
-   ============================================================ */
-.table-wrapper {
-    overflow-x: auto;
-    overflow-y: visible;
-    border-radius: 14px;
-    border: 1px solid var(--up-border);
-    background: var(--up-bg-1);
-    -webkit-overflow-scrolling: touch;
-    min-width: 0;
-    max-width: 100%;
-    box-shadow: var(--up-shadow-sm);
-}
-
-.preview-table {
-    border-collapse: collapse;
-    font-size: 13px;
-    font-family: var(--up-font);
-    width: max-content;
-    min-width: 100%;
-    table-layout: auto;
-}
-
-.preview-table thead th {
-    background: var(--up-bg-2);
-    color: var(--up-text-2);
-    font-weight: 700;
-    padding: 12px 14px;
-    text-align: left;
-    border-bottom: 1px solid var(--up-border);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    white-space: nowrap;
-    vertical-align: top;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    backdrop-filter: blur(8px);
-}
-
-.preview-table tbody td {
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--up-hairline);
-    color: var(--up-text-1);
-    vertical-align: top;
-    word-wrap: break-word;
-    overflow-wrap: anywhere;
-    white-space: normal;
-    min-width: 90px;
-    max-width: 420px;
-    line-height: 1.5;
-    hyphens: auto;
-}
-
-.preview-table tbody td.wide-cell {
-    min-width: 320px;
-    max-width: 800px;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    color: var(--up-text-0);
-}
-
-.preview-table tbody td.narrow-cell {
-    min-width: 80px;
-    max-width: 160px;
-    white-space: nowrap;
-}
-
-.preview-table tbody td.date-cell {
-    min-width: 110px;
-    max-width: 130px;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-    font-family: var(--up-mono);
-    font-size: 11px;
-    color: var(--up-text-1);
-}
-
-.preview-table tbody td.num-cell {
-    min-width: 100px;
-    max-width: 160px;
-    white-space: nowrap;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-    font-family: var(--up-mono);
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--up-emerald);
-}
-
-.preview-table tbody tr:nth-child(even) td {
-    background: rgba(15, 27, 51, 0.012);
-}
-
-.preview-table tbody tr:hover td {
-    background: var(--up-accent-soft);
-}
-
-.preview-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.preview-table tbody td.status-pill {
-    white-space: nowrap;
-    text-align: center;
-}
-
-.preview-table .status-badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.preview-table .status-badge.open {
-    background: var(--up-amber-soft);
-    color: var(--up-amber);
-    border: 1px solid rgba(224, 138, 23, 0.22);
-}
-
-.preview-table .status-badge.closed {
-    background: var(--up-emerald-soft);
-    color: var(--up-emerald);
-    border: 1px solid rgba(23, 166, 115, 0.22);
-}
-
-.preview-table .status-badge.in-progress {
-    background: var(--up-accent-soft);
-    color: var(--up-accent);
-    border: 1px solid rgba(79, 110, 247, 0.22);
-}
-
-.preview-table .status-badge.default {
-    background: var(--up-bg-2);
-    color: var(--up-text-1);
-    border: 1px solid var(--up-border);
-}
-
-.preview-table .empty-cell {
-    color: var(--up-text-2);
-    font-style: italic;
-    text-align: center;
-    padding: 40px 20px;
-}
-
-.table-wrapper::-webkit-scrollbar { height: 10px; width: 10px; }
-.table-wrapper::-webkit-scrollbar-track {
-    background: var(--up-bg-2);
-    border-radius: 6px;
-}
-.table-wrapper::-webkit-scrollbar-thumb {
-    background: rgba(15, 27, 51, 0.18);
-    border-radius: 6px;
-    border: 2px solid var(--up-bg-2);
-}
-.table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: rgba(15, 27, 51, 0.32);
-}
-
-/* ============================================================
-   SUBMIT ACTIONS
-   ============================================================ */
-.submit-actions {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 24px;
-    flex-wrap: wrap;
-    padding-top: 20px;
-    border-top: 1px solid var(--up-hairline);
-}
-
-.btn-submit {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 32px;
-    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
-    color: white;
-    border: 1px solid rgba(79, 110, 247, 0.4);
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    font-family: var(--up-font);
-    min-width: 200px;
-    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.28);
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-submit::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
-    opacity: 0;
-    transition: opacity 0.25s ease;
-}
-
-.btn-submit:hover:not(:disabled)::before { opacity: 1; }
-
-.btn-submit:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
-}
-
-.btn-submit:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-.btn-cancel {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 28px;
-    background: var(--up-bg-1);
-    color: var(--up-text-1);
-    border: 1px solid var(--up-border);
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.25s ease;
-    font-family: var(--up-font);
-    min-width: 140px;
-    box-shadow: var(--up-shadow-sm);
-}
-
-.btn-cancel:hover {
-    background: var(--up-bg-2);
-    color: var(--up-text-0);
-    border-color: var(--up-border-strong);
-}
-
-/* ============================================================
-   EMPTY STATE
-   ============================================================ */
-.empty-state {
-    text-align: center;
-    padding: 72px 24px;
-    color: var(--up-text-2);
-}
-
-.empty-state i {
-    font-size: 48px;
-    width: 88px;
-    height: 88px;
-    display: grid;
-    place-items: center;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    background: radial-gradient(circle,
-        rgba(79, 110, 247, 0.14) 0%,
-        rgba(79, 110, 247, 0.04) 60%,
-        transparent 70%);
-    color: var(--up-accent);
-    animation: up-float 3s ease-in-out infinite;
-}
-
-@keyframes up-float {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-6px); }
-}
-
-.empty-state h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--up-text-0);
-    margin: 0 0 6px;
-    letter-spacing: 0.2px;
-}
-
-.empty-state p {
-    font-size: 13px;
-    margin: 0 auto;
-    max-width: 400px;
-    line-height: 1.5;
-}
-
-.empty-state p strong {
-    color: var(--up-text-0);
-    font-weight: 600;
-}
-
-/* ============================================================
-   TOAST
-   ============================================================ */
-.toast-notification {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--up-bg-1);
-    border: 1px solid var(--up-border);
-    border-left: 4px solid var(--up-emerald);
-    border-radius: 14px;
-    padding: 16px 20px;
-    max-width: 400px;
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: var(--up-font);
-    box-shadow:
-        0 16px 40px rgba(15, 27, 51, 0.15),
-        0 4px 12px rgba(15, 27, 51, 0.08);
-    transform: translateX(120%);
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.toast-notification.show { transform: translateX(0); }
-.toast-notification.error { border-left-color: var(--up-rose); }
-
-.toast-notification .toast-icon {
-    flex-shrink: 0;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 15px;
-    background: var(--up-emerald-soft);
-    color: var(--up-emerald);
-    border: 1px solid rgba(23, 166, 115, 0.28);
-}
-
-.toast-notification.error .toast-icon {
-    background: var(--up-rose-soft);
-    color: var(--up-rose);
-    border-color: rgba(224, 69, 106, 0.28);
-}
-
-.toast-notification .toast-content { flex: 1; min-width: 0; }
-
-.toast-notification .toast-title {
-    font-weight: 700;
-    font-size: 13px;
-    color: var(--up-text-0);
-    margin: 0 0 2px 0;
-    letter-spacing: 0.2px;
-}
-
-.toast-notification .toast-message {
-    font-size: 12px;
-    color: var(--up-text-1);
-    margin: 0;
-    line-height: 1.4;
-    word-break: break-word;
-}
-
-.toast-notification .toast-close {
-    background: none;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    color: var(--up-text-2);
-    padding: 4px;
-    line-height: 1;
-    border-radius: 6px;
-    transition: all 0.2s;
-}
-
-.toast-notification .toast-close:hover {
-    color: var(--up-text-0);
-    background: var(--up-bg-2);
-}
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width: 1024px) {
-    .header-upload-controls .form-control { min-width: 200px; }
-}
-
-@media (max-width: 768px) {
-    .header-upload-controls { width: 100%; }
-    .header-upload-controls .form-control {
-        min-width: unset;
-        flex: 1;
-        width: 100%;
-    }
-    .header-upload-controls .btn-upload {
-        flex: 1;
-        justify-content: center;
+    /* ============================================================
+       UPLOAD EXCEPTION REPORT — PROFESSIONAL LAYOUT
+       ============================================================ */
+
+    :root {
+        --up-bg:      #f7f8fc;
+        --up-surface: #ffffff;
+        --up-border:  #e5e7eb;
+        --up-border-2:#f1f5f9;
+        --up-text:    #0f1b33;
+        --up-text-2:  #6b7280;
+        --up-text-3:  #9ca3af;
+        --up-accent:  #4f6ef7;
+        --up-success: #17a673;
+        --up-warning: #e08a17;
+        --up-danger:  #e0456a;
     }
 
-    .glass-card {
-        padding: 16px;
-        border-radius: 16px;
-    }
-
-    .preview-header {
+    .up-wrap {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 4px 0 48px;
+        font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+        color: var(--up-text);
+        display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        gap: 20px;
     }
-    .preview-header > div {
-        width: 100%;
+
+    /* ---------- Page header ---------- */
+    .up-header {
+        display: flex;
         justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 4px 2px 0;
     }
 
-    .preview-table { font-size: 12px; }
-    .preview-table thead th,
-    .preview-table tbody td { padding: 8px 10px; }
-    .preview-table tbody td.wide-cell {
-        min-width: 240px;
-        max-width: 600px;
+    .up-header-left h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        color: var(--up-text);
     }
 
-    .submit-actions { flex-direction: column; }
-    .submit-actions .btn-submit,
-    .submit-actions .btn-cancel {
+    .up-header-left p {
+        margin: 4px 0 0 0;
+        font-size: 12.5px;
+        color: var(--up-text-2);
+    }
+
+    .up-header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* ---------- Card primitive ---------- */
+    .up-card {
+        background: var(--up-surface);
+        border: 1px solid var(--up-border);
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(15, 27, 51, 0.03);
+        overflow: hidden;
+    }
+
+    .up-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--up-border-2);
+        flex-wrap: wrap;
+    }
+
+    .up-card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--up-text);
+    }
+
+    .up-card-title i {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        background: #eef1ff;
+        color: var(--up-accent);
+        font-size: 11px;
+    }
+
+    .up-card-title.danger i  { background: #fee2e2; color: var(--up-danger); }
+    .up-card-title.success i { background: #e2f7ef; color: var(--up-success); }
+
+    /* ============================================================
+       UPLOAD ZONE
+       ============================================================ */
+    .up-zone {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 0;
+        min-height: 260px;
+    }
+
+    @media (max-width: 900px) {
+        .up-zone { grid-template-columns: 1fr; }
+    }
+
+    /* Left column — report type */
+    .up-zone-config {
+        padding: 26px 24px;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+        border-right: 1px solid var(--up-border-2);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+        .up-zone-config {
+            border-right: none;
+            border-bottom: 1px solid var(--up-border-2);
+        }
+    }
+
+    .up-config-step {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .up-step-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--up-text-2);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+    }
+
+    .up-step-num {
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        background: #eef1ff;
+        color: var(--up-accent);
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .up-select {
         width: 100%;
+        height: 42px;
+        padding: 0 38px 0 14px;
+        border: 1px solid var(--up-border);
+        border-radius: 10px;
+        background: var(--up-surface);
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--up-text);
+        outline: none;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .up-select:focus {
+        border-color: var(--up-accent);
+        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    }
+
+    .up-hint {
+        font-size: 11.5px;
+        color: var(--up-text-3);
+        line-height: 1.5;
+    }
+
+    /* Right column — drop target */
+    .up-zone-drop {
+        padding: 32px 28px;
+        display: flex;
+        align-items: center;
         justify-content: center;
+        background:
+            radial-gradient(circle at 50% 40%, rgba(79, 110, 247, 0.05) 0%, transparent 60%),
+            var(--up-surface);
+        position: relative;
+        transition: background 0.18s;
     }
 
-    .toast-notification {
-        left: 16px;
-        right: 16px;
-        bottom: 16px;
-        max-width: none;
+    .up-drop-target {
+        width: 100%;
+        max-width: 460px;
+        border: 2px dashed #d1d5db;
+        border-radius: 14px;
+        padding: 36px 28px;
+        text-align: center;
+        transition: all 0.18s ease;
+        cursor: pointer;
+        background: #fbfcff;
     }
-}
 
-@media (max-width: 480px) {
-    .glass-card { padding: 14px; border-radius: 14px; }
-    .preview-header h4 { font-size: 13px; }
-    .preview-header h4 i { width: 24px; height: 24px; font-size: 11px; }
-    .preview-table thead th,
-    .preview-table tbody td { padding: 7px 9px; font-size: 11px; }
-    .empty-state { padding: 48px 16px; }
-    .empty-state i { width: 72px; height: 72px; font-size: 36px; }
-}
+    .up-drop-target:hover {
+        border-color: var(--up-accent);
+        background: #f7f8ff;
+    }
 
-/* ============================================================
-   LAST-RESORT CLAMP — defensive min-width: 0 chain
-   ============================================================ */
-.main-content-wrapper,
-.main-content,
-.page-wrapper {
-    min-width: 0;
-    max-width: 100%;
-}
-.main-content,
-.main-content-wrapper {
-    overflow-x: clip;
-}
+    .up-drop-target.dragover {
+        border-color: var(--up-accent);
+        background: #eef1ff;
+        transform: scale(1.01);
+    }
+
+    .up-drop-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        margin: 0 auto 16px;
+        display: grid;
+        place-items: center;
+        background: #eef1ff;
+        color: var(--up-accent);
+        font-size: 22px;
+        transition: transform 0.2s;
+    }
+
+    .up-drop-target:hover .up-drop-icon {
+        transform: translateY(-2px);
+    }
+
+    .up-drop-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--up-text);
+        margin-bottom: 6px;
+    }
+
+    .up-drop-desc {
+        font-size: 12.5px;
+        color: var(--up-text-2);
+        line-height: 1.5;
+        margin-bottom: 18px;
+    }
+
+    .up-drop-formats {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 11px;
+        color: var(--up-text-3);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .up-drop-formats .up-format-pill {
+        padding: 3px 10px;
+        background: #ffffff;
+        border: 1px solid var(--up-border);
+        border-radius: 100px;
+        color: var(--up-text-2);
+        font-weight: 700;
+    }
+
+    /* Upload button */
+    .up-btn-upload {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 24px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+        color: #ffffff;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .up-btn-upload:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(79, 110, 247, 0.35);
+    }
+
+    .up-btn-upload:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .up-btn-upload .up-spinner { display: none; }
+    .up-btn-upload.loading .up-spinner { display: inline-block; }
+    .up-btn-upload.loading .up-btn-text { display: none; }
+
+    /* ============================================================
+       PREVIEW CARD
+       ============================================================ */
+    .up-preview-card {
+        display: none;
+    }
+
+    .up-preview-card.show {
+        display: block;
+        animation: up-fade-in 0.25s ease;
+    }
+
+    @keyframes up-fade-in {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header toolbar */
+    .up-preview-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .up-record-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: #eef1ff;
+        color: var(--up-accent);
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .up-record-chip i { font-size: 11px; }
+
+    .up-btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border: 1px solid var(--up-border);
+        border-radius: 9px;
+        background: var(--up-surface);
+        color: var(--up-text-2);
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .up-btn-ghost:hover {
+        background: #fdeaf0;
+        color: var(--up-danger);
+        border-color: rgba(224, 69, 106, 0.25);
+    }
+
+    /* Table */
+    .up-table-scroll {
+        max-height: 620px;
+        overflow: auto;
+    }
+
+    .up-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+    }
+
+    .up-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f8fafc;
+        text-align: left;
+        padding: 11px 14px;
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--up-text-2);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--up-border);
+        white-space: nowrap;
+    }
+
+    .up-table tbody td {
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--up-border-2);
+        color: var(--up-text);
+        vertical-align: top;
+        line-height: 1.45;
+    }
+
+    .up-table tbody tr:last-child td { border-bottom: none; }
+    .up-table tbody tr:hover { background: #fafbfd; }
+
+    .up-table td.wide-cell {
+        max-width: 320px;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .up-table td.num-cell {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .up-table td.date-cell {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        color: var(--up-text-2);
+    }
+
+    .up-table td.narrow-cell {
+        white-space: nowrap;
+    }
+
+    .up-table td.empty-cell {
+        text-align: center;
+        color: var(--up-text-3);
+        font-style: italic;
+        padding: 24px;
+    }
+
+    /* Status badges */
+    .up-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 100px;
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border: 1px solid;
+    }
+
+    .up-status-badge.open        { background: #fef3c7; color: #92400e; border-color: rgba(146, 64, 14, 0.2); }
+    .up-status-badge.closed      { background: #e2f7ef; color: #065f46; border-color: rgba(6, 95, 70, 0.2); }
+    .up-status-badge.in-progress { background: #dbeafe; color: #1e40af; border-color: rgba(30, 64, 175, 0.2); }
+    .up-status-badge.default     { background: #f3f4f6; color: #6b7280; border-color: rgba(107, 114, 128, 0.2); }
+
+    /* Footer action bar */
+    .up-preview-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        background: #fbfcff;
+        border-top: 1px solid var(--up-border-2);
+        flex-wrap: wrap;
+    }
+
+    .up-footer-summary {
+        font-size: 12.5px;
+        color: var(--up-text-2);
+    }
+
+    .up-footer-summary strong {
+        color: var(--up-text);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .up-footer-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .up-btn-cancel {
+        padding: 11px 22px;
+        border-radius: 10px;
+        border: 1px solid var(--up-border);
+        background: var(--up-surface);
+        color: var(--up-text-2);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .up-btn-cancel:hover {
+        background: #f7f8fc;
+        color: var(--up-text);
+        border-color: #d1d5db;
+    }
+
+    .up-btn-submit {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 26px;
+        border-radius: 10px;
+        border: none;
+        background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+        color: #ffffff;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(79, 110, 247, 0.28);
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .up-btn-submit:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 22px rgba(79, 110, 247, 0.4);
+    }
+
+    .up-btn-submit:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    /* ============================================================
+       TOAST
+       ============================================================ */
+    .up-toast {
+        position: fixed;
+        bottom: 26px;
+        right: 26px;
+        min-width: 320px;
+        max-width: 440px;
+        background: #ffffff;
+        border-radius: 14px;
+        border-left: 4px solid var(--up-success);
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 20px 48px rgba(15, 27, 51, 0.16);
+        transform: translateX(130%);
+        transition: transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
+        z-index: 10000;
+    }
+
+    .up-toast.show { transform: translateX(0); }
+    .up-toast.error { border-left-color: var(--up-danger); }
+
+    .up-toast-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: #e2f7ef;
+        color: var(--up-success);
+        flex-shrink: 0;
+        font-size: 14px;
+    }
+
+    .up-toast.error .up-toast-icon { background: #fdeaf0; color: var(--up-danger); }
+
+    .up-toast-body { flex: 1; min-width: 0; }
+    .up-toast-title { margin: 0; font-size: 13px; font-weight: 700; color: var(--up-text); }
+    .up-toast-msg   { margin: 2px 0 0 0; font-size: 12px; color: var(--up-text-2); line-height: 1.45; }
+
+    .up-toast-close {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: var(--up-text-3);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        transition: background 0.12s, color 0.12s;
+    }
+
+    .up-toast-close:hover { background: #f3f4f6; color: var(--up-text); }
+
+    @media (max-width: 720px) {
+        .up-toast { left: 16px; right: 16px; min-width: 0; }
+    }
 </style>
 {% endblock %}
 
@@ -772,7 +617,7 @@
         <span class="nav-text">Dashboard</span>
     </a>
 </li>
-<li  class="active">
+<li class="active">
     <a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
         <span class="nav-icon"><i class="fas fa-folder-plus"></i></span>
         <span class="nav-text">Upload Report</span>
@@ -785,7 +630,7 @@
     </a>
 </li>
 <li>
-    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+    <a href="{% url 'control_dashboard:email_page' %}" data-tooltip="Email">
         <span class="nav-icon"><i class="fas fa-envelope"></i></span>
         <span class="nav-text">Email</span>
     </a>
@@ -818,84 +663,147 @@
 
 {% block page_title %}Upload Exception Report{% endblock %}
 
-{% block top_header_center %}
-<div class="header-upload-controls">
-    <select id="reportType" class="form-control" required>
-        <option value="">Select Report Type...</option>
-        {% for report_type in report_types %}
-        <option value="{{ report_type }}">{{ report_type }}</option>
-        {% endfor %}
-    </select>
-
-    <button class="btn-upload" id="uploadBtn" onclick="document.getElementById('excelFileInput').click()">
-        <i class="fas fa-file-excel"></i>
-        <span class="btn-text">Upload Excel</span>
-        <span class="spinner"><i class="fas fa-spinner"></i></span>
-    </button>
-
-    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv"
-           style="display: none;" onchange="handleFileUpload(this.files[0])">
-</div>
-{% endblock %}
-
 {% block content %}
-<div class="submit-container">
-    <div class="glass-card">
+<div class="up-wrap">
 
-        <!-- PREVIEW TABLE -->
-        <div class="preview-container" id="previewContainer">
-            <div class="preview-header">
-                <h4><i class="fas fa-table"></i> Data Preview</h4>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="record-count" id="recordCount">0 records</span>
-                    <button class="btn-clear-inline" onclick="clearData()">
-                        <i class="fas fa-trash"></i> Clear
-                    </button>
+    <!-- Page header -->
+    <header class="up-header">
+        <div class="up-header-left">
+            <p>Import an Excel file, preview the data, then submit it for exception processing.</p>
+        </div>
+    </header>
+
+    <!-- ============================================================
+         UPLOAD ZONE (visible when no data loaded)
+         ============================================================ -->
+    <section class="up-card" id="uploadZoneCard">
+        <div class="up-zone">
+
+            <!-- Left: config -->
+            <div class="up-zone-config">
+                <div class="up-config-step">
+                    <label class="up-step-label" for="reportType">
+                        <span class="up-step-num">1</span>
+                        Report Type
+                    </label>
+                    <select id="reportType" class="up-select" required>
+                        <option value="">Select report type...</option>
+                        {% for report_type in report_types %}
+                        <option value="{{ report_type }}">{{ report_type }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="up-hint">
+                        Choose the exception report category before uploading the file.
+                    </span>
                 </div>
             </div>
-            <div class="table-wrapper">
-                <table class="preview-table" id="previewTable">
-                    <thead id="tableHead"></thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
+
+            <!-- Right: drop target -->
+            <div class="up-zone-drop" id="dropZone">
+                <div class="up-drop-target" id="dropTarget">
+                    <div class="up-drop-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="up-drop-title">Drop your Excel file here</div>
+                    <div class="up-drop-desc">
+                        or click to browse from your computer. Files are processed locally in your browser before submission.
+                    </div>
+
+                    <button type="button"
+                            class="up-btn-upload"
+                            id="uploadBtn"
+                            onclick="document.getElementById('excelFileInput').click()">
+                        <i class="fas fa-file-excel"></i>
+                        <span class="up-btn-text">Select Excel File</span>
+                        <span class="up-spinner"><i class="fas fa-spinner fa-spin"></i></span>
+                    </button>
+
+                    <div class="up-drop-formats">
+                        <span class="up-format-pill">.xlsx</span>
+                        <span class="up-format-pill">.xls</span>
+                        <span class="up-format-pill">.csv</span>
+                    </div>
+                </div>
+
+                <input type="file"
+                       id="excelFileInput"
+                       accept=".xlsx,.xls,.csv"
+                       style="display:none;"
+                       onchange="handleFileUpload(this.files[0])">
             </div>
 
-            <div class="submit-actions">
-                <button class="btn-submit" id="submitBtn" onclick="submitData()">
-                    <i class="fas fa-paper-plane"></i> Submit Report
+        </div>
+    </section>
+
+    <!-- ============================================================
+         PREVIEW CARD (visible after upload)
+         ============================================================ -->
+    <section class="up-card up-preview-card" id="previewContainer">
+
+        <header class="up-card-head">
+            <div class="up-card-title success">
+                <i class="fas fa-table"></i>
+                <span>Data Preview</span>
+            </div>
+
+            <div class="up-preview-toolbar">
+                <span class="up-record-chip">
+                    <i class="fas fa-list"></i>
+                    <span id="recordCount">0 records</span>
+                </span>
+                <button type="button" class="up-btn-ghost" onclick="clearData()">
+                    <i class="fas fa-trash"></i> Clear
                 </button>
-                <button class="btn-cancel" onclick="clearData()">
+            </div>
+        </header>
+
+        <div class="up-table-scroll">
+            <table class="up-table" id="previewTable">
+                <thead id="tableHead"></thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <footer class="up-preview-footer">
+            <div class="up-footer-summary">
+                Preview shows the first rows of <strong id="footerRecordCount">0</strong> record(s) from <strong id="footerFileName">your file</strong>.
+            </div>
+
+            <div class="up-footer-actions">
+                <button type="button" class="up-btn-cancel" onclick="clearData()">
                     <i class="fas fa-times"></i> Cancel
                 </button>
+                <button type="button" class="up-btn-submit" id="submitBtn" onclick="submitData()">
+                    <i class="fas fa-paper-plane"></i> Submit Report
+                </button>
             </div>
-        </div>
+        </footer>
 
-        <!-- EMPTY STATE -->
-        <div class="empty-state" id="emptyState">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <h3>No Data Loaded</h3>
-            <p>Select a report type and click <strong>Upload Excel</strong> in the header above</p>
-        </div>
-    </div>
+    </section>
+
 </div>
 
-<!-- Toast Notification -->
-<div id="toastNotification" class="toast-notification">
-    <div class="toast-icon"><i class="fas fa-check"></i></div>
-    <div class="toast-content">
-        <p class="toast-title">Success!</p>
-        <p class="toast-message" id="toastMessage">Action completed successfully.</p>
+<!-- Toast -->
+<div id="toastNotification" class="up-toast">
+    <div class="up-toast-icon">
+        <i class="fas fa-check"></i>
     </div>
-    <button class="toast-close" onclick="closeToast()"><i class="fas fa-times"></i></button>
+    <div class="up-toast-body">
+        <p class="up-toast-title">Success</p>
+        <p class="up-toast-msg" id="toastMessage">Action completed successfully.</p>
+    </div>
+    <button class="up-toast-close" onclick="closeToast()">
+        <i class="fas fa-times"></i>
+    </button>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-    // ============================================
-    // CSRF TOKEN
-    // ============================================
+    /* ============================================================
+       CSRF
+       ============================================================ */
     function getCsrfToken() {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -911,14 +819,14 @@
         return cookieValue || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
     }
 
-    // ============================================
-    // TOAST
-    // ============================================
-    function showToast(message, title = 'Success!', isError = false) {
+    /* ============================================================
+       TOAST
+       ============================================================ */
+    function showToast(message, title = 'Success', isError = false) {
         const toast = document.getElementById('toastNotification');
         const msgEl = document.getElementById('toastMessage');
-        const titleEl = toast.querySelector('.toast-title');
-        const iconEl = toast.querySelector('.toast-icon i');
+        const titleEl = toast.querySelector('.up-toast-title');
+        const iconEl = toast.querySelector('.up-toast-icon i');
 
         msgEl.textContent = message || 'Action completed successfully.';
         titleEl.textContent = title;
@@ -928,7 +836,7 @@
             iconEl.className = 'fas fa-exclamation-circle';
         } else {
             toast.classList.remove('error');
-            iconEl.className = 'fas fa-check-circle';
+            iconEl.className = 'fas fa-check';
         }
 
         toast.classList.add('show');
@@ -938,7 +846,7 @@
         }, 4000);
     }
 
-    window.closeToast = function() {
+    window.closeToast = function () {
         const toast = document.getElementById('toastNotification');
         toast.classList.remove('show');
         if (window.toastTimeout) {
@@ -947,16 +855,16 @@
         }
     };
 
-    // ============================================
-    // STATE
-    // ============================================
+    /* ============================================================
+       STATE
+       ============================================================ */
     let importedData = null;
     let importedHeaders = [];
     let fileName = '';
 
-    // ============================================
-    // COLUMN CLASSIFIER
-    // ============================================
+    /* ============================================================
+       COLUMN CLASSIFIER
+       ============================================================ */
     function classifyColumn(header) {
         const h = String(header || '').toUpperCase().replace(/\s+/g, ' ').trim();
 
@@ -977,9 +885,9 @@
         return '';
     }
 
-    // ============================================
-    // EXCEL SERIAL DATE → STRING
-    // ============================================
+    /* ============================================================
+       EXCEL DATE HANDLING
+       ============================================================ */
     function excelSerialToDate(serial) {
         const excelEpoch = Date.UTC(1899, 11, 30);
         const ms = serial * 24 * 60 * 60 * 1000;
@@ -997,9 +905,9 @@
         return value;
     }
 
-    // ============================================
-    // HTML ESCAPE
-    // ============================================
+    /* ============================================================
+       HTML ESCAPE
+       ============================================================ */
     function escapeHtml(str) {
         return String(str)
             .replace(/&/g, '&amp;')
@@ -1009,9 +917,9 @@
             .replace(/'/g, '&#39;');
     }
 
-    // ============================================
-    // STATUS BADGE
-    // ============================================
+    /* ============================================================
+       STATUS BADGE
+       ============================================================ */
     function statusBadgeClass(value) {
         const v = String(value || '').toLowerCase().trim();
         if (v === 'closed' || v === 'resolved' || v === 'completed' || v === 'approved') return 'closed';
@@ -1020,9 +928,9 @@
         return 'default';
     }
 
-    // ============================================
-    // EXCEL FILE HANDLING
-    // ============================================
+    /* ============================================================
+       FILE HANDLING
+       ============================================================ */
     function handleFileUpload(file) {
         if (!file) return;
 
@@ -1045,7 +953,7 @@
 
         const reader = new FileReader();
 
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {
@@ -1065,8 +973,6 @@
 
                 if (!jsonData || jsonData.length === 0) {
                     showToast('No data found in the file', 'Error', true);
-                    uploadBtn.classList.remove('loading');
-                    uploadBtn.disabled = false;
                     return;
                 }
 
@@ -1079,15 +985,11 @@
 
                 if (headers.length === 0) {
                     showToast('No headers found in the file', 'Error', true);
-                    uploadBtn.classList.remove('loading');
-                    uploadBtn.disabled = false;
                     return;
                 }
 
                 if (filteredRows.length === 0) {
                     showToast('No data rows found in the file', 'Error', true);
-                    uploadBtn.classList.remove('loading');
-                    uploadBtn.disabled = false;
                     return;
                 }
 
@@ -1095,8 +997,14 @@
                 importedData = filteredRows;
 
                 renderPreview(headers, filteredRows);
+
+                // Swap views: hide upload zone, show preview
+                document.getElementById('uploadZoneCard').style.display = 'none';
                 document.getElementById('previewContainer').classList.add('show');
-                document.getElementById('emptyState').style.display = 'none';
+
+                // Update footer summary
+                document.getElementById('footerRecordCount').textContent = filteredRows.length;
+                document.getElementById('footerFileName').textContent = fileName;
 
                 showToast(`Loaded ${filteredRows.length} records from ${fileName}`, 'Success');
 
@@ -1109,7 +1017,7 @@
             }
         };
 
-        reader.onerror = function() {
+        reader.onerror = function () {
             showToast('Error reading file. Please try again.', 'Error', true);
             uploadBtn.classList.remove('loading');
             uploadBtn.disabled = false;
@@ -1118,9 +1026,9 @@
         reader.readAsArrayBuffer(file);
     }
 
-    // ============================================
-    // RENDER PREVIEW
-    // ============================================
+    /* ============================================================
+       RENDER PREVIEW
+       ============================================================ */
     function renderPreview(headers, data) {
         const thead = document.getElementById('tableHead');
         const tbody = document.getElementById('tableBody');
@@ -1130,8 +1038,7 @@
 
         let headerHTML = '<tr>';
         headers.forEach(header => {
-            const displayHeader = header || 'Column';
-            headerHTML += `<th>${escapeHtml(displayHeader)}</th>`;
+            headerHTML += `<th>${escapeHtml(header || 'Column')}</th>`;
         });
         headerHTML += '</tr>';
         thead.innerHTML = headerHTML;
@@ -1156,7 +1063,7 @@
                     const header = String(headers[i] || '').toUpperCase();
                     if (header === 'STATUS' || header === 'STATE') {
                         const badge = statusBadgeClass(value);
-                        bodyHTML += `<td class="status-pill"><span class="status-badge ${badge}">${escapeHtml(value)}</span></td>`;
+                        bodyHTML += `<td class="narrow-cell"><span class="up-status-badge ${badge}">${escapeHtml(value)}</span></td>`;
                     } else {
                         bodyHTML += `<td${clsAttr}>${escapeHtml(value)}</td>`;
                     }
@@ -1165,7 +1072,7 @@
             });
 
             if (data.length > MAX_ROWS) {
-                bodyHTML += `<tr><td colspan="${headers.length}" style="text-align: center; color: #6b7280; font-style: italic; background: #f8fafc; padding: 12px;">
+                bodyHTML += `<tr><td colspan="${headers.length}" style="text-align:center; color: var(--up-text-3); font-style:italic; background:#f8fafc; padding:14px;">
                     <i class="fas fa-ellipsis-h"></i> ${data.length - MAX_ROWS} more rows not shown (preview limited to ${MAX_ROWS})
                 </td></tr>`;
             }
@@ -1175,27 +1082,27 @@
         recordCount.textContent = `${data.length} records`;
     }
 
-    // ============================================
-    // CLEAR
-    // ============================================
+    /* ============================================================
+       CLEAR
+       ============================================================ */
     function clearData() {
         importedData = null;
         importedHeaders = [];
         fileName = '';
 
         document.getElementById('previewContainer').classList.remove('show');
-        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('uploadZoneCard').style.display = '';
         document.getElementById('tableHead').innerHTML = '';
         document.getElementById('tableBody').innerHTML = '';
         document.getElementById('recordCount').textContent = '0 records';
         document.getElementById('excelFileInput').value = '';
 
-        showToast('Data cleared successfully', 'Info');
+        showToast('Data cleared successfully', 'Cleared');
     }
 
-    // ============================================
-    // SUBMIT
-    // ============================================
+    /* ============================================================
+       SUBMIT
+       ============================================================ */
     function submitData() {
         const reportType = document.getElementById('reportType').value;
 
@@ -1262,10 +1169,51 @@
         });
     }
 
-    // ============================================
-    // KEYBOARD SHORTCUTS
-    // ============================================
-    document.addEventListener('keydown', function(event) {
+    /* ============================================================
+       DRAG & DROP
+       ============================================================ */
+    (function setupDragAndDrop() {
+        const dropTarget = document.getElementById('dropTarget');
+        const dropZone   = document.getElementById('dropZone');
+
+        if (!dropTarget || !dropZone) return;
+
+        ['dragenter', 'dragover'].forEach(evt => {
+            dropZone.addEventListener(evt, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropTarget.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(evt => {
+            dropZone.addEventListener(evt, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (evt === 'dragleave' && e.target !== dropTarget && dropTarget.contains(e.target)) return;
+                dropTarget.classList.remove('dragover');
+            });
+        });
+
+        dropZone.addEventListener('drop', function (e) {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length) {
+                handleFileUpload(dt.files[0]);
+            }
+        });
+
+        // Clicking the drop target opens the file picker
+        dropTarget.addEventListener('click', function (e) {
+            // Let the upload button click through
+            if (e.target.closest('.up-btn-upload')) return;
+            document.getElementById('excelFileInput').click();
+        });
+    })();
+
+    /* ============================================================
+       KEYBOARD SHORTCUTS
+       ============================================================ */
+    document.addEventListener('keydown', function (event) {
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
             event.preventDefault();
             if (document.getElementById('previewContainer').classList.contains('show')) {

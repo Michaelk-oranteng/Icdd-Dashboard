@@ -1,37 +1,4 @@
 /* ==========================================================================
-   RESPONSIVE CORE — Master responsive layer
-   Loaded LAST so it overrides all conflicting template rules
-   ========================================================================== */
-
-/* ==========================================================================
-   1. FLUID ROOT VARIABLES
-   ========================================================================== */
-:root {
-    --sidebar-width: clamp(200px, 18vw, 260px);
-    --sidebar-collapsed-width: clamp(56px, 5vw, 72px);
-    --header-height: clamp(56px, 6vw, 80px);
-
-    --space-xs: clamp(2px, 0.4vw, 6px);
-    --space-sm: clamp(6px, 0.8vw, 10px);
-    --space-md: clamp(10px, 1.2vw, 16px);
-    --space-lg: clamp(16px, 1.8vw, 24px);
-    --space-xl: clamp(20px, 2.5vw, 32px);
-
-    --fs-xs: clamp(9px, 0.7vw, 11px);
-    --fs-sm: clamp(10px, 0.8vw, 12px);
-    --fs-base: clamp(12px, 0.9vw, 14px);
-    --fs-md: clamp(13px, 1vw, 15px);
-    --fs-lg: clamp(15px, 1.2vw, 18px);
-    --fs-xl: clamp(18px, 1.5vw, 24px);
-    --fs-2xl: clamp(22px, 2vw, 32px);
-
-    --radius-sm: clamp(6px, 0.5vw, 8px);
-    --radius-md: clamp(10px, 0.7vw, 12px);
-    --radius-lg: clamp(14px, 1vw, 18px);
-    --radius-xl: clamp(18px, 1.2vw, 22px);
-}
-
-/* ==========================================================================
    2. FLUID SIDEBAR OVERRIDE
    ========================================================================== */
 .nav-bar {

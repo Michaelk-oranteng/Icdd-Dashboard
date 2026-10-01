@@ -1,0 +1,979 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - User List{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/admin.css' %}" type="text/css">
+
+<style>
+    /* ============================================
+       USER LIST STYLES
+       ============================================ */
+    .userlist-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 18px;
+    }
+
+    .userlist-toolbar input[type="search"],
+    .userlist-toolbar select {
+        padding: 8px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 13px;
+        background: #fff;
+        min-width: 160px;
+    }
+
+    .userlist-toolbar input[type="search"] {
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .userlist-count {
+        font-size: 12px;
+        color: #6b7280;
+        margin-left: auto;
+    }
+
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .user-table thead th {
+        background: #f8fafc;
+        color: #1a2332;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 12px 14px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .user-table tbody td {
+        padding: 12px 14px;
+        font-size: 13px;
+        color: #1a2332;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .user-table tbody tr:last-child td { border-bottom: none; }
+    .user-table tbody tr:hover { background: #fafbfc; }
+
+    /* ---- Avatar cell ---- */
+    .cell-avatar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .avatar-wrap {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .avatar-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .avatar-wrap .avatar-initials {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0066cc;
+        user-select: none;
+    }
+
+    .avatar-upload-btn {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    .avatar-wrap:hover .avatar-upload-btn { opacity: 1; }
+
+    /* ---- Status badge ---- */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .status-active   { background: #d1fae5; color: #065f46; }
+    .status-inactive { background: #fee2e2; color: #991b1b; }
+
+    /* ---- Row action buttons ---- */
+    .row-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .row-actions button {
+        border: none;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: background 0.12s;
+    }
+
+    .btn-toggle-on {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .btn-toggle-on:hover { background: #fecaca; }
+
+    .btn-toggle-off {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .btn-toggle-off:hover { background: #a7f3d0; }
+
+    .btn-edit {
+        background: #eef2ff;
+        color: #3730a3;
+    }
+    .btn-edit:hover { background: #e0e7ff; }
+
+    .btn-avatar-remove {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+    .btn-avatar-remove:hover { background: #e5e7eb; }
+    .btn-avatar-remove:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .hidden-file-input { display: none; }
+
+    /* ============================================
+       EDIT MODAL
+       ============================================ */
+    .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal-card {
+        background: #fff;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 560px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        animation: modalIn 0.15s ease-out;
+    }
+
+    @keyframes modalIn {
+        from { transform: translateY(8px); opacity: 0; }
+        to   { transform: translateY(0);   opacity: 1; }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 22px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .modal-header h4 {
+        margin: 0;
+        font-size: 16px;
+        color: #1a2332;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        color: #6b7280;
+        line-height: 1;
+    }
+    .modal-close:hover { color: #1a2332; }
+
+    .modal-body {
+        padding: 20px 22px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .modal-body .form-field-wide { grid-column: 1 / -1; }
+
+    .modal-body label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #1a2332;
+        margin-bottom: 5px;
+    }
+
+    .modal-body input,
+    .modal-body select {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 13px;
+        background: #fff;
+        box-sizing: border-box;
+    }
+
+    .modal-body input:focus,
+    .modal-body select:focus {
+        outline: none;
+        border-color: #0066cc;
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    }
+
+    .modal-footer {
+        padding: 16px 22px;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .modal-footer button {
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+    }
+
+    .btn-modal-cancel {
+        background: #f3f4f6;
+        color: #1a2332;
+    }
+    .btn-modal-cancel:hover { background: #e5e7eb; }
+
+    .btn-modal-save {
+        background: #0066cc;
+        color: #fff;
+    }
+    .btn-modal-save:hover { background: #0052a3; }
+    .btn-modal-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    @media (max-width: 640px) {
+        .modal-body { grid-template-columns: 1fr; }
+        .user-table thead { display: none; }
+        .user-table, .user-table tbody, .user-table tr, .user-table td {
+            display: block;
+            width: 100%;
+        }
+        .user-table tr {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 12px 0;
+        }
+        .user-table td {
+            border-bottom: none;
+            padding: 4px 14px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:admin_page' %}{% endblock %}
+
+{% block nav_links %}
+<li>
+    <a href="{% url 'control_dashboard:admin_page' %}">
+        <span class="nav-icon"><i class="fas fa-user-plus"></i></span>
+        <span class="nav-text">Add User</span>
+    </a>
+</li>
+<li class="active">
+    <a href="{% url 'control_dashboard:admin_user_list' %}">
+        <span class="nav-icon"><i class="fas fa-users-cog"></i></span>
+        <span class="nav-text">User List</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:admin_units' %}">
+        <span class="nav-icon"><i class="fas fa-building"></i></span>
+        <span class="nav-text">Branch / Department</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:report_creation' %}">
+        <span class="nav-icon"><i class="fas fa-file-medical"></i></span>
+        <span class="nav-text">Create Report</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:report_center' %}">
+        <span class="nav-icon"><i class="fas fa-inbox"></i></span>
+        <span class="nav-text">Report Center</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:checklist_builder' %}">
+        <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+        <span class="nav-text">Checklist Builder</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:checklist_list' %}">
+        <span class="nav-icon"><i class="fas fa-list-check"></i></span>
+        <span class="nav-text">Checklist List</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:activity_logs' %}">
+        <span class="nav-icon"><i class="fas fa-search"></i></span>
+        <span class="nav-text">Activity Logs</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block page_title %}User List{% endblock %}
+
+{% block content %}
+<div class="table-container">
+
+    <!-- Toolbar: search + role filter + status filter -->
+    <div class="userlist-toolbar">
+        <input type="search"
+               id="userSearch"
+               placeholder="Search by name, email, or username...">
+
+        <select id="filterRole">
+            <option value="">All Roles</option>
+            {% for value, label in roles %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <select id="filterStatus">
+            <option value="">All Statuses</option>
+            {% for value, label in statuses %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+
+        <span class="userlist-count">
+            <span id="visibleCount">{{ users|length }}</span> of {{ users|length }} users
+        </span>
+    </div>
+
+    <table class="user-table" id="userTable">
+        <thead>
+            <tr>
+                <th style="width: 70px;">Profile</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Position</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th style="width: 220px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr data-user-id="{{ u.id }}"
+                data-name="{{ u.full_name|lower }}"
+                data-email="{{ u.email|lower }}"
+                data-username="{{ u.username|default:''|lower }}"
+                data-role="{{ u.role }}"
+                data-status="{{ u.status }}">
+
+                <!-- 1. PROFILE IMAGE + UPLOADER -->
+                <td>
+                    <div class="cell-avatar">
+                        <div class="avatar-wrap" id="avatar-wrap-{{ u.id }}">
+                            <img id="avatar-img-{{ u.id }}"
+                                 src="{{ u.avatar_url }}"
+                                 alt="{{ u.initials }}"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="avatar-initials"
+                                 id="avatar-initials-{{ u.id }}"
+                                 style="display:none;">{{ u.initials }}</div>
+
+                            <button type="button"
+                                    class="avatar-upload-btn"
+                                    title="Upload new picture"
+                                    onclick="document.getElementById('avatar-input-{{ u.id }}').click();">
+                                <i class="fas fa-camera"></i>
+                            </button>
+                        </div>
+
+                        <input type="file"
+                               class="hidden-file-input"
+                               id="avatar-input-{{ u.id }}"
+                               accept="image/*"
+                               onchange="uploadAvatar({{ u.id }}, this);">
+                    </div>
+                </td>
+
+                <!-- 2. FULL NAME -->
+                <td>
+                    <strong>{{ u.full_name }}</strong>
+                    {% if u.username %}
+                    <div style="font-size:11px;color:#6b7280;margin-top:2px;">
+                        @{{ u.username }}
+                    </div>
+                    {% endif %}
+                </td>
+
+                <!-- 3. EMAIL -->
+                <td>{{ u.email }}</td>
+
+                <!-- 4. POSITION -->
+                <td>{{ u.get_position_display }}</td>
+
+                <!-- 5. ROLE -->
+                <td>{{ u.get_role_display }}</td>
+
+                <!-- 6. STATUS -->
+                <td>
+                    <span class="status-badge status-{{ u.status }}"
+                          id="status-badge-{{ u.id }}">
+                        {% if u.status == 'active' %}
+                        <i class="fas fa-circle" style="font-size:6px;"></i> Active
+                        {% else %}
+                        <i class="fas fa-circle" style="font-size:6px;"></i> Inactive
+                        {% endif %}
+                    </span>
+                </td>
+
+                <!-- 7. ACTIONS -->
+                <td>
+                    <div class="row-actions">
+                        {% if u.status == 'active' %}
+                        <button type="button"
+                                class="btn-toggle-on js-toggle-btn"
+                                id="toggle-btn-{{ u.id }}"
+                                data-user-id="{{ u.id }}"
+                                data-next-status="inactive">
+                            <i class="fas fa-user-slash"></i> Deactivate
+                        </button>
+                        {% else %}
+                        <button type="button"
+                                class="btn-toggle-off js-toggle-btn"
+                                id="toggle-btn-{{ u.id }}"
+                                data-user-id="{{ u.id }}"
+                                data-next-status="active">
+                            <i class="fas fa-user-check"></i> Activate
+                        </button>
+                        {% endif %}
+
+                        <button type="button"
+                                class="btn-edit js-edit-btn"
+                                data-user-id="{{ u.id }}"
+                                data-email="{{ u.email }}"
+                                data-full-name="{{ u.full_name }}"
+                                data-username="{{ u.username|default:'' }}"
+                                data-position="{{ u.position }}"
+                                data-role="{{ u.role }}"
+                                data-status="{{ u.status }}">
+                            <i class="fas fa-pen"></i> Edit
+                        </button>
+
+                        <button type="button"
+                                class="btn-avatar-remove js-avatar-remove-btn"
+                                id="avatar-remove-btn-{{ u.id }}"
+                                data-user-id="{{ u.id }}"
+                                {% if not u.avatar %}disabled{% endif %}
+                                title="Remove uploaded picture (revert to Gravatar)">
+                            <i class="fas fa-image"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align:center;color:#6b7280;padding:30px;">
+                    No users yet. Create one on the Add User page.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ============================================================
+     EDIT USER MODAL
+     ============================================================ -->
+<div class="modal-backdrop" id="editModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h4><i class="fas fa-user-edit"></i> Edit User</h4>
+            <button type="button" class="modal-close" onclick="closeEditModal();">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <input type="hidden" id="editUserId">
+
+            <div class="form-field">
+                <label for="editFirstName">First Name</label>
+                <input type="text" id="editFirstName" required>
+            </div>
+
+            <div class="form-field">
+                <label for="editLastName">Last Name</label>
+                <input type="text" id="editLastName">
+            </div>
+
+            <div class="form-field">
+                <label for="editUsername">Username</label>
+                <input type="text"
+                       id="editUsername"
+                       pattern="[a-zA-Z0-9._\-]{3,150}"
+                       title="3–150 chars: letters, digits, dot, underscore, hyphen"
+                       autocomplete="off">
+            </div>
+
+            <div class="form-field">
+                <label for="editEmail">Email</label>
+                <input type="email" id="editEmail" required>
+            </div>
+
+            <div class="form-field">
+                <label for="editPosition">Position</label>
+                <select id="editPosition">
+                    {% for value, label in positions %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label for="editRole">Role</label>
+                <select id="editRole">
+                    {% for value, label in roles %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-field form-field-wide">
+                <label for="editStatus">Status</label>
+                <select id="editStatus">
+                    {% for value, label in statuses %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn-modal-cancel" onclick="closeEditModal();">
+                Cancel
+            </button>
+            <button type="button" class="btn-modal-save" id="editSaveBtn" onclick="saveEdit();">
+                <i class="fas fa-check"></i> Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ============================================
+       CSRF HELPER
+       ============================================ */
+    function getCsrfToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const c = cookies[i].trim();
+                if (c.substring(0, 10) === 'csrftoken=') {
+                    cookieValue = decodeURIComponent(c.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue
+            || document.querySelector('[name=csrfmiddlewaretoken]')?.value
+            || '';
+    }
+
+    /* ============================================
+       API BASE PATH
+       ────────────────────────────────────────────
+       Every user-scoped endpoint lives under
+       /adminboard/api/users/<id>/... — we build
+       them from one constant to guarantee
+       consistency with the avatar endpoints
+       that already work.
+       ============================================ */
+    const API_USERS_BASE = "/adminboard/api/users/";
+
+    /* ============================================
+       FILTER / SEARCH (client-side)
+       ============================================ */
+    document.getElementById('userSearch').addEventListener('input', applyFilters);
+    document.getElementById('filterRole').addEventListener('change', applyFilters);
+    document.getElementById('filterStatus').addEventListener('change', applyFilters);
+
+    function applyFilters() {
+        const q      = document.getElementById('userSearch').value.trim().toLowerCase();
+        const role   = document.getElementById('filterRole').value;
+        const status = document.getElementById('filterStatus').value;
+
+        let visible = 0;
+        document.querySelectorAll('#userTable tbody tr[data-user-id]').forEach(tr => {
+            const matchesSearch =
+                !q ||
+                tr.dataset.name.includes(q) ||
+                tr.dataset.email.includes(q) ||
+                tr.dataset.username.includes(q);
+
+            const matchesRole   = !role   || tr.dataset.role === role;
+            const matchesStatus = !status || tr.dataset.status === status;
+
+            const show = matchesSearch && matchesRole && matchesStatus;
+            tr.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        document.getElementById('visibleCount').textContent = visible;
+    }
+
+    /* ============================================
+       EVENT DELEGATION
+       ────────────────────────────────────────────
+       One listener on the table handles toggle,
+       edit, and avatar-remove clicks. Keeps the
+       markup free of inline JS so no value ever
+       needs quote-escaping in the HTML.
+       ============================================ */
+    document.getElementById('userTable').addEventListener('click', function (e) {
+        const toggleBtn = e.target.closest('.js-toggle-btn');
+        if (toggleBtn) {
+            toggleStatus(toggleBtn.dataset.userId, toggleBtn.dataset.nextStatus);
+            return;
+        }
+
+        const editBtn = e.target.closest('.js-edit-btn');
+        if (editBtn) {
+            openEditModal(
+                editBtn.dataset.userId,
+                editBtn.dataset.email,
+                editBtn.dataset.fullName,
+                editBtn.dataset.username,
+                editBtn.dataset.position,
+                editBtn.dataset.role,
+                editBtn.dataset.status
+            );
+            return;
+        }
+
+        const removeBtn = e.target.closest('.js-avatar-remove-btn');
+        if (removeBtn && !removeBtn.disabled) {
+            removeAvatar(removeBtn.dataset.userId);
+        }
+    });
+
+    /* ============================================
+       TOGGLE STATUS (activate / deactivate)
+       ============================================ */
+    function toggleStatus(userId, newStatus) {
+        const verb = newStatus === 'active' ? 'activate' : 'deactivate';
+        if (!confirm(`Are you sure you want to ${verb} this user?`)) return;
+
+        const btn = document.getElementById('toggle-btn-' + userId);
+        if (!btn) return;
+
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        const url = `${API_USERS_BASE}${userId}/status/`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ status: newStatus })
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+
+            if (data.success) {
+                const badge = document.getElementById('status-badge-' + userId);
+                const tr    = document.querySelector(`tr[data-user-id="${userId}"]`);
+
+                if (newStatus === 'active') {
+                    badge.className = 'status-badge status-active';
+                    badge.innerHTML = '<i class="fas fa-circle" style="font-size:6px;"></i> Active';
+                    tr.dataset.status = 'active';
+                    btn.className = 'btn-toggle-on js-toggle-btn';
+                    btn.innerHTML = '<i class="fas fa-user-slash"></i> Deactivate';
+                    btn.dataset.nextStatus = 'inactive';
+                } else {
+                    badge.className = 'status-badge status-inactive';
+                    badge.innerHTML = '<i class="fas fa-circle" style="font-size:6px;"></i> Inactive';
+                    tr.dataset.status = 'inactive';
+                    btn.className = 'btn-toggle-off js-toggle-btn';
+                    btn.innerHTML = '<i class="fas fa-user-check"></i> Activate';
+                    btn.dataset.nextStatus = 'active';
+                }
+                applyFilters();
+            } else {
+                btn.innerHTML = originalHTML;
+                alert('Error: ' + (data.error || 'Status update failed.'));
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            console.error('Toggle status error:', err);
+            alert('An error occurred. Please try again.');
+        });
+    }
+
+    /* ============================================
+       AVATAR — UPLOAD
+       ============================================ */
+    function uploadAvatar(userId, fileInput) {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Image must be smaller than 2 MB.');
+            fileInput.value = '';
+            return;
+        }
+        if (!file.type.startsWith('image/')) {
+            alert('Please choose an image file.');
+            fileInput.value = '';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        const wrap = document.getElementById('avatar-wrap-' + userId);
+        wrap.style.opacity = '0.5';
+
+        fetch(`${API_USERS_BASE}${userId}/avatar/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrfToken() },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            wrap.style.opacity = '1';
+            fileInput.value = '';
+
+            if (data.success) {
+                const imgEl  = document.getElementById('avatar-img-' + userId);
+                const initEl = document.getElementById('avatar-initials-' + userId);
+                const busted = data.avatar_url + (data.avatar_url.includes('?') ? '&' : '?') + 't=' + Date.now();
+                imgEl.src = busted;
+                imgEl.style.display = 'block';
+                initEl.style.display = 'none';
+
+                const removeBtn = document.getElementById('avatar-remove-btn-' + userId);
+                if (removeBtn) removeBtn.disabled = false;
+            } else {
+                alert('Error: ' + (data.error || 'Upload failed.'));
+            }
+        })
+        .catch(err => {
+            wrap.style.opacity = '1';
+            fileInput.value = '';
+            console.error('Avatar upload error:', err);
+            alert('An error occurred while uploading the image.');
+        });
+    }
+
+    /* ============================================
+       AVATAR — REMOVE (revert to Gravatar)
+       ============================================ */
+    function removeAvatar(userId) {
+        if (!confirm("Remove this user's uploaded picture and revert to Gravatar?")) return;
+
+        const wrap = document.getElementById('avatar-wrap-' + userId);
+        wrap.style.opacity = '0.5';
+
+        fetch(`${API_USERS_BASE}${userId}/avatar/delete/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCsrfToken() }
+        })
+        .then(r => r.json())
+        .then(data => {
+            wrap.style.opacity = '1';
+
+            if (data.success) {
+                const imgEl  = document.getElementById('avatar-img-' + userId);
+                const initEl = document.getElementById('avatar-initials-' + userId);
+                const busted = data.avatar_url + (data.avatar_url.includes('?') ? '&' : '?') + 't=' + Date.now();
+                imgEl.src = busted;
+                imgEl.style.display = 'block';
+                initEl.style.display = 'none';
+
+                const removeBtn = document.getElementById('avatar-remove-btn-' + userId);
+                if (removeBtn) removeBtn.disabled = true;
+            } else {
+                alert('Error: ' + (data.error || 'Delete failed.'));
+            }
+        })
+        .catch(err => {
+            wrap.style.opacity = '1';
+            console.error('Avatar delete error:', err);
+            alert('An error occurred while removing the image.');
+        });
+    }
+
+    /* ============================================
+       EDIT USER — MODAL
+       ============================================ */
+    let _editingUserId = null;
+
+    function openEditModal(userId, email, fullName, username, position, role, status) {
+        _editingUserId = userId;
+
+        document.getElementById('editUserId').value   = userId;
+        document.getElementById('editEmail').value    = email || '';
+        document.getElementById('editUsername').value = username || '';
+
+        const parts = (fullName || '').trim().split(/\s+/);
+        document.getElementById('editFirstName').value = parts[0] || '';
+        document.getElementById('editLastName').value  = parts.slice(1).join(' ') || '';
+
+        document.getElementById('editPosition').value = position || 'cc';
+        document.getElementById('editRole').value     = role || 'member';
+        document.getElementById('editStatus').value   = status || 'active';
+
+        document.getElementById('editModal').classList.add('open');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.remove('open');
+        _editingUserId = null;
+    }
+
+    document.getElementById('editModal').addEventListener('click', e => {
+        if (e.target.id === 'editModal') closeEditModal();
+    });
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && document.getElementById('editModal').classList.contains('open')) {
+            closeEditModal();
+        }
+    });
+
+    function saveEdit() {
+        const userId = _editingUserId;
+        if (!userId) return;
+
+        const firstName = document.getElementById('editFirstName').value.trim();
+        const lastName  = document.getElementById('editLastName').value.trim();
+        const username  = document.getElementById('editUsername').value.trim();
+        const email     = document.getElementById('editEmail').value.trim();
+        const position  = document.getElementById('editPosition').value;
+        const role      = document.getElementById('editRole').value;
+        const status    = document.getElementById('editStatus').value;
+
+        if (!firstName) { alert('First name is required.'); return; }
+        if (!email)     { alert('Email is required.'); return; }
+        if (username && !/^[a-zA-Z0-9._-]{3,150}$/.test(username)) {
+            alert('Username must be 3–150 chars, letters/digits/._- only.');
+            return;
+        }
+
+        const fullName = `${firstName} ${lastName}`.trim();
+
+        const btn = document.getElementById('editSaveBtn');
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        const url = `${API_USERS_BASE}${userId}/edit/`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                email: email,
+                full_name: fullName,
+                username: username,
+                position: position,
+                role: role,
+                status: status
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+
+            if (data.success) {
+                closeEditModal();
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Update failed.'));
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            console.error('Edit user error:', err);
+            alert('An error occurred. Please try again.');
+        });
+    }
+</script>
+{% endblock %}

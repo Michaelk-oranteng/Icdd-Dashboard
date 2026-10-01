@@ -1,46 +1,4 @@
 /* ==========================================================================
-   SUBMITTED REPORTS — Premium Light Theme
-   ========================================================================== */
-
-:root {
-    /* Surfaces */
-    --sr-bg-0: #eef1f8;
-    --sr-bg-1: #ffffff;
-    --sr-bg-2: #f7f8fc;
-    --sr-bg-3: #f1f3f9;
-
-    /* Borders */
-    --sr-border: rgba(15, 27, 51, 0.08);
-    --sr-border-strong: rgba(15, 27, 51, 0.16);
-    --sr-hairline: rgba(15, 27, 51, 0.06);
-
-    /* Text */
-    --sr-text-0: #0f1b33;
-    --sr-text-1: #46536b;
-    --sr-text-2: #8993a8;
-
-    /* Accents */
-    --sr-accent: #4f6ef7;
-    --sr-accent-soft: #eef1ff;
-    --sr-emerald: #17a673;
-    --sr-emerald-soft: #e2f7ef;
-    --sr-amber: #e08a17;
-    --sr-amber-soft: #fdf2e0;
-    --sr-rose: #e0456a;
-    --sr-rose-soft: #fdeaf0;
-    --sr-violet: #7c5cf0;
-    --sr-violet-soft: #f0ebff;
-
-    /* Shadows */
-    --sr-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
-                    0 1px 3px rgba(15, 27, 51, 0.03);
-    --sr-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
-                    0 2px 4px rgba(15, 27, 51, 0.03);
-
-    --sr-font: 'Poppins', system-ui, -apple-system, sans-serif;
-}
-
-/* ==========================================================================
    1. STATS GRID — not used in current template but kept for compat
    ========================================================================== */
 .stats-grid {

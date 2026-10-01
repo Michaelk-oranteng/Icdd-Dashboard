@@ -1,0 +1,662 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Admin Dashboard - Branch / Department{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'stylesheets/admin.css' %}" type="text/css">
+
+<style>
+    /* ============================================
+       BRANCH / DEPARTMENT STYLES
+       ============================================ */
+    .unit-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .unit-form-grid .form-field-wide { grid-column: 1 / -1; }
+
+    .unit-form-grid label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #1a2332;
+        margin-bottom: 5px;
+    }
+
+    .unit-form-grid input[type="text"],
+    .unit-form-grid select,
+    .unit-form-grid textarea {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 13px;
+        background: #fff;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+
+    .unit-form-grid textarea {
+        resize: vertical;
+        min-height: 60px;
+    }
+
+    .unit-form-grid input:focus,
+    .unit-form-grid select:focus,
+    .unit-form-grid textarea:focus {
+        outline: none;
+        border-color: #0066cc;
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    }
+
+    /* ---- Multi-select for "specific" assignment ---- */
+    .user-picker {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 8px;
+        max-height: 180px;
+        overflow-y: auto;
+        background: #fafbfc;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .user-picker label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #1a2332;
+        padding: 4px 6px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.12s;
+    }
+
+    .user-picker label:hover { background: #eef2ff; }
+
+    .user-picker input[type="checkbox"] {
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 6px;
+    }
+
+    .btn-create {
+        background: #0066cc;
+        color: #fff;
+        border: none;
+        padding: 9px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.12s;
+    }
+
+    .btn-create:hover { background: #0052a3; }
+    .btn-create:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-cancel {
+        background: #f3f4f6;
+        color: #1a2332;
+        border: none;
+        padding: 9px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .btn-cancel:hover { background: #e5e7eb; }
+
+    /* ---- Saved units table ---- */
+    .unit-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        margin-top: 12px;
+    }
+
+    .unit-table thead th {
+        background: #f8fafc;
+        color: #1a2332;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 12px 14px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .unit-table tbody td {
+        padding: 12px 14px;
+        font-size: 13px;
+        color: #1a2332;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    .unit-table tbody tr:last-child td { border-bottom: none; }
+    .unit-table tbody tr:hover { background: #fafbfc; }
+
+    .type-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .type-branch     { background: #dbeafe; color: #1e40af; }
+    .type-department { background: #fef3c7; color: #92400e; }
+
+    .scope-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        background: #f3f4f6;
+        color: #374151;
+    }
+
+    .row-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .row-actions button {
+        border: none;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: background 0.12s;
+    }
+
+    .btn-edit {
+        background: #eef2ff;
+        color: #3730a3;
+    }
+    .btn-edit:hover { background: #e0e7ff; }
+
+    .btn-delete {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .btn-delete:hover { background: #fecaca; }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 640px) {
+        .unit-form-grid { grid-template-columns: 1fr; }
+        .user-picker { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:admin_page' %}{% endblock %}
+
+{% block nav_links %}
+<li>
+    <a href="{% url 'control_dashboard:admin_page' %}">
+        <span class="nav-icon"><i class="fas fa-user-plus"></i></span>
+        <span class="nav-text">Add User</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:admin_user_list' %}">
+        <span class="nav-icon"><i class="fas fa-users-cog"></i></span>
+        <span class="nav-text">User List</span>
+    </a>
+</li>
+<li class="active">
+    <a href="{% url 'control_dashboard:admin_units' %}">
+        <span class="nav-icon"><i class="fas fa-building"></i></span>
+        <span class="nav-text">Branch / Department</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:report_creation' %}">
+        <span class="nav-icon"><i class="fas fa-file-medical"></i></span>
+        <span class="nav-text">Create Report</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:report_center' %}">
+        <span class="nav-icon"><i class="fas fa-inbox"></i></span>
+        <span class="nav-text">Report Center</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:checklist_builder' %}">
+        <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+        <span class="nav-text">Checklist Builder</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:checklist_list' %}">
+        <span class="nav-icon"><i class="fas fa-list-check"></i></span>
+        <span class="nav-text">Checklist List</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:activity_logs' %}">
+        <span class="nav-icon"><i class="fas fa-search"></i></span>
+        <span class="nav-text">Activity Logs</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block page_title %}Branch / Department{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     ADD FORM
+     ============================================================ -->
+<div class="table-container">
+    <h4 id="formTitle">Add Branch or Department</h4>
+
+    <form id="unitForm" onsubmit="saveUnit(event)">
+        {% csrf_token %}
+
+        <div class="unit-form-grid">
+            <div class="form-field">
+                <label for="unitType">Type <span style="color:#dc2626;">*</span></label>
+                <select id="unitType" required>
+                    <option value="branch">Branch</option>
+                    <option value="department">Department</option>
+                </select>
+            </div>
+
+            <div class="form-field form-field-wide">
+                <label for="unitName">Name <span style="color:#dc2626;">*</span></label>
+                <input type="text"
+                       id="unitName"
+                       placeholder="e.g. Accra Main Branch"
+                       required>
+            </div>
+
+            <div class="form-field form-field-wide">
+                <label for="unitDescription">Description <small style="color:#6b7280;font-weight:400;">(optional)</small></label>
+                <textarea id="unitDescription" placeholder="Short description..."></textarea>
+            </div>
+
+            <div class="form-field form-field-wide">
+                <label for="unitAssignment">Assign To <span style="color:#dc2626;">*</span></label>
+                <select id="unitAssignment" required onchange="onAssignmentChange()">
+                    <option value="cc">Cluster Control</option>
+                    <option value="hc">Head Office Control</option>
+                    <option value="specific">Specific Users</option>
+                </select>
+            </div>
+
+            <div class="form-field form-field-wide hidden" id="userPickerField">
+                <label>Select Users <span style="color:#dc2626;">*</span></label>
+                <div class="user-picker" id="userPicker">
+                    {% for u in assignable_users %}
+                    <label>
+                        <input type="checkbox" value="{{ u.id }}">
+                        <span>{{ u.full_name }} <small style="color:#6b7280;">({{ u.get_position_display }})</small></span>
+                    </label>
+                    {% empty %}
+                    <span style="color:#6b7280;font-style:italic;">No active users to assign.</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="button" class="btn-cancel hidden" id="cancelEditBtn" onclick="cancelEdit()">
+                Cancel Edit
+            </button>
+            <button type="submit" class="btn-create" id="saveUnitBtn">
+                <i class="fas fa-plus"></i> Add to Database
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- ============================================================
+     SAVED UNITS
+     ============================================================ -->
+<div class="table-container" style="margin-top: 24px;">
+    <h4>Saved Branches &amp; Departments</h4>
+
+    <table class="unit-table">
+        <thead>
+            <tr>
+                <th style="width: 110px;">Type</th>
+                <th>Name</th>
+                <th>Assigned To</th>
+                <th>Description</th>
+                <th style="width: 180px;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in branches %}
+            <tr data-unit-id="{{ b.id }}" data-unit-type="branch">
+                <td><span class="type-badge type-branch"><i class="fas fa-building"></i> Branch</span></td>
+                <td><strong>{{ b.name }}</strong></td>
+                <td>
+                    {% if b.assignment_scope == 'specific' %}
+                        <span class="scope-badge">
+                            <i class="fas fa-users"></i>
+                            {{ b.assigned_users.count }} user{{ b.assigned_users.count|pluralize }}
+                        </span>
+                    {% elif b.assignment_scope == 'hc' %}
+                        <span class="scope-badge"><i class="fas fa-user-tie"></i> Head Office Control</span>
+                    {% else %}
+                        <span class="scope-badge"><i class="fas fa-user-tag"></i> Cluster Control</span>
+                    {% endif %}
+                </td>
+                <td>{{ b.description|default:"—"|truncatechars:60 }}</td>
+                <td>
+                    <div class="row-actions">
+                        <button type="button"
+                                class="btn-edit js-edit-unit"
+                                data-unit-id="{{ b.id }}"
+                                data-unit-type="branch"
+                                data-name="{{ b.name }}"
+                                data-description="{{ b.description|default:'' }}"
+                                data-assignment="{{ b.assignment_scope }}">
+                            <i class="fas fa-pen"></i> Edit
+                        </button>
+                        <button type="button"
+                                class="btn-delete js-delete-unit"
+                                data-unit-id="{{ b.id }}"
+                                data-unit-type="branch"
+                                data-name="{{ b.name }}">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+
+            {% for d in departments %}
+            <tr data-unit-id="{{ d.id }}" data-unit-type="department">
+                <td><span class="type-badge type-department"><i class="fas fa-sitemap"></i> Dept</span></td>
+                <td><strong>{{ d.name }}</strong></td>
+                <td>
+                    {% if d.assignment_scope == 'specific' %}
+                        <span class="scope-badge">
+                            <i class="fas fa-users"></i>
+                            {{ d.assigned_users.count }} user{{ d.assigned_users.count|pluralize }}
+                        </span>
+                    {% elif d.assignment_scope == 'hc' %}
+                        <span class="scope-badge"><i class="fas fa-user-tie"></i> Head Office Control</span>
+                    {% else %}
+                        <span class="scope-badge"><i class="fas fa-user-tag"></i> Cluster Control</span>
+                    {% endif %}
+                </td>
+                <td>{{ d.description|default:"—"|truncatechars:60 }}</td>
+                <td>
+                    <div class="row-actions">
+                        <button type="button"
+                                class="btn-edit js-edit-unit"
+                                data-unit-id="{{ d.id }}"
+                                data-unit-type="department"
+                                data-name="{{ d.name }}"
+                                data-description="{{ d.description|default:'' }}"
+                                data-assignment="{{ d.assignment_scope }}">
+                            <i class="fas fa-pen"></i> Edit
+                        </button>
+                        <button type="button"
+                                class="btn-delete js-delete-unit"
+                                data-unit-id="{{ d.id }}"
+                                data-unit-type="department"
+                                data-name="{{ d.name }}">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+
+            {% if not branches and not departments %}
+            <tr>
+                <td colspan="5" style="text-align:center;color:#6b7280;padding:30px;">
+                    No branches or departments yet. Add one above.
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    /* ============================================
+       CSRF HELPER
+       ============================================ */
+    function getCsrfToken() {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const c = cookies[i].trim();
+                if (c.substring(0, 10) === 'csrftoken=') {
+                    cookieValue = decodeURIComponent(c.substring(10));
+                    break;
+                }
+            }
+        }
+        return cookieValue
+            || document.querySelector('[name=csrfmiddlewaretoken]')?.value
+            || '';
+    }
+
+    const API_UNITS_BASE = "/adminboard/api/units/";
+
+    /* ============================================
+       FORM STATE
+       ============================================ */
+    let _editingUnitId = null;
+    let _editingUnitType = null;
+
+    function onAssignmentChange() {
+        const scope = document.getElementById('unitAssignment').value;
+        const picker = document.getElementById('userPickerField');
+        picker.classList.toggle('hidden', scope !== 'specific');
+    }
+
+    function resetForm() {
+        document.getElementById('unitForm').reset();
+        document.getElementById('unitType').value = 'branch';
+        document.getElementById('unitAssignment').value = 'cc';
+        onAssignmentChange();
+
+        document.querySelectorAll('#userPicker input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+        _editingUnitId = null;
+        _editingUnitType = null;
+
+        document.getElementById('formTitle').textContent = 'Add Branch or Department';
+        document.getElementById('saveUnitBtn').innerHTML = '<i class="fas fa-plus"></i> Add to Database';
+        document.getElementById('cancelEditBtn').classList.add('hidden');
+    }
+
+    function cancelEdit() { resetForm(); }
+
+    /* ============================================
+       SAVE (create OR edit)
+       ============================================ */
+    function saveUnit(event) {
+        event.preventDefault();
+
+        const unitType    = document.getElementById('unitType').value;
+        const name        = document.getElementById('unitName').value.trim();
+        const description = document.getElementById('unitDescription').value.trim();
+        const assignment  = document.getElementById('unitAssignment').value;
+
+        if (!name) {
+            alert('Name is required.');
+            return;
+        }
+
+        let userIds = [];
+        if (assignment === 'specific') {
+            userIds = Array.from(document.querySelectorAll('#userPicker input[type="checkbox"]:checked'))
+                           .map(cb => parseInt(cb.value, 10));
+            if (userIds.length === 0) {
+                alert('Please select at least one user.');
+                return;
+            }
+        }
+
+        const btn = document.getElementById('saveUnitBtn');
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+        const payload = {
+            unit_type: unitType,
+            name: name,
+            description: description,
+            assignment: assignment,
+            user_ids: userIds
+        };
+
+        const isEdit = !!_editingUnitId;
+        const url = isEdit
+            ? `${API_UNITS_BASE}${_editingUnitType}/${_editingUnitId}/edit/`
+            : `${API_UNITS_BASE}create/`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+
+            if (data.success) {
+                alert(data.message || 'Saved successfully.');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Save failed.'));
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+            console.error('Unit save error:', err);
+            alert('An error occurred. Please try again.');
+        });
+    }
+
+    /* ============================================
+       EDIT
+       ============================================ */
+    document.querySelectorAll('.js-edit-unit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            _editingUnitId   = btn.dataset.unitId;
+            _editingUnitType = btn.dataset.unitType;
+
+            document.getElementById('unitType').value        = btn.dataset.unitType;
+            document.getElementById('unitName').value        = btn.dataset.name;
+            document.getElementById('unitDescription').value = btn.dataset.description || '';
+            document.getElementById('unitAssignment').value  = btn.dataset.assignment || 'cc';
+
+            onAssignmentChange();
+
+            // Pre-check the assigned users if scope is 'specific'
+            if ((btn.dataset.assignment || '') === 'specific') {
+                // We don't know which users are assigned from the data attributes
+                // — that's a limitation. When the user saves with scope='specific',
+                // the new selection replaces the old one. That's acceptable.
+                document.querySelectorAll('#userPicker input[type="checkbox"]').forEach(cb => cb.checked = false);
+            }
+
+            document.getElementById('formTitle').textContent =
+                `Edit ${btn.dataset.unitType === 'branch' ? 'Branch' : 'Department'}`;
+            document.getElementById('saveUnitBtn').innerHTML = '<i class="fas fa-check"></i> Save Changes';
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+            document.getElementById('unitForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    /* ============================================
+       DELETE
+       ============================================ */
+    document.querySelectorAll('.js-delete-unit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const unitId   = btn.dataset.unitId;
+            const unitType = btn.dataset.unitType;
+            const name     = btn.dataset.name;
+
+            if (!confirm(`Delete the ${unitType} "${name}" permanently?\nThis cannot be undone.`)) return;
+
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            fetch(`${API_UNITS_BASE}${unitType}/${unitId}/delete/`, {
+                method: 'DELETE',
+                headers: { 'X-CSRFToken': getCsrfToken() }
+            })
+            .then(r => r.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+
+                if (data.success) {
+                    const row = document.querySelector(`tr[data-unit-id="${unitId}"][data-unit-type="${unitType}"]`);
+                    if (row) row.remove();
+                } else {
+                    alert('Error: ' + (data.error || 'Delete failed.'));
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+                console.error('Unit delete error:', err);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    });
+
+    /* ============================================
+       BOOTSTRAP
+       ============================================ */
+    document.addEventListener('DOMContentLoaded', () => {
+        onAssignmentChange();
+    });
+</script>
+{% endblock %}

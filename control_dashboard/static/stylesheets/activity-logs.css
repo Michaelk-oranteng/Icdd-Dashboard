@@ -1,44 +1,4 @@
 /* ==========================================================================
-   ACTIVITY LOGS — Premium Light Theme
-   ========================================================================== */
-
-:root {
-    --al-bg-0: #eef1f8;
-    --al-bg-1: #ffffff;
-    --al-bg-2: #f7f8fc;
-    --al-bg-3: #f1f3f9;
-
-    --al-border: rgba(15, 27, 51, 0.08);
-    --al-border-strong: rgba(15, 27, 51, 0.16);
-    --al-hairline: rgba(15, 27, 51, 0.06);
-
-    --al-text-0: #0f1b33;
-    --al-text-1: #46536b;
-    --al-text-2: #8993a8;
-
-    --al-accent: #4f6ef7;
-    --al-accent-soft: #eef1ff;
-    --al-emerald: #17a673;
-    --al-emerald-soft: #e2f7ef;
-    --al-amber: #e08a17;
-    --al-amber-soft: #fdf2e0;
-    --al-rose: #e0456a;
-    --al-rose-soft: #fdeaf0;
-    --al-violet: #7c5cf0;
-    --al-violet-soft: #f0ebff;
-
-    --al-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
-                    0 1px 3px rgba(15, 27, 51, 0.03);
-    --al-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
-                    0 2px 4px rgba(15, 27, 51, 0.03);
-    --al-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
-                    0 4px 12px rgba(15, 27, 51, 0.04);
-
-    --al-font: 'Poppins', system-ui, -apple-system, sans-serif;
-    --al-mono: 'JetBrains Mono', 'Fira Code', monospace;
-}
-
-/* ==========================================================================
    1. STATS GRID
    ========================================================================== */
 .stats-grid {

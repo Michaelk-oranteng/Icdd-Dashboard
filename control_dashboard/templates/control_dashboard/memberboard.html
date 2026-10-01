@@ -5,885 +5,693 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'stylesheets/member.css' %}" type="text/css">
+
 <style>
-/* ============================================================
-   MEMBER DASHBOARD — Premium Light Theme (page-scoped overrides)
-   ============================================================ */
-
-:root {
-    /* Surfaces */
-    --fx-bg-0: #eef1f8;
-    --fx-bg-1: #ffffff;
-    --fx-bg-2: #f7f8fc;
-    --fx-bg-3: #f1f3f9;
-
-    /* Glass & borders */
-    --fx-glass: rgba(255, 255, 255, 0.85);
-    --fx-glass-hover: rgba(255, 255, 255, 1);
-    --fx-border: rgba(15, 27, 51, 0.08);
-    --fx-border-strong: rgba(15, 27, 51, 0.16);
-    --fx-hairline: rgba(15, 27, 51, 0.06);
-
-    /* Text */
-    --fx-text-0: #0f1b33;
-    --fx-text-1: #46536b;
-    --fx-text-2: #8993a8;
-
-    /* Accents */
-    --fx-accent: #4f6ef7;
-    --fx-accent-soft: #eef1ff;
-    --fx-cyan: #0ea5a4;
-    --fx-cyan-soft: #e0f7f6;
-    --fx-violet: #7c5cf0;
-    --fx-violet-soft: #f0ebff;
-    --fx-amber: #e08a17;
-    --fx-amber-soft: #fdf2e0;
-    --fx-rose: #e0456a;
-    --fx-rose-soft: #fdeaf0;
-    --fx-emerald: #17a673;
-    --fx-emerald-soft: #e2f7ef;
-
-    /* Shadows */
-    --fx-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
-                    0 1px 3px rgba(15, 27, 51, 0.03);
-    --fx-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
-                    0 2px 4px rgba(15, 27, 51, 0.03);
-    --fx-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
-                    0 4px 12px rgba(15, 27, 51, 0.04);
-
-    --fx-font: 'Poppins', system-ui, -apple-system, sans-serif;
-    --fx-mono: 'JetBrains Mono', 'Fira Code', monospace;
-}
-
-/* ============================================================
-   DASHBOARD CONTAINER
-   ============================================================ */
-.fx-dashboard {
-    font-family: var(--fx-font);
-    color: var(--fx-text-0);
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 4px 0 32px;
-}
-
-/* ============================================================
-   SECTION 1 — HERO METRICS STRIP
-   ============================================================ */
-.fx-metrics-strip {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-}
-
-.fx-metric {
-    position: relative;
-    padding: 20px 22px;
-    border-radius: 18px;
-    background: var(--fx-bg-1);
-    border: 1px solid var(--fx-border);
-    overflow: hidden;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    isolation: isolate;
-    box-shadow: var(--fx-shadow-sm);
-}
-
-.fx-metric::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--metric-accent, var(--fx-accent)) 50%,
-        transparent 100%);
-    opacity: 0.85;
-}
-
-.fx-metric::after {
-    content: '';
-    position: absolute;
-    top: -50%; right: -30%;
-    width: 200px; height: 200px;
-    border-radius: 50%;
-    background: radial-gradient(circle,
-        color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 22%, transparent) 0%,
-        transparent 70%);
-    opacity: 0.55;
-    z-index: -1;
-    transition: opacity 0.4s ease, transform 0.6s ease;
-}
-
-.fx-metric:hover {
-    transform: translateY(-3px);
-    border-color: color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 30%, var(--fx-border));
-    box-shadow:
-        0 12px 28px rgba(15, 27, 51, 0.10),
-        0 2px 6px rgba(15, 27, 51, 0.04),
-        inset 0 0 0 1px color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 12%, transparent);
-}
-
-.fx-metric:hover::after {
-    opacity: 0.9;
-    transform: scale(1.15);
-}
-
-.fx-metric[data-accent="violet"]  { --metric-accent: var(--fx-violet); }
-.fx-metric[data-accent="emerald"] { --metric-accent: var(--fx-emerald); }
-.fx-metric[data-accent="rose"]    { --metric-accent: var(--fx-rose); }
-.fx-metric[data-accent="amber"]   { --metric-accent: var(--fx-amber); }
-
-.fx-metric-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 12px;
-}
-
-.fx-metric-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
-    color: var(--fx-text-2);
-}
-
-.fx-metric-glyph {
-    width: 34px; height: 34px;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
-    font-size: 15px;
-    background: color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 10%, transparent);
-    color: var(--metric-accent, var(--fx-accent));
-    border: 1px solid color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 20%, transparent);
-}
-
-.fx-metric-value {
-    font-size: 34px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -1px;
-    color: var(--fx-text-0);
-    font-variant-numeric: tabular-nums;
-    margin-bottom: 6px;
-}
-
-.fx-metric-value .unit {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--fx-text-2);
-    margin-left: 2px;
-}
-
-.fx-metric-foot {
-    font-size: 11px;
-    color: var(--fx-text-2);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.fx-metric-foot .dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: var(--metric-accent, var(--fx-accent));
-    box-shadow: 0 0 6px color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 70%, transparent);
-}
-
-/* ============================================================
-   SECTION 2 — PROGRESS ORBIT RINGS
-   ============================================================ */
-.fx-orbit-strip {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    padding: 18px;
-    border-radius: 20px;
-    background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
-    border: 1px solid var(--fx-border);
-    box-shadow: var(--fx-shadow-sm);
-    position: relative;
-    overflow: hidden;
-}
-
-.fx-orbit-strip::before {
-    content: '';
-    position: absolute;
-    top: -100px; left: 50%;
-    transform: translateX(-50%);
-    width: 500px; height: 200px;
-    background: radial-gradient(ellipse,
-        rgba(79, 110, 247, 0.08) 0%,
-        transparent 70%);
-    pointer-events: none;
-}
-
-.fx-orbit {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 1;
-}
-
-.fx-orbit:hover {
-    background: var(--fx-bg-2);
-    transform: translateX(2px);
-}
-
-.fx-orbit-ring {
-    position: relative;
-    width: 56px; height: 56px;
-    flex-shrink: 0;
-}
-
-.fx-orbit-ring svg {
-    width: 56px; height: 56px;
-    transform: rotate(-90deg);
-}
-
-.fx-orbit-ring .ring-track {
-    fill: none;
-    stroke: rgba(15, 27, 51, 0.08);
-    stroke-width: 4;
-}
-
-.fx-orbit-ring .ring-fill {
-    fill: none;
-    stroke-width: 4;
-    stroke-linecap: round;
-    transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-    filter: drop-shadow(0 1px 3px color-mix(in srgb, currentColor 40%, transparent));
-}
-
-.fx-orbit-ring .ring-center {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--fx-text-0);
-    font-variant-numeric: tabular-nums;
-}
-
-.fx-orbit-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.fx-orbit-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--fx-text-2);
-}
-
-.fx-orbit-meta {
-    font-size: 12px;
-    color: var(--fx-text-1);
-    font-variant-numeric: tabular-nums;
-}
-
-/* ============================================================
-   SECTION 3 — MAIN BENTO GRID
-   ============================================================ */
-.fx-bento {
-    display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    gap: 20px;
-}
-
-.fx-panel {
-    position: relative;
-    border-radius: 20px;
-    background: var(--fx-bg-1);
-    border: 1px solid var(--fx-border);
-    overflow: hidden;
-    transition: all 0.3s ease;
-    box-shadow: var(--fx-shadow-sm);
-}
-
-.fx-panel:hover {
-    border-color: var(--fx-border-strong);
-    box-shadow: var(--fx-shadow-md);
-}
-
-.fx-panel-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 22px 14px;
-    border-bottom: 1px solid var(--fx-hairline);
-    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.fx-panel-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    color: var(--fx-text-0);
-}
-
-.fx-panel-title i {
-    font-size: 13px;
-    width: 28px; height: 28px;
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
-    background: var(--fx-accent-soft);
-    color: var(--fx-accent);
-    border: 1px solid rgba(79, 110, 247, 0.2);
-}
-
-.fx-panel-title.rose i {
-    background: var(--fx-rose-soft);
-    color: var(--fx-rose);
-    border-color: rgba(224, 69, 106, 0.2);
-}
-
-.fx-panel-badge {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 8px;
-    background: var(--fx-rose-soft);
-    color: var(--fx-rose);
-    border: 1px solid rgba(224, 69, 106, 0.2);
-    font-variant-numeric: tabular-nums;
-}
-
-.fx-panel-body { padding: 4px 0 0; }
-
-/* ============================================================
-   IRREGULAR GL — date selector (calendar picker)
-   ============================================================ */
-.fx-gl-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.fx-gl-date-form {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-}
-
-.fx-gl-date-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--fx-text-2);
-    white-space: nowrap;
-}
-
-/* ---------- Native date input (calendar picker) ---------- */
-.fx-gl-date-input {
-    appearance: none;
-    -webkit-appearance: none;
-    padding: 6px 12px;
-    height: 32px;
-    min-width: 155px;
-    font-family: var(--fx-font);
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--fx-text-0);
-    background-color: var(--fx-bg-1);
-    border: 1px solid var(--fx-border);
-    border-radius: 8px;
-    cursor: pointer;
-    outline: none;
-    transition: all 0.2s ease;
-    box-shadow: var(--fx-shadow-sm);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.2px;
-}
-
-.fx-gl-date-input:hover {
-    border-color: var(--fx-border-strong);
-    background-color: var(--fx-bg-2);
-}
-
-.fx-gl-date-input:focus {
-    border-color: var(--fx-rose);
-    box-shadow: 0 0 0 3px rgba(224, 69, 106, 0.12);
-    background-color: var(--fx-bg-1);
-}
-
-.fx-gl-date-input.is-empty {
-    border-color: rgba(224, 138, 23, 0.35);
-    background-color: var(--fx-amber-soft);
-    color: var(--fx-amber);
-}
-
-.fx-gl-date-input.is-empty:hover {
-    background-color: #fcebd0;
-}
-
-.fx-gl-date-input.is-empty:focus {
-    border-color: var(--fx-amber);
-    box-shadow: 0 0 0 3px rgba(224, 138, 23, 0.15);
-}
-
-.fx-gl-date-input::-webkit-calendar-picker-indicator {
-    cursor: pointer;
-    opacity: 0.55;
-    padding: 2px;
-    border-radius: 4px;
-    transition: opacity 0.2s ease, background 0.2s ease;
-}
-
-.fx-gl-date-input::-webkit-calendar-picker-indicator:hover {
-    opacity: 1;
-    background: var(--fx-accent-soft);
-}
-
-.fx-gl-today-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 0 10px;
-    height: 32px;
-    border-radius: 8px;
-    font-family: var(--fx-font);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    text-decoration: none;
-    background: var(--fx-bg-1);
-    color: var(--fx-text-1);
-    border: 1px solid var(--fx-border);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: var(--fx-shadow-sm);
-    white-space: nowrap;
-}
-
-.fx-gl-today-btn:hover {
-    background: var(--fx-accent-soft);
-    color: var(--fx-accent);
-    border-color: rgba(79, 110, 247, 0.28);
-    transform: translateY(-1px);
-}
-
-.fx-gl-today-btn:active { transform: translateY(0); }
-.fx-gl-today-btn i { font-size: 10px; }
-
-.fx-gl-today-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 9px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    background: var(--fx-emerald-soft);
-    color: var(--fx-emerald);
-    border: 1px solid rgba(23, 166, 115, 0.25);
-    white-space: nowrap;
-}
-
-.fx-gl-today-pill .fx-gl-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--fx-emerald);
-    box-shadow: 0 0 6px rgba(23, 166, 115, 0.6);
-    animation: fx-pulse 2.4s ease-in-out infinite;
-}
-
-.fx-gl-meta {
-    padding: 10px 22px 12px;
-    font-size: 11px;
-    color: var(--fx-text-2);
-    border-bottom: 1px solid var(--fx-hairline);
-    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.fx-gl-meta strong {
-    color: var(--fx-text-0);
-    font-weight: 700;
-}
-
-.fx-gl-meta .fx-gl-meta-sep {
-    color: var(--fx-border-strong);
-}
-
-/* ============================================================
-   SECTION 4 — DATA TABLE
-   ============================================================ */
-.fx-table-scroll {
-    max-height: 380px;
-    overflow: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(15, 27, 51, 0.15) transparent;
-}
-
-.fx-table-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
-.fx-table-scroll::-webkit-scrollbar-track { background: transparent; }
-.fx-table-scroll::-webkit-scrollbar-thumb {
-    background: rgba(15, 27, 51, 0.12);
-    border-radius: 4px;
-}
-.fx-table-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(15, 27, 51, 0.24);
-}
-
-.fx-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-}
-
-.fx-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    background: var(--fx-bg-2);
-    backdrop-filter: blur(8px);
-}
-
-.fx-table thead th {
-    padding: 12px 18px;
-    text-align: left;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--fx-text-2);
-    border-bottom: 1px solid var(--fx-border);
-    white-space: nowrap;
-}
-
-.fx-table thead th.num { text-align: right; }
-
-.fx-table tbody td {
-    padding: 11px 18px;
-    border-bottom: 1px solid var(--fx-hairline);
-    color: var(--fx-text-1);
-    white-space: nowrap;
-}
-
-.fx-table tbody tr {
-    transition: background 0.2s ease;
-}
-
-.fx-table tbody tr:hover {
-    background: var(--fx-rose-soft);
-}
-
-.fx-table tbody tr:last-child td { border-bottom: none; }
-
-.fx-table .code-cell {
-    font-family: var(--fx-mono);
-    font-size: 11px;
-    color: var(--fx-accent);
-    font-weight: 600;
-}
-
-.fx-table .descr-cell {
-    max-width: 280px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--fx-text-0);
-}
-
-.fx-table .num { text-align: right; }
-
-.fx-table .lcy-cell {
-    color: var(--fx-rose);
-    font-weight: 700;
-}
-
-.fx-table .fcy-cell {
-    color: var(--fx-text-2);
-}
-
-/* ============================================================
-   SECTION 5 — EMPTY STATE
-   ============================================================ */
-.fx-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 56px 24px;
-    text-align: center;
-}
-
-.fx-empty-glyph {
-    width: 60px; height: 60px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: radial-gradient(circle,
-        rgba(23, 166, 115, 0.14) 0%,
-        rgba(23, 166, 115, 0.04) 60%,
-        transparent 70%);
-    color: var(--fx-emerald);
-    font-size: 24px;
-    margin-bottom: 4px;
-    animation: fx-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes fx-pulse {
-    0%, 100% { transform: scale(1); opacity: 0.9; }
-    50% { transform: scale(1.06); opacity: 1; }
-}
-
-.fx-empty-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--fx-text-0);
-}
-
-.fx-empty-desc {
-    font-size: 12px;
-    color: var(--fx-text-2);
-    max-width: 320px;
-    line-height: 1.5;
-}
-
-/* ============================================================
-   SECTION 6 — QUICK ACTIONS
-   ============================================================ */
-.fx-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px;
-}
-
-.fx-action {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
-    border-radius: 14px;
-    background: var(--fx-bg-1);
-    border: 1px solid var(--fx-border);
-    text-decoration: none;
-    color: inherit;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-    box-shadow: var(--fx-shadow-sm);
-}
-
-.fx-action::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--action-accent, var(--fx-accent));
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.fx-action::after {
-    content: '';
-    position: absolute;
-    top: 50%; right: -40px;
-    transform: translateY(-50%);
-    width: 100px; height: 100px;
-    border-radius: 50%;
-    background: radial-gradient(circle,
-        color-mix(in srgb, var(--action-accent, var(--fx-accent)) 20%, transparent) 0%,
-        transparent 70%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-}
-
-.fx-action:hover {
-    background: var(--fx-bg-1);
-    border-color: color-mix(in srgb, var(--action-accent, var(--fx-accent)) 35%, var(--fx-border));
-    transform: translateX(4px);
-    box-shadow:
-        0 8px 24px rgba(15, 27, 51, 0.08),
-        0 2px 6px rgba(15, 27, 51, 0.04);
-}
-
-.fx-action:hover::before { opacity: 1; }
-.fx-action:hover::after  { opacity: 0.9; }
-
-.fx-action[data-accent="rose"]   { --action-accent: var(--fx-rose); }
-.fx-action[data-accent="cyan"]   { --action-accent: var(--fx-cyan); }
-.fx-action[data-accent="violet"] { --action-accent: var(--fx-violet); }
-
-.fx-action-glyph {
-    width: 40px; height: 40px;
-    border-radius: 11px;
-    display: grid;
-    place-items: center;
-    font-size: 16px;
-    flex-shrink: 0;
-    background: color-mix(in srgb, var(--action-accent, var(--fx-accent)) 10%, transparent);
-    color: var(--action-accent, var(--fx-accent));
-    border: 1px solid color-mix(in srgb, var(--action-accent, var(--fx-accent)) 20%, transparent);
-    transition: transform 0.3s ease;
-    position: relative;
-    z-index: 1;
-}
-
-.fx-action:hover .fx-action-glyph {
-    transform: scale(1.06) rotate(-4deg);
-}
-
-.fx-action-text { flex: 1; min-width: 0; position: relative; z-index: 1; }
-
-.fx-action-text h5 {
-    margin: 0 0 2px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--fx-text-0);
-    letter-spacing: 0.2px;
-}
-
-.fx-action-text p {
-    margin: 0;
-    font-size: 11px;
-    color: var(--fx-text-2);
-}
-
-.fx-action-arrow {
-    color: var(--fx-text-2);
-    font-size: 12px;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 1;
-}
-
-.fx-action:hover .fx-action-arrow {
-    color: var(--action-accent, var(--fx-accent));
-    transform: translateX(3px);
-}
-
-/* ============================================================
-   SECTION 7 — FOOTER STATS STRIP
-   ============================================================ */
-.fx-footer-strip {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1px;
-    background: var(--fx-border);
-    border-radius: 18px;
-    overflow: hidden;
-    border: 1px solid var(--fx-border);
-    box-shadow: var(--fx-shadow-sm);
-}
-
-.fx-footer-cell {
-    background: var(--fx-bg-1);
-    padding: 18px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    position: relative;
-    transition: background 0.3s ease;
-}
-
-.fx-footer-cell:hover {
-    background: var(--fx-bg-2);
-}
-
-.fx-footer-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--fx-text-2);
-}
-
-.fx-footer-value {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    color: var(--fx-text-0);
-    font-variant-numeric: tabular-nums;
-    line-height: 1.1;
-}
-
-.fx-footer-value.green  { color: var(--fx-emerald); }
-.fx-footer-value.blue   { color: var(--fx-accent); }
-.fx-footer-value.orange { color: var(--fx-amber); }
-.fx-footer-value.red    { color: var(--fx-rose); }
-.fx-footer-value.purple { color: var(--fx-violet); }
-
-.fx-footer-bar {
-    height: 4px;
-    background: rgba(15, 27, 51, 0.06);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-top: 4px;
-}
-
-.fx-footer-bar-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width: 1200px) {
-    .fx-metrics-strip { grid-template-columns: repeat(2, 1fr); }
-    .fx-orbit-strip   { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 900px) {
-    .fx-bento { grid-template-columns: 1fr; }
-    .fx-footer-strip { grid-template-columns: repeat(3, 1fr); }
-}
-
-@media (max-width: 640px) {
-    .fx-dashboard { gap: 14px; }
-    .fx-metrics-strip { grid-template-columns: 1fr; gap: 12px; }
-    .fx-orbit-strip { grid-template-columns: 1fr; gap: 10px; padding: 12px; }
-    .fx-metric { padding: 16px 18px; }
-    .fx-metric-value { font-size: 28px; }
-    .fx-panel-head { padding: 14px 16px 12px; }
-    .fx-table thead th,
-    .fx-table tbody td { padding: 9px 12px; }
-    .fx-footer-strip { grid-template-columns: 1fr 1fr; }
-    .fx-footer-cell { padding: 14px 16px; }
-    .fx-footer-value { font-size: 18px; }
-
-    .fx-gl-controls { width: 100%; gap: 8px; }
-    .fx-gl-date-form { width: 100%; }
-    .fx-gl-date-input { flex: 1; min-width: 0; }
-    .fx-gl-date-label { font-size: 9px; }
-    .fx-gl-today-btn { flex-shrink: 0; }
-}
+    /* ============================================================
+       MEMBER DASHBOARD — PROFESSIONAL LAYOUT
+       ============================================================ */
+
+    :root {
+        --dash-bg:      #f7f8fc;
+        --dash-surface: #ffffff;
+        --dash-border:  #e5e7eb;
+        --dash-border-2:#f1f5f9;
+        --dash-text:    #0f1b33;
+        --dash-text-2:  #6b7280;
+        --dash-text-3:  #9ca3af;
+        --dash-accent:  #4f6ef7;
+        --dash-success: #17a673;
+        --dash-warning: #e08a17;
+        --dash-danger:  #e0456a;
+        --dash-violet:  #7c5cf0;
+    }
+
+    .dp-wrap {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 4px 0 48px;
+        font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+        color: var(--dash-text);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* ---------- Page header ---------- */
+    .dp-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 4px 2px 0;
+    }
+
+    .dp-header-left h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        color: var(--dash-text);
+    }
+
+    .dp-header-left p {
+        margin: 4px 0 0 0;
+        font-size: 12.5px;
+        color: var(--dash-text-2);
+    }
+
+    .dp-header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dp-date-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 14px;
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: 10px;
+        font-size: 12.5px;
+        font-weight: 500;
+        color: var(--dash-text-2);
+    }
+
+    .dp-date-chip i { color: var(--dash-accent); font-size: 11px; }
+
+    /* ============================================================
+       KPI ROW
+       ============================================================ */
+    .dp-kpi-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 14px;
+    }
+
+    .dp-kpi {
+        position: relative;
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: 12px;
+        padding: 18px 20px 16px;
+        box-shadow: 0 1px 2px rgba(15, 27, 51, 0.03);
+        transition: border-color 0.15s, box-shadow 0.15s;
+        overflow: hidden;
+    }
+
+    .dp-kpi:hover {
+        border-color: #d1d5db;
+        box-shadow: 0 4px 14px rgba(15, 27, 51, 0.05);
+    }
+
+    /* Left accent stripe */
+    .dp-kpi::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 18px;
+        bottom: 18px;
+        width: 3px;
+        border-radius: 0 3px 3px 0;
+        background: var(--kpi-accent, var(--dash-accent));
+    }
+
+    .dp-kpi[data-accent="success"] { --kpi-accent: var(--dash-success); }
+    .dp-kpi[data-accent="danger"]  { --kpi-accent: var(--dash-danger); }
+    .dp-kpi[data-accent="warning"] { --kpi-accent: var(--dash-warning); }
+    .dp-kpi[data-accent="violet"]  { --kpi-accent: var(--dash-violet); }
+
+    .dp-kpi-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .dp-kpi-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--dash-text-2);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+    }
+
+    .dp-kpi-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: color-mix(in srgb, var(--kpi-accent, var(--dash-accent)) 12%, transparent);
+        color: var(--kpi-accent, var(--dash-accent));
+        font-size: 12px;
+    }
+
+    .dp-kpi-value {
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.8px;
+        color: var(--dash-text);
+        font-variant-numeric: tabular-nums;
+        margin-bottom: 8px;
+    }
+
+    .dp-kpi-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        color: var(--dash-text-2);
+        line-height: 1.35;
+    }
+
+    .dp-kpi-meta i { font-size: 10px; color: var(--dash-text-3); }
+
+    .dp-kpi-meta strong { color: var(--dash-text); font-weight: 600; }
+
+    /* ============================================================
+       PROGRESS PANEL
+       ============================================================ */
+    .dp-progress-panel {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(15, 27, 51, 0.03);
+        padding: 20px 22px;
+    }
+
+    .dp-progress-panel > header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .dp-progress-panel > header i {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        background: #eef1ff;
+        color: var(--dash-accent);
+        font-size: 11px;
+    }
+
+    .dp-progress-panel > header h3 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--dash-text);
+        letter-spacing: 0.1px;
+    }
+
+    .dp-progress-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 20px;
+    }
+
+    .dp-progress-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .dp-progress-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+    }
+
+    .dp-progress-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--dash-text-2);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .dp-progress-value {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--dash-text);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.3px;
+    }
+
+    .dp-progress-value.green  { color: var(--dash-success); }
+    .dp-progress-value.orange { color: var(--dash-warning); }
+    .dp-progress-value.red    { color: var(--dash-danger); }
+
+    .dp-progress-track {
+        height: 6px;
+        border-radius: 100px;
+        background: var(--dash-border-2);
+        overflow: hidden;
+    }
+
+    .dp-progress-fill {
+        height: 100%;
+        border-radius: 100px;
+        width: 0;
+        transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .dp-progress-meta {
+        font-size: 11px;
+        color: var(--dash-text-3);
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ============================================================
+       MAIN 2-COLUMN GRID
+       ============================================================ */
+    .dp-main-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 20px;
+        align-items: start;
+    }
+
+    @media (max-width: 1100px) {
+        .dp-main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ============================================================
+       CARD PRIMITIVE
+       ============================================================ */
+    .dp-card {
+        background: var(--dash-surface);
+        border: 1px solid var(--dash-border);
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(15, 27, 51, 0.03);
+        overflow: hidden;
+    }
+
+    .dp-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--dash-border-2);
+        flex-wrap: wrap;
+    }
+
+    .dp-card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--dash-text);
+        letter-spacing: 0.1px;
+    }
+
+    .dp-card-title i {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        background: #eef1ff;
+        color: var(--dash-accent);
+        font-size: 11px;
+    }
+
+    .dp-card-title.danger i  { background: #fee2e2; color: var(--dash-danger); }
+    .dp-card-title.success i { background: #e2f7ef; color: var(--dash-success); }
+
+    .dp-card-body {
+        padding: 0;
+    }
+
+    .dp-card-body.padded { padding: 18px 20px; }
+
+    /* ============================================================
+       IRREGULAR GL TABLE
+       ============================================================ */
+    .dp-gl-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .dp-select {
+        height: 36px;
+        padding: 0 32px 0 12px;
+        border: 1px solid var(--dash-border);
+        border-radius: 9px;
+        background: var(--dash-surface);
+        font-family: inherit;
+        font-size: 12.5px;
+        color: var(--dash-text);
+        cursor: pointer;
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 13px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        min-width: 180px;
+    }
+
+    .dp-select:focus {
+        border-color: var(--dash-accent);
+        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    }
+
+    .dp-date-form {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .dp-date-input {
+        height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--dash-border);
+        border-radius: 9px;
+        background: var(--dash-surface);
+        font-family: inherit;
+        font-size: 12.5px;
+        color: var(--dash-text);
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .dp-date-input:focus {
+        border-color: var(--dash-accent);
+        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    }
+
+    .dp-date-input.is-empty {
+        border-color: var(--dash-warning);
+    }
+
+    .dp-mini-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 36px;
+        padding: 0 12px;
+        border-radius: 9px;
+        border: 1px solid var(--dash-border);
+        background: var(--dash-surface);
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--dash-text-2);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .dp-mini-btn:hover {
+        background: #f7f8fc;
+        color: var(--dash-text);
+        border-color: #d1d5db;
+    }
+
+    .dp-mini-btn i { font-size: 11px; }
+
+    /* Active filter chips */
+    .dp-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 12px 20px 0;
+    }
+
+    .dp-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: #eef1ff;
+        color: var(--dash-accent);
+        border-radius: 100px;
+        font-size: 11.5px;
+        font-weight: 600;
+    }
+
+    .dp-chip .dp-chip-x {
+        color: inherit;
+        opacity: 0.65;
+        text-decoration: none;
+        margin-left: 2px;
+        display: inline-grid;
+        place-items: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        transition: background 0.15s, opacity 0.15s;
+    }
+
+    .dp-chip .dp-chip-x:hover {
+        opacity: 1;
+        background: rgba(79, 110, 247, 0.15);
+    }
+
+    /* Table */
+    .dp-table-scroll {
+        max-height: 520px;
+        overflow: auto;
+    }
+
+    .dp-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+    }
+
+    .dp-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #f8fafc;
+        text-align: left;
+        padding: 11px 16px;
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--dash-text-2);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--dash-border);
+        white-space: nowrap;
+    }
+
+    .dp-table thead th.num { text-align: right; }
+
+    .dp-table tbody td {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--dash-border-2);
+        color: var(--dash-text);
+        vertical-align: top;
+        line-height: 1.4;
+    }
+
+    .dp-table tbody tr:last-child td { border-bottom: none; }
+    .dp-table tbody tr:hover { background: #fafbfd; }
+
+    .dp-table td.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .dp-table td.code-cell {
+        font-family: 'JetBrains Mono', ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--dash-text-2);
+    }
+
+    .dp-table td.descr-cell {
+        max-width: 340px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .dp-table td.lcy-cell { color: var(--dash-danger); font-weight: 600; }
+    .dp-table td.fcy-cell { color: var(--dash-text-2); }
+
+    /* Empty state */
+    .dp-empty {
+        padding: 60px 24px;
+        text-align: center;
+    }
+
+    .dp-empty-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        margin: 0 auto 16px;
+        display: grid;
+        place-items: center;
+        background: #f7f8fc;
+        color: var(--dash-text-3);
+        font-size: 20px;
+    }
+
+    .dp-empty-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--dash-text);
+        margin-bottom: 6px;
+    }
+
+    .dp-empty-text {
+        font-size: 12.5px;
+        color: var(--dash-text-2);
+        max-width: 400px;
+        margin: 0 auto;
+        line-height: 1.5;
+    }
+
+    /* ============================================================
+       SIDEBAR
+       ============================================================ */
+    .dp-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Quick actions */
+    .dp-actions {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dp-action {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        text-decoration: none;
+        color: var(--dash-text);
+        border-bottom: 1px solid var(--dash-border-2);
+        transition: background 0.12s;
+    }
+
+    .dp-action:last-child { border-bottom: none; }
+    .dp-action:hover { background: #fafbfd; }
+
+    .dp-action-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        flex-shrink: 0;
+        background: #eef1ff;
+        color: var(--dash-accent);
+    }
+
+    .dp-action[data-accent="rose"]   .dp-action-icon { background: #fee2e2; color: var(--dash-danger); }
+    .dp-action[data-accent="cyan"]   .dp-action-icon { background: #e0f2fe; color: #0284c7; }
+    .dp-action[data-accent="violet"] .dp-action-icon { background: #ede9fe; color: var(--dash-violet); }
+
+    .dp-action-text { flex: 1; min-width: 0; }
+    .dp-action-text h5 {
+        margin: 0;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--dash-text);
+    }
+    .dp-action-text p {
+        margin: 2px 0 0 0;
+        font-size: 11.5px;
+        color: var(--dash-text-2);
+    }
+
+    .dp-action-arrow {
+        color: var(--dash-text-3);
+        font-size: 10px;
+        transition: transform 0.15s;
+    }
+
+    .dp-action:hover .dp-action-arrow {
+        color: var(--dash-accent);
+        transform: translateX(2px);
+    }
+
+    /* Summary stats list */
+    .dp-stats-list {
+        display: flex;
+        flex-direction: column;
+        padding: 4px 0;
+    }
+
+    .dp-stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 20px;
+        font-size: 12.5px;
+    }
+
+    .dp-stat-row + .dp-stat-row {
+        border-top: 1px solid var(--dash-border-2);
+    }
+
+    .dp-stat-label {
+        color: var(--dash-text-2);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .dp-stat-label i {
+        width: 14px;
+        text-align: center;
+        font-size: 11px;
+        color: var(--dash-text-3);
+    }
+
+    .dp-stat-value {
+        font-weight: 700;
+        color: var(--dash-text);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.2px;
+    }
+
+    .dp-stat-value.blue   { color: var(--dash-accent); }
+    .dp-stat-value.purple { color: var(--dash-violet); }
+    .dp-stat-value.green  { color: var(--dash-success); }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 900px) {
+        .dp-header { flex-direction: column; align-items: stretch; }
+        .dp-kpi-value { font-size: 26px; }
+        .dp-table thead { display: none; }
+        .dp-table tbody, .dp-table tr, .dp-table td { display: block; width: 100%; }
+        .dp-table tbody tr {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--dash-border-2);
+        }
+        .dp-table tbody td {
+            border: none;
+            padding: 3px 0;
+            text-align: left;
+        }
+        .dp-table td.num { text-align: left; }
+        .dp-table td.descr-cell { max-width: none; white-space: normal; }
+    }
 </style>
 {% endblock %}
 
@@ -909,7 +717,7 @@
     </a>
 </li>
 <li>
-    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+    <a href="{% url 'control_dashboard:email_page' %}" data-tooltip="Email">
         <span class="nav-icon"><i class="fas fa-envelope"></i></span>
         <span class="nav-text">Email</span>
     </a>
@@ -943,209 +751,212 @@
 {% block page_title %}Member Dashboard{% endblock %}
 
 {% block content %}
-<div class="fx-dashboard">
-
+<div class="dp-wrap">
     <!-- ============================================================
-         SECTION 1 — HERO METRICS STRIP
+         KPI ROW
          ============================================================ -->
-    <section class="fx-metrics-strip">
-        <article class="fx-metric" data-accent="violet">
-            <div class="fx-metric-head">
-                <span class="fx-metric-label">Active Checklist Rows</span>
-                <span class="fx-metric-glyph"><i class="fas fa-tasks"></i></span>
+    <section class="dp-kpi-row">
+        <article class="dp-kpi" data-accent="violet">
+            <div class="dp-kpi-head">
+                <span class="dp-kpi-label">Active Checklists</span>
+                <span class="dp-kpi-icon"><i class="fas fa-tasks"></i></span>
             </div>
-            <div class="fx-metric-value">{{ all_checklists_count|default:0 }}</div>
-            <div class="fx-metric-foot">
-                <span class="dot"></span>
+            <div class="dp-kpi-value">{{ all_checklists_count|default:0 }}</div>
+            <div class="dp-kpi-meta">
+                <i class="fas fa-clock"></i>
                 <span>{{ frequency_summary }}</span>
             </div>
         </article>
 
-        <article class="fx-metric" data-accent="emerald">
-            <div class="fx-metric-head">
-                <span class="fx-metric-label">Tasks Completed</span>
-                <span class="fx-metric-glyph"><i class="fas fa-check-double"></i></span>
+        <article class="dp-kpi" data-accent="success">
+            <div class="dp-kpi-head">
+                <span class="dp-kpi-label">Tasks Completed</span>
+                <span class="dp-kpi-icon"><i class="fas fa-check-double"></i></span>
             </div>
-            <div class="fx-metric-value">{{ total_checklists_completed|default:0 }}</div>
-            <div class="fx-metric-foot">
-                <span class="dot"></span>
+            <div class="dp-kpi-value">{{ total_checklists_completed|default:0 }}</div>
+            <div class="dp-kpi-meta">
+                <i class="fas fa-list-check"></i>
                 <span>Total log entries recorded</span>
             </div>
         </article>
 
-        <article class="fx-metric" data-accent="rose">
-            <div class="fx-metric-head">
-                <span class="fx-metric-label">Exceptions Captured</span>
-                <span class="fx-metric-glyph"><i class="fas fa-bug"></i></span>
+        <article class="dp-kpi" data-accent="danger">
+            <div class="dp-kpi-head">
+                <span class="dp-kpi-label">Exceptions Captured</span>
+                <span class="dp-kpi-icon"><i class="fas fa-exclamation-triangle"></i></span>
             </div>
-            <div class="fx-metric-value">{{ total_exceptions_captured|default:0 }}</div>
-            <div class="fx-metric-foot">
-                <span class="dot"></span>
-                <span>
-                    {% if exceptions_this_week > 0 %}
-                        +{{ exceptions_this_week }} this week
-                    {% else %}
-                        No new entries this week
-                    {% endif %}
-                </span>
+            <div class="dp-kpi-value">{{ total_exceptions_captured|default:0 }}</div>
+            <div class="dp-kpi-meta">
+                {% if exceptions_this_week > 0 %}
+                    <i class="fas fa-arrow-up" style="color: var(--dash-danger);"></i>
+                    <span><strong>+{{ exceptions_this_week }}</strong> this week</span>
+                {% else %}
+                    <i class="fas fa-check"></i>
+                    <span>No new entries this week</span>
+                {% endif %}
             </div>
         </article>
 
-        <article class="fx-metric" data-accent="amber">
-            <div class="fx-metric-head">
-                <span class="fx-metric-label">Pending Submissions</span>
-                <span class="fx-metric-glyph"><i class="fas fa-clock"></i></span>
+        <article class="dp-kpi" data-accent="warning">
+            <div class="dp-kpi-head">
+                <span class="dp-kpi-label">Pending Submissions</span>
+                <span class="dp-kpi-icon"><i class="fas fa-hourglass-half"></i></span>
             </div>
-            <div class="fx-metric-value">{{ pending_submissions|default:0 }}</div>
-            <div class="fx-metric-foot">
-                <span class="dot"></span>
-                <span>
-                    {% if pending_submissions > 0 %}
-                        {{ pending_submissions }} awaiting action
-                    {% else %}
-                        All clear
-                    {% endif %}
-                </span>
+            <div class="dp-kpi-value">{{ pending_submissions|default:0 }}</div>
+            <div class="dp-kpi-meta">
+                {% if pending_submissions > 0 %}
+                    <i class="fas fa-clock"></i>
+                    <span>Awaiting action</span>
+                {% else %}
+                    <i class="fas fa-check-circle" style="color: var(--dash-success);"></i>
+                    <span>All clear</span>
+                {% endif %}
             </div>
         </article>
     </section>
 
     <!-- ============================================================
-         SECTION 2 — PROGRESS ORBIT RINGS
+         PROGRESS PANEL
          ============================================================ -->
-    <section class="fx-orbit-strip">
-        <div class="fx-orbit">
-            <div class="fx-orbit-ring">
-                <svg viewBox="0 0 56 56">
-                    <circle class="ring-track" cx="28" cy="28" r="24"></circle>
-                    <circle class="ring-fill" cx="28" cy="28" r="24"
-                            stroke="var(--fx-emerald)"
-                            stroke-dasharray="150.8"
-                            stroke-dashoffset="{{ overall_month_progress|default:0|add:-100|floatformat:0 }}"
-                            data-target-offset="{{ overall_month_progress|default:0|add:-100|floatformat:0 }}"
-                            style="color: var(--fx-emerald);"></circle>
-                </svg>
-                <div class="ring-center">{{ overall_month_progress|default:0 }}%</div>
-            </div>
-            <div class="fx-orbit-info">
-                <span class="fx-orbit-label">Month Progress</span>
-                <span class="fx-orbit-meta">{{ month_completed|default:0 }} / {{ month_total|default:0 }} tasks</span>
-            </div>
-        </div>
+    <section class="dp-progress-panel">
+        <header>
+            <i class="fas fa-chart-line"></i>
+            <h3>Progress Overview</h3>
+        </header>
 
-        <div class="fx-orbit">
-            <div class="fx-orbit-ring">
-                <svg viewBox="0 0 56 56">
-                    <circle class="ring-track" cx="28" cy="28" r="24"></circle>
-                    <circle class="ring-fill" cx="28" cy="28" r="24"
-                            stroke="var(--fx-amber)"
-                            stroke-dasharray="150.8"
-                            stroke-dashoffset="{{ overall_quarter_progress|default:0|add:-100|floatformat:0 }}"
-                            data-target-offset="{{ overall_quarter_progress|default:0|add:-100|floatformat:0 }}"
-                            style="color: var(--fx-amber);"></circle>
-                </svg>
-                <div class="ring-center">{{ overall_quarter_progress|default:0 }}%</div>
+        <div class="dp-progress-grid">
+            <div class="dp-progress-item">
+                <div class="dp-progress-head">
+                    <span class="dp-progress-label">This Month</span>
+                    <span class="dp-progress-value {% if overall_month_progress >= 70 %}green{% elif overall_month_progress >= 40 %}orange{% else %}red{% endif %}">
+                        {{ overall_month_progress|default:0 }}%
+                    </span>
+                </div>
+                <div class="dp-progress-track">
+                    <div class="dp-progress-fill"
+                         data-width="{{ overall_month_progress|default:0 }}%"
+                         style="background: {% if overall_month_progress >= 70 %}var(--dash-success){% elif overall_month_progress >= 40 %}var(--dash-warning){% else %}var(--dash-danger){% endif %};"></div>
+                </div>
+                <div class="dp-progress-meta">{{ month_completed|default:0 }} of {{ month_total|default:0 }} tasks</div>
             </div>
-            <div class="fx-orbit-info">
-                <span class="fx-orbit-label">Quarter Progress</span>
-                <span class="fx-orbit-meta">Rolling quarter</span>
-            </div>
-        </div>
 
-        <div class="fx-orbit">
-            <div class="fx-orbit-ring">
-                <svg viewBox="0 0 56 56">
-                    <circle class="ring-track" cx="28" cy="28" r="24"></circle>
-                    <circle class="ring-fill" cx="28" cy="28" r="24"
-                            stroke="var(--fx-accent)"
-                            stroke-dasharray="150.8"
-                            stroke-dashoffset="{{ overall_year_progress|default:0|add:-100|floatformat:0 }}"
-                            data-target-offset="{{ overall_year_progress|default:0|add:-100|floatformat:0 }}"
-                            style="color: var(--fx-accent);"></circle>
-                </svg>
-                <div class="ring-center">{{ overall_year_progress|default:0 }}%</div>
+            <div class="dp-progress-item">
+                <div class="dp-progress-head">
+                    <span class="dp-progress-label">This Quarter</span>
+                    <span class="dp-progress-value {% if overall_quarter_progress >= 70 %}green{% elif overall_quarter_progress >= 40 %}orange{% else %}red{% endif %}">
+                        {{ overall_quarter_progress|default:0 }}%
+                    </span>
+                </div>
+                <div class="dp-progress-track">
+                    <div class="dp-progress-fill"
+                         data-width="{{ overall_quarter_progress|default:0 }}%"
+                         style="background: {% if overall_quarter_progress >= 70 %}var(--dash-success){% elif overall_quarter_progress >= 40 %}var(--dash-warning){% else %}var(--dash-danger){% endif %};"></div>
+                </div>
+                <div class="dp-progress-meta">Rolling quarter</div>
             </div>
-            <div class="fx-orbit-info">
-                <span class="fx-orbit-label">Year Progress</span>
-                <span class="fx-orbit-meta">{{ year_completed|default:0 }} / {{ year_total|default:0 }} tasks</span>
-            </div>
-        </div>
 
-        <div class="fx-orbit">
-            <div class="fx-orbit-ring">
-                <svg viewBox="0 0 56 56">
-                    <circle class="ring-track" cx="28" cy="28" r="24"></circle>
-                    <circle class="ring-fill" cx="28" cy="28" r="24"
-                            stroke="var(--fx-violet)"
-                            stroke-dasharray="150.8"
-                            stroke-dashoffset="{{ weekly_completion_rate|default:0|add:-100|floatformat:0 }}"
-                            data-target-offset="{{ weekly_completion_rate|default:0|add:-100|floatformat:0 }}"
-                            style="color: var(--fx-violet);"></circle>
-                </svg>
-                <div class="ring-center">{{ weekly_completion_rate|default:0 }}%</div>
+            <div class="dp-progress-item">
+                <div class="dp-progress-head">
+                    <span class="dp-progress-label">This Year</span>
+                    <span class="dp-progress-value {% if overall_year_progress >= 70 %}green{% elif overall_year_progress >= 40 %}orange{% else %}red{% endif %}">
+                        {{ overall_year_progress|default:0 }}%
+                    </span>
+                </div>
+                <div class="dp-progress-track">
+                    <div class="dp-progress-fill"
+                         data-width="{{ overall_year_progress|default:0 }}%"
+                         style="background: {% if overall_year_progress >= 70 %}var(--dash-success){% elif overall_year_progress >= 40 %}var(--dash-warning){% else %}var(--dash-danger){% endif %};"></div>
+                </div>
+                <div class="dp-progress-meta">{{ year_completed|default:0 }} of {{ year_total|default:0 }} tasks</div>
             </div>
-            <div class="fx-orbit-info">
-                <span class="fx-orbit-label">Weekly Completion</span>
-                <span class="fx-orbit-meta">Current week</span>
+
+            <div class="dp-progress-item">
+                <div class="dp-progress-head">
+                    <span class="dp-progress-label">This Week</span>
+                    <span class="dp-progress-value {% if weekly_completion_rate >= 70 %}green{% elif weekly_completion_rate >= 40 %}orange{% else %}red{% endif %}">
+                        {{ weekly_completion_rate|default:0 }}%
+                    </span>
+                </div>
+                <div class="dp-progress-track">
+                    <div class="dp-progress-fill"
+                         data-width="{{ weekly_completion_rate|default:0 }}%"
+                         style="background: {% if weekly_completion_rate >= 70 %}var(--dash-success){% elif weekly_completion_rate >= 40 %}var(--dash-warning){% else %}var(--dash-danger){% endif %};"></div>
+                </div>
+                <div class="dp-progress-meta">Current week (Fri – Thu)</div>
             </div>
         </div>
     </section>
 
     <!-- ============================================================
-         SECTION 3 — MAIN BENTO GRID
+         MAIN 2-COLUMN GRID
          ============================================================ -->
-    <section class="fx-bento">
+    <section class="dp-main-grid">
 
-        <!-- Irregular GLs panel (date-aware, calendar picker) -->
-        <div class="fx-panel">
-            <header class="fx-panel-head">
-                <div class="fx-panel-title rose">
+        <!-- ================= IRREGULAR GL CARD ================= -->
+        <div class="dp-card">
+            <header class="dp-card-head">
+                <div class="dp-card-title danger">
                     <i class="fas fa-exclamation-triangle"></i>
                     <span>Irregular GL Positions</span>
                 </div>
 
-                <div class="fx-gl-controls">
-                    <form method="get" class="fx-gl-date-form">
-                        <label for="gl_date" class="fx-gl-date-label">As at</label>
+                <div class="dp-gl-controls">
+                    {% if unit_filter_options %}
+                    <select class="dp-select"
+                            id="unitFilter"
+                            onchange="applyUnitFilter(this.value)">
+                        {% for opt in unit_filter_options %}
+                            <option value="{{ opt.value }}"
+                                    {% if active_unit_filter == opt.value %}selected{% endif %}>
+                                {{ opt.display }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+
+                    <form method="get" class="dp-date-form">
+                        {% if active_unit_filter != 'all' %}
+                        <input type="hidden" name="unit" value="{{ active_unit_filter }}">
+                        {% endif %}
                         <input type="date"
                                name="gl_date"
-                               id="gl_date"
-                               class="fx-gl-date-input{% if not has_trial_balance %} is-empty{% endif %}"
+                               class="dp-date-input{% if not has_trial_balance %} is-empty{% endif %}"
                                value="{{ selected_gl_date|date:'Y-m-d' }}"
                                max="{{ today|date:'Y-m-d' }}"
                                onchange="this.form.submit()">
 
                         {% if not is_today_gl %}
-                            <a href="?gl_date={{ today|date:'Y-m-d' }}"
-                               class="fx-gl-today-btn"
-                               title="Jump to today's trial balance">
+                            <a href="?gl_date={{ today|date:'Y-m-d' }}{% if active_unit_filter != 'all' %}&unit={{ active_unit_filter }}{% endif %}"
+                               class="dp-mini-btn"
+                               title="Jump to today">
                                 <i class="fas fa-calendar-day"></i> Today
                             </a>
                         {% endif %}
                     </form>
-
-                    {% if is_today_gl %}
-                        <span class="fx-gl-today-pill">
-                            <span class="fx-gl-dot"></span> Today
-                        </span>
-                    {% endif %}
-
-                    {% if irregular_gls %}
-                    {% else %}
-                    {% endif %}
                 </div>
             </header>
 
-            {% if has_trial_balance %}
+            {% if selected_unit_type != 'all' %}
+            <div class="dp-chip-row">
+                <span class="dp-chip">
+                    <i class="fas fa-filter"></i>
+                    {{ selected_unit_display }}
+                    <a href="?{% if gl_date_param %}gl_date={{ gl_date_param }}&{% endif %}unit=all"
+                       class="dp-chip-x"
+                       title="Clear filter">
+                        <i class="fas fa-times" style="font-size: 8px;"></i>
+                    </a>
+                </span>
+            </div>
             {% endif %}
 
-            <div class="fx-panel-body">
+            <div class="dp-card-body">
                 {% if irregular_gls %}
-                    <div class="fx-table-scroll">
-                        <table class="fx-table">
+                    <div class="dp-table-scroll">
+                        <table class="dp-table">
                             <thead>
                                 <tr>
-                                    <th>Branch Name</th>
+                                    <th>Branch</th>
                                     <th>GL Code</th>
                                     <th>Description</th>
                                     <th class="num">Close Bal (LCY)</th>
@@ -1166,122 +977,110 @@
                         </table>
                     </div>
                 {% elif not has_trial_balance %}
-                    <div class="fx-empty">
-                        <div class="fx-empty-glyph"
-                             style="background: radial-gradient(circle, rgba(224,138,23,0.16) 0%, rgba(224,138,23,0.04) 60%, transparent 70%); color: var(--fx-amber);">
+                    <div class="dp-empty">
+                        <div class="dp-empty-icon">
                             <i class="fas fa-calendar-times"></i>
                         </div>
-                        <div class="fx-empty-title">No trial balance for {{ selected_gl_date_display }}</div>
-                        <div class="fx-empty-desc">
-                            There is no uploaded trial balance for this date yet.
-                            Pick another day from the calendar above.
+                        <div class="dp-empty-title">No trial balance for {{ selected_gl_date_display }}</div>
+                        <div class="dp-empty-text">
+                            There is no uploaded trial balance for this date yet. Choose another day
+                            using the calendar above.
                         </div>
                     </div>
                 {% else %}
-                    <div class="fx-empty">
-                        <div class="fx-empty-glyph">
+                    <div class="dp-empty">
+                        <div class="dp-empty-icon" style="background: #e2f7ef; color: var(--dash-success);">
                             <i class="fas fa-shield-alt"></i>
                         </div>
-                        <div class="fx-empty-title">All GL positions balanced on {{ selected_gl_date_display }}</div>
-                        <div class="fx-empty-desc">
-                            No irregular GL entries detected in the trial balance for this date.
+                        <div class="dp-empty-title">All GL positions balanced on {{ selected_gl_date_display }}</div>
+                        <div class="dp-empty-text">
+                            No irregular GL entries were detected in the trial balance for this date.
                         </div>
                     </div>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Quick actions panel -->
-        <div class="fx-panel">
-            <header class="fx-panel-head">
-                <div class="fx-panel-title">
-                    <i class="fas fa-bolt"></i>
-                    <span>Quick Actions</span>
-                </div>
-            </header>
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="dp-sidebar">
 
-            <div class="fx-panel-body">
-                <nav class="fx-actions">
-                    <a href="{% url 'control_dashboard:drafts_page' %}" class="fx-action" data-accent="rose">
-                        <div class="fx-action-glyph"><i class="fas fa-exclamation-circle"></i></div>
-                        <div class="fx-action-text">
+            <!-- Quick actions -->
+            <div class="dp-card">
+                <header class="dp-card-head">
+                    <div class="dp-card-title">
+                        <i class="fas fa-bolt"></i>
+                        <span>Quick Actions</span>
+                    </div>
+                </header>
+                <nav class="dp-actions">
+                    <a href="{% url 'control_dashboard:drafts_page' %}" class="dp-action" data-accent="rose">
+                        <div class="dp-action-icon"><i class="fas fa-exclamation-circle"></i></div>
+                        <div class="dp-action-text">
                             <h5>Log Exception</h5>
                             <p>Report a control breach</p>
                         </div>
-                        <div class="fx-action-arrow"><i class="fas fa-chevron-right"></i></div>
+                        <div class="dp-action-arrow"><i class="fas fa-chevron-right"></i></div>
                     </a>
 
-                    <a href="{% url 'control_dashboard:member_checklist' %}" class="fx-action" data-accent="cyan">
-                        <div class="fx-action-glyph"><i class="fas fa-check-double"></i></div>
-                        <div class="fx-action-text">
+                    <a href="{% url 'control_dashboard:member_checklist' %}" class="dp-action" data-accent="cyan">
+                        <div class="dp-action-icon"><i class="fas fa-check-double"></i></div>
+                        <div class="dp-action-text">
                             <h5>View Checklist</h5>
                             <p>Track your daily progress</p>
                         </div>
-                        <div class="fx-action-arrow"><i class="fas fa-chevron-right"></i></div>
+                        <div class="dp-action-arrow"><i class="fas fa-chevron-right"></i></div>
                     </a>
 
-                    <a href="{% url 'control_dashboard:reports_page' %}" class="fx-action" data-accent="violet">
-                        <div class="fx-action-glyph"><i class="fas fa-file-alt"></i></div>
-                        <div class="fx-action-text">
+                    <a href="{% url 'control_dashboard:reports_page' %}" class="dp-action" data-accent="violet">
+                        <div class="dp-action-icon"><i class="fas fa-file-alt"></i></div>
+                        <div class="dp-action-text">
                             <h5>My Reports</h5>
                             <p>Browse submitted reports</p>
                         </div>
-                        <div class="fx-action-arrow"><i class="fas fa-chevron-right"></i></div>
+                        <div class="dp-action-arrow"><i class="fas fa-chevron-right"></i></div>
                     </a>
                 </nav>
             </div>
-        </div>
-    </section>
 
-    <!-- ============================================================
-         SECTION 4 — FOOTER STATS STRIP
-         ============================================================ -->
-    <section class="fx-footer-strip">
-        <div class="fx-footer-cell">
-            <span class="fx-footer-label">Month Progress</span>
-            <span class="fx-footer-value {% if overall_month_progress >= 70 %}green{% elif overall_month_progress >= 40 %}orange{% else %}red{% endif %}">
-                {{ overall_month_progress|default:0 }}%
-            </span>
-            <div class="fx-footer-bar">
-                <div class="fx-footer-bar-fill"
-                     data-width="{{ overall_month_progress|default:0 }}%"
-                     style="width: 0%; background: {% if overall_month_progress >= 70 %}var(--fx-emerald){% elif overall_month_progress >= 40 %}var(--fx-amber){% else %}var(--fx-rose){% endif %};"></div>
+            <!-- Summary stats -->
+            <div class="dp-card">
+                <header class="dp-card-head">
+                    <div class="dp-card-title success">
+                        <i class="fas fa-chart-simple"></i>
+                        <span>Summary</span>
+                    </div>
+                </header>
+                <div class="dp-card-body">
+                    <div class="dp-stats-list">
+                        <div class="dp-stat-row">
+                            <span class="dp-stat-label">
+                                <i class="fas fa-tasks"></i> Active checklists
+                            </span>
+                            <span class="dp-stat-value blue">{{ all_checklists_count|default:0 }}</span>
+                        </div>
+                        <div class="dp-stat-row">
+                            <span class="dp-stat-label">
+                                <i class="fas fa-calendar-check"></i> Logged days
+                            </span>
+                            <span class="dp-stat-value purple">{{ total_logged_days|default:0 }}</span>
+                        </div>
+                        <div class="dp-stat-row">
+                            <span class="dp-stat-label">
+                                <i class="fas fa-list-check"></i> Tasks completed
+                            </span>
+                            <span class="dp-stat-value green">{{ total_checklists_completed|default:0 }}</span>
+                        </div>
+                        <div class="dp-stat-row">
+                            <span class="dp-stat-label">
+                                <i class="fas fa-bug"></i> Exceptions
+                            </span>
+                            <span class="dp-stat-value">{{ total_exceptions_captured|default:0 }}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="fx-footer-cell">
-            <span class="fx-footer-label">Quarter Progress</span>
-            <span class="fx-footer-value {% if overall_quarter_progress >= 70 %}green{% elif overall_quarter_progress >= 40 %}orange{% else %}red{% endif %}">
-                {{ overall_quarter_progress|default:0 }}%
-            </span>
-            <div class="fx-footer-bar">
-                <div class="fx-footer-bar-fill"
-                     data-width="{{ overall_quarter_progress|default:0 }}%"
-                     style="width: 0%; background: {% if overall_quarter_progress >= 70 %}var(--fx-emerald){% elif overall_quarter_progress >= 40 %}var(--fx-amber){% else %}var(--fx-rose){% endif %};"></div>
-            </div>
-        </div>
-
-        <div class="fx-footer-cell">
-            <span class="fx-footer-label">Year Progress</span>
-            <span class="fx-footer-value {% if overall_year_progress >= 70 %}green{% elif overall_year_progress >= 40 %}orange{% else %}red{% endif %}">
-                {{ overall_year_progress|default:0 }}%
-            </span>
-            <div class="fx-footer-bar">
-                <div class="fx-footer-bar-fill"
-                     data-width="{{ overall_year_progress|default:0 }}%"
-                     style="width: 0%; background: {% if overall_year_progress >= 70 %}var(--fx-emerald){% elif overall_year_progress >= 40 %}var(--fx-amber){% else %}var(--fx-rose){% endif %};"></div>
-            </div>
-        </div>
-
-        <div class="fx-footer-cell">
-            <span class="fx-footer-label">Total Checklists</span>
-            <span class="fx-footer-value blue">{{ all_checklists_count|default:0 }}</span>
-        </div>
-
-        <div class="fx-footer-cell">
-            <span class="fx-footer-label">Logged Days</span>
-            <span class="fx-footer-value purple">{{ total_logged_days|default:0 }}</span>
-        </div>
+        </aside>
     </section>
 
 </div>
@@ -1293,21 +1092,28 @@
     'use strict';
 
     /* ============================================================
-       Animate progress rings + bars on load
+       Branch / department filter — preserves gl_date
+       ============================================================ */
+    window.applyUnitFilter = function (value) {
+        const params = new URLSearchParams(window.location.search);
+
+        if (value === 'all') {
+            params.delete('unit');
+        } else {
+            params.set('unit', value);
+        }
+
+        const qs = params.toString();
+        window.location.href = qs
+            ? `${window.location.pathname}?${qs}`
+            : window.location.pathname;
+    };
+
+    /* ============================================================
+       Animate progress bars on load
        ============================================================ */
     function animateOnLoad() {
-        document.querySelectorAll('.fx-orbit-ring .ring-fill').forEach(function (ring) {
-            var target = ring.getAttribute('data-target-offset');
-            if (target === null) return;
-            ring.style.strokeDashoffset = '150.8';
-            requestAnimationFrame(function () {
-                requestAnimationFrame(function () {
-                    ring.style.strokeDashoffset = target;
-                });
-            });
-        });
-
-        document.querySelectorAll('.fx-footer-bar-fill').forEach(function (bar) {
+        document.querySelectorAll('.dp-progress-fill').forEach(function (bar) {
             var target = bar.getAttribute('data-width') || '0%';
             requestAnimationFrame(function () {
                 requestAnimationFrame(function () {

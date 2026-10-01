@@ -1,7 +1,35 @@
 /* ==========================================================================
    UNIFIED DESIGN TOKENS
-   Single source of truth for all design variables
-   Import FIRST, before all other CSS files
+   Single source of truth for all design variables.
+   MUST be loaded FIRST — before base.css and every page stylesheet.
+
+   How this works
+   --------------
+   1. The :root block below defines the canonical tokens (--bg-1, --accent,
+      --fs-lg, --space-md, ...).
+
+   2. The alias blocks further down map each page's legacy prefixed
+      variables (--al-*, --sv-*, --sr-*, --fx-*, --adm-*, --ah-*, --sc-*,
+      --tp-*, --rp-*) back to the canonical set.
+
+      That means: change --accent here, and EVERY page updates — even
+      pages that still reference --sv-accent or --fx-accent in their CSS.
+
+   3. The compatibility shim at the very bottom aliases the older
+      base.css variable names (--omnibsic-blue, --glass-bg, --gray-500,
+      ...) so legacy markup keeps rendering while we migrate.
+
+   Load order in base.html:
+       variables-unified.css   ← you are here
+       base.css
+       font-awesome
+       {% block extra_css %}   ← per-page stylesheets
+       responsive-core.css     ← wins over everything
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. CANONICAL TOKENS
    ========================================================================== */
 
 :root {
@@ -35,22 +63,26 @@
     --accent: #4f6ef7;
     --accent-soft: #eef1ff;
     --accent-hover: #3b56d8;
-    
+
     --emerald: #17a673;
     --emerald-soft: #e2f7ef;
     --emerald-dark: #0f8a5e;
-    
+
     --amber: #e08a17;
     --amber-soft: #fdf2e0;
     --amber-dark: #c46e0c;
-    
+
     --rose: #e0456a;
     --rose-soft: #fdeaf0;
     --rose-dark: #c82d52;
-    
+
     --violet: #7c5cf0;
     --violet-soft: #f0ebff;
     --violet-dark: #6344d4;
+
+    /* Extra accents used by a few pages (member dashboard, TB) */
+    --cyan: #0ea5a4;
+    --cyan-soft: #e0f7f6;
 
     /* ========================================
        SHADOWS
@@ -67,43 +99,44 @@
     /* ========================================
        TYPOGRAPHY
        ======================================== */
-    --font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont,
+                   'Segoe UI', Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
 
     /* ========================================
        FLUID SPACING
        ======================================== */
     --space-2xs: clamp(2px, 0.3vw, 4px);
-    --space-xs: clamp(4px, 0.5vw, 6px);
-    --space-sm: clamp(6px, 1vw, 10px);
-    --space-md: clamp(10px, 1.5vw, 16px);
-    --space-lg: clamp(16px, 2vw, 24px);
-    --space-xl: clamp(20px, 3vw, 32px);
+    --space-xs:  clamp(4px, 0.5vw, 6px);
+    --space-sm:  clamp(6px, 1vw, 10px);
+    --space-md:  clamp(10px, 1.5vw, 16px);
+    --space-lg:  clamp(16px, 2vw, 24px);
+    --space-xl:  clamp(20px, 3vw, 32px);
     --space-2xl: clamp(32px, 4vw, 48px);
     --space-3xl: clamp(48px, 5vw, 64px);
 
     /* ========================================
        FLUID RADII
        ======================================== */
-    --radius-xs: clamp(4px, 0.4vw, 6px);
-    --radius-sm: clamp(6px, 0.6vw, 8px);
-    --radius-md: clamp(10px, 0.8vw, 12px);
-    --radius-lg: clamp(14px, 1vw, 18px);
-    --radius-xl: clamp(18px, 1.2vw, 22px);
+    --radius-xs:   clamp(4px, 0.4vw, 6px);
+    --radius-sm:   clamp(6px, 0.6vw, 8px);
+    --radius-md:   clamp(10px, 0.8vw, 12px);
+    --radius-lg:   clamp(14px, 1vw, 18px);
+    --radius-xl:   clamp(18px, 1.2vw, 22px);
     --radius-full: 9999px;
 
     /* ========================================
        FLUID TYPOGRAPHY SCALE
        ======================================== */
-    --fs-2xs: clamp(8px, 0.6vw, 10px);
-    --fs-xs: clamp(9px, 0.7vw, 11px);
-    --fs-sm: clamp(10px, 0.8vw, 12px);
+    --fs-2xs:  clamp(8px, 0.6vw, 10px);
+    --fs-xs:   clamp(9px, 0.7vw, 11px);
+    --fs-sm:   clamp(10px, 0.8vw, 12px);
     --fs-base: clamp(12px, 0.9vw, 14px);
-    --fs-md: clamp(13px, 1vw, 15px);
-    --fs-lg: clamp(15px, 1.2vw, 18px);
-    --fs-xl: clamp(18px, 1.5vw, 24px);
-    --fs-2xl: clamp(22px, 2vw, 32px);
-    --fs-3xl: clamp(28px, 2.5vw, 42px);
+    --fs-md:   clamp(13px, 1vw, 15px);
+    --fs-lg:   clamp(15px, 1.2vw, 18px);
+    --fs-xl:   clamp(18px, 1.5vw, 24px);
+    --fs-2xl:  clamp(22px, 2vw, 32px);
+    --fs-3xl:  clamp(28px, 2.5vw, 42px);
 
     /* ========================================
        LAYOUT
@@ -117,158 +150,66 @@
     /* ========================================
        TRANSITIONS
        ======================================== */
-    --transition-fast: 0.15s ease;
+    --transition-fast:   0.15s ease;
     --transition-normal: 0.25s ease;
-    --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow:   0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* ========================================
        Z-INDEX SCALE
        ======================================== */
-    --z-dropdown: 100;
-    --z-sticky: 200;
-    --z-fixed: 300;
-    --z-modal-backdrop: 9000;
-    --z-modal: 9999;
-    --z-toast: 10000;
-    --z-tooltip: 11000;
+    --z-dropdown:        100;
+    --z-sticky:          200;
+    --z-fixed:           300;
+    --z-modal-backdrop:  9000;
+    --z-modal:           9999;
+    --z-toast:           10000;
+    --z-tooltip:         11000;
 }
 
+
 /* ==========================================================================
-   VARIABLE ALIASES FOR BACKWARD COMPATIBILITY
-   Maps old variable names to new unified names
+   2. PAGE ALIASES
+   Map every legacy page prefix back to the canonical tokens.
+   Change a canonical token above → every page updates.
    ========================================================================== */
 
 :root {
-    /* Activity Logs aliases */
-    --al-bg-0: var(--bg-0);
-    --al-bg-1: var(--bg-1);
-    --al-bg-2: var(--bg-2);
-    --al-bg-3: var(--bg-3);
-    --al-border: var(--border);
-    --al-border-strong: var(--border-strong);
-    --al-hairline: var(--hairline);
-    --al-text-0: var(--text-0);
-    --al-text-1: var(--text-1);
-    --al-text-2: var(--text-2);
-    --al-accent: var(--accent);
-    --al-accent-soft: var(--accent-soft);
-    --al-emerald: var(--emerald);
-    --al-emerald-soft: var(--emerald-soft);
-    --al-amber: var(--amber);
-    --al-amber-soft: var(--amber-soft);
-    --al-rose: var(--rose);
-    --al-rose-soft: var(--rose-soft);
-    --al-violet: var(--violet);
-    --al-violet-soft: var(--violet-soft);
-    --al-shadow-sm: var(--shadow-sm);
-    --al-shadow-md: var(--shadow-md);
-    --al-shadow-lg: var(--shadow-lg);
-    --al-font: var(--font-family);
-    --al-mono: var(--font-mono);
+    /* ----------------------------------------------------------------------
+       Member dashboard (member.html / memberboard.html / trialbalance.html)
+       ---------------------------------------------------------------------- */
+    --fx-bg-0: var(--bg-0);
+    --fx-bg-1: var(--bg-1);
+    --fx-bg-2: var(--bg-2);
+    --fx-bg-3: var(--bg-3);
+    --fx-glass: rgba(255, 255, 255, 0.85);
+    --fx-glass-hover: rgba(255, 255, 255, 1);
+    --fx-border: var(--border);
+    --fx-border-strong: var(--border-strong);
+    --fx-hairline: var(--hairline);
+    --fx-text-0: var(--text-0);
+    --fx-text-1: var(--text-1);
+    --fx-text-2: var(--text-2);
+    --fx-accent: var(--accent);
+    --fx-accent-soft: var(--accent-soft);
+    --fx-cyan: var(--cyan);
+    --fx-cyan-soft: var(--cyan-soft);
+    --fx-violet: var(--violet);
+    --fx-violet-soft: var(--violet-soft);
+    --fx-amber: var(--amber);
+    --fx-amber-soft: var(--amber-soft);
+    --fx-rose: var(--rose);
+    --fx-rose-soft: var(--rose-soft);
+    --fx-emerald: var(--emerald);
+    --fx-emerald-soft: var(--emerald-soft);
+    --fx-shadow-sm: var(--shadow-sm);
+    --fx-shadow-md: var(--shadow-md);
+    --fx-shadow-lg: var(--shadow-lg);
+    --fx-font: var(--font-family);
+    --fx-mono: var(--font-mono);
 
-    /* Ad-hoc Scorecard aliases */
-    --ah-bg-0: var(--bg-0);
-    --ah-bg-1: var(--bg-1);
-    --ah-bg-2: var(--bg-2);
-    --ah-bg-3: var(--bg-3);
-    --ah-border: var(--border);
-    --ah-border-strong: var(--border-strong);
-    --ah-hairline: var(--hairline);
-    --ah-text-0: var(--text-0);
-    --ah-text-1: var(--text-1);
-    --ah-text-2: var(--text-2);
-    --ah-accent: var(--accent);
-    --ah-accent-soft: var(--accent-soft);
-    --ah-emerald: var(--emerald);
-    --ah-emerald-soft: var(--emerald-soft);
-    --ah-amber: var(--amber);
-    --ah-amber-soft: var(--amber-soft);
-    --ah-rose: var(--rose);
-    --ah-rose-soft: var(--rose-soft);
-    --ah-violet: var(--violet);
-    --ah-violet-soft: var(--violet-soft);
-    --ah-shadow-sm: var(--shadow-sm);
-    --ah-shadow-md: var(--shadow-md);
-    --ah-shadow-lg: var(--shadow-lg);
-    --ah-font: var(--font-family);
-
-    /* Admin aliases */
-    --adm-bg-0: var(--bg-0);
-    --adm-bg-1: var(--bg-1);
-    --adm-bg-2: var(--bg-2);
-    --adm-bg-3: var(--bg-3);
-    --adm-border: var(--border);
-    --adm-border-strong: var(--border-strong);
-    --adm-hairline: var(--hairline);
-    --adm-text-0: var(--text-0);
-    --adm-text-1: var(--text-1);
-    --adm-text-2: var(--text-2);
-    --adm-accent: var(--accent);
-    --adm-accent-soft: var(--accent-soft);
-    --adm-emerald: var(--emerald);
-    --adm-emerald-soft: var(--emerald-soft);
-    --adm-amber: var(--amber);
-    --adm-amber-soft: var(--amber-soft);
-    --adm-rose: var(--rose);
-    --adm-rose-soft: var(--rose-soft);
-    --adm-violet: var(--violet);
-    --adm-violet-soft: var(--violet-soft);
-    --adm-shadow-sm: var(--shadow-sm);
-    --adm-shadow-md: var(--shadow-md);
-    --adm-shadow-lg: var(--shadow-lg);
-
-    /* Supervisor Checklist aliases */
-    --sc-bg-0: var(--bg-0);
-    --sc-bg-1: var(--bg-1);
-    --sc-bg-2: var(--bg-2);
-    --sc-bg-3: var(--bg-3);
-    --sc-border: var(--border);
-    --sc-border-strong: var(--border-strong);
-    --sc-hairline: var(--hairline);
-    --sc-text-0: var(--text-0);
-    --sc-text-1: var(--text-1);
-    --sc-text-2: var(--text-2);
-    --sc-accent: var(--accent);
-    --sc-accent-soft: var(--accent-soft);
-    --sc-emerald: var(--emerald);
-    --sc-emerald-soft: var(--emerald-soft);
-    --sc-amber: var(--amber);
-    --sc-amber-soft: var(--amber-soft);
-    --sc-rose: var(--rose);
-    --sc-rose-soft: var(--rose-soft);
-    --sc-violet: var(--violet);
-    --sc-violet-soft: var(--violet-soft);
-    --sc-shadow-sm: var(--shadow-sm);
-    --sc-shadow-md: var(--shadow-md);
-    --sc-shadow-lg: var(--shadow-lg);
-    --sc-font: var(--font-family);
-
-    /* Submitted Reports aliases */
-    --sr-bg-0: var(--bg-0);
-    --sr-bg-1: var(--bg-1);
-    --sr-bg-2: var(--bg-2);
-    --sr-bg-3: var(--bg-3);
-    --sr-border: var(--border);
-    --sr-border-strong: var(--border-strong);
-    --sr-hairline: var(--hairline);
-    --sr-text-0: var(--text-0);
-    --sr-text-1: var(--text-1);
-    --sr-text-2: var(--text-2);
-    --sr-accent: var(--accent);
-    --sr-accent-soft: var(--accent-soft);
-    --sr-emerald: var(--emerald);
-    --sr-emerald-soft: var(--emerald-soft);
-    --sr-amber: var(--amber);
-    --sr-amber-soft: var(--amber-soft);
-    --sr-rose: var(--rose);
-    --sr-rose-soft: var(--rose-soft);
-    --sr-violet: var(--violet);
-    --sr-violet-soft: var(--violet-soft);
-    --sr-shadow-sm: var(--shadow-sm);
-    --sr-shadow-md: var(--shadow-md);
-    --sr-font: var(--font-family);
-
-    /* Supervisor Dashboard aliases */
+    /* ----------------------------------------------------------------------
+       Supervisor dashboard (supervisorboard.html / supervisor.css)
+       ---------------------------------------------------------------------- */
     --sv-bg-0: var(--bg-0);
     --sv-bg-1: var(--bg-1);
     --sv-bg-2: var(--bg-2);
@@ -295,7 +236,179 @@
     --sv-font: var(--font-family);
     --sv-mono: var(--font-mono);
 
-    /* Team Performance aliases */
+    /* ----------------------------------------------------------------------
+       Analytics (analytics.html / analytics-sup.html)
+       ---------------------------------------------------------------------- */
+    --an-bg-0: var(--bg-0);
+    --an-bg-1: var(--bg-1);
+    --an-bg-2: var(--bg-2);
+    --an-bg-3: var(--bg-3);
+    --an-border: var(--border);
+    --an-border-strong: var(--border-strong);
+    --an-hairline: var(--hairline);
+    --an-text-0: var(--text-0);
+    --an-text-1: var(--text-1);
+    --an-text-2: var(--text-2);
+    --an-accent: var(--accent);
+    --an-accent-soft: var(--accent-soft);
+    --an-emerald: var(--emerald);
+    --an-emerald-soft: var(--emerald-soft);
+    --an-amber: var(--amber);
+    --an-amber-soft: var(--amber-soft);
+    --an-rose: var(--rose);
+    --an-rose-soft: var(--rose-soft);
+    --an-violet: var(--violet);
+    --an-violet-soft: var(--violet-soft);
+    --an-shadow-sm: var(--shadow-sm);
+    --an-shadow-md: var(--shadow-md);
+    --an-shadow-lg: var(--shadow-lg);
+    --an-font: var(--font-family);
+
+    /* ----------------------------------------------------------------------
+       Activity logs (activity.html / activity-sup.html)
+       ---------------------------------------------------------------------- */
+    --al-bg-0: var(--bg-0);
+    --al-bg-1: var(--bg-1);
+    --al-bg-2: var(--bg-2);
+    --al-bg-3: var(--bg-3);
+    --al-border: var(--border);
+    --al-border-strong: var(--border-strong);
+    --al-hairline: var(--hairline);
+    --al-text-0: var(--text-0);
+    --al-text-1: var(--text-1);
+    --al-text-2: var(--text-2);
+    --al-accent: var(--accent);
+    --al-accent-soft: var(--accent-soft);
+    --al-emerald: var(--emerald);
+    --al-emerald-soft: var(--emerald-soft);
+    --al-amber: var(--amber);
+    --al-amber-soft: var(--amber-soft);
+    --al-rose: var(--rose);
+    --al-rose-soft: var(--rose-soft);
+    --al-violet: var(--violet);
+    --al-violet-soft: var(--violet-soft);
+    --al-shadow-sm: var(--shadow-sm);
+    --al-shadow-md: var(--shadow-md);
+    --al-shadow-lg: var(--shadow-lg);
+    --al-font: var(--font-family);
+    --al-mono: var(--font-mono);
+
+    /* ----------------------------------------------------------------------
+       Ad-hoc scorecard (ad-hoc.html / ad-hoc-scorecard.css)
+       ---------------------------------------------------------------------- */
+    --ah-bg-0: var(--bg-0);
+    --ah-bg-1: var(--bg-1);
+    --ah-bg-2: var(--bg-2);
+    --ah-bg-3: var(--bg-3);
+    --ah-border: var(--border);
+    --ah-border-strong: var(--border-strong);
+    --ah-hairline: var(--hairline);
+    --ah-text-0: var(--text-0);
+    --ah-text-1: var(--text-1);
+    --ah-text-2: var(--text-2);
+    --ah-accent: var(--accent);
+    --ah-accent-soft: var(--accent-soft);
+    --ah-emerald: var(--emerald);
+    --ah-emerald-soft: var(--emerald-soft);
+    --ah-amber: var(--amber);
+    --ah-amber-soft: var(--amber-soft);
+    --ah-rose: var(--rose);
+    --ah-rose-soft: var(--rose-soft);
+    --ah-violet: var(--violet);
+    --ah-violet-soft: var(--violet-soft);
+    --ah-shadow-sm: var(--shadow-sm);
+    --ah-shadow-md: var(--shadow-md);
+    --ah-shadow-lg: var(--shadow-lg);
+    --ah-font: var(--font-family);
+    --ah-mono: var(--font-mono);
+
+    /* ----------------------------------------------------------------------
+       Admin (adminboard.html / admin.css)
+       ---------------------------------------------------------------------- */
+    --adm-bg-0: var(--bg-0);
+    --adm-bg-1: var(--bg-1);
+    --adm-bg-2: var(--bg-2);
+    --adm-bg-3: var(--bg-3);
+    --adm-border: var(--border);
+    --adm-border-strong: var(--border-strong);
+    --adm-hairline: var(--hairline);
+    --adm-text-0: var(--text-0);
+    --adm-text-1: var(--text-1);
+    --adm-text-2: var(--text-2);
+    --adm-accent: var(--accent);
+    --adm-accent-soft: var(--accent-soft);
+    --adm-emerald: var(--emerald);
+    --adm-emerald-soft: var(--emerald-soft);
+    --adm-amber: var(--amber);
+    --adm-amber-soft: var(--amber-soft);
+    --adm-rose: var(--rose);
+    --adm-rose-soft: var(--rose-soft);
+    --adm-violet: var(--violet);
+    --adm-violet-soft: var(--violet-soft);
+    --adm-shadow-sm: var(--shadow-sm);
+    --adm-shadow-md: var(--shadow-md);
+    --adm-shadow-lg: var(--shadow-lg);
+
+    /* ----------------------------------------------------------------------
+       Supervisor checklist (checklist-sup.html / supervisor-checklist.css)
+       ---------------------------------------------------------------------- */
+    --sc-bg-0: var(--bg-0);
+    --sc-bg-1: var(--bg-1);
+    --sc-bg-2: var(--bg-2);
+    --sc-bg-3: var(--bg-3);
+    --sc-border: var(--border);
+    --sc-border-strong: var(--border-strong);
+    --sc-hairline: var(--hairline);
+    --sc-text-0: var(--text-0);
+    --sc-text-1: var(--text-1);
+    --sc-text-2: var(--text-2);
+    --sc-accent: var(--accent);
+    --sc-accent-soft: var(--accent-soft);
+    --sc-emerald: var(--emerald);
+    --sc-emerald-soft: var(--emerald-soft);
+    --sc-amber: var(--amber);
+    --sc-amber-soft: var(--amber-soft);
+    --sc-rose: var(--rose);
+    --sc-rose-soft: var(--rose-soft);
+    --sc-violet: var(--violet);
+    --sc-violet-soft: var(--violet-soft);
+    --sc-shadow-sm: var(--shadow-sm);
+    --sc-shadow-md: var(--shadow-md);
+    --sc-shadow-lg: var(--shadow-lg);
+    --sc-font: var(--font-family);
+
+    /* ----------------------------------------------------------------------
+       Submitted reports (submitted.html / submitted-reports.css)
+       ---------------------------------------------------------------------- */
+    --sr-bg-0: var(--bg-0);
+    --sr-bg-1: var(--bg-1);
+    --sr-bg-2: var(--bg-2);
+    --sr-bg-3: var(--bg-3);
+    --sr-border: var(--border);
+    --sr-border-strong: var(--border-strong);
+    --sr-hairline: var(--hairline);
+    --sr-text-0: var(--text-0);
+    --sr-text-1: var(--text-1);
+    --sr-text-2: var(--text-2);
+    --sr-accent: var(--accent);
+    --sr-accent-soft: var(--accent-soft);
+    --sr-emerald: var(--emerald);
+    --sr-emerald-soft: var(--emerald-soft);
+    --sr-amber: var(--amber);
+    --sr-amber-soft: var(--amber-soft);
+    --sr-rose: var(--rose);
+    --sr-rose-soft: var(--rose-soft);
+    --sr-violet: var(--violet);
+    --sr-violet-soft: var(--violet-soft);
+    --sr-shadow-sm: var(--shadow-sm);
+    --sr-shadow-md: var(--shadow-md);
+    --sr-shadow-lg: var(--shadow-lg);
+    --sr-font: var(--font-family);
+    --sr-mono: var(--font-mono);
+
+    /* ----------------------------------------------------------------------
+       Team performance (team.html / team-performance.css)
+       ---------------------------------------------------------------------- */
     --tp-bg-0: var(--bg-0);
     --tp-bg-1: var(--bg-1);
     --tp-bg-2: var(--bg-2);
@@ -322,7 +435,9 @@
     --tp-font: var(--font-family);
     --tp-mono: var(--font-mono);
 
-    /* Reports aliases */
+    /* ----------------------------------------------------------------------
+       Reports (reports.html / reports.css)
+       ---------------------------------------------------------------------- */
     --rp-bg-0: var(--bg-0);
     --rp-bg-1: var(--bg-1);
     --rp-bg-2: var(--bg-2);
@@ -349,34 +464,285 @@
     --rp-font: var(--font-family);
     --rp-mono: var(--font-mono);
 
-    /* Member Dashboard aliases */
-    --fx-bg-0: var(--bg-0);
-    --fx-bg-1: var(--bg-1);
-    --fx-bg-2: var(--bg-2);
-    --fx-bg-3: var(--bg-3);
-    --fx-glass: rgba(255, 255, 255, 0.85);
-    --fx-glass-hover: rgba(255, 255, 255, 1);
-    --fx-border: var(--border);
-    --fx-border-strong: var(--border-strong);
-    --fx-hairline: var(--hairline);
-    --fx-text-0: var(--text-0);
-    --fx-text-1: var(--text-1);
-    --fx-text-2: var(--text-2);
-    --fx-accent: var(--accent);
-    --fx-accent-soft: var(--accent-soft);
-    --fx-cyan: #0ea5a4;
-    --fx-cyan-soft: #e0f7f6;
-    --fx-violet: var(--violet);
-    --fx-violet-soft: var(--violet-soft);
-    --fx-amber: var(--amber);
-    --fx-amber-soft: var(--amber-soft);
-    --fx-rose: var(--rose);
-    --fx-rose-soft: var(--rose-soft);
-    --fx-emerald: var(--emerald);
-    --fx-emerald-soft: var(--emerald-soft);
-    --fx-shadow-sm: var(--shadow-sm);
-    --fx-shadow-md: var(--shadow-md);
-    --fx-shadow-lg: var(--shadow-lg);
-    --fx-font: var(--font-family);
-    --fx-mono: var(--font-mono);
+    /* ----------------------------------------------------------------------
+       Upload / submit pages (draft.html / drafts.css / submit.css)
+       ---------------------------------------------------------------------- */
+    --up-bg-0: var(--bg-0);
+    --up-bg-1: var(--bg-1);
+    --up-bg-2: var(--bg-2);
+    --up-bg-3: var(--bg-3);
+    --up-glass: rgba(255, 255, 255, 0.85);
+    --up-border: var(--border);
+    --up-border-strong: var(--border-strong);
+    --up-hairline: var(--hairline);
+    --up-text-0: var(--text-0);
+    --up-text-1: var(--text-1);
+    --up-text-2: var(--text-2);
+    --up-accent: var(--accent);
+    --up-accent-soft: var(--accent-soft);
+    --up-emerald: var(--emerald);
+    --up-emerald-soft: var(--emerald-soft);
+    --up-emerald-dark: var(--emerald-dark);
+    --up-amber: var(--amber);
+    --up-amber-soft: var(--amber-soft);
+    --up-rose: var(--rose);
+    --up-rose-soft: var(--rose-soft);
+    --up-violet: var(--violet);
+    --up-violet-soft: var(--violet-soft);
+    --up-shadow-sm: var(--shadow-sm);
+    --up-shadow-md: var(--shadow-md);
+    --up-shadow-lg: var(--shadow-lg);
+    --up-font: var(--font-family);
+    --up-mono: var(--font-mono);
+
+    /* ----------------------------------------------------------------------
+       Daily trial balance (trialbalance.html)
+       ---------------------------------------------------------------------- */
+    --tb-bg-0: var(--bg-0);
+    --tb-bg-1: var(--bg-1);
+    --tb-bg-2: var(--bg-2);
+    --tb-bg-3: var(--bg-3);
+    --tb-glass: rgba(255, 255, 255, 0.85);
+    --tb-glass-hover: rgba(255, 255, 255, 1);
+    --tb-border: var(--border);
+    --tb-border-strong: var(--border-strong);
+    --tb-hairline: var(--hairline);
+    --tb-text-0: var(--text-0);
+    --tb-text-1: var(--text-1);
+    --tb-text-2: var(--text-2);
+    --tb-accent: var(--accent);
+    --tb-accent-soft: var(--accent-soft);
+    --tb-cyan: var(--cyan);
+    --tb-cyan-soft: var(--cyan-soft);
+    --tb-violet: var(--violet);
+    --tb-violet-soft: var(--violet-soft);
+    --tb-amber: var(--amber);
+    --tb-amber-soft: var(--amber-soft);
+    --tb-rose: var(--rose);
+    --tb-rose-soft: var(--rose-soft);
+    --tb-emerald: var(--emerald);
+    --tb-emerald-soft: var(--emerald-soft);
+    --tb-shadow-sm: var(--shadow-sm);
+    --tb-shadow-md: var(--shadow-md);
+    --tb-shadow-lg: var(--shadow-lg);
+    --tb-font: var(--font-family);
+    --tb-mono: var(--font-mono);
+
+    /* ----------------------------------------------------------------------
+       Consolidated reports (consolidated.html)
+       ---------------------------------------------------------------------- */
+    --cr-bg-0: var(--bg-0);
+    --cr-bg-1: var(--bg-1);
+    --cr-bg-2: var(--bg-2);
+    --cr-bg-3: var(--bg-3);
+    --cr-border: var(--border);
+    --cr-border-strong: var(--border-strong);
+    --cr-hairline: var(--hairline);
+    --cr-text-0: var(--text-0);
+    --cr-text-1: var(--text-1);
+    --cr-text-2: var(--text-2);
+    --cr-accent: var(--accent);
+    --cr-accent-soft: var(--accent-soft);
+    --cr-emerald: var(--emerald);
+    --cr-emerald-soft: var(--emerald-soft);
+    --cr-amber: var(--amber);
+    --cr-amber-soft: var(--amber-soft);
+    --cr-rose: var(--rose);
+    --cr-rose-soft: var(--rose-soft);
+    --cr-violet: var(--violet);
+    --cr-violet-soft: var(--violet-soft);
+    --cr-shadow-sm: var(--shadow-sm);
+    --cr-shadow-md: var(--shadow-md);
+    --cr-font: var(--font-family);
+    --cr-mono: var(--font-mono);
+
+    /* ----------------------------------------------------------------------
+       Logged exceptions (logged.html)
+       ---------------------------------------------------------------------- */
+    --le-bg-0: var(--bg-0);
+    --le-bg-1: var(--bg-1);
+    --le-bg-2: var(--bg-2);
+    --le-bg-3: var(--bg-3);
+    --le-border: var(--border);
+    --le-border-strong: var(--border-strong);
+    --le-hairline: var(--hairline);
+    --le-text-0: var(--text-0);
+    --le-text-1: var(--text-1);
+    --le-text-2: var(--text-2);
+    --le-accent: var(--accent);
+    --le-accent-soft: var(--accent-soft);
+    --le-emerald: var(--emerald);
+    --le-emerald-soft: var(--emerald-soft);
+    --le-amber: var(--amber);
+    --le-amber-soft: var(--amber-soft);
+    --le-rose: var(--rose);
+    --le-rose-soft: var(--rose-soft);
+    --le-violet: var(--violet);
+    --le-violet-soft: var(--violet-soft);
+    --le-shadow-sm: var(--shadow-sm);
+    --le-shadow-md: var(--shadow-md);
+    --le-shadow-lg: var(--shadow-lg);
+    --le-font: var(--font-family);
+
+    /* ----------------------------------------------------------------------
+       Checklist builder (checklist.html)
+       ---------------------------------------------------------------------- */
+    --clb-accent: var(--accent);
+    --clb-accent-soft: var(--accent-soft);
+    --clb-emerald: var(--emerald);
+    --clb-emerald-soft: var(--emerald-soft);
+    --clb-amber: var(--amber);
+    --clb-amber-soft: var(--amber-soft);
+    --clb-rose: var(--rose);
+    --clb-rose-soft: var(--rose-soft);
+    --clb-violet: var(--violet);
+    --clb-violet-soft: var(--violet-soft);
+    --clb-border: var(--border);
+    --clb-hairline: var(--hairline);
+    --clb-text-0: var(--text-0);
+    --clb-text-1: var(--text-1);
+    --clb-text-2: var(--text-2);
+    --clb-shadow-sm: var(--shadow-sm);
+    --clb-shadow-md: var(--shadow-md);
+}
+
+
+/* ==========================================================================
+   3. COMPATIBILITY SHIM
+   Aliases the older variable names used by base.css and a handful of legacy
+   templates. Keep this block until those files are migrated — it means we
+   can ship the unified tokens without a big-bang rename.
+   ========================================================================== */
+
+:root {
+    /* --- Brand colors (base.css) --- */
+    --omnibsic-blue:        #003366;
+    --omnibsic-blue-dark:   #001F3D;
+    --omnibsic-blue-medium: #1A4B7A;
+    --omnibsic-blue-light:  #4A7FA7;
+    --omnibsic-blue-rgb:    0, 51, 102;
+
+    --omnibsic-gold:        #D4AF37;
+    --omnibsic-gold-light:  #F5E6B8;
+    --omnibsic-gold-dark:   #B8960F;
+    --omnibsic-gold-rgb:    212, 175, 55;
+
+    /* --- Semantic colors (base.css) --- */
+    --success:       #28A745;
+    --success-light: #34d399;
+    --success-dark:  #1e7e34;
+
+    --warning:       #FFC107;
+    --warning-light: #fbbf24;
+    --warning-dark:  #d48c1a;
+
+    --danger:        #DC3545;
+    --danger-light:  #fb7185;
+    --danger-dark:   #b91c1c;
+
+    --info:          #17A2B8;
+    --info-light:    #60a5fa;
+    --info-dark:     #0d6efd;
+
+    --purple:        #8b5cf6;
+    --purple-light:  #a78bfa;
+
+    /* --- Neutrals (base.css) --- */
+    --dark:     #1A2332;
+    --gray-900: #1F2937;
+    --gray-700: #374151;
+    --gray-500: #6B7280;
+    --gray-300: #D1D5DB;
+    --gray-200: #E5E7EB;
+    --gray-100: #F3F4F6;
+    --white:    #FFFFFF;
+
+    /* --- Gradients (base.css) --- */
+    --gradient-primary:  linear-gradient(135deg, #003366 0%, #1A4B7A 100%);
+    --gradient-gold:     linear-gradient(135deg, #D4AF37 0%, #F5E6B8 100%);
+    --gradient-sidebar:  linear-gradient(180deg, #001F3D 0%, #003366 100%);
+    --gradient-header:   linear-gradient(135deg, #003366, #1A4B7A);
+
+    /* --- Glassmorphism (base.css + drafts.css) --- */
+    --glass-bg:           rgba(255, 255, 255, 0.7);
+    --glass-bg-dark:      rgba(255, 255, 255, 0.4);
+    --glass-border:       rgba(255, 255, 255, 0.25);
+    --glass-border-dark:  rgba(0, 51, 102, 0.06);
+    --glass-shadow:       rgba(0, 51, 102, 0.06);
+    --glass-shadow-hover: rgba(0, 51, 102, 0.12);
+
+    /* --- Drafts / submit page aliases --- */
+    --omni-primary:       #003399;
+    --omni-primary-dark:  #002266;
+    --omni-primary-light: #1a4cbf;
+    --omni-primary-rgb:   0, 51, 153;
+
+    --omni-gold:        #c9a84c;
+    --omni-gold-light:  #d4b96a;
+    --omni-gold-dark:   #b8963a;
+    --omni-accent:      #00a3e0;
+
+    --omni-success:       #00a859;
+    --omni-success-light: #34d399;
+    --omni-success-rgb:   0, 168, 89;
+
+    --omni-warning:       #f5a623;
+    --omni-warning-light: #fbbf24;
+
+    --omni-danger:        #e74c3c;
+    --omni-danger-light:  #fb7185;
+    --omni-danger-rgb:    231, 76, 60;
+
+    --omni-info:          #3b82f6;
+
+    /* --- Member checklist (member_checklist.css) --- */
+    --omni-secondary:       #00a86b;
+    --omni-secondary-light: #d1fae5;
+}
+
+
+/* ==========================================================================
+   4. GLOBAL BASE RESET (light — base.css owns the heavy lifting)
+   These rules give us a consistent starting point across every page and
+   are intentionally cheap: they only touch things base.css leaves implicit.
+   ========================================================================== */
+
+html {
+    scroll-behavior: smooth;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font-family);
+    color: var(--text-0);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+
+/* ==========================================================================
+   5. ACCESSIBILITY
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
 }

@@ -1,48 +1,4 @@
 /* ==========================================================================
-   AD-HOC SCORECARD — Premium Light Theme
-   ========================================================================== */
-
-:root {
-    /* Surfaces */
-    --ah-bg-0: #eef1f8;
-    --ah-bg-1: #ffffff;
-    --ah-bg-2: #f7f8fc;
-    --ah-bg-3: #f1f3f9;
-
-    /* Borders */
-    --ah-border: rgba(15, 27, 51, 0.08);
-    --ah-border-strong: rgba(15, 27, 51, 0.16);
-    --ah-hairline: rgba(15, 27, 51, 0.06);
-
-    /* Text */
-    --ah-text-0: #0f1b33;
-    --ah-text-1: #46536b;
-    --ah-text-2: #8993a8;
-
-    /* Accents */
-    --ah-accent: #4f6ef7;
-    --ah-accent-soft: #eef1ff;
-    --ah-emerald: #17a673;
-    --ah-emerald-soft: #e2f7ef;
-    --ah-amber: #e08a17;
-    --ah-amber-soft: #fdf2e0;
-    --ah-rose: #e0456a;
-    --ah-rose-soft: #fdeaf0;
-    --ah-violet: #7c5cf0;
-    --ah-violet-soft: #f0ebff;
-
-    /* Shadows */
-    --ah-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
-                    0 1px 3px rgba(15, 27, 51, 0.03);
-    --ah-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
-                    0 2px 4px rgba(15, 27, 51, 0.03);
-    --ah-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
-                    0 4px 12px rgba(15, 27, 51, 0.04);
-
-    --ah-font: 'Poppins', system-ui, -apple-system, sans-serif;
-}
-
-/* ==========================================================================
    1. STATS GRID — auto-fit, no ghost columns
    ========================================================================== */
 .stats-grid {

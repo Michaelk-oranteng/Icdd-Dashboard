@@ -20,6 +20,7 @@ import io
 import os, logging
 import uuid
 import openpyxl
+import re
 
 from .models import (
     UserProfile,
@@ -36,6 +37,7 @@ from .models import (
     ReportSubmissionField,
     ReportSchedule,
     ExceptionRecord,
+    SentEmail,
 )
 from .forms import UserProfileForm
 
@@ -75,37 +77,104 @@ def get_week_start(d):
         days_since_friday = weekday + 3
     return d - timedelta(days=days_since_friday)
 
-
 def count_expected_occurrences(checklist, period_start, period_end):
-    """Number of expected occurrences for a checklist in a period."""
+    """
+    Number of expected occurrences for a checklist in a period.
+
+    Single source of truth for the expected-occurrence denominator.
+    MUST agree with:
+      • _add_frequency()                 (Report recurrence stepping)
+      • api_log_checklist()'s period    (one-log-per-period rule)
+      • get_week_start()                (Friday-anchored weeks)
+
+    Rules per frequency:
+      daily      → delegate to the model (weekday-only)
+      weekly     → one per Friday-anchored (Fri–Thu) week overlapping
+                   the period
+      monthly    → one per calendar month overlapping the period
+      quarterly  → one per calendar quarter overlapping the period
+      bi-annual  → one per Jan–Jun / Jul–Dec block overlapping
+      annual     → one per calendar year overlapping
+      one-off    → 1 if the period contains the checklist's creation
+                   date, else 0
+    """
     freq = checklist.frequency
+
     if freq == 'daily':
         return checklist.get_expected_occurrences(period_start, period_end)
-    if freq == 'weekly':
-        days_diff = (period_end - period_start).days + 1
-        return max(1, days_diff // 7)
-    if freq in ('monthly', 'quarterly', 'bi-annual', 'annual', 'one-off'):
-        count = 0
-        m = period_start.month
-        y = period_start.year
-        while True:
-            m_start = date(y, m, 1)
-            if m == 12:
-                m_end = date(y + 1, 1, 1) - timedelta(days=1)
-            else:
-                m_end = date(y, m + 1, 1) - timedelta(days=1)
-            if m_start > period_end:
-                break
-            if m_start <= period_end and m_end >= period_start:
-                count += 1
-            if m == 12:
-                m = 1
-                y += 1
-            else:
-                m += 1
-        return count
-    return checklist.get_expected_occurrences(period_start, period_end)
 
+    if freq == 'one-off':
+        created = getattr(checklist, 'created_at', None)
+        if created is None:
+            return 1 if period_start <= period_end else 0
+        created_date = created.date() if hasattr(created, 'date') else created
+        return 1 if period_start <= created_date <= period_end else 0
+
+    if freq == 'weekly':
+        # Count Friday-anchored weeks that overlap [period_start, period_end].
+        count = 0
+        cursor = get_week_start(period_start)
+        safety = 0
+        while cursor <= period_end and safety < 10000:
+            week_end = cursor + timedelta(days=6)
+            if week_end >= period_start and cursor <= period_end:
+                count += 1
+            cursor += timedelta(days=7)
+            safety += 1
+        return count
+
+    # Monthly / quarterly / bi-annual / annual — step by month-blocks
+    if freq == 'monthly':
+        block_months = 1
+    elif freq == 'quarterly':
+        block_months = 3
+    elif freq == 'bi-annual':
+        block_months = 6
+    elif freq == 'annual':
+        block_months = 12
+    else:
+        # Unknown frequency — safest fallback
+        return checklist.get_expected_occurrences(period_start, period_end)
+
+    count = 0
+    safety = 0
+
+    # Anchor on the first day of the block containing period_start.
+    cursor = period_start.replace(day=1)
+    if block_months == 3:
+        q_start_month = ((cursor.month - 1) // 3) * 3 + 1
+        cursor = cursor.replace(month=q_start_month)
+    elif block_months == 6:
+        h_start_month = 1 if cursor.month <= 6 else 7
+        cursor = cursor.replace(month=h_start_month)
+    elif block_months == 12:
+        cursor = cursor.replace(month=1)
+
+    while cursor <= period_end and safety < 10000:
+        # Compute block_end inclusive
+        end_index = (cursor.month - 1) + block_months
+        end_year  = cursor.year + (end_index // 12)
+        end_month = (end_index % 12)
+        if end_month == 0:
+            end_month = 12
+            end_year -= 1
+        if end_month == 12:
+            block_end = date(end_year + 1, 1, 1) - timedelta(days=1)
+        else:
+            block_end = date(end_year, end_month + 1, 1) - timedelta(days=1)
+
+        if block_end >= period_start and cursor <= period_end:
+            count += 1
+
+        # Advance cursor to the first day of the next block
+        next_index = (cursor.month - 1) + block_months
+        next_year  = cursor.year + (next_index // 12)
+        next_month = (next_index % 12) + 1
+        cursor = date(next_year, next_month, 1)
+
+        safety += 1
+
+    return count
 
 def redirect_dashboard(user):
     """Redirect user to their dashboard based on role."""
@@ -462,8 +531,18 @@ def admin_page(request):
 @require_http_methods(["POST"])
 def api_create_user(request):
     try:
+        # ---- Admin role guard ----
+        try:
+            caller = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        if caller.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
         data = json.loads(request.body)
-        email = data.get('email', '').strip()
+        email = data.get('email', '').strip().lower()
+        username = data.get('username', '').strip()
         full_name = data.get('full_name', '').strip()
         position = data.get('position', 'member')
         role = data.get('role', 'member')
@@ -471,19 +550,37 @@ def api_create_user(request):
         department_id = data.get('department_id')
         branch_id = data.get('branch_id')
 
+        # ---- Required field validation ----
         if not email:
             return JsonResponse({'success': False, 'error': 'Email is required'}, status=400)
+        if not username:
+            return JsonResponse({'success': False, 'error': 'Username is required'}, status=400)
         if not full_name:
             return JsonResponse({'success': False, 'error': 'Full name is required'}, status=400)
+
+        # ---- Username format check ----
+        if not re.match(r'^[a-zA-Z0-9._-]{3,150}$', username):
+            return JsonResponse({
+                'success': False,
+                'error': 'Username must be 3–150 chars, letters/digits/._- only.',
+            }, status=400)
+
+        # ---- Uniqueness ----
         if UserProfile.objects.filter(email__iexact=email).exists():
             return JsonResponse({'success': False, 'error': 'A user with this email already exists'}, status=400)
+        if UserProfile.objects.filter(username__iexact=username).exists():
+            return JsonResponse({'success': False, 'error': 'This username is already taken'}, status=400)
 
         user = UserProfile.objects.create(
-            email=email.lower(), full_name=full_name,
-            position=position, role=role, status=status
+            email=email,
+            username=username,
+            full_name=full_name,
+            position=position,
+            role=role,
+            status=status,
         )
 
-        # ---------- Assign departments (accepts BOTH singular and plural) ----------
+        # ---------- Assign departments ----------
         dept_ids = []
         if isinstance(data.get('department_ids'), list):
             dept_ids = [int(x) for x in data['department_ids'] if str(x).strip().isdigit()]
@@ -495,7 +592,7 @@ def api_create_user(request):
             if depts.exists():
                 user.departments.set(depts)
 
-        # ---------- Assign branches (accepts BOTH singular and plural) ----------
+        # ---------- Assign branches ----------
         br_ids = []
         if isinstance(data.get('branch_ids'), list):
             br_ids = [int(x) for x in data['branch_ids'] if str(x).strip().isdigit()]
@@ -509,32 +606,39 @@ def api_create_user(request):
 
         user.save()
 
-        get_or_create_django_user(email=email.lower(), username=user.username, full_name=full_name)
-
         log_activity(
-            user=user,
+            user=caller,
             activity_type='user_created',
             details=f'User {email} was created with role {user.get_role_display()} (username: {user.username})',
-            request=request
+            request=request,
         )
 
         return JsonResponse({
             'success': True,
-            'message': f'User created successfully. Username: {user.username}',
+            'message': f'User created successfully.',
             'user_id': user.id,
-            'username': user.username
+            'username': user.username,
         })
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
+    except Exception:
+        logger.exception("Error in api_create_user")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
 
 @csrf_exempt
 @require_http_methods(["PUT", "POST"])
 def api_edit_user(request, user_id):
     try:
+        # ---- Admin role guard ----
+        try:
+            caller = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        if caller.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
         user = get_object_or_404(UserProfile, id=user_id)
         data = json.loads(request.body)
 
@@ -670,6 +774,15 @@ def api_edit_user(request, user_id):
 @require_http_methods(["POST"])
 def api_update_status(request, user_id):
     try:
+        # ---- Admin role guard ----
+        try:
+            caller = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        if caller.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
         user = get_object_or_404(UserProfile, id=user_id)
         data = json.loads(request.body)
         new_status = data.get('status')
@@ -696,11 +809,25 @@ def api_update_status(request, user_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
+# ═══ CHANGED ═══ Added admin role guard + self-deletion guard
+
 @csrf_exempt
 @require_http_methods(["DELETE"])
 def api_delete_user(request, user_id):
     try:
+        try:
+            caller = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        if caller.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
         user = get_object_or_404(UserProfile, id=user_id)
+
+        if user.id == caller.id:
+            return JsonResponse({'success': False, 'error': 'You cannot delete your own account'}, status=400)
+
         email = user.email
         username = user.username
 
@@ -1146,6 +1273,17 @@ def api_delete_report(request, report_id):
 
 @login_required
 def checklist_builder(request):
+    """
+    Checklist Builder — create-only page.
+
+    Fields:
+      • Name
+      • Tasks
+      • Frequency
+      • Assigned Branches (multi-select)
+      • Assigned Departments (multi-select)
+      • Create button
+    """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
         if user_profile.role != 'admin':
@@ -1154,28 +1292,18 @@ def checklist_builder(request):
     except UserProfile.DoesNotExist:
         return redirect_dashboard(request.user)
 
-    checklists = Checklist.objects.all().order_by('-created_at')
-    users = UserProfile.objects.filter(status='active').order_by('full_name')
-    branches = Branch.objects.filter(is_active=True).order_by('name')
-    departments = Department.objects.filter(is_active=True).order_by('name')
-    frequencies = Checklist.FREQUENCY_CHOICES
-    assignments = Checklist.ASSIGNMENT_CHOICES
-
     context = {
         'user_profile': user_profile,
-        'checklists': checklists,
-        'users': users,
-        'branches': branches,
-        'departments': departments,
-        'frequencies': frequencies,
-        'assignments': assignments,
+        'branches':    Branch.objects.filter(is_active=True).order_by('name'),
+        'departments': Department.objects.filter(is_active=True).order_by('name'),
+        'frequencies': Checklist.FREQUENCY_CHOICES,
     }
-
     return render(request, 'control_dashboard/checklist.html', context)
 
 
 @login_required
 def checklist_list(request):
+    """Checklist List — table + edit modal + delete."""
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
         if user_profile.role != 'admin':
@@ -1184,16 +1312,20 @@ def checklist_list(request):
     except UserProfile.DoesNotExist:
         return redirect_dashboard(request.user)
 
-    checklists = Checklist.objects.all().prefetch_related('tasks', 'assigned_users').order_by('-created_at')
-    users = UserProfile.objects.filter(status='active').order_by('full_name')
+    checklists = (
+        Checklist.objects
+        .prefetch_related('tasks', 'assigned_branches', 'assigned_departments')
+        .order_by('-created_at')
+    )
 
     context = {
         'user_profile': user_profile,
-        'checklists': checklists,
-        'users': users,
-        'today': timezone.now(),
+        'checklists':   checklists,
+        'branches':     Branch.objects.filter(is_active=True).order_by('name'),
+        'departments':  Department.objects.filter(is_active=True).order_by('name'),
+        'frequencies':  Checklist.FREQUENCY_CHOICES,
+        'today':        timezone.now(),
     }
-
     return render(request, 'control_dashboard/checklist_list.html', context)
 
 
@@ -1202,245 +1334,237 @@ def checklist_list(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_create_checklist(request):
+    """
+    Create a checklist.
+
+    Payload:
+    {
+        "name":                 "...",
+        "description":          "..." (optional),
+        "frequency":            "daily" | "weekly" | ...,
+        "tasks":                [{"description": "..."}, ...],
+        "assigned_branches":    [1, 2, 3],
+        "assigned_departments": [4, 5]
+    }
+    """
     try:
         if not request.body:
-            return JsonResponse({'success': False, 'error': 'Empty request body'}, status=400)
+            return JsonResponse({'success': False, 'error': 'Empty request body.'}, status=400)
 
         data = json.loads(request.body)
 
-        name = data.get('name', '').strip()
-        description = data.get('description', '').strip()
-        frequency = data.get('frequency', 'weekly')
-        assignment_target = data.get('assignment_target', 'all')
-        assigned_users_ids = data.get('assigned_users', [])
-        assigned_branches_ids = data.get('assigned_branches', [])
-        assigned_departments_ids = data.get('assigned_departments', [])
-        tasks_data = data.get('tasks', [])
+        name                     = (data.get('name') or '').strip()
+        description              = (data.get('description') or '').strip()
+        frequency                = (data.get('frequency') or 'weekly').strip()
+        tasks_data               = data.get('tasks') or []
+        assigned_branches_ids    = data.get('assigned_branches') or []
+        assigned_departments_ids = data.get('assigned_departments') or []
 
+        # ── Validation ──
         if not name:
-            return JsonResponse({'success': False, 'error': 'Activity name is required'}, status=400)
+            return JsonResponse({'success': False, 'error': 'Checklist name is required.'}, status=400)
+
+        valid_freq = {v for v, _ in Checklist.FREQUENCY_CHOICES}
+        if frequency not in valid_freq:
+            return JsonResponse({'success': False, 'error': 'Invalid frequency.'}, status=400)
+
         if not tasks_data:
-            return JsonResponse({'success': False, 'error': 'Please add at least one task'}, status=400)
+            return JsonResponse({'success': False, 'error': 'Add at least one task.'}, status=400)
 
-        created_by = None
-        if request.user and request.user.is_authenticated:
-            created_by = UserProfile.objects.filter(email=request.user.email).first()
-            if not created_by:
-                created_by = UserProfile.objects.create(
-                    email=request.user.email,
-                    full_name=request.user.get_full_name() or request.user.username,
-                    role='member',
-                    position='member',
-                    status='active'
-                )
+        if not assigned_branches_ids and not assigned_departments_ids:
+            return JsonResponse({
+                'success': False,
+                'error': 'Assign at least one branch or department.',
+            }, status=400)
 
+        # ── Caller ──
+        if not request.user.is_authenticated:
+            return JsonResponse({'success': False, 'error': 'Authentication required.'}, status=401)
+
+        created_by = UserProfile.objects.filter(email=request.user.email).first()
         if not created_by:
-            return JsonResponse({'success': False, 'error': 'No active UserProfile records found to assign ownership'}, status=400)
+            return JsonResponse({'success': False, 'error': 'Admin profile not found.'}, status=404)
+        if created_by.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
+        # ── Create ──
         checklist = Checklist.objects.create(
             name=name,
             description=description,
             frequency=frequency,
-            assignment_target=assignment_target,
+            is_active=True,
             created_by=created_by,
-            is_active=True
         )
 
-        if assignment_target == 'specific' and assigned_users_ids:
-            checklist.assigned_users.set(UserProfile.objects.filter(id__in=assigned_users_ids, status='active'))
-        elif assignment_target == 'cc':
-            checklist.assigned_users.set(UserProfile.objects.filter(position='cc', status='active'))
-        elif assignment_target == 'hc':
-            checklist.assigned_users.set(UserProfile.objects.filter(position='hc', status='active'))
-        elif assignment_target == 'all':
-            checklist.assigned_users.set(UserProfile.objects.filter(status='active'))
-
         if assigned_branches_ids:
-            checklist.assigned_branches.set(Branch.objects.filter(id__in=assigned_branches_ids, is_active=True))
+            checklist.assigned_branches.set(
+                Branch.objects.filter(id__in=assigned_branches_ids, is_active=True)
+            )
 
         if assigned_departments_ids:
-            checklist.assigned_departments.set(Department.objects.filter(id__in=assigned_departments_ids, is_active=True))
+            checklist.assigned_departments.set(
+                Department.objects.filter(id__in=assigned_departments_ids, is_active=True)
+            )
 
         for index, task_item in enumerate(tasks_data):
-            task_desc = task_item.get('description', '').strip()
+            task_desc = (task_item.get('description') or '').strip()
             if task_desc:
-                ChecklistTask.objects.create(checklist=checklist, description=task_desc, order=index)
-
-        saved_branches = checklist.assigned_branches.all()
-        saved_departments = checklist.assigned_departments.all()
+                ChecklistTask.objects.create(
+                    checklist=checklist,
+                    description=task_desc,
+                    order=index,
+                )
 
         log_activity(
             user=created_by,
             activity_type='checklist_created',
-            details=f'Created checklist "{name}" with {len(tasks_data)} tasks',
-            request=request
+            details=f'Created checklist "{name}" with {len(tasks_data)} tasks ({frequency})',
+            request=request,
         )
 
         return JsonResponse({
             'success': True,
-            'message': 'Checklist created successfully',
+            'message': 'Checklist created successfully.',
             'checklist_id': checklist.id,
-            'branches_saved': [b.name for b in saved_branches],
-            'departments_saved': [d.name for d in saved_departments]
         }, status=201)
 
     except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Malformed or invalid JSON payload structure'}, status=400)
-    except Exception as e:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON payload.'}, status=400)
+    except Exception:
         logger.exception("Error in api_create_checklist")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
 
 @csrf_exempt
 @require_http_methods(["GET"])
 def api_get_checklist(request, checklist_id):
     try:
-        checklist = get_object_or_404(Checklist, id=checklist_id)
-        tasks = checklist.tasks.all().order_by('order')
-
-        branch_names = [branch.name for branch in checklist.assigned_branches.all()]
-        department_names = [dept.name for dept in checklist.assigned_departments.all()]
-
+        c = get_object_or_404(Checklist, id=checklist_id)
         return JsonResponse({
             'success': True,
             'checklist': {
-                'id': checklist.id,
-                'name': checklist.name,
-                'description': checklist.description,
-                'frequency': checklist.frequency,
-                'assignment_target': checklist.assignment_target,
-                'is_active': checklist.is_active,
-                'assigned_users': list(checklist.assigned_users.values_list('id', flat=True)),
-                'assigned_branches': list(checklist.assigned_branches.values_list('id', flat=True)),
-                'assigned_branches_names': branch_names,
-                'assigned_departments': list(checklist.assigned_departments.values_list('id', flat=True)),
-                'assigned_departments_names': department_names,
+                'id': c.id,
+                'name': c.name,
+                'description': c.description,
+                'frequency': c.frequency,
+                'is_active': c.is_active,
+                'assigned_branches':    list(c.assigned_branches.values_list('id', flat=True)),
+                'assigned_departments': list(c.assigned_departments.values_list('id', flat=True)),
                 'tasks': [
-                    {'id': task.id, 'description': task.description, 'order': task.order, 'is_completed': task.is_completed}
-                    for task in tasks
-                ]
+                    {'id': t.id, 'description': t.description, 'order': t.order}
+                    for t in c.tasks.all().order_by('order')
+                ],
             }
         })
-
-    except Exception as e:
+    except Exception:
         logger.exception("Error in api_get_checklist")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
 
 @csrf_exempt
-@require_http_methods(["PUT"])
+@require_http_methods(["PUT", "POST"])
 def api_edit_checklist(request, checklist_id):
+    """
+    Edit from the Checklist List page. Accepts any subset of:
+        name, description, frequency, is_active,
+        assigned_branches, assigned_departments, tasks
+    """
     try:
         checklist = get_object_or_404(Checklist, id=checklist_id)
+
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        if user_profile.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
         if not request.body:
-            return JsonResponse({'success': False, 'error': 'Empty patch payload parameters'}, status=400)
+            return JsonResponse({'success': False, 'error': 'Empty payload.'}, status=400)
 
         data = json.loads(request.body)
-
         changes = []
 
         if 'name' in data:
-            checklist.name = data['name'].strip()
-            changes.append(f"Name updated to '{checklist.name}'")
+            new_name = (data['name'] or '').strip()
+            if not new_name:
+                return JsonResponse({'success': False, 'error': 'Name cannot be empty.'}, status=400)
+            if new_name != checklist.name:
+                checklist.name = new_name
+                changes.append(f'Name → "{new_name}"')
+
+        if 'description' in data:
+            checklist.description = (data['description'] or '').strip()
+
         if 'frequency' in data:
-            old_freq = checklist.get_frequency_display()
-            checklist.frequency = data['frequency']
-            changes.append(f"Frequency changed from {old_freq} to {checklist.get_frequency_display()}")
-        if 'assignment_target' in data:
-            old_target = checklist.get_assignment_display()
-            checklist.assignment_target = data['assignment_target']
-            changes.append(f"Assignment target changed from {old_target} to {checklist.get_assignment_display()}")
+            freq = data['frequency']
+            valid = {v for v, _ in Checklist.FREQUENCY_CHOICES}
+            if freq in valid and freq != checklist.frequency:
+                changes.append(f'Frequency → {freq}')
+                checklist.frequency = freq
+
+        if 'is_active' in data:
+            checklist.is_active = bool(data['is_active'])
+            changes.append(f'Active → {checklist.is_active}')
 
         checklist.save()
 
-        assignment_target = data.get('assignment_target', checklist.assignment_target)
-        if assignment_target == 'specific':
-            assigned_users_ids = data.get('assigned_users', [])
-            if assigned_users_ids:
-                checklist.assigned_users.set(UserProfile.objects.filter(id__in=assigned_users_ids, status='active'))
-                changes.append(f"Assigned {len(assigned_users_ids)} specific users")
-            else:
-                checklist.assigned_users.clear()
-                changes.append("Cleared all user assignments")
-        elif assignment_target == 'cc':
-            checklist.assigned_users.set(UserProfile.objects.filter(position='cc', status='active'))
-            changes.append("Assigned to Cluster Control users")
-        elif assignment_target == 'hc':
-            checklist.assigned_users.set(UserProfile.objects.filter(position='hc', status='active'))
-            changes.append("Assigned to Head Office Control users")
-        elif assignment_target == 'all':
-            checklist.assigned_users.set(UserProfile.objects.filter(status='active'))
-            changes.append("Assigned to all active users")
+        if 'assigned_branches' in data:
+            ids = [int(x) for x in (data['assigned_branches'] or []) if str(x).isdigit()]
+            checklist.assigned_branches.set(
+                Branch.objects.filter(id__in=ids, is_active=True)
+            )
+            changes.append(f'{len(ids)} branch(es)')
 
-        assigned_branches_ids = data.get('assigned_branches', [])
-        if assigned_branches_ids:
-            branches = Branch.objects.filter(id__in=assigned_branches_ids, is_active=True)
-            checklist.assigned_branches.set(branches)
-            changes.append(f"Assigned to {len(branches)} branches")
-        else:
-            checklist.assigned_branches.clear()
-            changes.append("Cleared all branch assignments")
-
-        assigned_departments_ids = data.get('assigned_departments', [])
-        if assigned_departments_ids:
-            departments = Department.objects.filter(id__in=assigned_departments_ids, is_active=True)
-            checklist.assigned_departments.set(departments)
-            changes.append(f"Assigned to {len(departments)} departments")
-        else:
-            checklist.assigned_departments.clear()
-            changes.append("Cleared all department assignments")
+        if 'assigned_departments' in data:
+            ids = [int(x) for x in (data['assigned_departments'] or []) if str(x).isdigit()]
+            checklist.assigned_departments.set(
+                Department.objects.filter(id__in=ids, is_active=True)
+            )
+            changes.append(f'{len(ids)} department(s)')
 
         if 'tasks' in data:
-            incoming_tasks = data['tasks']
-            existing_tasks = {t.id: t for t in checklist.tasks.all()}
+            incoming = data['tasks'] or []
+            existing = {t.id: t for t in checklist.tasks.all()}
             seen_ids = set()
 
-            for index, task_item in enumerate(incoming_tasks):
-                task_desc = task_item.get('description', '').strip()
-                if not task_desc:
+            for idx, item in enumerate(incoming):
+                desc = (item.get('description') or '').strip()
+                if not desc:
                     continue
-
-                task_id = task_item.get('id')
-                if task_id and task_id in existing_tasks:
-                    task = existing_tasks[task_id]
-                    task.description = task_desc
-                    task.order = index
-                    task.save()
-                    seen_ids.add(task_id)
+                tid = item.get('id')
+                if tid and tid in existing:
+                    t = existing[tid]
+                    t.description = desc
+                    t.order = idx
+                    t.save()
+                    seen_ids.add(tid)
                 else:
-                    new_task = ChecklistTask.objects.create(checklist=checklist, description=task_desc, order=index)
-                    seen_ids.add(new_task.id)
+                    new_t = ChecklistTask.objects.create(
+                        checklist=checklist, description=desc, order=idx,
+                    )
+                    seen_ids.add(new_t.id)
 
-            for tid, task in existing_tasks.items():
+            for tid, t in existing.items():
                 if tid not in seen_ids:
-                    task.delete()
+                    t.delete()
 
-            changes.append(f"Updated {len(incoming_tasks)} tasks")
+            changes.append(f'{len(incoming)} task(s)')
 
-        if changes and request.user.is_authenticated:
-            try:
-                user_profile = UserProfile.objects.get(email=request.user.email)
-                log_activity(
-                    user=user_profile,
-                    activity_type='checklist_updated',
-                    details=f'Checklist "{checklist.name}" updated: ' + '; '.join(changes[:3]) + ('...' if len(changes) > 3 else ''),
-                    request=request
-                )
-            except UserProfile.DoesNotExist:
-                pass
+        if changes:
+            log_activity(
+                user=user_profile,
+                activity_type='checklist_updated',
+                details=f'Checklist "{checklist.name}" updated: ' + '; '.join(changes),
+                request=request,
+            )
 
-        return JsonResponse({
-            'success': True,
-            'message': 'Checklist updated successfully',
-            'changes': changes
-        })
+        return JsonResponse({'success': True, 'message': 'Checklist updated successfully.'})
 
     except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Invalid JSON data payload parameters'}, status=400)
-    except Exception as e:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
+    except Exception:
         logger.exception("Error in api_edit_checklist")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
 
 @csrf_exempt
 @require_http_methods(["DELETE"])
@@ -1485,18 +1609,56 @@ def member_dashboard(request):
     week_start = get_week_start(today)
     week_end = week_start + timedelta(days=6)
 
-        # Compute the user's unit IDs first — the checklist query below needs them.
+    # ================================================================
+    # BRANCH / DEPARTMENT FILTER — scopes ONLY the Irregular GL panel
+    # ================================================================
+    unit_filter_raw = request.GET.get('unit', 'all').strip()
+
+    selected_unit_type = 'all'
+    selected_unit_id = None
+    selected_unit_display = 'All Branches & Departments'
+
+    if unit_filter_raw.startswith('branch_'):
+        try:
+            selected_unit_id = int(unit_filter_raw.split('_', 1)[1])
+            selected_unit_type = 'branch'
+        except (ValueError, IndexError):
+            selected_unit_id = None
+            selected_unit_type = 'all'
+    elif unit_filter_raw.startswith('dept_'):
+        try:
+            selected_unit_id = int(unit_filter_raw.split('_', 1)[1])
+            selected_unit_type = 'department'
+        except (ValueError, IndexError):
+            selected_unit_id = None
+            selected_unit_type = 'all'
+
+    unit_filter_options = [{'value': 'all', 'display': 'All Branches & Departments'}]
+    for b in user_profile.branches.all().order_by('name'):
+        unit_filter_options.append({
+            'value': f'branch_{b.id}',
+            'display': f'🏢 {b.name}',
+        })
+    for d in user_profile.departments.all().order_by('name'):
+        unit_filter_options.append({
+            'value': f'dept_{d.id}',
+            'display': f'🏛️ {d.name}',
+        })
+
+    if selected_unit_type != 'all' and selected_unit_id is not None:
+        for opt in unit_filter_options:
+            if opt['value'] == unit_filter_raw:
+                selected_unit_display = opt['display']
+                break
+
     user_branch_ids = set(user_profile.branches.values_list('id', flat=True))
     user_dept_ids = set(user_profile.departments.values_list('id', flat=True))
 
     user_checklists = Checklist.objects.filter(
         is_active=True
     ).filter(
-        Q(assigned_users=user_profile) |
-        Q(assignment_target='all') |
-        Q(assignment_target=user_profile.position) |
-        Q(assigned_departments__in=user_dept_ids) |
-        Q(assigned_branches__in=user_branch_ids)
+        Q(assigned_branches__in=user_branch_ids) |
+        Q(assigned_departments__in=user_dept_ids)
     ).distinct()
 
     total_checklist_rows = 0
@@ -1531,7 +1693,6 @@ def member_dashboard(request):
         report__report_type=TRIAL_BALANCE_REPORT_TYPE,
     ).count()
 
-    # Form-based reports (no Excel records) still count as captured exceptions
     non_excel_reports = user_reports.filter(
         exception_records__isnull=True,
         excel_headers='',
@@ -1558,13 +1719,30 @@ def member_dashboard(request):
 
     pending_submissions = pending_qs.count()
 
+    # ============================================================
+    # PERIOD WINDOWS — month, quarter, year
+    # ============================================================
     month_expected = 0
     month_actual = 0
+    quarter_expected = 0
+    quarter_actual = 0
     year_expected = 0
     year_actual = 0
 
     year_start = today.replace(month=1, day=1)
     year_end = today.replace(month=12, day=31)
+
+    current_quarter = (today.month - 1) // 3 + 1
+    q_start_month = (current_quarter - 1) * 3 + 1
+    q_end_month   = current_quarter * 3
+
+    quarter_start = today.replace(month=q_start_month, day=1)
+    if q_end_month == 12:
+        quarter_end = today.replace(month=12, day=31)
+    else:
+        quarter_end = today.replace(
+            month=q_end_month + 1, day=1
+        ) - timedelta(days=1)
 
     display_checklists_with_progress = []
 
@@ -1588,6 +1766,8 @@ def member_dashboard(request):
 
         checklist_month_expected = 0
         checklist_month_actual = 0
+        checklist_quarter_expected = 0
+        checklist_quarter_actual = 0
         checklist_year_expected = 0
         checklist_year_actual = 0
 
@@ -1606,6 +1786,13 @@ def member_dashboard(request):
                 **unit_filter
             ).values('log_date').distinct().count()
 
+            q_exp = count_expected_occurrences(checklist, quarter_start, quarter_end)
+            q_act = ChecklistLog.objects.filter(
+                checklist=checklist, user=user_profile,
+                log_date__gte=quarter_start, log_date__lte=quarter_end,
+                **unit_filter
+            ).values('log_date').distinct().count()
+
             y_exp = count_expected_occurrences(checklist, year_start, year_end)
             y_act = ChecklistLog.objects.filter(
                 checklist=checklist, user=user_profile,
@@ -1615,11 +1802,15 @@ def member_dashboard(request):
 
             checklist_month_expected += m_exp
             checklist_month_actual += m_act
+            checklist_quarter_expected += q_exp
+            checklist_quarter_actual += q_act
             checklist_year_expected += y_exp
             checklist_year_actual += y_act
 
         month_expected += checklist_month_expected
         month_actual += checklist_month_actual
+        quarter_expected += checklist_quarter_expected
+        quarter_actual += checklist_quarter_actual
         year_expected += checklist_year_expected
         year_actual += checklist_year_actual
 
@@ -1642,6 +1833,8 @@ def member_dashboard(request):
         checklist.year_progress = year_progress
         checklist.month_expected = checklist_month_expected
         checklist.month_actual = checklist_month_actual
+        checklist.quarter_expected = checklist_quarter_expected
+        checklist.quarter_actual = checklist_quarter_actual
         checklist.year_expected = checklist_year_expected
         checklist.year_actual = checklist_year_actual
         checklist.status = status
@@ -1650,9 +1843,9 @@ def member_dashboard(request):
 
         display_checklists_with_progress.append(checklist)
 
-    overall_month_progress = min(int(month_actual / month_expected * 100), 100) if month_expected > 0 else 0
-    overall_quarter_progress = overall_month_progress
-    overall_year_progress = min(int(year_actual / year_expected * 100), 100) if year_expected > 0 else 0
+    overall_month_progress   = min(int(month_actual   / month_expected   * 100), 100) if month_expected   > 0 else 0
+    overall_quarter_progress = min(int(quarter_actual / quarter_expected * 100), 100) if quarter_expected > 0 else 0
+    overall_year_progress    = min(int(year_actual    / year_expected    * 100), 100) if year_expected    > 0 else 0
 
     freq_labels = {
         'daily': 'Daily', 'weekly': 'Weekly', 'monthly': 'Monthly',
@@ -1694,11 +1887,7 @@ def member_dashboard(request):
     display_checklists_with_progress.sort(key=lambda x: x.month_progress)
 
     # ============================================================
-    # IRREGULAR GL POSITIONS — date-aware
-    # ------------------------------------------------------------
-    # Default (on login): TODAY. If today has no trial balance yet,
-    #                     fall back to the most recent available day.
-    # With ?gl_date=YYYY-MM-DD: show that specific day.
+    # IRREGULAR GL POSITIONS — date-aware + unit filter
     # ============================================================
     from .models import TrialBalanceEntry
 
@@ -1714,8 +1903,6 @@ def member_dashboard(request):
     try:
         today_date = timezone.now().date()
 
-        # All distinct dates that actually have trial-balance data
-        # (most recent first, capped to keep the dropdown manageable)
         available_tb_dates = list(
             TrialBalanceEntry.objects
             .values_list('report_date', flat=True)
@@ -1723,15 +1910,12 @@ def member_dashboard(request):
             .order_by('-report_date')[:90]
         )
 
-        # Resolve which date to display
         if gl_date_param:
             try:
                 target_date = datetime.strptime(gl_date_param, '%Y-%m-%d').date()
             except ValueError:
                 target_date = today_date
         else:
-            # Fresh page load → default to TODAY.
-            # If today has no TB data yet, fall back to the most recent day.
             target_date = today_date
             if not TrialBalanceEntry.objects.filter(report_date=today_date).exists():
                 if available_tb_dates:
@@ -1741,9 +1925,6 @@ def member_dashboard(request):
         selected_gl_date_display = target_date.strftime('%b %d, %Y')
         is_today_gl = (target_date == today_date)
 
-        # Selectable dates for the dropdown:
-        # today first (so it's always visible), then every other
-        # available date, newest-first, without duplicates.
         selectable_gl_dates = [today_date]
         for d in available_tb_dates:
             if d != today_date:
@@ -1753,7 +1934,6 @@ def member_dashboard(request):
             report_date=target_date
         ).exists()
 
-        # Branch / dept / role scoping (unchanged)
         code_to_name = dict(Branch.BRANCH_CODE_MAP)
         for b in Branch.objects.filter(is_active=True):
             if b.code:
@@ -1781,6 +1961,35 @@ def member_dashboard(request):
         has_dept_restriction = len(user_dept_names) > 0
 
         entries_qs = TrialBalanceEntry.objects.filter(report_date=target_date)
+
+        if selected_unit_type == 'branch' and selected_unit_id:
+            try:
+                chosen_branch = Branch.objects.get(id=selected_unit_id)
+            except Branch.DoesNotExist:
+                chosen_branch = None
+
+            if chosen_branch is None:
+                entries_qs = entries_qs.none()
+            else:
+                chosen_code = (chosen_branch.code or '').strip()
+                if chosen_code:
+                    entries_qs = entries_qs.filter(branch_code=chosen_code)
+                else:
+                    matching_codes = [
+                        code for code, name in Branch.BRANCH_CODE_MAP.items()
+                        if name.strip().upper() == chosen_branch.name.strip().upper()
+                    ]
+                    if matching_codes:
+                        entries_qs = entries_qs.filter(branch_code__in=matching_codes)
+                    else:
+                        entries_qs = entries_qs.none()
+
+        elif selected_unit_type == 'department' and selected_unit_id:
+            try:
+                chosen_dept = Department.objects.get(id=selected_unit_id)
+                entries_qs = entries_qs.filter(category__iexact=chosen_dept.name)
+            except Department.DoesNotExist:
+                entries_qs = entries_qs.none()
 
         if not is_privileged:
             or_q = Q()
@@ -1873,21 +2082,22 @@ def member_dashboard(request):
         'pending_submissions': pending_submissions,
         'assigned_this_week': assigned_this_week,
 
-        'overall_month_progress': overall_month_progress,
+        'overall_month_progress':   overall_month_progress,
         'overall_quarter_progress': overall_quarter_progress,
-        'overall_year_progress': overall_year_progress,
-        'weekly_completion_rate': weekly_completion_rate,
-        'month_completed': month_actual,
-        'month_total': month_expected,
-        'year_completed': year_actual,
-        'year_total': year_expected,
+        'overall_year_progress':    overall_year_progress,
+        'weekly_completion_rate':   weekly_completion_rate,
+        'month_completed':   month_actual,
+        'month_total':       month_expected,
+        'quarter_completed': quarter_actual,
+        'quarter_total':     quarter_expected,
+        'year_completed':    year_actual,
+        'year_total':        year_expected,
         'total_logged_days': total_logged_days,
         'frequency_summary': frequency_summary,
 
         'daily_checklists': display_checklists_with_progress[:5],
         'activity_logs': activity_logs,
 
-        # --- Irregular GL panel (date-aware) ---
         'irregular_gls': irregular_gls,
         'has_trial_balance': has_trial_balance,
         'available_tb_dates': available_tb_dates,
@@ -1900,10 +2110,15 @@ def member_dashboard(request):
         'user_branches': user_profile.branches.all(),
         'user_departments': user_profile.departments.all(),
 
-        'month_ring_offset': 100 - overall_month_progress,
+        'unit_filter_options':   unit_filter_options,
+        'active_unit_filter':    unit_filter_raw,
+        'selected_unit_display': selected_unit_display,
+        'selected_unit_type':    selected_unit_type,
+
+        'month_ring_offset':   100 - overall_month_progress,
         'quarter_ring_offset': 100 - overall_quarter_progress,
-        'year_ring_offset': 100 - overall_year_progress,
-        'weekly_ring_offset': 100 - weekly_completion_rate,
+        'year_ring_offset':    100 - overall_year_progress,
+        'weekly_ring_offset':  100 - weekly_completion_rate,
     }
 
     return render(request, 'control_dashboard/memberboard.html', context)
@@ -1955,53 +2170,78 @@ def drafts_page(request):
 def reports_page(request):
     """
     My Reports.
-    
-    Two distinct concepts are rendered:
-    
-      * submitted_reports — Report rows that the member actually sent
-        via submit.html (statuses: submitted / completed / draft).
-        These have corresponding SubmittedReportScore rows.
-    
-      * exception_uploads — Report rows created by draft.html Excel
-        uploads (status='uploaded'). These are DATA CONTAINERS, not
-        submissions. They are shown separately so the member can
-        review / edit / delete the raw exception data they imported.
+
+    Two distinct groups:
+      • submitted_reports  — Report rows the member actually sent
+                             (status: submitted / completed / draft)
+      • exception_uploads  — Excel data containers from draft.html
+                             (status='uploaded')
+
+    The filter dropdown includes every type from EITHER group,
+    plus a count of how many uploads exist per type, so members
+    can always filter to the data they can actually see.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
     except UserProfile.DoesNotExist:
         return redirect('control_dashboard:member_dashboard')
 
-    # --- Real submitted reports (email sends) ---
-    # These have statuses indicating they were actually submitted.
+    # ------------------------------------------------------------
+    # Submitted reports
+    # ------------------------------------------------------------
     submitted_reports = Report.objects.filter(
         created_by=user_profile
     ).exclude(
         report_type=TRIAL_BALANCE_REPORT_TYPE
     ).exclude(
-        status=UPLOADED_STATUS  # Exclude Excel data containers
+        status=UPLOADED_STATUS
     ).filter(
         Q(status='submitted') |
         Q(status='completed') |
         Q(status='draft')
     ).order_by('-created_at')
 
-    # --- Excel exception data containers ---
-    # These are the raw data imports from draft.html
+    # ------------------------------------------------------------
+    # Excel exception uploads
+    # ------------------------------------------------------------
     exception_uploads = Report.objects.filter(
-    created_by=user_profile,
-    status=UPLOADED_STATUS,
+        created_by=user_profile,
+        status=UPLOADED_STATUS,
     ).exclude(
         report_type=TRIAL_BALANCE_REPORT_TYPE
     ).filter(
-    Q(exception_records__isnull=False) | Q(data_fields__isnull=False)
+        Q(exception_records__isnull=False) | Q(data_fields__isnull=False)
     ).distinct().order_by('-created_at')
 
-    # Get report types from actual submissions only
-    report_types = submitted_reports.values_list('report_type', flat=True).distinct()
+    # ------------------------------------------------------------
+    # Filter dropdown — union of BOTH groups, with counts
+    # ------------------------------------------------------------
+    from collections import defaultdict
+
+    type_counts = defaultdict(int)
+    for rt in submitted_reports.values_list('report_type', flat=True):
+        if rt:
+            type_counts[rt] += 1
+    for rt in exception_uploads.values_list('report_type', flat=True):
+        if rt:
+            type_counts[rt] += 1
+
+    # Sort alphabetically, but ship as a list of dicts so the
+    # template can render the count next to the label.
+    report_type_options = sorted(
+        (
+            {'value': rt, 'label': rt, 'count': cnt}
+            for rt, cnt in type_counts.items()
+        ),
+        key=lambda o: o['label'].lower(),
+    )
+
+    # Keep the plain list too, in case other templates depend on it.
+    report_types = [o['value'] for o in report_type_options]
+
     branches = Branch.objects.filter(is_active=True).order_by('name')
 
-    # Attach schedule info and display data
+    # Attach schedule + display data
     for report in submitted_reports:
         schedule = ReportSchedule.objects.filter(report=report, is_active=True).first()
         report.has_schedule = bool(schedule)
@@ -2014,12 +2254,13 @@ def reports_page(request):
         report._display_data = report.get_display_data()
 
     context = {
-        'user_profile': user_profile,
-        'today': timezone.now(),
-        'reports': submitted_reports,           # Real submissions
-        'exception_uploads': exception_uploads,  # Excel data containers
-        'report_types': list(report_types),
-        'branches': branches,
+        'user_profile':         user_profile,
+        'today':                timezone.now(),
+        'reports':              submitted_reports,
+        'exception_uploads':    exception_uploads,
+        'report_types':         report_types,           # legacy plain list
+        'report_type_options':  report_type_options,    # new: with counts
+        'branches':             branches,
     }
 
     return render(request, 'control_dashboard/reports.html', context)
@@ -2296,72 +2537,95 @@ def member_checklist(request):
 
     today = timezone.now().date()
 
-    branch_filter = request.GET.get('branch', 'all')
+    # -----------------------------------------------------------------
+    # Filter params
+    # -----------------------------------------------------------------
+    branch_filter     = request.GET.get('branch', 'all')
     department_filter = request.GET.get('department', 'all')
-    month_filter = request.GET.get('month', 'all')
-    year_filter = request.GET.get('year', 'all')
-    frequency_filter = request.GET.get('frequency', 'all')
-    quarter_filter = request.GET.get('quarter', 'all')
+    month_filter      = request.GET.get('month', 'all')       # 0-based index
+    year_filter       = request.GET.get('year', 'all')
+    frequency_filter  = request.GET.get('frequency', 'all')
+    quarter_filter    = request.GET.get('quarter', 'all')
 
-    user_branches = user_profile.branches.all().order_by('name')
-    user_departments = user_profile.departments.all().order_by('name')
+    user_branches     = user_profile.branches.all().order_by('name')
+    user_departments  = user_profile.departments.all().order_by('name')
 
-    user_branch_ids = set(user_branches.values_list('id', flat=True))
+    user_branch_ids    = set(user_branches.values_list('id', flat=True))
     user_department_ids = set(user_departments.values_list('id', flat=True))
 
+    # -----------------------------------------------------------------
+    # Base checklist queryset
+    # -----------------------------------------------------------------
     user_checklists = Checklist.objects.filter(
         is_active=True
     ).filter(
-        Q(assigned_users=user_profile) |
-        Q(assignment_target='all') |
-        Q(assignment_target=user_profile.position) |
-        Q(assigned_departments__in=user_department_ids) |
-        Q(assigned_branches__in=user_branch_ids)
+        Q(assigned_branches__in=user_branch_ids) |
+        Q(assigned_departments__in=user_department_ids)
     ).distinct()
 
     if branch_filter != 'all':
         try:
-            user_checklists = user_checklists.filter(assigned_branches__id=int(branch_filter)).distinct()
-        except ValueError:
+            user_checklists = user_checklists.filter(
+                assigned_branches__id=int(branch_filter)
+            ).distinct()
+        except (ValueError, TypeError):
             pass
 
     if department_filter != 'all':
         try:
-            user_checklists = user_checklists.filter(assigned_departments__id=int(department_filter)).distinct()
-        except ValueError:
+            user_checklists = user_checklists.filter(
+                assigned_departments__id=int(department_filter)
+            ).distinct()
+        except (ValueError, TypeError):
             pass
 
     if frequency_filter != 'all':
         user_checklists = user_checklists.filter(frequency=frequency_filter)
 
-    current_year = timezone.now().year
-    years = list(range(current_year - 2, current_year + 1))
-
-    display_month = today.month
+    # =================================================================
+    # Resolve the "active period"
+    # Priority: explicit month → quarter (first month of quarter) → today
+    # =================================================================
     display_year = today.year
-
-    if month_filter != 'all':
-        try:
-            display_month = int(month_filter) + 1
-        except ValueError:
-            pass
-
     if year_filter != 'all':
         try:
             display_year = int(year_filter)
-        except ValueError:
-            pass
+        except (ValueError, TypeError):
+            display_year = today.year
+
+    display_month = today.month
+    if month_filter != 'all':
+        try:
+            display_month = int(month_filter) + 1   # UI sends 0-based
+        except (ValueError, TypeError):
+            display_month = today.month
+    elif quarter_filter != 'all':
+        try:
+            q = int(quarter_filter)
+            if 1 <= q <= 4:
+                display_month = (q - 1) * 3 + 1
+        except (ValueError, TypeError):
+            display_month = today.month
+
+    display_month = max(1, min(12, display_month))
+    display_year  = max(2000, min(2100, display_year))
 
     current_quarter = (display_month - 1) // 3 + 1
 
-    if quarter_filter != 'all':
-        try:
-            current_quarter = int(quarter_filter)
-        except ValueError:
-            pass
+    # Selected label used in the KPI subtitle
+    selected_month_label = date(display_year, display_month, 1).strftime('%B')
+
+    # -----------------------------------------------------------------
+    # Period windows derived from the active month
+    # -----------------------------------------------------------------
+    month_start = date(display_year, display_month, 1)
+    if display_month == 12:
+        month_end = date(display_year + 1, 1, 1) - timedelta(days=1)
+    else:
+        month_end = date(display_year, display_month + 1, 1) - timedelta(days=1)
 
     quarter_start_month = (current_quarter - 1) * 3 + 1
-    quarter_end_month = current_quarter * 3
+    quarter_end_month   = current_quarter * 3
 
     quarter_start = date(display_year, quarter_start_month, 1)
     if quarter_end_month == 12:
@@ -2369,14 +2633,8 @@ def member_checklist(request):
     else:
         quarter_end = date(display_year, quarter_end_month + 1, 1) - timedelta(days=1)
 
-    month_start = date(display_year, display_month, 1)
-    if display_month == 12:
-        month_end = date(display_year + 1, 1, 1) - timedelta(days=1)
-    else:
-        month_end = date(display_year, display_month + 1, 1) - timedelta(days=1)
-
     year_start = date(display_year, 1, 1)
-    year_end = date(display_year, 12, 31)
+    year_end   = date(display_year, 12, 31)
 
     def count_actual(checklist, unit_filter, period_start, period_end):
         return ChecklistLog.objects.filter(
@@ -2387,6 +2645,9 @@ def member_checklist(request):
             **unit_filter
         ).values('log_date').distinct().count()
 
+    # -----------------------------------------------------------------
+    # Build the row data
+    # -----------------------------------------------------------------
     checklist_data = []
     total_month_expected = 0
     total_month_actual = 0
@@ -2398,14 +2659,18 @@ def member_checklist(request):
     for checklist in user_checklists:
         tasks = list(checklist.tasks.all().order_by('order'))
 
-        checklist_branches = checklist.assigned_branches.all()
+        checklist_branches    = checklist.assigned_branches.all()
         checklist_departments = checklist.assigned_departments.all()
 
         if branch_filter != 'all':
             try:
                 aid = int(branch_filter)
-                checklist_branches = checklist_branches.filter(id=aid) if aid in user_branch_ids else checklist_branches.none()
-            except ValueError:
+                checklist_branches = (
+                    checklist_branches.filter(id=aid)
+                    if aid in user_branch_ids
+                    else checklist_branches.none()
+                )
+            except (ValueError, TypeError):
                 checklist_branches = checklist_branches.none()
         else:
             checklist_branches = checklist_branches.filter(id__in=user_branch_ids)
@@ -2413,8 +2678,12 @@ def member_checklist(request):
         if department_filter != 'all':
             try:
                 aid = int(department_filter)
-                checklist_departments = checklist_departments.filter(id=aid) if aid in user_department_ids else checklist_departments.none()
-            except ValueError:
+                checklist_departments = (
+                    checklist_departments.filter(id=aid)
+                    if aid in user_department_ids
+                    else checklist_departments.none()
+                )
+            except (ValueError, TypeError):
                 checklist_departments = checklist_departments.none()
         else:
             checklist_departments = checklist_departments.filter(id__in=user_department_ids)
@@ -2429,7 +2698,10 @@ def member_checklist(request):
                 continue
             assign_units.append(('general', 0, 'General', None))
 
-        next_due = checklist.get_next_due_date(user_profile) if hasattr(checklist, 'get_next_due_date') else None
+        next_due = (
+            checklist.get_next_due_date(user_profile)
+            if hasattr(checklist, 'get_next_due_date') else None
+        )
 
         for unit_type, unit_id, unit_name, unit_obj in assign_units:
             if unit_type == 'branch':
@@ -2451,17 +2723,17 @@ def member_checklist(request):
             log_dates_list = [d.strftime('%Y-%m-%d') for d in month_log_dates]
 
             month_expected = count_expected_occurrences(checklist, month_start, month_end)
-            month_actual = count_actual(checklist, unit_filter, month_start, month_end)
+            month_actual   = count_actual(checklist, unit_filter, month_start, month_end)
 
             quarter_expected = count_expected_occurrences(checklist, quarter_start, quarter_end)
-            quarter_actual = count_actual(checklist, unit_filter, quarter_start, quarter_end)
+            quarter_actual   = count_actual(checklist, unit_filter, quarter_start, quarter_end)
 
             year_expected = count_expected_occurrences(checklist, year_start, year_end)
-            year_actual = count_actual(checklist, unit_filter, year_start, year_end)
+            year_actual   = count_actual(checklist, unit_filter, year_start, year_end)
 
-            month_progress = min(int(month_actual / month_expected * 100), 100) if month_expected > 0 else 0
+            month_progress   = min(int(month_actual / month_expected * 100), 100) if month_expected > 0 else 0
             quarter_progress = min(int(quarter_actual / quarter_expected * 100), 100) if quarter_expected > 0 else 0
-            year_progress = min(int(year_actual / year_expected * 100), 100) if year_expected > 0 else 0
+            year_progress    = min(int(year_actual / year_expected * 100), 100) if year_expected > 0 else 0
 
             if month_progress >= 100:
                 status = 'completed'
@@ -2508,21 +2780,34 @@ def member_checklist(request):
                 'assigned_departments': list(checklist.assigned_departments.values_list('name', flat=True)),
             })
 
-            total_month_expected += month_expected
-            total_month_actual += month_actual
+            total_month_expected   += month_expected
+            total_month_actual     += month_actual
             total_quarter_expected += quarter_expected
-            total_quarter_actual += quarter_actual
-            total_year_expected += year_expected
-            total_year_actual += year_actual
+            total_quarter_actual   += quarter_actual
+            total_year_expected    += year_expected
+            total_year_actual      += year_actual
 
-    overall_month_progress = min(int(total_month_actual / total_month_expected * 100), 100) if total_month_expected > 0 else 0
+    overall_month_progress   = min(int(total_month_actual / total_month_expected * 100), 100) if total_month_expected > 0 else 0
     overall_quarter_progress = min(int(total_quarter_actual / total_quarter_expected * 100), 100) if total_quarter_expected > 0 else 0
-    overall_year_progress = min(int(total_year_actual / total_year_expected * 100), 100) if total_year_expected > 0 else 0
+    overall_year_progress    = min(int(total_year_actual / total_year_expected * 100), 100) if total_year_expected > 0 else 0
 
-    available_branches = user_branches.filter(checklist_assignments__in=user_checklists).distinct().order_by('name')
-    available_departments = user_departments.filter(checklist_assignments__in=user_checklists).distinct().order_by('name')
+    # -----------------------------------------------------------------
+    # Filter dropdown options
+    # -----------------------------------------------------------------
+    available_branches = (
+        user_branches
+        .filter(checklist_assignments__in=user_checklists)
+        .distinct().order_by('name')
+    )
+    available_departments = (
+        user_departments
+        .filter(checklist_assignments__in=user_checklists)
+        .distinct().order_by('name')
+    )
 
-    combined_filter_options = [{'type': 'all', 'id': 'all', 'display': 'All Branches/Departments', 'value': 'all'}]
+    combined_filter_options = [
+        {'type': 'all', 'id': 'all', 'display': 'All Branches/Departments', 'value': 'all'}
+    ]
     for branch in available_branches:
         combined_filter_options.append({
             'type': 'branch', 'id': branch.id,
@@ -2576,62 +2861,84 @@ def member_checklist(request):
         try:
             q_num = int(quarter_filter)
             selected_quarter_display = quarter_names.get(q_num, f'Q{q_num}')
-        except ValueError:
+        except (ValueError, TypeError):
             pass
 
     context = {
         'user_profile': user_profile,
         'checklists': user_checklists,
         'checklist_data': checklist_data,
-        'years': years,
-        'overall_month_progress': overall_month_progress,
+        'years': list(range(timezone.now().year - 2, timezone.now().year + 1)),
+
+        # KPI values, precomputed server-side
+        'overall_month_progress':   overall_month_progress,
         'overall_quarter_progress': overall_quarter_progress,
-        'overall_year_progress': overall_year_progress,
-        'total_checklists': user_checklists.count(),
-        'total_month_expected': total_month_expected,
-        'total_month_actual': total_month_actual,
-        'total_quarter_expected': total_quarter_expected,
-        'total_quarter_actual': total_quarter_actual,
-        'total_year_expected': total_year_expected,
-        'total_year_actual': total_year_actual,
-        'branch_filter': branch_filter,
-        'department_filter': department_filter,
-        'month_filter': month_filter,
-        'year_filter': year_filter,
-        'frequency_filter': frequency_filter,
-        'quarter_filter': quarter_filter,
-        'available_frequencies': available_frequencies,
-        'month_names': month_names,
-        'quarter_options': quarter_options,
-        'selected_frequency_display': selected_frequency_display,
-        'selected_quarter_display': selected_quarter_display,
-        'today': today,
-        'month_name': today.strftime('%B'),
-        'year': today.year,
-        'display_month': display_month,
-        'display_year': display_year,
-        'current_quarter': current_quarter,
+        'overall_year_progress':    overall_year_progress,
+        'total_month_actual':       total_month_actual,
+        'total_month_expected':     total_month_expected,
+        'total_quarter_actual':     total_quarter_actual,
+        'total_quarter_expected':   total_quarter_expected,
+        'total_year_actual':        total_year_actual,
+        'total_year_expected':      total_year_expected,
+
+        # Active period
+        'display_month':         display_month,
+        'display_year':          display_year,
+        'current_quarter':       current_quarter,
+        'selected_month_label':  selected_month_label,
+
+        # Filters and labels
+        'branch_filter':      branch_filter,
+        'department_filter':  department_filter,
+        'month_filter':       month_filter,
+        'year_filter':        year_filter,
+        'frequency_filter':   frequency_filter,
+        'quarter_filter':     quarter_filter,
+
+        'available_frequencies':       available_frequencies,
+        'month_names':                 month_names,
+        'quarter_options':             quarter_options,
+        'selected_frequency_display':  selected_frequency_display,
+        'selected_quarter_display':    selected_quarter_display,
+
+        'today':      today,
+        'month_name': selected_month_label,
+        'year':       display_year,
+
         'combined_filter_options': combined_filter_options,
-        'active_combined_filter': active_combined_filter,
+        'active_combined_filter':  active_combined_filter,
         'selected_combined_display': selected_combined_display,
     }
 
     return render(request, 'control_dashboard/checklist-mem.html', context)
-
 
 # ==================== API - CHECKLIST LOG ====================
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_log_checklist(request):
+    """
+    Log or unlog a checklist for a given date.
+
+    ONE-LOG-PER-PERIOD RULES:
+      daily      → one log per calendar day (unchanged)
+      weekly     → one log per Fri–Thu week
+      monthly    → one log per calendar month
+      quarterly  → one log per calendar quarter
+      bi-annual  → one log per Jan–Jun or Jul–Dec block
+      annual     → one log per calendar year
+
+    Any attempt to log a second day inside the same period is
+    rejected with HTTP 409 and a helpful `already_logged_on` date.
+    """
     try:
         data = json.loads(request.body)
 
         checklist_id = data.get('checklist_id')
-        log_date = data.get('log_date')
-        action = data.get('action', 'log')
-        unit_type = data.get('unit_type', 'general')
-        unit_id = data.get('unit_id')
+        log_date     = data.get('log_date')
+        action       = data.get('action', 'log')
+        unit_type    = data.get('unit_type', 'general')
+        unit_id      = data.get('unit_id')
 
         if not checklist_id:
             return JsonResponse({'success': False, 'error': 'Checklist ID is required'}, status=400)
@@ -2649,10 +2956,12 @@ def api_log_checklist(request):
         except Checklist.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Checklist not found'}, status=404)
 
+        user_branch_ids = set(user_profile.branches.values_list('id', flat=True))
+        user_dept_ids   = set(user_profile.departments.values_list('id', flat=True))
+
         is_assigned = (
-            checklist.assigned_users.filter(id=user_profile.id).exists() or
-            checklist.assignment_target == 'all' or
-            checklist.assignment_target == user_profile.position
+            checklist.assigned_branches.filter(id__in=user_branch_ids).exists() or
+            checklist.assigned_departments.filter(id__in=user_dept_ids).exists()
         )
         if not is_assigned:
             return JsonResponse({'success': False, 'error': 'You are not assigned to this checklist'}, status=403)
@@ -2676,33 +2985,125 @@ def api_log_checklist(request):
             except (ValueError, Department.DoesNotExist):
                 return JsonResponse({'success': False, 'error': 'Invalid department'}, status=400)
 
+        # ------------------------------------------------------------------
+        # EVERY log for this (checklist, user, unit) tuple — used to detect
+        # whether any other day in the same period has already been logged.
+        # ------------------------------------------------------------------
+        base_qs = ChecklistLog.objects.filter(
+            checklist=checklist,
+            user=user_profile,
+            branch=branch,
+            department=department,
+        )
+
+        freq = checklist.frequency or 'daily'
+
+        # ============================================================
+        # Period window for the *candidate* date
+        # ============================================================
+        period_start = None
+        period_end   = None
+
+        if freq == 'weekly':
+            # Friday-based week (single source of truth)
+            week_start = get_week_start(date_obj)
+            period_start = week_start
+            period_end   = week_start + timedelta(days=6)
+
+        elif freq == 'monthly':
+            period_start = date(date_obj.year, date_obj.month, 1)
+            if date_obj.month == 12:
+                period_end = date(date_obj.year + 1, 1, 1) - timedelta(days=1)
+            else:
+                period_end = date(date_obj.year, date_obj.month + 1, 1) - timedelta(days=1)
+
+        elif freq == 'quarterly':
+            q_start_month = ((date_obj.month - 1) // 3) * 3 + 1
+            q_end_month   = q_start_month + 2
+            period_start = date(date_obj.year, q_start_month, 1)
+            if q_end_month == 12:
+                period_end = date(date_obj.year + 1, 1, 1) - timedelta(days=1)
+            else:
+                period_end = date(date_obj.year, q_end_month + 1, 1) - timedelta(days=1)
+
+        elif freq == 'bi-annual':
+            if date_obj.month <= 6:
+                period_start = date(date_obj.year, 1, 1)
+                period_end   = date(date_obj.year, 6, 30)
+            else:
+                period_start = date(date_obj.year, 7, 1)
+                period_end   = date(date_obj.year, 12, 31)
+
+        elif freq == 'annual':
+            period_start = date(date_obj.year, 1, 1)
+            period_end   = date(date_obj.year, 12, 31)
+
+        # ============================================================
+        # ACTION: log
+        # ============================================================
         if action == 'log':
+            # For non-daily frequencies, if any OTHER day in the same
+            # period is already logged, reject with 409.
+            if period_start is not None and period_end is not None:
+                existing_in_period = base_qs.filter(
+                    log_date__gte=period_start,
+                    log_date__lte=period_end,
+                ).exclude(log_date=date_obj).first()
+
+                if existing_in_period is not None:
+                    return JsonResponse({
+                        'success': False,
+                        'error': (
+                            f'This is a {freq} activity. '
+                            f'It has already been logged for this period '
+                            f'on {existing_in_period.log_date.isoformat()}.'
+                        ),
+                        'already_logged_on': existing_in_period.log_date.isoformat(),
+                        'period': freq,
+                        'period_start': period_start.isoformat(),
+                        'period_end': period_end.isoformat(),
+                    }, status=409)
+
             log_entry, created = ChecklistLog.objects.get_or_create(
                 checklist=checklist,
                 user=user_profile,
                 branch=branch,
                 department=department,
-                log_date=date_obj
+                log_date=date_obj,
             )
 
             if created:
-                return JsonResponse({'success': True, 'message': 'Checklist logged successfully', 'action': 'logged'})
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Checklist logged successfully',
+                    'action': 'logged',
+                    'period': freq,
+                })
             else:
-                return JsonResponse({'success': True, 'message': 'Checklist already logged for this date', 'action': 'already_logged'})
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Checklist already logged for this date',
+                    'action': 'already_logged',
+                    'period': freq,
+                })
 
+        # ============================================================
+        # ACTION: unlog
+        # ============================================================
         elif action == 'unlog':
-            deleted_count, _ = ChecklistLog.objects.filter(
-                checklist=checklist,
-                user=user_profile,
-                branch=branch,
-                department=department,
-                log_date=date_obj
-            ).delete()
+            deleted_count, _ = base_qs.filter(log_date=date_obj).delete()
 
             if deleted_count > 0:
-                return JsonResponse({'success': True, 'message': 'Checklist unlogged successfully', 'action': 'unlogged'})
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Checklist unlogged successfully',
+                    'action': 'unlogged',
+                })
             else:
-                return JsonResponse({'success': False, 'error': 'No log found for this date'}, status=404)
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No log found for this date',
+                }, status=404)
 
         else:
             return JsonResponse({'success': False, 'error': 'Invalid action. Use "log" or "unlog"'}, status=400)
@@ -2710,8 +3111,8 @@ def api_log_checklist(request):
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
     except Exception as e:
+        logger.exception("Error in api_log_checklist")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -2737,9 +3138,6 @@ def api_get_checklist_logs(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-@csrf_exempt
-@require_http_methods(["GET"])
-def api_get_checklist_stats(request):
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
 
@@ -2795,6 +3193,63 @@ def api_get_checklist_stats(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_get_checklist_stats(request):
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+
+        user_branch_ids = user_profile.branches.values_list('id', flat=True)
+        user_dept_ids   = user_profile.departments.values_list('id', flat=True)
+
+        user_checklists = Checklist.objects.filter(
+            is_active=True
+        ).filter(
+            Q(assigned_branches__in=user_branch_ids) |
+            Q(assigned_departments__in=user_dept_ids)
+        ).distinct()
+
+        total_checklists = user_checklists.count()
+        logs = ChecklistLog.objects.filter(user=user_profile)
+        total_logs = logs.count()
+
+        today = timezone.now().date()
+        start_of_week = get_week_start(today)
+        end_of_week = start_of_week + timedelta(days=6)
+
+        weekly_logs = logs.filter(log_date__gte=start_of_week, log_date__lte=end_of_week).count()
+        recent_logs = logs.filter(log_date__gte=today - timedelta(days=7)).count()
+
+        daily_checklists = user_checklists.filter(frequency='daily')
+        daily_total = daily_checklists.count()
+
+        completion_rate = 0
+        if daily_total > 0:
+            completed_days = 0
+            for i in range(7):
+                day = start_of_week + timedelta(days=i)
+                if day > today:
+                    break
+                if logs.filter(log_date=day).count() >= daily_total:
+                    completed_days += 1
+            completion_rate = int((completed_days / 7) * 100)
+
+        return JsonResponse({
+            'success': True,
+            'stats': {
+                'total_checklists': total_checklists,
+                'total_logs': total_logs,
+                'weekly_logs': weekly_logs,
+                'recent_logs': recent_logs,
+                'completion_rate': completion_rate,
+                'daily_checklists': daily_total,
+            }
+        })
+
+    except UserProfile.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 # ==================== API - SAVE DRAFT ====================
 
@@ -6460,3 +6915,751 @@ def api_supervisor_top_performers_live(request):
             'team_size': total_members,
         },
     })
+
+
+# ═══ NEW ═══ Avatar upload / delete endpoints
+
+@login_required
+@require_http_methods(["POST"])
+def api_upload_avatar(request, user_id):
+    """
+    Upload or replace a user's profile picture.
+
+    Multipart/form-data with an 'avatar' file field.
+    Admin-only. Max 2 MB. Image mime type required.
+    """
+    try:
+        # ---- Admin role guard ----
+        try:
+            caller = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        if caller.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+        target = get_object_or_404(UserProfile, id=user_id)
+
+        uploaded = request.FILES.get('avatar')
+        if not uploaded:
+            return JsonResponse({'success': False, 'error': 'No file uploaded'}, status=400)
+
+        if uploaded.size > 2 * 1024 * 1024:
+            return JsonResponse({'success': False, 'error': 'Image must be smaller than 2 MB'}, status=400)
+
+        content_type = uploaded.content_type or ''
+        if not content_type.startswith('image/'):
+            return JsonResponse({'success': False, 'error': 'File must be an image'}, status=400)
+
+        # Delete old file first
+        if target.avatar:
+            try:
+                target.avatar.delete(save=False)
+            except Exception:
+                pass
+
+        target.avatar = uploaded
+        target.save(update_fields=['avatar', 'updated_at'])
+
+        log_activity(
+            user=caller,
+            activity_type='user_updated',
+            details=f'Updated avatar for {target.email}',
+            request=request,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Avatar updated successfully',
+            'avatar_url': target.avatar_url,
+        })
+
+    except Exception:
+        logger.exception("Error in api_upload_avatar")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def api_delete_avatar(request, user_id):
+    """Remove a user's uploaded avatar. Falls back to Gravatar."""
+    try:
+        # ---- Admin role guard ----
+        try:
+            caller = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        if caller.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+        target = get_object_or_404(UserProfile, id=user_id)
+
+        if target.avatar:
+            try:
+                target.avatar.delete(save=False)
+            except Exception:
+                pass
+            target.avatar = None
+            target.save(update_fields=['avatar', 'updated_at'])
+
+        log_activity(
+            user=caller,
+            activity_type='user_updated',
+            details=f'Removed avatar for {target.email}',
+            request=request,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Avatar removed',
+            'avatar_url': target.avatar_url,
+        })
+
+    except Exception:
+        logger.exception("Error in api_delete_avatar")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+# ==================== ADMIN — USER LIST ====================
+
+@login_required
+def admin_user_list(request):
+    """
+    User List page.
+
+    Renders every UserProfile with:
+      - avatar (uploaded or Gravatar fallback)
+      - full name, email, position, role, status
+      - activate / deactivate toggle
+      - edit (modal form → api_edit_user)
+
+    Only admins may access this page.
+    """
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+        if user_profile.role != 'admin':
+            messages.error(request, 'You do not have permission to access this page.')
+            return redirect_dashboard(request.user)
+    except UserProfile.DoesNotExist:
+        return redirect_dashboard(request.user)
+
+    users = (
+        UserProfile.objects
+        .prefetch_related('branches', 'departments')
+        .order_by('full_name')
+    )
+
+    positions = UserProfile.POSITION_CHOICES
+    roles = UserProfile.ROLE_CHOICES
+    statuses = UserProfile.STATUS_CHOICES
+    branches = Branch.objects.filter(is_active=True).order_by('name')
+    departments = Department.objects.filter(is_active=True).order_by('name')
+
+    context = {
+        'user_profile': user_profile,
+        'users': users,
+        'positions': positions,
+        'roles': roles,
+        'statuses': statuses,
+        'branches': branches,
+        'departments': departments,
+    }
+    return render(request, 'control_dashboard/userlist.html', context)
+
+# ==================== ADMIN — BRANCH / DEPARTMENT MANAGEMENT ====================
+
+@login_required
+def admin_units(request):
+    """
+    Branch / Department management page.
+
+    Renders a single page with:
+      - Add form (name, type, assignment scope, specific users)
+      - Table of every saved Branch and Department
+      - Edit / Delete actions on each row
+
+    Only admins may access this page.
+    """
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+        if user_profile.role != 'admin':
+            messages.error(request, 'You do not have permission to access this page.')
+            return redirect_dashboard(request.user)
+    except UserProfile.DoesNotExist:
+        return redirect_dashboard(request.user)
+
+    branches = Branch.objects.all().order_by('name')
+    departments = Department.objects.all().order_by('name')
+
+    # Users eligible for "specific" assignment — every active user
+    assignable_users = (
+        UserProfile.objects
+        .filter(status='active')
+        .order_by('full_name')
+    )
+
+    context = {
+        'user_profile': user_profile,
+        'branches': branches,
+        'departments': departments,
+        'assignable_users': assignable_users,
+    }
+    return render(request, 'control_dashboard/branch_department.html', context)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_create_unit(request):
+    """
+    Create a Branch or Department.
+
+    Body:
+    {
+        "unit_type":   "branch" | "department",
+        "name":        "Accra Main",
+        "code":        "ACC" (optional, branch only),
+        "assignment":  "cc" | "hc" | "specific",
+        "user_ids":    [1, 2, 3]   (only when assignment == "specific"),
+        "description": "..."        (optional)
+    }
+    """
+    try:
+        # ---- Admin role guard ----
+        try:
+            caller = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        if caller.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+        data = json.loads(request.body)
+
+        unit_type   = (data.get('unit_type') or '').strip().lower()
+        name        = (data.get('name') or '').strip()
+        code        = (data.get('code') or '').strip()
+        assignment  = (data.get('assignment') or 'cc').strip().lower()
+        user_ids    = data.get('user_ids') or []
+        description = (data.get('description') or '').strip()
+
+        # ---- Validation ----
+        if unit_type not in ('branch', 'department'):
+            return JsonResponse({'success': False, 'error': 'Unit type must be "branch" or "department".'}, status=400)
+
+        if not name:
+            return JsonResponse({'success': False, 'error': 'Name is required.'}, status=400)
+
+        if assignment not in ('cc', 'hc', 'specific'):
+            return JsonResponse({'success': False, 'error': 'Invalid assignment scope.'}, status=400)
+
+        if assignment == 'specific' and not user_ids:
+            return JsonResponse({'success': False, 'error': 'Select at least one user for specific assignment.'}, status=400)
+
+        # ---- Duplicate check ----
+        Model = Branch if unit_type == 'branch' else Department
+        if Model.objects.filter(name__iexact=name).exists():
+            return JsonResponse({
+                'success': False,
+                'error': f'A {unit_type} named "{name}" already exists.'
+            }, status=400)
+
+        # ---- Create ----
+        create_kwargs = {
+            'name': name,
+            'description': description,
+            'is_active': True,
+        }
+        if unit_type == 'branch' and code:
+            create_kwargs['code'] = code
+
+        unit = Model.objects.create(**create_kwargs)
+
+        # ---- Attach users for "specific" assignment ----
+        if assignment == 'specific':
+            users_qs = UserProfile.objects.filter(id__in=user_ids, status='active')
+            if hasattr(unit, 'assigned_users'):
+                unit.assigned_users.set(users_qs)
+
+        log_activity(
+            user=caller,
+            activity_type='unit_created',
+            details=f'Created {unit_type} "{name}" (assignment: {assignment})',
+            request=request,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'{unit_type.capitalize()} created successfully.',
+            'unit_id': unit.id,
+            'unit_type': unit_type,
+        }, status=201)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
+    except Exception:
+        logger.exception("Error in api_create_unit")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_edit_unit(request, unit_type, unit_id):
+    """
+    Edit a Branch or Department.
+
+    URL: /adminboard/api/units/<branch|department>/<id>/edit/
+    """
+    try:
+        try:
+            caller = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        if caller.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+        if unit_type not in ('branch', 'department'):
+            return JsonResponse({'success': False, 'error': 'Invalid unit type.'}, status=400)
+
+        Model = Branch if unit_type == 'branch' else Department
+        unit  = get_object_or_404(Model, id=unit_id)
+
+        data = json.loads(request.body)
+
+        changes = []
+
+        if 'name' in data:
+            new_name = (data['name'] or '').strip()
+            if not new_name:
+                return JsonResponse({'success': False, 'error': 'Name cannot be empty.'}, status=400)
+            if new_name.lower() != unit.name.lower():
+                if Model.objects.filter(name__iexact=new_name).exclude(id=unit.id).exists():
+                    return JsonResponse({'success': False, 'error': f'Another {unit_type} already uses that name.'}, status=400)
+                changes.append(f'Name: "{unit.name}" → "{new_name}"')
+                unit.name = new_name
+
+        if 'description' in data:
+            unit.description = (data['description'] or '').strip()
+
+        if unit_type == 'branch' and 'code' in data:
+            unit.code = (data['code'] or '').strip()[:20]
+
+        if 'is_active' in data:
+            unit.is_active = bool(data['is_active'])
+
+        unit.save()
+
+        # ---- Update specific-user assignment ----
+        assignment = (data.get('assignment') or '').strip().lower()
+        if assignment == 'specific' and 'user_ids' in data:
+            users_qs = UserProfile.objects.filter(id__in=data['user_ids'], status='active')
+            if hasattr(unit, 'assigned_users'):
+                unit.assigned_users.set(users_qs)
+                changes.append(f'Users assigned: {users_qs.count()}')
+
+        if changes:
+            log_activity(
+                user=caller,
+                activity_type='unit_updated',
+                details=f'{unit_type.capitalize()} "{unit.name}" updated: ' + '; '.join(changes),
+                request=request,
+            )
+
+        return JsonResponse({'success': True, 'message': f'{unit_type.capitalize()} updated successfully.'})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
+    except Exception:
+        logger.exception("Error in api_edit_unit")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def api_delete_unit(request, unit_type, unit_id):
+    """Delete a Branch or Department."""
+    try:
+        try:
+            caller = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        if caller.role != 'admin':
+            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+        if unit_type not in ('branch', 'department'):
+            return JsonResponse({'success': False, 'error': 'Invalid unit type.'}, status=400)
+
+        Model = Branch if unit_type == 'branch' else Department
+        unit  = get_object_or_404(Model, id=unit_id)
+
+        unit_name = unit.name
+        unit.delete()
+
+        log_activity(
+            user=caller,
+            activity_type='unit_deleted',
+            details=f'Deleted {unit_type} "{unit_name}"',
+            request=request,
+        )
+
+        return JsonResponse({'success': True, 'message': f'{unit_type.capitalize()} deleted successfully.'})
+
+    except Exception:
+        logger.exception("Error in api_delete_unit")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+
+
+
+
+
+
+
+
+
+def _get_email_report_type_options(user_profile, is_privileged=False):
+    """
+    Report type options for the Email compose page.
+
+    Members  → only report types they're assigned to, PLUS the
+               consolidated report types they can access.
+    Admins / supervisors → every non-TB, non-uploaded report type.
+    """
+    base_qs = Report.objects.exclude(
+        report_type=TRIAL_BALANCE_REPORT_TYPE
+    ).exclude(
+        status=UPLOADED_STATUS
+    )
+
+    if is_privileged:
+        qs = base_qs
+    else:
+        qs = base_qs.filter(
+            Q(assigned_to=user_profile) |
+            Q(is_assigned_to_all=True) |
+            Q(created_by=user_profile)
+        )
+
+    types = sorted(
+        {rt for rt in qs.values_list('report_type', flat=True) if rt}
+    )
+
+    # Always allow the "consolidated reports" that the user can see,
+    # even if they weren't directly assigned to the underlying reports.
+    consolidated_types = sorted(
+        {rt for rt in Report.objects.filter(
+            Q(assigned_to=user_profile) |
+            Q(is_assigned_to_all=True) |
+            Q(created_by=user_profile)
+        ).exclude(
+            report_type=TRIAL_BALANCE_REPORT_TYPE
+        ).filter(
+            report_type__icontains='consolidated'
+        ).values_list('report_type', flat=True) if rt}
+    )
+
+    combined = sorted(set(types) | set(consolidated_types))
+
+    # Return as list of dicts so the template can render option labels
+    return [{'value': rt, 'label': rt} for rt in combined]
+
+
+@login_required
+def email_page(request):
+    """
+    Email compose page.
+
+    To, CC, Report Type (DB), Header, Body, Send.
+    """
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+    except UserProfile.DoesNotExist:
+        return redirect('control_dashboard:member_dashboard')
+
+    is_privileged = user_profile.role in ('admin', 'supervisor')
+
+    # Recipients: every active user, excluding the sender themselves
+    # (they can still manually type their own address if they want).
+    recipients = (
+        UserProfile.objects
+        .filter(status='active')
+        .exclude(id=user_profile.id)
+        .order_by('full_name')
+    )
+
+    report_type_options = _get_email_report_type_options(
+        user_profile, is_privileged=is_privileged
+    )
+
+    # If a ?report_type=<X> is passed (e.g. from the report page),
+    # pre-select it in the dropdown.
+    preselect_report_type = (request.GET.get('report_type') or '').strip()
+
+    context = {
+        'user_profile': user_profile,
+        'today': timezone.now(),
+        'recipients': recipients,
+        'report_type_options': report_type_options,
+        'preselect_report_type': preselect_report_type,
+        'is_privileged': is_privileged,
+    }
+    return render(request, 'control_dashboard/email.html', context)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_send_email(request):
+    """
+    Send an email from the compose page.
+
+    Every attempt — successful or not — is recorded in the
+    SentEmail table so there is a durable audit trail of who
+    sent what, to whom, and when.
+
+    Body (JSON):
+    {
+        "to":          ["a@x.com", "b@y.com"],
+        "cc":          ["c@z.com"],
+        "report_type": "Daily Exception Report",
+        "header":      "Subject line",
+        "body":        "Email body text"
+    }
+    """
+    try:
+        if not request.body:
+            return JsonResponse({'success': False, 'error': 'Empty request body.'}, status=400)
+
+        data = json.loads(request.body)
+
+        to_list       = data.get('to') or []
+        cc_list       = data.get('cc') or []
+        report_type   = (data.get('report_type') or '').strip()
+        header        = (data.get('header') or '').strip()
+        body          = (data.get('body') or '').strip()
+
+        # ---- Validation ----
+        if not isinstance(to_list, list) or not to_list:
+            return JsonResponse({'success': False, 'error': 'At least one "To" recipient is required.'}, status=400)
+
+        if not report_type:
+            return JsonResponse({'success': False, 'error': 'Report type is required.'}, status=400)
+
+        if not header:
+            return JsonResponse({'success': False, 'error': 'Email header is required.'}, status=400)
+
+        if not body:
+            return JsonResponse({'success': False, 'error': 'Email body is required.'}, status=400)
+
+        # Normalize + deduplicate recipient lists
+        def _clean(lst):
+            out = []
+            for addr in lst:
+                a = str(addr or '').strip()
+                if a and a not in out:
+                    out.append(a)
+            return out
+
+        to_list = _clean(to_list)
+        cc_list = _clean(cc_list)
+
+        # Simple email-format guard
+        email_re = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+        bad = [a for a in (to_list + cc_list) if not email_re.match(a)]
+        if bad:
+            return JsonResponse({
+                'success': False,
+                'error': f'Invalid email address(es): {", ".join(bad)}',
+            }, status=400)
+
+        # ---- Caller ----
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        # ---- Build the final subject ----
+        full_subject = f'[{report_type}] {header}'
+
+        # ---- Compose the message ----
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or user_profile.email
+
+        message = EmailMessage(
+            subject=full_subject,
+            body=body,
+            from_email=from_email,
+            to=to_list,
+            cc=cc_list,
+        )
+
+        # ---- Attempt to send ----
+        send_error = None
+        try:
+            message.send(fail_silently=False)
+            delivery_status = 'sent'
+        except Exception as exc:
+            logger.exception("SMTP send failed")
+            send_error = str(exc)
+            delivery_status = 'failed'
+
+        # ---- PERSIST THE SENT EMAIL RECORD ----
+        # This runs regardless of SMTP outcome so we have a full
+        # audit trail of what was attempted.
+        try:
+            SentEmail.objects.create(
+                sender=user_profile,
+                report_type=report_type,
+                subject=full_subject,
+                body=body,
+                to_addresses=', '.join(to_list),
+                cc_addresses=', '.join(cc_list),
+                status=delivery_status,
+                error_message=send_error or '',
+            )
+        except Exception:
+            logger.exception("Failed to persist SentEmail audit row")
+
+        # ---- Mirror into the ActivityLog for the activity timeline ----
+        log_activity(
+            user=user_profile,
+            activity_type='email_sent',
+            details=(
+                f'Sent email "{full_subject}" to {", ".join(to_list)}'
+                + (f' (cc: {", ".join(cc_list)})' if cc_list else '')
+                + (f' — SMTP error: {send_error}' if send_error else '')
+            ),
+            request=request,
+        )
+
+        if send_error:
+            return JsonResponse({
+                'success': False,
+                'error': f'Email saved but could not be sent: {send_error}',
+            }, status=500)
+
+        return JsonResponse({
+            'success': True,
+            'message': (
+                f'Email sent to {len(to_list)} recipient(s)'
+                + (f' and {len(cc_list)} cc' if cc_list else '')
+                + '.'
+            ),
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
+    except Exception as e:
+        logger.exception("Error in api_send_email")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    """
+    Send an email from the compose page.
+
+    Body (JSON):
+    {
+        "to":          ["a@x.com", "b@y.com"],
+        "cc":          ["c@z.com"],
+        "report_type": "Daily Exception Report",
+        "header":      "Subject line",
+        "body":        "Email body text"
+    }
+    """
+    try:
+        if not request.body:
+            return JsonResponse({'success': False, 'error': 'Empty request body.'}, status=400)
+
+        data = json.loads(request.body)
+
+        to_list       = data.get('to') or []
+        cc_list       = data.get('cc') or []
+        report_type   = (data.get('report_type') or '').strip()
+        header        = (data.get('header') or '').strip()
+        body          = (data.get('body') or '').strip()
+
+        # ---- Validation ----
+        if not isinstance(to_list, list) or not to_list:
+            return JsonResponse({'success': False, 'error': 'At least one "To" recipient is required.'}, status=400)
+
+        if not report_type:
+            return JsonResponse({'success': False, 'error': 'Report type is required.'}, status=400)
+
+        if not header:
+            return JsonResponse({'success': False, 'error': 'Email header is required.'}, status=400)
+
+        if not body:
+            return JsonResponse({'success': False, 'error': 'Email body is required.'}, status=400)
+
+        # Normalize + clean recipient lists
+        def _clean(lst):
+            out = []
+            for addr in lst:
+                a = str(addr or '').strip()
+                if a and a not in out:
+                    out.append(a)
+            return out
+
+        to_list = _clean(to_list)
+        cc_list = _clean(cc_list)
+
+        # Simple email-format guard (Django will validate the rest at send time)
+        email_re = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+        bad = [a for a in (to_list + cc_list) if not email_re.match(a)]
+        if bad:
+            return JsonResponse({
+                'success': False,
+                'error': f'Invalid email address(es): {", ".join(bad)}',
+            }, status=400)
+
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        # ---- Prepend report type into the subject for traceability ----
+        full_subject = f'[{report_type}] {header}'
+
+        # ---- Compose the message ----
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or user_profile.email
+        message = EmailMessage(
+            subject=full_subject,
+            body=body,
+            from_email=from_email,
+            to=to_list,
+            cc=cc_list,
+        )
+
+        # ---- Attempt to send ----
+        send_error = None
+        try:
+            message.send(fail_silently=False)
+        except Exception as exc:
+            logger.exception("SMTP send failed")
+            send_error = str(exc)
+
+        # ---- Log the attempt regardless of SMTP outcome ----
+        log_activity(
+            user=user_profile,
+            activity_type='email_sent',
+            details=(
+                f'Sent email "{full_subject}" to {", ".join(to_list)}'
+                + (f' (cc: {", ".join(cc_list)})' if cc_list else '')
+                + (f' — SMTP error: {send_error}' if send_error else '')
+            ),
+            request=request,
+        )
+
+        if send_error:
+            return JsonResponse({
+                'success': False,
+                'error': f'Email saved but could not be sent: {send_error}',
+            }, status=500)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Email sent to {len(to_list)} recipient(s)' + (f' and {len(cc_list)} cc' if cc_list else '') + '.',
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
+    except Exception as e:
+        logger.exception("Error in api_send_email")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

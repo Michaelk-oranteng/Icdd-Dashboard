@@ -1,48 +1,4 @@
 /* ==========================================================================
-   SUPERVISOR ACTIVITY CHECKLIST — Premium Light Theme
-   ========================================================================== */
-
-:root {
-    /* Surfaces */
-    --sc-bg-0: #eef1f8;
-    --sc-bg-1: #ffffff;
-    --sc-bg-2: #f7f8fc;
-    --sc-bg-3: #f1f3f9;
-
-    /* Borders */
-    --sc-border: rgba(15, 27, 51, 0.08);
-    --sc-border-strong: rgba(15, 27, 51, 0.16);
-    --sc-hairline: rgba(15, 27, 51, 0.06);
-
-    /* Text */
-    --sc-text-0: #0f1b33;
-    --sc-text-1: #46536b;
-    --sc-text-2: #8993a8;
-
-    /* Accents */
-    --sc-accent: #4f6ef7;
-    --sc-accent-soft: #eef1ff;
-    --sc-emerald: #17a673;
-    --sc-emerald-soft: #e2f7ef;
-    --sc-amber: #e08a17;
-    --sc-amber-soft: #fdf2e0;
-    --sc-rose: #e0456a;
-    --sc-rose-soft: #fdeaf0;
-    --sc-violet: #7c5cf0;
-    --sc-violet-soft: #f0ebff;
-
-    /* Shadows */
-    --sc-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
-                    0 1px 3px rgba(15, 27, 51, 0.03);
-    --sc-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
-                    0 2px 4px rgba(15, 27, 51, 0.03);
-    --sc-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
-                    0 4px 12px rgba(15, 27, 51, 0.04);
-
-    --sc-font: 'Poppins', system-ui, -apple-system, sans-serif;
-}
-
-/* ==========================================================================
    1. STATS GRID
    ========================================================================== */
 .stats-grid {

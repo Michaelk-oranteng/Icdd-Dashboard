@@ -1,89 +1,34 @@
-/* ============================================================
-   MEMBER DASHBOARD — Premium Light Theme
-   ============================================================ */
+/* ==========================================================================
+   MEMBER DASHBOARD — extracted from memberboard.html inline <style>
+   These rules were previously duplicated inline in the template.
+   Tokens (--fx-*) live in stylesheets/variables-unified.css.
+   ========================================================================== */
 
-/* ============================================================
-   DESIGN TOKENS
-   ============================================================ */
-:root {
-    /* Surfaces */
-    --fx-bg-0: #eef1f8;
-    --fx-bg-1: #ffffff;
-    --fx-bg-2: #f7f8fc;
-    --fx-bg-3: #f1f3f9;
-
-    /* Glass & borders */
-    --fx-glass: rgba(255, 255, 255, 0.85);
-    --fx-glass-hover: rgba(255, 255, 255, 1);
-    --fx-border: rgba(15, 27, 51, 0.08);
-    --fx-border-strong: rgba(15, 27, 51, 0.16);
-    --fx-hairline: rgba(15, 27, 51, 0.06);
-
-    /* Text */
-    --fx-text-0: #0f1b33;
-    --fx-text-1: #46536b;
-    --fx-text-2: #8993a8;
-
-    /* Accents */
-    --fx-accent: #4f6ef7;
-    --fx-accent-soft: #eef1ff;
-    --fx-cyan: #0ea5a4;
-    --fx-cyan-soft: #e0f7f6;
-    --fx-violet: #7c5cf0;
-    --fx-violet-soft: #f0ebff;
-    --fx-amber: #e08a17;
-    --fx-amber-soft: #fdf2e0;
-    --fx-rose: #e0456a;
-    --fx-rose-soft: #fdeaf0;
-    --fx-emerald: #17a673;
-    --fx-emerald-soft: #e2f7ef;
-
-    /* Shadows */
-    --fx-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
-                    0 1px 3px rgba(15, 27, 51, 0.03);
-    --fx-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
-                    0 2px 4px rgba(15, 27, 51, 0.03);
-    --fx-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
-                    0 4px 12px rgba(15, 27, 51, 0.04);
-
-    --fx-font: 'Poppins', system-ui, -apple-system, sans-serif;
-    --fx-mono: 'JetBrains Mono', 'Fira Code', monospace;
-
-    --space-xs: 6px;
-    --space-sm: 10px;
-    --space-md: 16px;
-    --space-lg: 20px;
-    --space-xl: 28px;
-    --radius-md: 12px;
-    --radius-lg: 18px;
-    --radius-xl: 22px;
-}
-
-/* ============================================================
-   1. DASHBOARD CONTAINER
-   ============================================================ */
+/* --------------------------------------------------------------------------
+   Dashboard container
+   -------------------------------------------------------------------------- */
 .fx-dashboard {
     font-family: var(--fx-font);
     color: var(--fx-text-0);
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
+    gap: 20px;
     padding: 4px 0 32px;
 }
 
-/* ============================================================
-   2. HERO METRICS STRIP
-   ============================================================ */
+/* --------------------------------------------------------------------------
+   Section 1 — Hero metrics strip
+   -------------------------------------------------------------------------- */
 .fx-metrics-strip {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-md);
+    gap: 16px;
 }
 
 .fx-metric {
     position: relative;
     padding: 20px 22px;
-    border-radius: var(--radius-lg);
+    border-radius: 18px;
     background: var(--fx-bg-1);
     border: 1px solid var(--fx-border);
     overflow: hidden;
@@ -195,15 +140,15 @@
     box-shadow: 0 0 6px color-mix(in srgb, var(--metric-accent, var(--fx-accent)) 70%, transparent);
 }
 
-/* ============================================================
-   3. PROGRESS ORBIT STRIP
-   ============================================================ */
+/* --------------------------------------------------------------------------
+   Section 2 — Progress orbit rings
+   -------------------------------------------------------------------------- */
 .fx-orbit-strip {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: var(--space-md);
+    gap: 16px;
     padding: 18px;
-    border-radius: var(--radius-xl);
+    border-radius: 20px;
     background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
     border: 1px solid var(--fx-border);
     box-shadow: var(--fx-shadow-sm);
@@ -296,18 +241,18 @@
     font-variant-numeric: tabular-nums;
 }
 
-/* ============================================================
-   4. BENTO GRID
-   ============================================================ */
+/* --------------------------------------------------------------------------
+   Section 3 — Main bento grid
+   -------------------------------------------------------------------------- */
 .fx-bento {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    gap: var(--space-lg);
+    gap: 20px;
 }
 
 .fx-panel {
     position: relative;
-    border-radius: var(--radius-xl);
+    border-radius: 20px;
     background: var(--fx-bg-1);
     border: 1px solid var(--fx-border);
     overflow: hidden;
@@ -373,9 +318,9 @@
 
 .fx-panel-body { padding: 4px 0 0; }
 
-/* ============================================================
-   5. IRREGULAR GL — date selector (calendar picker)
-   ============================================================ */
+/* --------------------------------------------------------------------------
+   Irregular GL — date selector
+   -------------------------------------------------------------------------- */
 .fx-gl-controls {
     display: flex;
     align-items: center;
@@ -399,7 +344,6 @@
     white-space: nowrap;
 }
 
-/* ---------- Native date input (calendar picker) ---------- */
 .fx-gl-date-input {
     appearance: none;
     -webkit-appearance: none;
@@ -432,23 +376,19 @@
     background-color: var(--fx-bg-1);
 }
 
-/* Selected day has no uploaded trial balance */
 .fx-gl-date-input.is-empty {
     border-color: rgba(224, 138, 23, 0.35);
     background-color: var(--fx-amber-soft);
     color: var(--fx-amber);
 }
 
-.fx-gl-date-input.is-empty:hover {
-    background-color: #fcebd0;
-}
+.fx-gl-date-input.is-empty:hover { background-color: #fcebd0; }
 
 .fx-gl-date-input.is-empty:focus {
     border-color: var(--fx-amber);
     box-shadow: 0 0 0 3px rgba(224, 138, 23, 0.15);
 }
 
-/* Calendar trigger icon */
 .fx-gl-date-input::-webkit-calendar-picker-indicator {
     cursor: pointer;
     opacity: 0.55;
@@ -462,7 +402,6 @@
     background: var(--fx-accent-soft);
 }
 
-/* ---------- "Jump to today" quick button ---------- */
 .fx-gl-today-btn {
     display: inline-flex;
     align-items: center;
@@ -492,15 +431,9 @@
     transform: translateY(-1px);
 }
 
-.fx-gl-today-btn:active {
-    transform: translateY(0);
-}
+.fx-gl-today-btn:active { transform: translateY(0); }
+.fx-gl-today-btn i { font-size: 10px; }
 
-.fx-gl-today-btn i {
-    font-size: 10px;
-}
-
-/* ---------- "Today" green pill ---------- */
 .fx-gl-today-pill {
     display: inline-flex;
     align-items: center;
@@ -543,13 +476,11 @@
     font-weight: 700;
 }
 
-.fx-gl-meta .fx-gl-meta-sep {
-    color: var(--fx-border-strong);
-}
+.fx-gl-meta .fx-gl-meta-sep { color: var(--fx-border-strong); }
 
-/* ============================================================
-   6. DATA TABLE
-   ============================================================ */
+/* --------------------------------------------------------------------------
+   Section 4 — Data table
+   -------------------------------------------------------------------------- */
 .fx-table-scroll {
     max-height: 380px;
     overflow: auto;
@@ -631,9 +562,9 @@
 
 .fx-table .fcy-cell { color: var(--fx-text-2); }
 
-/* ============================================================
-   7. EMPTY STATE
-   ============================================================ */
+/* --------------------------------------------------------------------------
+   Section 5 — Empty state
+   -------------------------------------------------------------------------- */
 .fx-empty {
     display: flex;
     flex-direction: column;
@@ -677,9 +608,9 @@
     line-height: 1.5;
 }
 
-/* ============================================================
-   8. QUICK ACTIONS
-   ============================================================ */
+/* --------------------------------------------------------------------------
+   Section 6 — Quick actions
+   -------------------------------------------------------------------------- */
 .fx-actions {
     display: flex;
     flex-direction: column;
@@ -792,15 +723,15 @@
     transform: translateX(3px);
 }
 
-/* ============================================================
-   9. FOOTER STATS STRIP
-   ============================================================ */
+/* --------------------------------------------------------------------------
+   Section 7 — Footer stats strip
+   -------------------------------------------------------------------------- */
 .fx-footer-strip {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 1px;
     background: var(--fx-border);
-    border-radius: var(--radius-lg);
+    border-radius: 18px;
     overflow: hidden;
     border: 1px solid var(--fx-border);
     box-shadow: var(--fx-shadow-sm);
@@ -854,108 +785,149 @@
     border-radius: 2px;
     transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-/* ============================================================
-   10. LEGACY CLASS COMPATIBILITY
-   ============================================================ */
-.users-table {
-    width: 100%;
-    border-collapse: collapse;
+/* ==========================================================================
+   IRREGULAR GL — branch / department filter (compact, panel-header sized)
+   Lives inside the GL panel header next to the date picker.
+   ========================================================================== */
+.fx-gl-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
 }
 
-.users-table thead th {
-    background: rgba(79, 110, 247, 0.04);
-    color: var(--fx-text-2);
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--fx-hairline);
-}
-
-.users-table tbody td {
-    padding: 12px;
-    color: var(--fx-text-0);
-    font-size: 13px;
-    border-bottom: 1px solid var(--fx-hairline);
-    vertical-align: middle;
-}
-
-.users-table tbody tr:hover { background: var(--fx-bg-2); }
-
-.frequency-tag {
-    display: inline-block;
-    padding: 3px 12px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.frequency-tag.daily     { background: var(--fx-accent-soft); color: var(--fx-accent); }
-.frequency-tag.weekly    { background: var(--fx-amber-soft); color: var(--fx-amber); }
-.frequency-tag.monthly   { background: var(--fx-emerald-soft); color: var(--fx-emerald); }
-.frequency-tag.quarterly { background: var(--fx-rose-soft); color: var(--fx-rose); }
-.frequency-tag.one-off   { background: var(--fx-bg-2); color: var(--fx-text-1); }
-
-.score-badge {
-    display: inline-block;
-    padding: 3px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.score-badge.badge-success { background: var(--fx-emerald-soft); color: var(--fx-emerald); }
-.score-badge.badge-warning { background: var(--fx-amber-soft); color: var(--fx-amber); }
-.score-badge.badge-danger  { background: var(--fx-rose-soft); color: var(--fx-rose); }
-
-.status-badge {
+.fx-gl-unit-filter {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 10px;
-    border-radius: 12px;
+    gap: 6px;
+    padding: 4px;
+    background: var(--fx-bg-1);
+    border: 1px solid var(--fx-border);
+    border-radius: 8px;
+    box-shadow: var(--fx-shadow-sm);
+    flex-wrap: nowrap;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.fx-gl-unit-filter .fx-gl-unit-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 6px 0 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--fx-text-2);
+    white-space: nowrap;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.fx-gl-unit-filter .fx-gl-unit-label i {
+    color: var(--fx-accent);
+    font-size: 10px;
+}
+
+.fx-gl-unit-filter .fx-gl-unit-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 5px 26px 5px 10px;
+    border: 1px solid var(--fx-border);
+    border-radius: 6px;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
+    font-family: var(--fx-font);
+    color: var(--fx-text-0);
+    background-color: var(--fx-bg-1);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    min-width: 0;
+    max-width: 200px;
+    text-overflow: ellipsis;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+}
+
+.fx-gl-unit-filter .fx-gl-unit-select:hover {
+    border-color: var(--fx-border-strong);
+}
+
+.fx-gl-unit-filter .fx-gl-unit-select:focus {
+    border-color: var(--fx-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.fx-gl-unit-filter .fx-gl-unit-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    background: var(--fx-emerald-soft);
+    color: var(--fx-emerald);
+    border: 1px solid rgba(23, 166, 115, 0.25);
+    white-space: nowrap;
+    flex-shrink: 0;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fx-gl-unit-filter .fx-gl-unit-pill > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.status-badge.success { background: var(--fx-emerald-soft); color: var(--fx-emerald); }
-.status-badge.warning { background: var(--fx-amber-soft); color: var(--fx-amber); }
-.status-badge.danger  { background: var(--fx-rose-soft); color: var(--fx-rose); }
+.fx-gl-unit-filter .fx-gl-unit-pill i {
+    font-size: 9px;
+    flex-shrink: 0;
+}
 
-/* ============================================================
-   11. RESPONSIVE
-   ============================================================ */
-@media (max-width: 1200px) {
-    .fx-metrics-strip { grid-template-columns: repeat(2, 1fr); }
-    .fx-orbit-strip   { grid-template-columns: repeat(2, 1fr); }
+.fx-gl-unit-filter .fx-gl-unit-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(23, 166, 115, 0.15);
+    color: var(--fx-emerald);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-size: 8px;
+    flex-shrink: 0;
+}
+
+.fx-gl-unit-filter .fx-gl-unit-clear:hover {
+    background: var(--fx-emerald);
+    color: #fff;
 }
 
 @media (max-width: 900px) {
-    .fx-bento { grid-template-columns: 1fr; }
-    .fx-footer-strip { grid-template-columns: repeat(3, 1fr); }
-}
+    .fx-gl-controls {
+        width: 100%;
+        justify-content: flex-start;
+    }
 
-@media (max-width: 640px) {
-    .fx-dashboard { gap: 14px; }
-    .fx-metrics-strip { grid-template-columns: 1fr; gap: 12px; }
-    .fx-orbit-strip { grid-template-columns: 1fr; gap: 10px; padding: 12px; }
-    .fx-metric { padding: 16px 18px; }
-    .fx-metric-value { font-size: 28px; }
-    .fx-panel-head { padding: 14px 16px 12px; }
-    .fx-table thead th,
-    .fx-table tbody td { padding: 9px 12px; }
-    .fx-footer-strip { grid-template-columns: 1fr 1fr; }
-    .fx-footer-cell { padding: 14px 16px; }
-    .fx-footer-value { font-size: 18px; }
+    .fx-gl-unit-filter {
+        width: 100%;
+        justify-content: space-between;
+    }
 
-    /* Calendar controls stack on small screens */
-    .fx-gl-controls { width: 100%; gap: 8px; }
-    .fx-gl-date-form { width: 100%; }
-    .fx-gl-date-input { flex: 1; min-width: 0; }
-    .fx-gl-date-label { font-size: 9px; }
-    .fx-gl-today-btn { flex-shrink: 0; }
+    .fx-gl-unit-filter .fx-gl-unit-select {
+        max-width: none;
+        flex: 1;
+    }
 }

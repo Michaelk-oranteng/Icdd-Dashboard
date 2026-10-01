@@ -1,74 +1,560 @@
 {% extends 'control_dashboard/base.html' %}
 {% load static %}
 
-{% block title %}Checklist Activities{% endblock %}
+{% block title %}Checklist List{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'stylesheets/checklist_list.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'stylesheets/admin.css' %}" type="text/css">
 <style>
-    /* Additional styles for department/branch columns */
-    .assigned-items-list {
+    .cll-wrap {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 8px 0 40px;
+        font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+        color: #0f1b33;
+    }
+
+    /* Toolbar */
+    .cll-toolbar {
         display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
+        justify-content: space-between;
         align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
     }
-    
-    .assigned-items-list .item-tag {
-        display: inline-block;
-        padding: 2px 8px;
+
+    .cll-toolbar-left {
+        display: flex;
+        gap: 10px;
+        flex: 1;
+        min-width: 0;
+        flex-wrap: wrap;
+    }
+
+    .cll-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
         border-radius: 10px;
-        font-size: 10px;
-        white-space: nowrap;
-        max-width: 120px;
+        padding: 0 14px;
+        height: 40px;
+        min-width: 280px;
+        flex: 1;
+        max-width: 460px;
+    }
+
+    .cll-search input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-family: inherit;
+        font-size: 13px;
+        width: 100%;
+        color: #0f1b33;
+    }
+
+    .cll-search i { color: #9ca3af; font-size: 12px; }
+
+    .cll-search select {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-family: inherit;
+        font-size: 13px;
+        width: 100%;
+        color: #0f1b33;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding-right: 18px;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0 center;
+        background-size: 12px;
+    }
+
+    .cll-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 16px;
+        height: 40px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        color: #374151;
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.15s, box-shadow 0.15s;
+    }
+
+    .cll-btn:hover { background: #f7f8fc; }
+
+    .cll-btn.primary {
+        background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+        color: #ffffff;
+        border-color: rgba(79, 110, 247, 0.4);
+        box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    }
+
+    .cll-btn.primary:hover {
+        box-shadow: 0 6px 20px rgba(79, 110, 247, 0.4);
+    }
+
+    .cll-btn.ghost-danger {
+        background: #fff5f8;
+        color: #e0456a;
+        border-color: rgba(224, 69, 106, 0.25);
+    }
+
+    .cll-btn.ghost-danger:hover { background: #fdeaf0; }
+
+    /* Table */
+    .cll-table-wrap {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
         overflow: hidden;
-        text-overflow: ellipsis;
     }
-    
-    .assigned-items-list .item-tag.branch-tag {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-    
-    .assigned-items-list .item-tag.dept-tag {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    
-    .assigned-items-list .item-tag.more-tag {
-        background: #f3f4f6;
-        color: #6b7280;
-        font-size: 9px;
-        cursor: help;
-    }
-    
-    .assigned-items-list .no-assignment {
-        color: #9ca3af;
+
+    .cll-table { width: 100%; border-collapse: collapse; }
+
+    .cll-table thead th {
+        text-align: left;
+        padding: 12px 16px;
         font-size: 11px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .cll-table tbody td {
+        padding: 14px 16px;
+        font-size: 13px;
+        color: #0f1b33;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: top;
+    }
+
+    .cll-table tbody tr:last-child td { border-bottom: none; }
+    .cll-table tbody tr:hover { background: #fbfcff; }
+
+    .cll-name {
+        font-weight: 600;
+        font-size: 13.5px;
+        color: #0f1b33;
+        margin-bottom: 4px;
+    }
+
+    .cll-desc {
+        font-size: 11.5px;
+        color: #6b7280;
+        line-height: 1.45;
+        max-width: 320px;
+        margin-bottom: 8px;
+    }
+
+    /* Numbered task list under the checklist name */
+    .cll-task-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        counter-reset: cll-task;
+    }
+
+    .cll-task-list li {
+        counter-increment: cll-task;
+        position: relative;
+        padding-left: 26px;
+        margin-bottom: 4px;
+        font-size: 12.5px;
+        line-height: 1.45;
+        color: #46536b;
+    }
+
+    .cll-task-list li::before {
+        content: counter(cll-task) ".";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 18px;
+        text-align: right;
+        font-size: 11px;
+        font-weight: 700;
+        color: #4f6ef7;
+        opacity: 0.85;
+    }
+
+    .cll-task-empty {
+        font-size: 12px;
+        color: #9ca3af;
         font-style: italic;
     }
-    
-    .assignment-cell {
-        max-width: 200px;
+
+    .cll-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 8px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border: 1px solid;
     }
-    
-    .checklist-table th {
-        white-space: nowrap;
+
+    .cll-badge.freq {
+        background: #eef1ff;
+        color: #4f6ef7;
+        border-color: rgba(79, 110, 247, 0.22);
     }
-    
-    .checklist-table td {
-        vertical-align: top;
-        padding: 10px 8px;
+
+    .cll-badge.on {
+        background: #e2f7ef;
+        color: #17a673;
+        border-color: rgba(23, 166, 115, 0.25);
     }
-    
-    /* Column width adjustments */
-    .checklist-table .col-name { min-width: 160px; }
-    .checklist-table .col-frequency { min-width: 100px; }
-    .checklist-table .col-assignment { min-width: 120px; }
-    .checklist-table .col-branches { min-width: 140px; }
-    .checklist-table .col-departments { min-width: 140px; }
-    .checklist-table .col-tasks { min-width: 200px; }
-    .checklist-table .col-actions { min-width: 100px; text-align: center; }
+
+    .cll-badge.off {
+        background: #fdeaf0;
+        color: #e0456a;
+        border-color: rgba(224, 69, 106, 0.25);
+    }
+
+    .cll-units {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        max-width: 380px;
+    }
+
+    .cll-unit {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 8px;
+        background: #f7f8fc;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 11px;
+        color: #46536b;
+    }
+
+    .cll-unit i { font-size: 9px; color: #9ca3af; }
+
+    .cll-actions { display: flex; gap: 6px; }
+
+    .cll-icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        color: #46536b;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        transition: background 0.15s;
+    }
+
+    .cll-icon-btn:hover { background: #f7f8fc; }
+
+    .cll-icon-btn.danger:hover {
+        background: #fdeaf0;
+        color: #e0456a;
+        border-color: rgba(224, 69, 106, 0.25);
+    }
+
+    .cll-empty {
+        text-align: center;
+        padding: 60px 20px;
+        background: #ffffff;
+        border: 1px dashed #e5e7eb;
+        border-radius: 14px;
+        color: #9ca3af;
+    }
+
+    .cll-empty i {
+        font-size: 38px;
+        margin-bottom: 12px;
+        display: block;
+        opacity: 0.4;
+    }
+
+    .cll-empty h3 {
+        color: #0f1b33;
+        margin: 0 0 6px 0;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .cll-empty p {
+        font-size: 13px;
+        margin: 0 0 16px 0;
+    }
+
+    /* Modal */
+    .cll-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 27, 51, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 10000;
+        display: none;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 40px 20px;
+        overflow-y: auto;
+    }
+
+    .cll-modal-backdrop.show { display: flex; }
+
+    .cll-modal {
+        background: #ffffff;
+        border-radius: 18px;
+        width: 100%;
+        max-width: 640px;
+        box-shadow: 0 24px 64px rgba(15, 27, 51, 0.25);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: cll-modal-in 0.2s ease;
+    }
+
+    @keyframes cll-modal-in {
+        from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .cll-modal-head {
+        padding: 18px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .cll-modal-head h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f1b33;
+    }
+
+    .cll-modal-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        color: #46536b;
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        transition: background 0.15s;
+    }
+
+    .cll-modal-close:hover { background: #fdeaf0; color: #e0456a; }
+
+    .cll-modal-body {
+        padding: 18px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        max-height: 68vh;
+        overflow-y: auto;
+    }
+
+    .cll-field { display: flex; flex-direction: column; gap: 6px; }
+
+    .cll-field label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+    }
+
+    .cll-field input[type="text"],
+    .cll-field textarea,
+    .cll-field select {
+        padding: 10px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 13px;
+        color: #0f1b33;
+        outline: none;
+        width: 100%;
+        box-sizing: border-box;
+        background: #ffffff;
+    }
+
+    .cll-field input:focus,
+    .cll-field textarea:focus,
+    .cll-field select:focus {
+        border-color: #4f6ef7;
+        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    }
+
+    .cll-field textarea { resize: vertical; min-height: 60px; }
+
+    .cll-field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .cll-multi {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        padding: 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #fbfcff;
+        max-height: 160px;
+        overflow-y: auto;
+    }
+
+    .cll-multi label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 8px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 11.5px;
+        color: #374151;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+    .cll-multi input[type="checkbox"] { accent-color: #4f6ef7; }
+
+    .cll-task-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .cll-task-row input {
+        flex: 1;
+        padding: 9px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .cll-task-row button {
+        width: 38px;
+        border-radius: 10px;
+        border: 1px solid rgba(224, 69, 106, 0.3);
+        background: #fff5f8;
+        color: #e0456a;
+        cursor: pointer;
+    }
+
+    .cll-modal-foot {
+        padding: 14px 22px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        background: #fbfcff;
+    }
+
+    .cll-modal-foot button {
+        padding: 9px 20px;
+        border-radius: 10px;
+        border: none;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .cll-cancel { background: #f3f4f6; color: #1a2332; }
+    .cll-cancel:hover { background: #e5e7eb; }
+
+    .cll-save {
+        background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    }
+
+    .cll-save:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Toast */
+    .cll-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: #ffffff;
+        border-left: 4px solid #17a673;
+        border-radius: 12px;
+        padding: 14px 20px;
+        min-width: 280px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 16px 40px rgba(15, 27, 51, 0.15);
+        transform: translateX(120%);
+        transition: transform 0.3s ease;
+        z-index: 10001;
+    }
+
+    .cll-toast.show { transform: translateX(0); }
+    .cll-toast.error { border-left-color: #e0456a; }
+
+    .cll-toast .icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #e2f7ef;
+        color: #17a673;
+    }
+
+    .cll-toast.error .icon { background: #fdeaf0; color: #e0456a; }
+    .cll-toast .title { font-size: 13px; font-weight: 700; color: #0f1b33; margin: 0; }
+    .cll-toast .msg   { font-size: 12px; color: #46536b; margin: 2px 0 0 0; }
+
+    @media (max-width: 768px) {
+        .cll-toolbar { flex-direction: column; align-items: stretch; }
+        .cll-search { max-width: 100%; min-width: 0; }
+        .cll-field-row, .cll-multi { grid-template-columns: 1fr; }
+        .cll-table thead { display: none; }
+        .cll-table, .cll-table tbody, .cll-table tr, .cll-table td {
+            display: block;
+            width: 100%;
+        }
+        .cll-table tr {
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .cll-table td {
+            border: none;
+            padding: 6px 16px;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -77,8 +563,20 @@
 {% block nav_links %}
 <li>
     <a href="{% url 'control_dashboard:admin_page' %}">
+        <span class="nav-icon"><i class="fas fa-user-plus"></i></span>
+        <span class="nav-text">Add User</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:admin_user_list' %}">
         <span class="nav-icon"><i class="fas fa-users-cog"></i></span>
-        <span class="nav-text">Admin Dashboard</span>
+        <span class="nav-text">User List</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:admin_units' %}">
+        <span class="nav-icon"><i class="fas fa-building"></i></span>
+        <span class="nav-text">Branch / Department</span>
     </a>
 </li>
 <li>
@@ -113,137 +611,154 @@
 </li>
 {% endblock %}
 
-{% block page_title %}Checklist Activities{% endblock %}
-
-{% block page_subtitle %}
-<span class="page-subtitle">View and manage all created checklists</span>
-{% endblock %}
-
-{% block top_header_center %}
-<!-- Empty -->
-{% endblock %}
+{% block page_title %}Checklist List{% endblock %}
 
 {% block top_header_right %}
-<a href="{% url 'control_dashboard:checklist_builder' %}" class="btn-create-header">
-    <i class="fas fa-plus"></i> Create New
+<a href="{% url 'control_dashboard:checklist_builder' %}" class="cll-btn primary">
+    <i class="fas fa-plus"></i> New Checklist
 </a>
 {% endblock %}
 
 {% block content %}
-<div class="checklist-list-container">
-    <div class="table-container">
-        <div class="table-header">
-            <h4><i class="fas fa-clipboard-list"></i> All Activities ({{ checklists|length }})</h4>
-            <div class="table-actions">
-                <input type="text" id="searchChecklist" class="table-input" placeholder="Search activities..." style="width: 200px;" onkeyup="filterChecklists()">
-                <button class="btn-refresh" onclick="location.reload()">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
+<div class="cll-wrap">
+
+    <!-- Toolbar -->
+    <div class="cll-toolbar">
+        <div class="cll-toolbar-left">
+            <div class="cll-search">
+                <i class="fas fa-search"></i>
+                <input type="text"
+                       id="cllSearch"
+                       placeholder="Search checklists by name..."
+                       oninput="cllFilter()">
+            </div>
+
+            <div class="cll-search" style="max-width:280px; min-width:220px;">
+                <i class="fas fa-sitemap"></i>
+                <select id="cllUnitFilter" onchange="cllFilter()">
+                    <option value="">All Assigned Units</option>
+                    {% if branches %}
+                        <optgroup label="Branches">
+                            {% for b in branches %}
+                                <option value="branch_{{ b.id }}">🏢 {{ b.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                    {% if departments %}
+                        <optgroup label="Departments">
+                            {% for d in departments %}
+                                <option value="dept_{{ d.id }}">🏛️ {{ d.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                </select>
             </div>
         </div>
 
-        {% if checklists %}
-        <table class="users-table checklist-table">
+        <div style="display:flex; gap:10px;">
+            <button class="cll-btn ghost-danger"
+                    id="cllClearFilters"
+                    onclick="cllClearFilters()"
+                    style="display:none;">
+                <i class="fas fa-filter-circle-xmark"></i> Clear
+            </button>
+            <button class="cll-btn" onclick="window.location.reload()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    {% if checklists %}
+    <div class="cll-table-wrap">
+        <table class="cll-table">
             <thead>
                 <tr>
-                    <th class="col-name">Activity Name</th>
-                    <th class="col-frequency">Frequency</th>
-                    <th class="col-assignment">Assignment Target</th>
-                    <th class="col-branches">Assigned Branches</th>
-                    <th class="col-departments">Assigned Departments</th>
-                    <th class="col-tasks">Checklist Items</th>
-                    <th class="col-actions">Actions</th>
+                    <th style="width:120px;">Frequency</th>
+                    <th>Checklist &amp; Tasks</th>
+                    <th>Assigned To</th>
+                    <th style="width:100px;">Status</th>
+                    <th style="width:110px;">Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for checklist in checklists %}
-                <tr data-id="{{ checklist.id }}" class="checklist-row">
-                    <td class="col-name font-bold">
-                        <i class="fas fa-clipboard-check" style="color: #0066cc; margin-right: 8px;"></i>
-                        {{ checklist.name }}
-                    </td>
-                    <td class="col-frequency">
-                        <span class="frequency-tag {{ checklist.frequency }}">
-                            {{ checklist.get_frequency_display }}
+            <tbody id="cllBody">
+                {% for cl in checklists %}
+                <tr class="cll-row"
+                    data-name="{{ cl.name|lower }}"
+                    data-branches="{% for b in cl.assigned_branches.all %}branch_{{ b.id }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                    data-departments="{% for d in cl.assigned_departments.all %}dept_{{ d.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
+
+                    <!-- Frequency -->
+                    <td>
+                        <span class="cll-badge freq">
+                            <i class="fas fa-clock"></i> {{ cl.get_frequency_display }}
                         </span>
                     </td>
-                    <td class="col-assignment">
-                        <span class="assignment-tag {% if checklist.assignment_target == 'all' %}all{% elif checklist.assignment_target == 'hc' %}hc{% elif checklist.assignment_target == 'cc' %}cc{% else %}specific{% endif %}">
-                            {% if checklist.assignment_target == 'all' %}
-                                All Personnel
-                            {% elif checklist.assignment_target == 'hc' %}
-                                Head Office Control
-                            {% elif checklist.assignment_target == 'cc' %}
-                                Cluster Control
-                            {% else %}
-                                Specific Users
-                            {% endif %}
-                        </span>
-                        {% if checklist.assignment_target == 'specific' %}
-                        <div class="assigned-users-list" style="margin-top: 4px;">
-                            {% for user in checklist.assigned_users.all|slice:":3" %}
-                            <span class="user-tag">{{ user.full_name|default:user.email }}</span>
-                            {% endfor %}
-                            {% if checklist.assigned_users.count > 3 %}
-                            <span class="user-tag more">+{{ checklist.assigned_users.count|add:"-3" }}</span>
-                            {% endif %}
-                        </div>
+
+                    <!-- Checklist name + description + full numbered task list -->
+                    <td>
+                        <div class="cll-name">{{ cl.name }}</div>
+
+                        {% if cl.description %}
+                            <div class="cll-desc">{{ cl.description|truncatechars:140 }}</div>
+                        {% endif %}
+
+                        {% if cl.tasks.all %}
+                            <ol class="cll-task-list">
+                                {% for task in cl.tasks.all %}
+                                    <li>{{ task.description }}</li>
+                                {% endfor %}
+                            </ol>
+                        {% else %}
+                            <div class="cll-task-empty">No tasks defined</div>
                         {% endif %}
                     </td>
-                    <td class="col-branches assignment-cell">
-                        <div class="assigned-items-list">
-                            {% with branches=checklist.assigned_branches.all %}
-                                {% if branches %}
-                                    {% for branch in branches|slice:":3" %}
-                                        <span class="item-tag branch-tag" title="{{ branch.name }}">{{ branch.name }}</span>
-                                    {% endfor %}
-                                    {% if branches|length > 3 %}
-                                        <span class="item-tag more-tag" title="{{ branches|join:', ' }}">+{{ branches|length|add:"-3" }}</span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="no-assignment">Not assigned</span>
-                                {% endif %}
-                            {% endwith %}
-                        </div>
-                    </td>
-                    <td class="col-departments assignment-cell">
-                        <div class="assigned-items-list">
-                            {% with departments=checklist.assigned_departments.all %}
-                                {% if departments %}
-                                    {% for dept in departments|slice:":3" %}
-                                        <span class="item-tag dept-tag" title="{{ dept.name }}">{{ dept.name }}</span>
-                                    {% endfor %}
-                                    {% if departments|length > 3 %}
-                                        <span class="item-tag more-tag" title="{{ departments|join:', ' }}">+{{ departments|length|add:"-3" }}</span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="no-assignment">Not assigned</span>
-                                {% endif %}
-                            {% endwith %}
-                        </div>
-                    </td>
-                    <td class="col-tasks">
-                        <ul class="task-list">
-                            {% for task in checklist.tasks.all|slice:":3" %}
-                            <li><i class="fas fa-check-circle"></i> {{ task.description }}</li>
-                            {% empty %}
-                            <li class="text-muted">No tasks defined</li>
+
+                    <!-- Assigned units -->
+                    <td>
+                        <div class="cll-units">
+                            {% for b in cl.assigned_branches.all %}
+                                <span class="cll-unit">
+                                    <i class="fas fa-building"></i> {{ b.name }}
+                                </span>
                             {% endfor %}
-                            {% if checklist.tasks.count > 3 %}
-                            <li class="text-muted more-tasks">+{{ checklist.tasks.count|add:"-3" }} more tasks</li>
+                            {% for d in cl.assigned_departments.all %}
+                                <span class="cll-unit">
+                                    <i class="fas fa-sitemap"></i> {{ d.name }}
+                                </span>
+                            {% endfor %}
+                            {% if not cl.assigned_branches.exists and not cl.assigned_departments.exists %}
+                                <span style="color:#9ca3af;font-size:11px;font-style:italic;">No units</span>
                             {% endif %}
-                        </ul>
+                        </div>
                     </td>
-                    <td class="col-actions text-center">
-                        <div class="action-buttons">
-                            <button class="btn-action edit" onclick="editChecklist('{{ checklist.id }}')" title="Edit Activity">
-                                <i class="fas fa-edit"></i>
+
+                    <!-- Status -->
+                    <td>
+                        {% if cl.is_active %}
+                            <span class="cll-badge on">
+                                <i class="fas fa-circle" style="font-size:6px;"></i> Active
+                            </span>
+                        {% else %}
+                            <span class="cll-badge off">
+                                <i class="fas fa-circle" style="font-size:6px;"></i> Inactive
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Actions -->
+                    <td>
+                        <div class="cll-actions">
+                            <button class="cll-icon-btn js-edit"
+                                    title="Edit"
+                                    data-id="{{ cl.id }}">
+                                <i class="fas fa-pen"></i>
                             </button>
-                            <button class="btn-action delete" onclick="deleteChecklist('{{ checklist.id }}')" title="Delete Activity">
+                            <button class="cll-icon-btn danger js-delete"
+                                    title="Delete"
+                                    data-id="{{ cl.id }}"
+                                    data-name="{{ cl.name }}">
                                 <i class="fas fa-trash"></i>
-                            </button>
-                            <button class="btn-action view" onclick="viewChecklist('{{ checklist.id }}')" title="View Details">
-                                <i class="fas fa-eye"></i>
                             </button>
                         </div>
                     </td>
@@ -251,326 +766,350 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-clipboard-list"></i>
-            <h3>No Checklists Created</h3>
-            <p>Create your first checklist using the <a href="{% url 'control_dashboard:checklist_builder' %}">Checklist Builder</a></p>
-        </div>
-        {% endif %}
     </div>
+    {% else %}
+    <div class="cll-empty">
+        <i class="fas fa-clipboard-list"></i>
+        <h3>No checklists yet</h3>
+        <p>Create your first checklist on the builder page.</p>
+        <a href="{% url 'control_dashboard:checklist_builder' %}"
+           class="cll-btn primary"
+           style="margin-top:16px;">
+            <i class="fas fa-plus"></i> Create Checklist
+        </a>
+    </div>
+    {% endif %}
 </div>
 
-<!-- ==================== DELETE CONFIRMATION MODAL ==================== -->
-<div id="deleteModal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <div class="modal-icon danger">
-            <i class="fas fa-trash"></i>
+<!-- ============================================================
+     EDIT MODAL
+     ============================================================ -->
+<div class="cll-modal-backdrop" id="cllModal">
+    <div class="cll-modal">
+        <div class="cll-modal-head">
+            <h3><i class="fas fa-pen"></i> Edit Checklist</h3>
+            <button class="cll-modal-close" onclick="cllCloseModal()">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
-        <h2>Confirm Delete</h2>
-        <p>Are you sure you want to delete this checklist? This action cannot be undone.</p>
-        <input type="hidden" id="deleteChecklistId">
-        <div class="modal-actions">
-            <button onclick="closeDeleteModal()" class="btn-secondary">Cancel</button>
-            <button onclick="confirmDeleteChecklist()" class="btn-danger">
-                <i class="fas fa-trash"></i> Delete
+
+        <div class="cll-modal-body">
+            <input type="hidden" id="cllId">
+
+            <div class="cll-field">
+                <label for="cllNameEdit">Name</label>
+                <input type="text" id="cllNameEdit">
+            </div>
+
+            <div class="cll-field">
+                <label for="cllDescriptionEdit">Description</label>
+                <textarea id="cllDescriptionEdit"></textarea>
+            </div>
+
+            <div class="cll-field-row">
+                <div class="cll-field">
+                    <label for="cllFrequencyEdit">Frequency</label>
+                    <select id="cllFrequencyEdit">
+                        {% for value, label in frequencies %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="cll-field">
+                    <label for="cllActiveEdit">Status</label>
+                    <select id="cllActiveEdit">
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="cll-field">
+                <label>Assigned Branches</label>
+                <div class="cll-multi">
+                    {% for b in branches %}
+                        <label>
+                            <input type="checkbox" class="cll-branch-check" value="{{ b.id }}">
+                            {{ b.name }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="cll-field">
+                <label>Assigned Departments</label>
+                <div class="cll-multi">
+                    {% for d in departments %}
+                        <label>
+                            <input type="checkbox" class="cll-dept-check" value="{{ d.id }}">
+                            {{ d.name }}
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="cll-field">
+                <label>Tasks</label>
+                <div id="cllTasksEditor"></div>
+                <button type="button"
+                        class="cll-btn"
+                        style="margin-top:6px; align-self:flex-start;"
+                        onclick="cllAddTaskRow()">
+                    <i class="fas fa-plus"></i> Add Task
+                </button>
+            </div>
+        </div>
+
+        <div class="cll-modal-foot">
+            <button class="cll-cancel" onclick="cllCloseModal()">Cancel</button>
+            <button class="cll-save" id="cllSaveBtn" onclick="cllSave()">
+                <i class="fas fa-check"></i> Save Changes
             </button>
         </div>
     </div>
 </div>
 
-<!-- ==================== VIEW CHECKLIST MODAL ==================== -->
-<div id="viewModal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 550px;">
-        <div class="modal-header">
-            <h2 id="viewChecklistTitle">Checklist Details</h2>
-            <button class="modal-close" onclick="closeViewModal()">&times;</button>
-        </div>
-        <div id="viewChecklistContent">
-            <!-- Dynamically populated -->
-        </div>
-    </div>
-</div>
-
-<!-- ==================== TOAST NOTIFICATION ==================== -->
-<div id="toastNotification" class="toast" style="display: none;">
-    <div class="toast-content">
-        <div class="toast-icon">
-            <i id="toastIcon" class="fas fa-check"></i>
-        </div>
-        <div class="toast-body">
-            <div id="toastTitle" class="toast-title">Success!</div>
-            <div id="toastMessage" class="toast-message">Action completed successfully.</div>
-        </div>
-        <button class="toast-close" onclick="this.parentElement.parentElement.style.display='none'">&times;</button>
+<!-- Toast -->
+<div class="cll-toast" id="cllToast">
+    <div class="icon"><i class="fas fa-check"></i></div>
+    <div>
+        <p class="title" id="cllToastTitle">Success</p>
+        <p class="msg" id="cllToastMsg"></p>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    console.log('Checklist List loaded successfully!');
-    
-    // ============================================
-    // CSRF TOKEN HELPER
-    // ============================================
+    const CLB_GET_URL    = "{% url 'control_dashboard:api_get_checklist' 0 %}".replace('/0/', '/__ID__/');
+    const CLB_EDIT_URL   = "{% url 'control_dashboard:api_edit_checklist' 0 %}".replace('/0/', '/__ID__/');
+    const CLB_DELETE_URL = "{% url 'control_dashboard:api_delete_checklist' 0 %}".replace('/0/', '/__ID__/');
+
+    function clbUrl(t, id) {
+        return t.replace('__ID__', String(id));
+    }
+
     function getCsrfToken() {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, 10) === 'csrftoken=') {
-                    cookieValue = decodeURIComponent(cookie.substring(10));
-                    break;
-                }
-            }
-        }
-        return cookieValue || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        const m = document.cookie.match(/csrftoken=([^;]+)/);
+        return m ? m[1] : (document.querySelector('[name=csrfmiddlewaretoken]')?.value || '');
     }
 
-    // ============================================
-    // TOAST NOTIFICATION
-    // ============================================
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('toastNotification');
-        const msgEl = document.getElementById('toastMessage');
-        const titleEl = document.getElementById('toastTitle');
-        const icon = document.getElementById('toastIcon');
-        
-        msgEl.textContent = message || 'Action completed successfully.';
-        
-        if (type === 'error') {
-            icon.className = 'fas fa-exclamation-circle';
-            toast.className = 'toast error';
-            titleEl.textContent = 'Error!';
-        } else {
-            icon.className = 'fas fa-check-circle';
-            toast.className = 'toast success';
-            titleEl.textContent = 'Success!';
-        }
-        
-        toast.style.display = 'block';
-        
-        if (window.toastTimeout) {
-            clearTimeout(window.toastTimeout);
-        }
-        
-        window.toastTimeout = setTimeout(() => {
-            toast.style.display = 'none';
-        }, 4000);
+    function cllToast(title, msg, isError) {
+        const t = document.getElementById('cllToast');
+        document.getElementById('cllToastTitle').textContent = title;
+        document.getElementById('cllToastMsg').textContent = msg || '';
+        t.classList.toggle('error', !!isError);
+        t.querySelector('.icon i').className = isError
+            ? 'fas fa-exclamation-circle'
+            : 'fas fa-check';
+        t.classList.add('show');
+        clearTimeout(window._cllToastT);
+        window._cllToastT = setTimeout(() => t.classList.remove('show'), 3500);
     }
 
-    // ============================================
-    // FILTER CHECKLISTS
-    // ============================================
-    function filterChecklists() {
-        const search = document.getElementById('searchChecklist').value.toLowerCase();
-        const rows = document.querySelectorAll('.checklist-row');
-        
-        rows.forEach(row => {
-            const name = row.querySelector('.col-name').textContent.toLowerCase();
-            if (name.includes(search)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+    /* ---------- Filter: name + assigned unit ---------- */
+    function cllFilter() {
+        const q      = document.getElementById('cllSearch').value.toLowerCase().trim();
+        const unit   = document.getElementById('cllUnitFilter').value;
+
+        let visibleCount = 0;
+
+        document.querySelectorAll('#cllBody .cll-row').forEach(row => {
+            const name      = row.dataset.name || '';
+            const branches  = (row.dataset.branches || '').split(',').filter(Boolean);
+            const depts     = (row.dataset.departments || '').split(',').filter(Boolean);
+
+            const matchesSearch = !q || name.includes(q);
+            const matchesUnit   = !unit ||
+                                  branches.includes(unit) ||
+                                  depts.includes(unit);
+
+            const show = matchesSearch && matchesUnit;
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
         });
+
+        // Toggle the Clear button
+        const clearBtn = document.getElementById('cllClearFilters');
+        if (clearBtn) {
+            clearBtn.style.display = (q || unit) ? 'inline-flex' : 'none';
+        }
     }
 
-    // ============================================
-    // EDIT CHECKLIST (Redirect to builder)
-    // ============================================
-    function editChecklist(checklistId) {
-        window.location.href = `/adminboard/checklists/?edit=${checklistId}`;
+    function cllClearFilters() {
+        document.getElementById('cllSearch').value = '';
+        document.getElementById('cllUnitFilter').value = '';
+        cllFilter();
     }
 
-    // ============================================
-    // DELETE CHECKLIST FUNCTIONS
-    // ============================================
-    function deleteChecklist(checklistId) {
-        document.getElementById('deleteChecklistId').value = checklistId;
-        document.getElementById('deleteModal').style.display = 'flex';
+    /* ---------- Task rows inside modal ---------- */
+    function cllAddTaskRow(value) {
+        const editor = document.getElementById('cllTasksEditor');
+        const row = document.createElement('div');
+        row.className = 'cll-task-row';
+        row.innerHTML = `
+            <input type="text"
+                   placeholder="Task description"
+                   class="cll-task-input"
+                   value="${value ? String(value).replace(/"/g, '&quot;') : ''}">
+            <button type="button"
+                    onclick="this.closest('.cll-task-row').remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        editor.appendChild(row);
     }
 
-    function closeDeleteModal() {
-        document.getElementById('deleteModal').style.display = 'none';
-        document.getElementById('deleteChecklistId').value = '';
+    /* ---------- Open edit modal ---------- */
+    async function cllOpenEdit(id) {
+        try {
+            const resp = await fetch(clbUrl(CLB_GET_URL, id), { credentials: 'same-origin' });
+            const data = await resp.json();
+
+            if (!data.success) {
+                cllToast('Error', data.error || 'Could not load checklist.', true);
+                return;
+            }
+
+            const c = data.checklist;
+
+            document.getElementById('cllId').value              = c.id;
+            document.getElementById('cllNameEdit').value        = c.name || '';
+            document.getElementById('cllDescriptionEdit').value = c.description || '';
+            document.getElementById('cllFrequencyEdit').value   = c.frequency || 'weekly';
+            document.getElementById('cllActiveEdit').value      = c.is_active ? 'true' : 'false';
+
+            document.querySelectorAll('.cll-branch-check').forEach(cb => {
+                cb.checked = (c.assigned_branches || []).map(String).includes(cb.value);
+            });
+            document.querySelectorAll('.cll-dept-check').forEach(cb => {
+                cb.checked = (c.assigned_departments || []).map(String).includes(cb.value);
+            });
+
+            const editor = document.getElementById('cllTasksEditor');
+            editor.innerHTML = '';
+            (c.tasks || []).forEach(t => cllAddTaskRow(t.description));
+            if (!editor.children.length) cllAddTaskRow();
+
+            document.getElementById('cllModal').classList.add('show');
+        } catch (err) {
+            console.error(err);
+            cllToast('Error', 'Network error while loading.', true);
+        }
     }
 
-    function confirmDeleteChecklist() {
-        const checklistId = document.getElementById('deleteChecklistId').value;
-        if (!checklistId) return;
+    function cllCloseModal() {
+        document.getElementById('cllModal').classList.remove('show');
+    }
 
-        const btn = document.querySelector('#deleteModal .btn-danger');
+    /* ---------- Save from modal ---------- */
+    async function cllSave() {
+        const id     = document.getElementById('cllId').value;
+        const name   = document.getElementById('cllNameEdit').value.trim();
+        const desc   = document.getElementById('cllDescriptionEdit').value.trim();
+        const freq   = document.getElementById('cllFrequencyEdit').value;
+        const active = document.getElementById('cllActiveEdit').value === 'true';
+
+        if (!name) {
+            cllToast('Validation', 'Name is required.', true);
+            return;
+        }
+
+        const tasks = Array.from(document.querySelectorAll('#cllTasksEditor .cll-task-input'))
+            .map(i => ({ description: i.value.trim() }))
+            .filter(t => t.description);
+
+        const assigned_branches = Array.from(document.querySelectorAll('.cll-branch-check:checked'))
+            .map(cb => parseInt(cb.value, 10));
+
+        const assigned_departments = Array.from(document.querySelectorAll('.cll-dept-check:checked'))
+            .map(cb => parseInt(cb.value, 10));
+
+        const btn = document.getElementById('cllSaveBtn');
+        const orig = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-        fetch(`/adminboard/api/checklists/${checklistId}/delete/`, {
-            method: 'DELETE',
-            headers: { 'X-CSRFToken': getCsrfToken() }
-        })
-        .then(response => response.json())
-        .then(data => {
+        try {
+            const resp = await fetch(clbUrl(CLB_EDIT_URL, id), {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    name,
+                    description: desc,
+                    frequency: freq,
+                    is_active: active,
+                    tasks,
+                    assigned_branches,
+                    assigned_departments
+                })
+            });
+
+            const data = await resp.json();
             if (data.success) {
-                showToast('Checklist deleted successfully!');
-                closeDeleteModal();
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
+                cllToast('Saved', data.message || 'Checklist updated.');
+                setTimeout(() => window.location.reload(), 800);
             } else {
-                showToast('Error: ' + data.error, 'error');
+                cllToast('Error', data.error || 'Could not save.', true);
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+                btn.innerHTML = orig;
             }
-        })
-        .catch(err => {
+        } catch (err) {
+            console.error(err);
+            cllToast('Error', 'Network error while saving.', true);
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-trash"></i> Delete';
-            console.error(err);
-            showToast('An error occurred while deleting', 'error');
-        });
+            btn.innerHTML = orig;
+        }
     }
 
-    // ============================================
-    // VIEW CHECKLIST FUNCTIONS
-    // ============================================
-    function viewChecklist(checklistId) {
-        fetch(`/adminboard/api/checklists/${checklistId}/`, {
-            method: 'GET',
-            headers: { 'X-CSRFToken': getCsrfToken() }
-        })
-        .then(response => response.json())
-        .then(data => {
+    /* ---------- Delete ---------- */
+    async function cllDelete(id, name) {
+        if (!confirm(`Delete checklist "${name}"?\nThis cannot be undone.`)) return;
+
+        try {
+            const resp = await fetch(clbUrl(CLB_DELETE_URL, id), {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+            const data = await resp.json();
+
             if (data.success) {
-                const checklist = data.checklist;
-                document.getElementById('viewChecklistTitle').textContent = checklist.name;
-                
-                // Get branch and department names from the data
-                // We need to fetch these from the DOM or pass them through context
-                // For now, we'll use the data from the API
-                let branchNames = [];
-                let deptNames = [];
-                
-                // Try to get branch names from the DOM
-                const row = document.querySelector(`.checklist-row[data-id="${checklistId}"]`);
-                if (row) {
-                    const branchCell = row.querySelector('.col-branches .assigned-items-list');
-                    const deptCell = row.querySelector('.col-departments .assigned-items-list');
-                    
-                    if (branchCell) {
-                        branchCell.querySelectorAll('.item-tag.branch-tag').forEach(el => {
-                            branchNames.push(el.textContent);
-                        });
-                    }
-                    if (deptCell) {
-                        deptCell.querySelectorAll('.item-tag.dept-tag').forEach(el => {
-                            deptNames.push(el.textContent);
-                        });
-                    }
-                }
-                
-                let html = `
-                    <div class="view-checklist-details">
-                        <div class="detail-row">
-                            <strong>Frequency:</strong>
-                            <span class="frequency-tag ${checklist.frequency}">${checklist.frequency.charAt(0).toUpperCase() + checklist.frequency.slice(1)}</span>
-                        </div>
-                        <div class="detail-row">
-                            <strong>Assignment:</strong>
-                            <span class="assignment-tag ${checklist.assignment_target}">
-                                ${checklist.assignment_target === 'all' ? 'All Personnel' : 
-                                  checklist.assignment_target === 'hc' ? 'Head Office Control' :
-                                  checklist.assignment_target === 'cc' ? 'Cluster Control' : 'Specific Users'}
-                            </span>
-                        </div>
-                        <div class="detail-row">
-                            <strong>Assigned Branches:</strong>
-                            <div class="assigned-items-list">
-                                ${branchNames.length > 0 ? branchNames.map(name => 
-                                    `<span class="item-tag branch-tag">${name}</span>`
-                                ).join('') : '<span class="no-assignment">Not assigned</span>'}
-                            </div>
-                        </div>
-                        <div class="detail-row">
-                            <strong>Assigned Departments:</strong>
-                            <div class="assigned-items-list">
-                                ${deptNames.length > 0 ? deptNames.map(name => 
-                                    `<span class="item-tag dept-tag">${name}</span>`
-                                ).join('') : '<span class="no-assignment">Not assigned</span>'}
-                            </div>
-                        </div>
-                        <div class="detail-row">
-                            <strong>Tasks:</strong>
-                            <ul class="task-list">
-                                ${checklist.tasks.map(task => `
-                                    <li><i class="fas fa-check-circle"></i> ${task.description}</li>
-                                `).join('')}
-                            </ul>
-                        </div>
-                        ${checklist.assigned_users && checklist.assigned_users.length > 0 ? `
-                        <div class="detail-row">
-                            <strong>Assigned Users:</strong>
-                            <div class="assigned-users-list">
-                                ${checklist.assigned_users.map(userId => {
-                                    const user = document.querySelector(`#checklist-specific-users option[value="${userId}"]`);
-                                    return user ? `<span class="user-tag">${user.textContent}</span>` : '';
-                                }).join('')}
-                            </div>
-                        </div>
-                        ` : ''}
-                    </div>
-                `;
-                
-                document.getElementById('viewChecklistContent').innerHTML = html;
-                document.getElementById('viewModal').style.display = 'flex';
+                cllToast('Deleted', 'Checklist removed.');
+                setTimeout(() => window.location.reload(), 700);
             } else {
-                showToast('Error: ' + data.error, 'error');
+                cllToast('Error', data.error || 'Could not delete.', true);
             }
-        })
-        .catch(err => {
+        } catch (err) {
             console.error(err);
-            showToast('Could not fetch checklist details', 'error');
-        });
-    }
-
-    function closeViewModal() {
-        document.getElementById('viewModal').style.display = 'none';
-    }
-
-    // ============================================
-    // MODAL CLOSE ON CLICK OUTSIDE
-    // ============================================
-    window.onclick = function(event) {
-        const deleteModal = document.getElementById('deleteModal');
-        const viewModal = document.getElementById('viewModal');
-        if (event.target === deleteModal) closeDeleteModal();
-        if (event.target === viewModal) closeViewModal();
-    }
-
-    // ============================================
-    // KEYBOARD SHORTCUTS
-    // ============================================
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeDeleteModal();
-            closeViewModal();
+            cllToast('Error', 'Network error while deleting.', true);
         }
-        if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
-            event.preventDefault();
-            document.getElementById('searchChecklist').focus();
-        }
+    }
+
+    /* ---------- Wire up buttons ---------- */
+    document.querySelectorAll('.js-edit').forEach(btn =>
+        btn.addEventListener('click', () => cllOpenEdit(btn.dataset.id))
+    );
+    document.querySelectorAll('.js-delete').forEach(btn =>
+        btn.addEventListener('click', () => cllDelete(btn.dataset.id, btn.dataset.name))
+    );
+
+    // Close modal on backdrop click
+    document.getElementById('cllModal').addEventListener('click', function(e) {
+        if (e.target.id === 'cllModal') cllCloseModal();
     });
 
-    // ============================================
-    // INITIALIZATION
-    // ============================================
-    document.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const editId = urlParams.get('edit');
-        if (editId) {
-            window.location.href = `/adminboard/checklists/?edit=${editId}`;
-        }
+    // Close modal on ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') cllCloseModal();
     });
 </script>
 {% endblock %}

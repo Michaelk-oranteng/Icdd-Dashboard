@@ -6,124 +6,683 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'stylesheets/reports.css' %}" type="text/css">
+
 <style>
-/* ============================================================
-   HEADER FILTER CONTROLS — page-local
-   ============================================================ */
-.header-filter-group,
-.header-date-group {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
+    /* ============================================================
+       MY REPORTS — enhanced UI
+       ============================================================ */
 
-.header-filter-group label,
-.header-date-group label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--rp-text-2);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    white-space: nowrap;
-}
+    :root {
+        --rp-font:         'Poppins', system-ui, -apple-system, sans-serif;
+        --rp-bg-1:         #ffffff;
+        --rp-bg-2:         #f7f8fc;
+        --rp-border:       #e5e7eb;
+        --rp-border-strong:#d1d5db;
+        --rp-text-0:       #0f1b33;
+        --rp-text-1:       #374151;
+        --rp-text-2:       #6b7280;
+        --rp-text-3:       #9ca3af;
+        --rp-accent:       #4f6ef7;
+        --rp-success:      #17a673;
+        --rp-warning:      #e08a17;
+        --rp-danger:       #e0456a;
+        --rp-shadow-sm:    0 1px 2px rgba(15, 27, 51, 0.04);
+        --rp-shadow-md:    0 4px 14px rgba(15, 27, 51, 0.06);
+    }
 
-.header-select {
-    padding: 8px 34px 8px 14px;
-    border: 1px solid var(--rp-border);
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 500;
-    font-family: var(--rp-font);
-    background: var(--rp-bg-1);
-    color: var(--rp-text-0);
-    cursor: pointer;
-    outline: none;
-    transition: all 0.25s ease;
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 14px;
-    min-width: 160px;
-    box-shadow: var(--rp-shadow-sm);
-}
+    .rp-wrap {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 4px 0 48px;
+        font-family: var(--rp-font);
+        color: var(--rp-text-0);
+    }
 
-.header-select:hover { border-color: var(--rp-border-strong); }
+    /* ---------- Page header ---------- */
+    .rp-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 22px;
+    }
 
-.header-select:focus {
-    border-color: var(--rp-accent);
-    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
-}
+    .rp-header-left h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        color: var(--rp-text-0);
+    }
 
-.header-divider {
-    width: 1px;
-    height: 24px;
-    background: var(--rp-border);
-}
+    .rp-header-left p {
+        margin: 4px 0 0 0;
+        font-size: 12.5px;
+        color: var(--rp-text-2);
+    }
 
-.header-date-wrapper {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
-    background: var(--rp-bg-1);
-    border: 1px solid var(--rp-border);
-    border-radius: 10px;
-    box-shadow: var(--rp-shadow-sm);
-    transition: all 0.25s ease;
-}
+    /* ---------- Filter toolbar ---------- */
+    .rp-toolbar {
+        background: var(--rp-bg-1);
+        border: 1px solid var(--rp-border);
+        border-radius: 12px;
+        box-shadow: var(--rp-shadow-sm);
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
 
-.header-date-wrapper:focus-within {
-    border-color: var(--rp-accent);
-    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
-}
+    .rp-toolbar-section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
 
-.header-date-wrapper span {
-    font-size: 11px;
-    color: var(--rp-text-2);
-    font-weight: 500;
-}
+    .rp-toolbar-label {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--rp-text-2);
+        text-transform: uppercase;
+        letter-spacing: 0.9px;
+        white-space: nowrap;
+    }
 
-.header-date-input {
-    background: transparent;
-    color: var(--rp-text-0);
-    font-size: 12px;
-    font-weight: 600;
-    font-family: var(--rp-font);
-    padding: 4px 6px;
-    border: none;
-    outline: none;
-    min-width: 120px;
-    color-scheme: light;
-}
+    .rp-select {
+        padding: 8px 34px 8px 12px;
+        border: 1px solid var(--rp-border);
+        border-radius: 9px;
+        font-size: 12.5px;
+        font-weight: 500;
+        font-family: var(--rp-font);
+        background: var(--rp-bg-1);
+        color: var(--rp-text-0);
+        cursor: pointer;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 11px center;
+        background-size: 13px;
+        min-width: 200px;
+    }
 
-.btn-reset-header {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: var(--rp-bg-1);
-    color: var(--rp-text-1);
-    border: 1px solid var(--rp-border);
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 600;
-    font-family: var(--rp-font);
-    letter-spacing: 0.3px;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    box-shadow: var(--rp-shadow-sm);
-}
+    .rp-select:hover { border-color: var(--rp-border-strong); }
+    .rp-select:focus {
+        border-color: var(--rp-accent);
+        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    }
 
-.btn-reset-header:hover {
-    background: var(--rp-bg-2);
-    color: var(--rp-text-0);
-    border-color: var(--rp-border-strong);
-    transform: translateY(-1px);
-}
+    .rp-date-range {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: var(--rp-bg-1);
+        border: 1px solid var(--rp-border);
+        border-radius: 9px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
 
-.btn-reset-header i { font-size: 12px; }
+    .rp-date-range:focus-within {
+        border-color: var(--rp-accent);
+        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    }
+
+    .rp-date-range .rp-date-sep {
+        font-size: 11px;
+        color: var(--rp-text-3);
+        font-weight: 500;
+    }
+
+    .rp-date-input {
+        background: transparent;
+        color: var(--rp-text-0);
+        font-size: 12.5px;
+        font-weight: 600;
+        font-family: var(--rp-font);
+        padding: 4px 4px;
+        border: none;
+        outline: none;
+        min-width: 120px;
+        color-scheme: light;
+    }
+
+    .rp-divider {
+        width: 1px;
+        height: 26px;
+        background: var(--rp-border);
+    }
+
+    .rp-spacer { flex: 1; }
+
+    .rp-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 14px;
+        border-radius: 9px;
+        border: 1px solid var(--rp-border);
+        background: var(--rp-bg-1);
+        color: var(--rp-text-1);
+        font-family: var(--rp-font);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .rp-btn:hover {
+        background: var(--rp-bg-2);
+        color: var(--rp-text-0);
+        border-color: var(--rp-border-strong);
+    }
+
+    .rp-btn i { font-size: 11px; }
+
+    .rp-result-count {
+        font-size: 12px;
+        color: var(--rp-text-2);
+        font-weight: 500;
+    }
+
+    .rp-result-count strong {
+        color: var(--rp-text-0);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ============================================================
+       REPORT TYPE GROUPS
+       ============================================================ */
+    .report-type-group {
+        background: var(--rp-bg-1);
+        border: 1px solid var(--rp-border);
+        border-radius: 12px;
+        box-shadow: var(--rp-shadow-sm);
+        margin-bottom: 16px;
+        overflow: hidden;
+        transition: box-shadow 0.18s;
+    }
+
+    .report-type-group:hover {
+        box-shadow: var(--rp-shadow-md);
+    }
+
+    .report-type-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 20px;
+        cursor: pointer;
+        user-select: none;
+        background: var(--rp-bg-1);
+        border-bottom: 1px solid var(--rp-border);
+        transition: background 0.12s;
+    }
+
+    .report-type-header:hover {
+        background: #fbfcff;
+    }
+
+    .report-type-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .report-type-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #e2f7ef;
+        color: var(--rp-success);
+        font-size: 13px;
+        flex-shrink: 0;
+    }
+
+    .report-type-title {
+        margin: 0;
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--rp-text-0);
+        letter-spacing: -0.1px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .report-type-count {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        background: #f7f8fc;
+        border: 1px solid var(--rp-border);
+        border-radius: 100px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--rp-text-2);
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+    }
+
+    .report-type-toggle {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: var(--rp-text-3);
+        font-size: 11px;
+        transition: transform 0.2s, color 0.15s, background 0.15s;
+    }
+
+    .report-type-header:hover .report-type-toggle {
+        color: var(--rp-text-1);
+        background: #f7f8fc;
+    }
+
+    .report-type-toggle:not(.open) {
+        transform: rotate(-90deg);
+    }
+
+    .report-type-body {
+        transition: max-height 0.25s ease, opacity 0.2s ease;
+        max-height: 20000px;
+        opacity: 1;
+    }
+
+    .report-type-body.collapsed {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+    }
+
+    /* ============================================================
+       TABLE
+       ============================================================ */
+    .report-details-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+    }
+
+    .report-details-table thead th {
+        text-align: left;
+        padding: 11px 16px;
+        background: #f8fafc;
+        font-size: 10.5px;
+        font-weight: 700;
+        color: var(--rp-text-2);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--rp-border);
+        white-space: nowrap;
+    }
+
+    .report-details-table thead th.text-center { text-align: center; }
+
+    .report-details-table tbody td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        color: var(--rp-text-0);
+        vertical-align: top;
+        line-height: 1.45;
+    }
+
+    .report-details-table tbody tr:last-child td { border-bottom: none; }
+    .report-details-table tbody tr:hover { background: #fafbfd; }
+
+    .report-details-table td.narrow-cell { white-space: nowrap; }
+    .report-details-table td.date-cell {
+        white-space: nowrap;
+        color: var(--rp-text-2);
+        font-variant-numeric: tabular-nums;
+    }
+    .report-details-table td.num-cell {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    .report-details-table td.wide-cell {
+        max-width: 340px;
+        white-space: normal;
+        word-break: break-word;
+    }
+    .report-details-table td.text-center { text-align: center; }
+
+    .report-details-table tr.empty-row td {
+        text-align: center;
+        color: var(--rp-text-3);
+        font-style: italic;
+        padding: 24px;
+        background: #fbfcff;
+    }
+
+    /* Badges */
+    .badge-success,
+    .badge-warning,
+    .badge-danger,
+    .badge-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 100px;
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border: 1px solid;
+        white-space: nowrap;
+    }
+    .badge-success   { background: #e2f7ef; color: #065f46; border-color: rgba(6, 95, 70, 0.2); }
+    .badge-warning   { background: #fef3c7; color: #92400e; border-color: rgba(146, 64, 14, 0.2); }
+    .badge-danger    { background: #fee2e2; color: #991b1b; border-color: rgba(153, 27, 27, 0.2); }
+    .badge-secondary { background: #f3f4f6; color: #6b7280; border-color: rgba(107, 114, 128, 0.2); }
+
+    /* Action buttons in tables */
+    .table-actions-cluster {
+        display: inline-flex;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .btn-edit-modal,
+    .btn-delete {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        border: 1px solid var(--rp-border);
+        background: var(--rp-bg-1);
+        color: var(--rp-text-2);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        transition: all 0.15s;
+    }
+
+    .btn-edit-modal:hover {
+        background: #eef1ff;
+        color: var(--rp-accent);
+        border-color: rgba(79, 110, 247, 0.3);
+    }
+
+    .btn-delete:hover {
+        background: #fdeaf0;
+        color: var(--rp-danger);
+        border-color: rgba(224, 69, 106, 0.3);
+    }
+
+    /* ============================================================
+       EMPTY STATE
+       ============================================================ */
+    .rp-empty {
+        background: var(--rp-bg-1);
+        border: 1px dashed var(--rp-border);
+        border-radius: 14px;
+        padding: 60px 24px;
+        text-align: center;
+    }
+
+    .rp-empty-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        margin: 0 auto 18px;
+        display: grid;
+        place-items: center;
+        background: #eef1ff;
+        color: var(--rp-accent);
+        font-size: 24px;
+    }
+
+    .rp-empty h3 {
+        margin: 0 0 6px 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--rp-text-0);
+    }
+
+    .rp-empty p {
+        margin: 0;
+        font-size: 13px;
+        color: var(--rp-text-2);
+        line-height: 1.5;
+    }
+
+    .rp-empty p strong { color: var(--rp-text-0); font-weight: 700; }
+
+    /* Filter-empty helper (dynamic) */
+    .rp-filter-empty {
+        background: var(--rp-bg-1);
+        border: 1px dashed var(--rp-border);
+        border-radius: 14px;
+        padding: 48px 24px;
+        text-align: center;
+        margin-top: 16px;
+    }
+
+    .rp-filter-empty i {
+        font-size: 28px;
+        color: var(--rp-text-3);
+        margin-bottom: 12px;
+        display: block;
+    }
+
+    .rp-filter-empty h4 {
+        margin: 0 0 6px 0;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--rp-text-0);
+    }
+
+    .rp-filter-empty p {
+        margin: 0;
+        font-size: 12.5px;
+        color: var(--rp-text-2);
+    }
+
+    /* ============================================================
+       MODALS (light refresh of existing styles)
+       ============================================================ */
+    .modal-wrapper {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 27, 51, 0.55);
+        backdrop-filter: blur(4px);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 30px 20px;
+        overflow-y: auto;
+    }
+
+    .modal-content {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 24px 26px;
+        max-width: 480px;
+        width: 100%;
+        box-shadow: 0 24px 64px rgba(15, 27, 51, 0.25);
+    }
+
+    .modal-content-wide { max-width: 640px; }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--rp-border);
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--rp-text-0);
+    }
+
+    .modal-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid var(--rp-border);
+        background: #ffffff;
+        color: var(--rp-text-2);
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+    }
+
+    .modal-close:hover { background: #fdeaf0; color: var(--rp-danger); }
+
+    .modal-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        margin: 0 auto 16px;
+        display: grid;
+        place-items: center;
+        font-size: 22px;
+        background: #fee2e2;
+        color: var(--rp-danger);
+    }
+
+    .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 22px;
+        padding-top: 16px;
+        border-top: 1px solid var(--rp-border);
+    }
+
+    .btn-cancel,
+    .btn-create {
+        padding: 10px 20px;
+        border-radius: 9px;
+        border: none;
+        font-family: var(--rp-font);
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-cancel { background: #f3f4f6; color: var(--rp-text-0); }
+    .btn-cancel:hover { background: #e5e7eb; }
+
+    .btn-create {
+        background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    }
+    .btn-create:hover { box-shadow: 0 6px 20px rgba(79, 110, 247, 0.4); }
+    .btn-create.btn-danger {
+        background: linear-gradient(135deg, #e0456a 0%, #c4365c 100%);
+        box-shadow: 0 4px 14px rgba(224, 69, 106, 0.25);
+    }
+
+    /* Form fields inside modal */
+    .form-group { margin-bottom: 12px; }
+    .form-group label {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--rp-text-1);
+        margin-bottom: 6px;
+    }
+    .form-control {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--rp-border);
+        border-radius: 9px;
+        font-family: var(--rp-font);
+        font-size: 13px;
+        color: var(--rp-text-0);
+        box-sizing: border-box;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-control:focus {
+        border-color: var(--rp-accent);
+        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    }
+
+    /* ============================================================
+       TOAST
+       ============================================================ */
+    .toast-notification {
+        position: fixed;
+        bottom: 26px;
+        right: 26px;
+        min-width: 320px;
+        max-width: 440px;
+        background: #ffffff;
+        border-radius: 14px;
+        border-left: 4px solid var(--rp-success);
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 20px 48px rgba(15, 27, 51, 0.16);
+        transform: translateX(130%);
+        transition: transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
+        z-index: 10001;
+    }
+    .toast-notification.show { transform: translateX(0); }
+    .toast-notification.error { border-left-color: var(--rp-danger); }
+
+    .toast-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: #e2f7ef;
+        color: var(--rp-success);
+        flex-shrink: 0;
+        font-size: 14px;
+    }
+    .toast-notification.error .toast-icon { background: #fdeaf0; color: var(--rp-danger); }
+
+    .toast-content { flex: 1; min-width: 0; }
+    .toast-title { margin: 0; font-size: 13px; font-weight: 700; color: var(--rp-text-0); }
+    .toast-message { margin: 2px 0 0 0; font-size: 12px; color: var(--rp-text-2); }
+
+    .toast-close {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: var(--rp-text-3);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+    }
+    .toast-close:hover { background: #f3f4f6; color: var(--rp-text-0); }
+
+    @media (max-width: 720px) {
+        .rp-toolbar { flex-direction: column; align-items: stretch; }
+        .rp-toolbar-section { flex-direction: column; align-items: stretch; }
+        .rp-select { min-width: 100%; }
+        .toast-notification { left: 16px; right: 16px; min-width: 0; }
+    }
 </style>
 {% endblock %}
 
@@ -149,7 +708,7 @@
     </a>
 </li>
 <li>
-    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+    <a href="{% url 'control_dashboard:email_page' %}" data-tooltip="Email">
         <span class="nav-icon"><i class="fas fa-envelope"></i></span>
         <span class="nav-text">Email</span>
     </a>
@@ -182,36 +741,6 @@
 
 {% block page_title %}My Reports{% endblock %}
 
-{% block top_header_center %}
-<div class="header-divider"></div>
-<div class="header-filter-group">
-    <label for="type-filter">Report Type</label>
-    <select id="type-filter" class="header-select">
-        <option value="all">All Types</option>
-        {% for report_type in report_types %}
-        <option value="{{ report_type }}">{{ report_type }}</option>
-        {% endfor %}
-    </select>
-</div>
-
-<div class="header-divider"></div>
-
-<div class="header-date-group">
-    <label for="start-date">Date Range</label>
-    <div class="header-date-wrapper">
-        <input type="date" id="start-date" class="header-date-input">
-        <span>to</span>
-        <input type="date" id="end-date" class="header-date-input">
-    </div>
-</div>
-{% endblock %}
-
-{% block top_header_right %}
-<button class="btn-reset-header" onclick="resetFilters()">
-    <i class="fas fa-undo"></i> Reset
-</button>
-{% endblock %}
-
 {% block content %}
 {# ---- URL config for JS (single source of truth) ---- #}
 <script id="reports-config" type="application/json">
@@ -226,190 +755,242 @@
 }
 </script>
 
-<div class="table-container">
+<div class="rp-wrap">
+    <!-- Filter toolbar -->
+    <div class="rp-toolbar">
+        <div class="rp-toolbar-section">
+            <label class="rp-toolbar-label" for="type-filter">Report Type</label>
+            <select id="type-filter" class="rp-select">
+                <option value="all">All Types ({{ report_type_options|length }})</option>
+                {% for opt in report_type_options %}
+                <option value="{{ opt.value }}" data-count="{{ opt.count }}">
+                    {{ opt.label }} ({{ opt.count }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
 
+        <div class="rp-divider"></div>
+
+        <div class="rp-toolbar-section">
+            <label class="rp-toolbar-label">Date Range</label>
+            <div class="rp-date-range">
+                <input type="date" id="start-date" class="rp-date-input">
+                <span class="rp-date-sep">to</span>
+                <input type="date" id="end-date" class="rp-date-input">
+            </div>
+        </div>
+
+        <div class="rp-spacer"></div>
+
+        <span class="rp-result-count">
+            Showing <strong id="visibleCount">{{ exception_uploads|length }}</strong>
+            of {{ exception_uploads|length }} group{{ exception_uploads|length|pluralize }}
+        </span>
+
+        <button class="rp-btn" onclick="resetFilters()">
+            <i class="fas fa-undo"></i> Reset
+        </button>
+    </div>
+
+    <!-- Content -->
     {% if exception_uploads %}
 
         {% regroup exception_uploads by report_type as exc_groups %}
-        {% for type_group in exc_groups %}
-            <div class="report-type-group">
-                <div class="report-type-header" onclick="toggleGroup(this)">
-                    <div class="report-type-left">
-                        <i class="fas fa-file-excel report-type-icon"></i>
-                        <h3 class="report-type-title">{{ type_group.grouper|default:"Uncategorized" }}</h3>
-                        <span class="report-type-count">
-                            {{ type_group.list|length }} upload{{ type_group.list|length|pluralize }}
-                        </span>
-                    </div>
-                    <div class="report-type-toggle open">
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                </div>
 
-                <div class="report-type-body">
-                    {% for report_item in type_group.list %}
-                        {% with display=report_item.get_display_data %}
-                            {% if forloop.first %}
-                                <table class="report-details-table">
-                                    <thead>
-                                        <tr>
-                                            {% if display.is_excel %}
-                                                {% for header in display.headers %}
-                                                    {% with h=header|upper %}
-                                                        {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
-                                                            <th class="narrow-cell">{{ header|default:"Column" }}</th>
-                                                        {% elif "DATE" in h %}
-                                                            <th class="date-cell">{{ header|default:"Column" }}</th>
-                                                        {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "OFFICER" in h or h == "SUPERVISOR" or h == "STATUS" or "CATEGORY" in h %}
-                                                            <th class="narrow-cell">{{ header|default:"Column" }}</th>
-                                                        {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
-                                                            <th class="num-cell">{{ header|default:"Column" }}</th>
-                                                        {% elif "EXCEPTION" in h or "DESCRIPTION" in h or "OBSERVATION" in h or "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h or "DETAIL" in h %}
-                                                            <th class="wide-cell">{{ header|default:"Column" }}</th>
-                                                        {% else %}
-                                                            <th>{{ header|default:"Column" }}</th>
-                                                        {% endif %}
-                                                    {% endwith %}
-                                                {% endfor %}
-                                            {% else %}
-                                                <th>Branch/Unit</th>
-                                                <th>Date</th>
-                                                <th>Observation</th>
-                                                <th>Responsible Staff</th>
-                                                <th>Status</th>
-                                            {% endif %}
-                                            <th class="text-center">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                            {% endif %}
+        <div id="groupsContainer">
+            {% for type_group in exc_groups %}
+                <div class="report-type-group"
+                     data-group-type="{{ type_group.grouper|default:'Uncategorized' }}"
+                     data-group-count="{{ type_group.list|length }}">
 
-                            {% if display.is_excel %}
-                                {% for row in display.rows %}
-                                    <tr data-type="{{ report_item.report_type }}"
-                                        data-id="{{ report_item.id }}"
-                                        data-row-id="{{ row.row_id }}"
-                                        data-kind="excel"
-                                        class="report-row">
-                                        {% for header in display.headers %}
-                                            {% with h=header|upper %}
-                                                {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
-                                                    <td class="narrow-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
-                                                {% elif "DATE" in h %}
-                                                    <td class="date-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
-                                                {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "OFFICER" in h or h == "SUPERVISOR" or h == "STATUS" or "CATEGORY" in h %}
-                                                    <td class="narrow-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
-                                                {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
-                                                    <td class="num-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
-                                                {% elif "EXCEPTION" in h or "DESCRIPTION" in h or "OBSERVATION" in h or "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h or "DETAIL" in h %}
-                                                    <td class="wide-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                    <div class="report-type-header" onclick="toggleGroup(this)">
+                        <div class="report-type-left">
+                            <span class="report-type-icon"><i class="fas fa-file-excel"></i></span>
+                            <h3 class="report-type-title">
+                                {{ type_group.grouper|default:"Uncategorized" }}
+                            </h3>
+                            <span class="report-type-count">
+                                {{ type_group.list|length }} upload{{ type_group.list|length|pluralize }}
+                            </span>
+                        </div>
+                        <div class="report-type-toggle open">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+
+                    <div class="report-type-body">
+                        {% for report_item in type_group.list %}
+                            {% with display=report_item.get_display_data %}
+                                {% if forloop.first %}
+                                    <table class="report-details-table">
+                                        <thead>
+                                            <tr>
+                                                {% if display.is_excel %}
+                                                    {% for header in display.headers %}
+                                                        {% with h=header|upper %}
+                                                            {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
+                                                                <th class="narrow-cell">{{ header|default:"Column" }}</th>
+                                                            {% elif "DATE" in h %}
+                                                                <th class="date-cell">{{ header|default:"Column" }}</th>
+                                                            {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "OFFICER" in h or h == "SUPERVISOR" or h == "STATUS" or "CATEGORY" in h %}
+                                                                <th class="narrow-cell">{{ header|default:"Column" }}</th>
+                                                            {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
+                                                                <th class="num-cell">{{ header|default:"Column" }}</th>
+                                                            {% elif "EXCEPTION" in h or "DESCRIPTION" in h or "OBSERVATION" in h or "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h or "DETAIL" in h %}
+                                                                <th class="wide-cell">{{ header|default:"Column" }}</th>
+                                                            {% else %}
+                                                                <th>{{ header|default:"Column" }}</th>
+                                                            {% endif %}
+                                                        {% endwith %}
+                                                    {% endfor %}
                                                 {% else %}
-                                                    <td>{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                    <th>Branch/Unit</th>
+                                                    <th>Date</th>
+                                                    <th>Observation</th>
+                                                    <th>Responsible Staff</th>
+                                                    <th>Status</th>
                                                 {% endif %}
-                                            {% endwith %}
-                                        {% endfor %}
-                                        <td class="text-center">
-                                            <div class="table-actions-cluster">
-                                                <button class="btn-edit-modal"
-                                                        onclick="openEditRowModal('{{ report_item.id }}', '{{ row.row_id }}')"
-                                                        title="Edit row">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn-delete"
-                                                        onclick="deleteExcelRow('{{ row.row_id }}')"
-                                                        title="Delete row">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% empty %}
-                                    <tr>
-                                        <td colspan="{{ display.headers|length|default:0|add:1 }}" class="empty-row">
-                                            No data rows found in this Excel import.
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            {% else %}
-                                {% with row=display.rows.0 %}
-                                    <tr data-type="{{ report_item.report_type }}"
-                                        data-id="{{ report_item.id }}"
-                                        data-kind="form"
-                                        class="report-row">
-                                        {% if row %}
-                                            <td class="narrow-cell">
-                                                {% with value=row.Branch|default:row.branch|default:row.BRANCH|default:row.BRANCH_UNIT|default:row.branch_unit|default:row.Unit|default:row.unit|default:"-" %}
-                                                    {{ value }}
-                                                {% endwith %}
-                                            </td>
-                                            <td class="date-cell">
-                                                {% with value=row.Date|default:row.date|default:row.DATE|default:row.Submission_Date|default:row.submission_date|default:"-" %}
-                                                    {{ value }}
-                                                {% endwith %}
-                                            </td>
-                                            <td class="wide-cell">
-                                                {% with value=row.Observation|default:row.observation|default:row.OBSERVATION|default:row.Comments|default:row.comments|default:"-" %}
-                                                    {{ value }}
-                                                {% endwith %}
-                                            </td>
-                                            <td class="narrow-cell">
-                                                {% with value=row.Responsible_Staff|default:row.responsible_staff|default:row.RESPONSIBLE_STAFF|default:row.Staff|default:row.staff|default:"-" %}
-                                                    {{ value }}
-                                                {% endwith %}
-                                            </td>
-                                            <td class="narrow-cell">
-                                                {% with status=row.Status|default:row.status|default:"Open" %}
-                                                    {% if status == 'Open' or status == 'open' or status == 'OPEN' %}
-                                                        <span class="badge-success">{{ status }}</span>
-                                                    {% elif status == 'Closed' or status == 'closed' or status == 'CLOSED' %}
-                                                        <span class="badge-secondary">{{ status }}</span>
-                                                    {% elif status == 'In Progress' or status == 'in progress' or status == 'IN PROGRESS' or status == 'In-Progress' %}
-                                                        <span class="badge-warning">{{ status }}</span>
-                                                    {% elif status == 'Resolved' or status == 'resolved' or status == 'RESOLVED' %}
-                                                        <span class="badge-success">{{ status }}</span>
-                                                    {% elif status == 'Pending' or status == 'pending' or status == 'PENDING' %}
-                                                        <span class="badge-warning">{{ status }}</span>
-                                                    {% elif status == 'Rejected' or status == 'rejected' or status == 'REJECTED' %}
-                                                        <span class="badge-danger">{{ status }}</span>
+                                                <th class="text-center">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                {% endif %}
+
+                                {% if display.is_excel %}
+                                    {% for row in display.rows %}
+                                        <tr data-type="{{ report_item.report_type }}"
+                                            data-id="{{ report_item.id }}"
+                                            data-row-id="{{ row.row_id }}"
+                                            data-kind="excel"
+                                            class="report-row">
+                                            {% for header in display.headers %}
+                                                {% with h=header|upper %}
+                                                    {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
+                                                        <td class="narrow-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                    {% elif "DATE" in h %}
+                                                        <td class="date-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                    {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "OFFICER" in h or h == "SUPERVISOR" or h == "STATUS" or "CATEGORY" in h %}
+                                                        <td class="narrow-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                    {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
+                                                        <td class="num-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                    {% elif "EXCEPTION" in h or "DESCRIPTION" in h or "OBSERVATION" in h or "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h or "DETAIL" in h %}
+                                                        <td class="wide-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
                                                     {% else %}
-                                                        <span class="badge-secondary">{{ status|default:"Open" }}</span>
+                                                        <td>{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
                                                     {% endif %}
                                                 {% endwith %}
+                                            {% endfor %}
+                                            <td class="text-center">
+                                                <div class="table-actions-cluster">
+                                                    <button class="btn-edit-modal"
+                                                            onclick="openEditRowModal('{{ report_item.id }}', '{{ row.row_id }}')"
+                                                            title="Edit row">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn-delete"
+                                                            onclick="deleteExcelRow('{{ row.row_id }}')"
+                                                            title="Delete row">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
                                             </td>
-                                        {% else %}
-                                            {# 5 data columns only — the separate actions cell below covers column 6 #}
-                                            <td colspan="5" class="empty-row">No data available</td>
-                                        {% endif %}
-                                        <td class="text-center">
-                                            <div class="table-actions-cluster">
-                                                <button class="btn-edit-modal"
-                                                        onclick="openEditModal('{{ report_item.id }}')"
-                                                        title="Edit">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn-delete"
-                                                        onclick="deleteReport('{{ report_item.id }}')"
-                                                        title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endwith %}
-                            {% endif %}
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="{{ display.headers|length|default:0|add:1 }}" class="empty-row">
+                                                No data rows found in this Excel import.
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    {% with row=display.rows.0 %}
+                                        <tr data-type="{{ report_item.report_type }}"
+                                            data-id="{{ report_item.id }}"
+                                            data-kind="form"
+                                            class="report-row">
+                                            {% if row %}
+                                                <td class="narrow-cell">
+                                                    {% with value=row.Branch|default:row.branch|default:row.BRANCH|default:row.BRANCH_UNIT|default:row.branch_unit|default:row.Unit|default:row.unit|default:"-" %}
+                                                        {{ value }}
+                                                    {% endwith %}
+                                                </td>
+                                                <td class="date-cell">
+                                                    {% with value=row.Date|default:row.date|default:row.DATE|default:row.Submission_Date|default:row.submission_date|default:"-" %}
+                                                        {{ value }}
+                                                    {% endwith %}
+                                                </td>
+                                                <td class="wide-cell">
+                                                    {% with value=row.Observation|default:row.observation|default:row.OBSERVATION|default:row.Comments|default:row.comments|default:"-" %}
+                                                        {{ value }}
+                                                    {% endwith %}
+                                                </td>
+                                                <td class="narrow-cell">
+                                                    {% with value=row.Responsible_Staff|default:row.responsible_staff|default:row.RESPONSIBLE_STAFF|default:row.Staff|default:row.staff|default:"-" %}
+                                                        {{ value }}
+                                                    {% endwith %}
+                                                </td>
+                                                <td class="narrow-cell">
+                                                    {% with status=row.Status|default:row.status|default:"Open" %}
+                                                        {% if status == 'Open' or status == 'open' or status == 'OPEN' %}
+                                                            <span class="badge-success">{{ status }}</span>
+                                                        {% elif status == 'Closed' or status == 'closed' or status == 'CLOSED' %}
+                                                            <span class="badge-secondary">{{ status }}</span>
+                                                        {% elif status == 'In Progress' or status == 'in progress' or status == 'IN PROGRESS' or status == 'In-Progress' %}
+                                                            <span class="badge-warning">{{ status }}</span>
+                                                        {% elif status == 'Resolved' or status == 'resolved' or status == 'RESOLVED' %}
+                                                            <span class="badge-success">{{ status }}</span>
+                                                        {% elif status == 'Pending' or status == 'pending' or status == 'PENDING' %}
+                                                            <span class="badge-warning">{{ status }}</span>
+                                                        {% elif status == 'Rejected' or status == 'rejected' or status == 'REJECTED' %}
+                                                            <span class="badge-danger">{{ status }}</span>
+                                                        {% else %}
+                                                            <span class="badge-secondary">{{ status|default:"Open" }}</span>
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                </td>
+                                            {% else %}
+                                                <td colspan="5" class="empty-row">No data available</td>
+                                            {% endif %}
+                                            <td class="text-center">
+                                                <div class="table-actions-cluster">
+                                                    <button class="btn-edit-modal"
+                                                            onclick="openEditModal('{{ report_item.id }}')"
+                                                            title="Edit">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn-delete"
+                                                            onclick="deleteReport('{{ report_item.id }}')"
+                                                            title="Delete">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endwith %}
+                                {% endif %}
 
-                            {% if forloop.last %}
-                                    </tbody>
-                                </table>
-                            {% endif %}
-                        {% endwith %}
-                    {% endfor %}
+                                {% if forloop.last %}
+                                        </tbody>
+                                    </table>
+                                {% endif %}
+                            {% endwith %}
+                        {% endfor %}
+                    </div>
                 </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
+        </div>
+
+        <!-- Dynamic "no matching groups" panel -->
+        <div class="rp-filter-empty" id="filterEmpty" style="display: none;">
+            <i class="fas fa-filter-circle-xmark"></i>
+            <h4>No matching report types</h4>
+            <p>Try a different type or clear the filter to see everything.</p>
+        </div>
+
     {% else %}
-        <div class="empty-state">
-            <i class="fas fa-file-excel"></i>
+        <div class="rp-empty">
+            <div class="rp-empty-icon"><i class="fas fa-file-excel"></i></div>
             <h3>No Exception Uploads Yet</h3>
             <p>Use <strong>Upload Report</strong> to import exception data from Excel files.</p>
         </div>
@@ -442,8 +1023,10 @@
         <div class="modal-icon danger">
             <i class="fas fa-exclamation-triangle"></i>
         </div>
-        <h3>Confirm Deletion</h3>
-        <p id="deleteModalMessage">Are you sure you want to permanently delete this report? This action cannot be undone.</p>
+        <h3 style="text-align:center; margin: 0 0 8px 0; font-size: 16px;">Confirm Deletion</h3>
+        <p id="deleteModalMessage" style="text-align:center; color: var(--rp-text-2); font-size: 13px; line-height: 1.5;">
+            Are you sure you want to permanently delete this report? This action cannot be undone.
+        </p>
         <input type="hidden" id="deleteReportId" value="">
         <input type="hidden" id="deleteRowId" value="">
         <div class="modal-actions">
@@ -453,11 +1036,9 @@
     </div>
 </div>
 
-<!-- Toast Notification -->
+<!-- Toast -->
 <div id="toastNotification" class="toast-notification">
-    <div class="toast-icon">
-        <i class="fas fa-check-circle"></i>
-    </div>
+    <div class="toast-icon"><i class="fas fa-check-circle"></i></div>
     <div class="toast-content">
         <p class="toast-title" id="toastTitle">Success</p>
         <p class="toast-message" id="toastMessage">Action completed successfully</p>
@@ -473,15 +1054,15 @@
 (function () {
     'use strict';
 
-    // ============================================
-    // CONFIG
-    // ============================================
+    /* ============================================
+       CONFIG
+       ============================================ */
     const CFG = JSON.parse(document.getElementById('reports-config').textContent);
     const urlFor = (tpl, id) => tpl.replace('/0/', '/' + id + '/');
 
-    // ============================================
-    // CSRF TOKEN HELPER
-    // ============================================
+    /* ============================================
+       CSRF
+       ============================================ */
     function getCsrfToken() {
         const tokenInput = document.querySelector('input[name=csrfmiddlewaretoken]');
         if (tokenInput && tokenInput.value) return tokenInput.value;
@@ -496,9 +1077,9 @@
         return '';
     }
 
-    // ============================================
-    // TOAST
-    // ============================================
+    /* ============================================
+       TOAST
+       ============================================ */
     function showToast(message, type) {
         const toast = document.getElementById('toastNotification');
         const title = document.getElementById('toastTitle');
@@ -510,15 +1091,14 @@
         clearTimeout(showToast._t);
         showToast._t = setTimeout(() => toast.classList.remove('show'), 4000);
     }
-
     function closeToast() {
         const toast = document.getElementById('toastNotification');
         if (toast) toast.classList.remove('show');
     }
 
-    // ============================================
-    // TOGGLE GROUP
-    // ============================================
+    /* ============================================
+       TOGGLE GROUP
+       ============================================ */
     function toggleGroup(header) {
         const body = header.nextElementSibling;
         if (!body) return;
@@ -527,9 +1107,66 @@
         if (toggle) toggle.classList.toggle('open', !body.classList.contains('collapsed'));
     }
 
-    // ============================================
-    // RESET FILTERS
-    // ============================================
+    /* ============================================
+       FILTERS — type + date, with URL persistence
+       ============================================ */
+    function updateVisibleCount() {
+        const groups = document.querySelectorAll('.report-type-group');
+        let visible = 0;
+        groups.forEach(g => { if (g.style.display !== 'none') visible++; });
+
+        const counter = document.getElementById('visibleCount');
+        if (counter) counter.textContent = visible;
+
+        const emptyPanel = document.getElementById('filterEmpty');
+        if (emptyPanel) emptyPanel.style.display = (visible === 0 && groups.length > 0) ? 'block' : 'none';
+    }
+
+    function applyTypeFilter() {
+        const sel = document.getElementById('type-filter');
+        const selected = sel.value;
+
+        document.querySelectorAll('.report-type-group').forEach(group => {
+            const gt = group.dataset.groupType || '';
+            const show = (selected === 'all' || gt === selected);
+            group.style.display = show ? '' : 'none';
+        });
+
+        updateVisibleCount();
+    }
+
+    function parseRowDate(s) {
+        if (!s || s === '-') return null;
+        const t = Date.parse(s);
+        return Number.isNaN(t) ? null : new Date(t);
+    }
+
+    function applyDateFilter() {
+        const startVal = document.getElementById('start-date').value;
+        const endVal   = document.getElementById('end-date').value;
+        const start = startVal ? new Date(startVal) : null;
+        const end   = endVal   ? new Date(endVal)   : null;
+        if (end) end.setHours(23, 59, 59, 999);
+
+        // Only report-form rows have a reliable date in the date cell.
+        // Excel rows have arbitrary columns, so we skip them by default.
+        document.querySelectorAll('.report-details-table tbody tr').forEach(row => {
+            if (row.dataset.kind === 'excel') return;
+            if (row.querySelector('.empty-row')) return;
+
+            const dateCell = row.querySelector('td.date-cell');
+            if (!dateCell) return;
+
+            const d = parseRowDate(dateCell.textContent.trim());
+            if (!d) return;
+
+            let show = true;
+            if (start && d < start) show = false;
+            if (end   && d > end)   show = false;
+            row.style.display = show ? '' : 'none';
+        });
+    }
+
     function resetFilters() {
         const t = document.getElementById('type-filter');
         const s = document.getElementById('start-date');
@@ -537,12 +1174,23 @@
         if (t) t.value = 'all';
         if (s) s.value = '';
         if (e) e.value = '';
-        location.reload();
+
+        document.querySelectorAll('.report-type-group').forEach(g => g.style.display = '');
+        document.querySelectorAll('.report-details-table tbody tr').forEach(r => r.style.display = '');
+
+        // Clear URL query params
+        const url = new URL(window.location.href);
+        url.searchParams.delete('type');
+        url.searchParams.delete('start');
+        url.searchParams.delete('end');
+        window.history.replaceState({}, '', url.toString());
+
+        updateVisibleCount();
     }
 
-    // ============================================
-    // DELETE — single Excel row
-    // ============================================
+    /* ============================================
+       DELETE — single row
+       ============================================ */
     function deleteExcelRow(rowId) {
         if (!rowId) return;
         document.getElementById('deleteReportId').value = '';
@@ -552,9 +1200,9 @@
         document.getElementById('deleteModal').style.display = 'flex';
     }
 
-    // ============================================
-    // DELETE — whole Report
-    // ============================================
+    /* ============================================
+       DELETE — whole report
+       ============================================ */
     function deleteReport(reportId) {
         document.getElementById('deleteReportId').value = reportId;
         document.getElementById('deleteRowId').value = '';
@@ -579,11 +1227,9 @@
         btn.disabled = true;
 
         let url;
-        if (rowId) {
-            url = urlFor(CFG.urls.excelDelete, rowId);
-        } else if (reportId) {
-            url = urlFor(CFG.urls.draftDelete, reportId);
-        } else {
+        if (rowId)         url = urlFor(CFG.urls.excelDelete, rowId);
+        else if (reportId) url = urlFor(CFG.urls.draftDelete, reportId);
+        else {
             btn.innerHTML = originalText;
             btn.disabled = false;
             return;
@@ -591,16 +1237,11 @@
 
         fetch(url, {
             method: 'DELETE',
-            headers: {
-                'X-CSRFToken': getCsrfToken(),
-                'Accept': 'application/json'
-            },
+            headers: { 'X-CSRFToken': getCsrfToken(), 'Accept': 'application/json' },
             credentials: 'same-origin'
         })
         .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => { throw new Error(data.error || 'Server error'); });
-            }
+            if (!response.ok) return response.json().then(d => { throw new Error(d.error || 'Server error'); });
             return response.json();
         })
         .then(data => {
@@ -629,14 +1270,11 @@
         });
     }
 
-    // ============================================
-    // OPEN EDIT MODAL — whole Report
-    // ============================================
+    /* ============================================
+       EDIT — whole report
+       ============================================ */
     function openEditModal(reportId) {
-        if (!reportId) {
-            showToast('Invalid report ID', 'error');
-            return;
-        }
+        if (!reportId) { showToast('Invalid report ID', 'error'); return; }
 
         document.getElementById('editModalTitle').textContent = 'Edit Report';
         document.getElementById('editReportId').value = reportId;
@@ -650,10 +1288,7 @@
 
         fetch(urlFor(CFG.urls.draftDetail, reportId), {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin'
         })
         .then(response => {
@@ -676,9 +1311,9 @@
         });
     }
 
-    // ============================================
-    // OPEN EDIT MODAL — single Excel row
-    // ============================================
+    /* ============================================
+       EDIT — single Excel row
+       ============================================ */
     function openEditRowModal(reportId, rowId) {
         if (!rowId) { showToast('Invalid row ID', 'error'); return; }
 
@@ -719,26 +1354,16 @@
         form.dataset.rowId = rowId;
     }
 
-    // ============================================
-    // CLOSE EDIT MODAL
-    // ============================================
     function closeEditModal() {
         const form = document.getElementById('editReportForm');
-        if (form) {
-            delete form.dataset.mode;
-            delete form.dataset.rowId;
-        }
+        if (form) { delete form.dataset.mode; delete form.dataset.rowId; }
         document.getElementById('editReportModal').style.display = 'none';
         document.getElementById('editReportId').value = '';
         document.getElementById('editFormFields').innerHTML = '';
     }
 
-    // ============================================
-    // SUBMIT EDIT REPORT
-    // ============================================
     function submitEditReport(event) {
         event.preventDefault();
-
         const form = event.target;
         const mode = form.dataset.mode || 'report';
 
@@ -809,16 +1434,11 @@
                 'X-CSRFToken': getCsrfToken(),
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({
-                form_data: formData,
-                is_excel: false
-            }),
+            body: JSON.stringify({ form_data: formData, is_excel: false }),
             credentials: 'same-origin'
         })
         .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => { throw new Error(data.error || 'Server error'); });
-            }
+            if (!response.ok) return response.json().then(data => { throw new Error(data.error || 'Server error'); });
             return response.json();
         })
         .then(data => {
@@ -839,9 +1459,6 @@
         });
     }
 
-    // ============================================
-    // BUILD FORM EDITOR HTML
-    // ============================================
     function buildFormEditorHTML(reportData) {
         let formData = {};
         if (reportData.form_data && reportData.form_data.length > 0) {
@@ -861,7 +1478,6 @@
             { label: 'Responsible Staff', field_type: 'text'     },
             { label: 'Status',            field_type: 'dropdown' }
         ];
-
         const statusOptions = ['Open', 'In Progress', 'Resolved', 'Closed', 'Pending Review'];
         let html = '';
 
@@ -895,9 +1511,6 @@
         return html;
     }
 
-    // ============================================
-    // ESCAPE HTML
-    // ============================================
     function escapeHtml(text) {
         if (text === null || text === undefined) return '';
         const div = document.createElement('div');
@@ -905,9 +1518,9 @@
         return div.innerHTML;
     }
 
-    // ============================================
-    // OUTSIDE-CLICK CLOSE
-    // ============================================
+    /* ============================================
+       OUTSIDE-CLICK CLOSE
+       ============================================ */
     window.addEventListener('click', event => {
         const editModal   = document.getElementById('editReportModal');
         const deleteModal = document.getElementById('deleteModal');
@@ -915,67 +1528,70 @@
         if (event.target === deleteModal) closeDeleteModal();
     });
 
-    // ============================================
-    // DATE FILTER (ISO-safe)
-    // ============================================
-    function parseRowDate(s) {
-        if (!s || s === '-') return null;
-        const t = Date.parse(s);
-        return Number.isNaN(t) ? null : new Date(t);
-    }
-
-    function applyDateFilter() {
-        const startVal = document.getElementById('start-date').value;
-        const endVal   = document.getElementById('end-date').value;
-        const start = startVal ? new Date(startVal) : null;
-        const end   = endVal   ? new Date(endVal)   : null;
-        if (end) end.setHours(23, 59, 59, 999);
-
-        document.querySelectorAll('.report-details-table tbody tr').forEach(row => {
-            if (row.dataset.kind === 'excel') return;
-            if (row.querySelector('.empty-row')) return;
-
-            const dateCell = row.querySelector('td.date-cell');
-            if (!dateCell) return;
-
-            const d = parseRowDate(dateCell.textContent.trim());
-            if (!d) return;
-
-            let show = true;
-            if (start && d < start) show = false;
-            if (end   && d > end)   show = false;
-            row.style.display = show ? '' : 'none';
-        });
-    }
-
-    // ============================================
-    // INIT
-    // ============================================
+    /* ============================================
+       INIT
+       ============================================ */
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.report-type-body').forEach(b => b.classList.remove('collapsed'));
         document.querySelectorAll('.report-type-toggle').forEach(t => t.classList.add('open'));
 
+        // Restore filters from URL, if present
+        const params = new URLSearchParams(window.location.search);
+        const urlType  = params.get('type');
+        const urlStart = params.get('start');
+        const urlEnd   = params.get('end');
+
         const typeFilter = document.getElementById('type-filter');
+        const startDate  = document.getElementById('start-date');
+        const endDate    = document.getElementById('end-date');
+
+        if (urlType && typeFilter)  typeFilter.value = urlType;
+        if (urlStart && startDate)  startDate.value = urlStart;
+        if (urlEnd   && endDate)    endDate.value = urlEnd;
+
         if (typeFilter) {
-            typeFilter.addEventListener('change', function () {
-                const selectedType = this.value;
-                document.querySelectorAll('.report-details-table tbody tr').forEach(row => {
-                    if (row.querySelector('.empty-row')) return;
-                    const reportType = row.getAttribute('data-type');
-                    row.style.display = (selectedType === 'all' || reportType === selectedType) ? '' : 'none';
-                });
+            typeFilter.addEventListener('change', () => {
+                applyTypeFilter();
+                persistFilters();
             });
         }
+        if (startDate) startDate.addEventListener('change', () => {
+            applyDateFilter();
+            persistFilters();
+        });
+        if (endDate) endDate.addEventListener('change', () => {
+            applyDateFilter();
+            persistFilters();
+        });
 
-        const startDate = document.getElementById('start-date');
-        const endDate   = document.getElementById('end-date');
-        if (startDate) startDate.addEventListener('change', applyDateFilter);
-        if (endDate)   endDate.addEventListener('change', applyDateFilter);
+        // Apply on load (in case URL provided filters)
+        if (urlType)  applyTypeFilter();
+        if (urlStart || urlEnd) applyDateFilter();
+
+        updateVisibleCount();
     });
 
-    // ============================================
-    // EXPOSE HANDLERS TO INLINE onclick
-    // ============================================
+    function persistFilters() {
+        const url = new URL(window.location.href);
+        const typeVal  = document.getElementById('type-filter')?.value;
+        const startVal = document.getElementById('start-date')?.value;
+        const endVal   = document.getElementById('end-date')?.value;
+
+        if (typeVal && typeVal !== 'all') url.searchParams.set('type', typeVal);
+        else url.searchParams.delete('type');
+
+        if (startVal) url.searchParams.set('start', startVal);
+        else url.searchParams.delete('start');
+
+        if (endVal) url.searchParams.set('end', endVal);
+        else url.searchParams.delete('end');
+
+        window.history.replaceState({}, '', url.toString());
+    }
+
+    /* ============================================
+       EXPOSE HANDLERS
+       ============================================ */
     window.showToast         = showToast;
     window.closeToast        = closeToast;
     window.toggleGroup       = toggleGroup;
@@ -988,7 +1604,6 @@
     window.openEditRowModal  = openEditRowModal;
     window.closeEditModal    = closeEditModal;
     window.submitEditReport  = submitEditReport;
-
 })();
 </script>
 {% endblock %}

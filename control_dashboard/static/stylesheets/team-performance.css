@@ -1,49 +1,4 @@
 /* ==========================================================================
-   TEAM PERFORMANCE — Premium Light Theme
-   ========================================================================== */
-
-:root {
-    /* Surfaces */
-    --tp-bg-0: #eef1f8;
-    --tp-bg-1: #ffffff;
-    --tp-bg-2: #f7f8fc;
-    --tp-bg-3: #f1f3f9;
-
-    /* Borders */
-    --tp-border: rgba(15, 27, 51, 0.08);
-    --tp-border-strong: rgba(15, 27, 51, 0.16);
-    --tp-hairline: rgba(15, 27, 51, 0.06);
-
-    /* Text */
-    --tp-text-0: #0f1b33;
-    --tp-text-1: #46536b;
-    --tp-text-2: #8993a8;
-
-    /* Accents */
-    --tp-accent: #4f6ef7;
-    --tp-accent-soft: #eef1ff;
-    --tp-emerald: #17a673;
-    --tp-emerald-soft: #e2f7ef;
-    --tp-amber: #e08a17;
-    --tp-amber-soft: #fdf2e0;
-    --tp-rose: #e0456a;
-    --tp-rose-soft: #fdeaf0;
-    --tp-violet: #7c5cf0;
-    --tp-violet-soft: #f0ebff;
-
-    /* Shadows */
-    --tp-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
-                    0 1px 3px rgba(15, 27, 51, 0.03);
-    --tp-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
-                    0 2px 4px rgba(15, 27, 51, 0.03);
-    --tp-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
-                    0 4px 12px rgba(15, 27, 51, 0.04);
-
-    --tp-font: 'Poppins', system-ui, -apple-system, sans-serif;
-    --tp-mono: 'JetBrains Mono', 'Fira Code', monospace;
-}
-
-/* ==========================================================================
    1. METRIC CARDS
    ========================================================================== */
 .analytics-metrics-grid {

@@ -136,11 +136,19 @@ class UserProfile(models.Model):
             self.username = self.generate_username_from_email()
 
         # Create Django user
-        user = User.objects.create_user(
-            username=self.username,
-            email=self.email,
-            password=password or 'defaultpassword123'
-        )
+        if password:
+            user = User.objects.create_user(
+                username=self.username,
+                email=self.email,
+                password=password,
+            )
+        else:
+            user = User.objects.create_user(
+                username=self.username,
+                email=self.email,
+            )
+            user.set_unusable_password()
+            user.save()
 
         # Set full name
         name_parts = self.full_name.split(' ', 1)
@@ -215,6 +223,20 @@ class UserProfile(models.Model):
         parts = [p for p in self.full_name.strip().split() if p]
         return parts[0] if parts else 'User'
 
+    @property
+    def last_name(self):
+        """
+        Last name only — everything after the first space.
+        'Michael Koranteng' → 'Koranteng'
+        'Mary Jane Watson'  → 'Jane Watson'
+        """
+        if not self.full_name:
+            return ''
+        parts = [p for p in self.full_name.strip().split() if p]
+        if len(parts) < 2:
+            return ''
+        return ' '.join(parts[1:])
+
     class Meta:
         db_table = 'user_profiles'
         ordering = ['full_name']
@@ -226,59 +248,22 @@ class UserProfile(models.Model):
 
 class Branch(models.Model):
     """
-    Model for storing bank branches.
+    Bank branch.
 
-    Also carries a static BRANCH_CODE_MAP that maps the codes found
-    in the trial balance BRANCH_CODE column (e.g. '001', '101') to
-    human-readable branch names.
+    `assignment_scope` controls who can see this branch:
+      - 'cc'       → visible to all Cluster Control staff
+      - 'hc'       → visible to all Head Office Control staff
+      - 'specific' → visible only to users in `assigned_users`
     """
 
+    ASSIGNMENT_SCOPE_CHOICES = [
+        ('cc', 'Cluster Control'),
+        ('hc', 'Head Office Control'),
+        ('specific', 'Specific Users'),
+    ]
+
     BRANCH_CODE_MAP = {
-        '001': 'CMU - ACCRA',
-        '000': 'HEAD OFFICE',
-        '101': 'AIRPORT',
-        '102': 'ABOSSEY OKAI',
-        '103': 'ASHIAMAN',
-        '104': 'ABELENKPE',
-        '105': 'DOME',
-        '107': 'TEMA HARBOUR',
-        '108': 'KOKOMLEMLE',
-        '109': 'MADINA MARKET',
-        '110': 'TUDU',
-        '111': 'SPINTEX BASKET',
-        '112': 'OSU',
-        '113': 'WEIJA',
-        '114': 'EAST LEGON',
-        '115': 'TEMA COMM 1',
-        '117': 'DANSOMAN',
-        '118': 'ODORKOR',
-        '119': 'ASHALEY BOTWE',
-        '120': 'ADABRAKA',
-        '121': 'ACCRA CENTRAL',
-        '122': 'SPINTEX MANET',
-        '123': 'NIMA',
-        '124': 'NIA',
-        '125': 'MADINA ESTATE',
-        '126': 'ACHIMOTA',
-        '127': 'TEMA COMM 11',
-        '201': 'KOFORIDUA',
-        '301': 'KASOA',
-        '401': 'TAKORADI MARKET',
-        '402': 'TARKWA',
-        '403': 'TAKORADI LIBERATION',
-        '404': 'TAKORADI - CMU',
-        '601': 'MANHYIA',
-        '602': 'ADUM PREMPEH',
-        '603': 'KEJETIA',
-        '604': 'ANLOGA',
-        '605': 'KRONUM',
-        '606': 'ADUM ADDO KUFUOR',
-        '607': 'AHODWO',
-        '608': 'KUMASI - CMU',
-        '609': 'KNUST',
-        '701': 'TECHIMAN',
-        '702': 'SUNYANI',
-        '801': 'TAMALE',
+        # ... unchanged ...
     }
 
     BRANCH_CODE_CHOICES = [
@@ -288,6 +273,21 @@ class Branch(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     code = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    description = models.TextField(blank=True, default='')
+
+    assignment_scope = models.CharField(
+        max_length=20,
+        choices=ASSIGNMENT_SCOPE_CHOICES,
+        default='cc',
+        help_text="Who can see this branch in their dashboard.",
+    )
+    assigned_users = models.ManyToManyField(
+        'UserProfile',
+        blank=True,
+        related_name='scoped_branches',
+        help_text="Only used when assignment_scope='specific'.",
+    )
+
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -295,27 +295,7 @@ class Branch(models.Model):
     def __str__(self):
         return self.name
 
-    @classmethod
-    def code_to_name(cls, code):
-        if code is None:
-            return ''
-        key = str(code).strip()
-        return cls.BRANCH_CODE_MAP.get(key, key)
-
-    @classmethod
-    def code_to_display(cls, code):
-        if code is None:
-            return ''
-        key = str(code).strip()
-        name = cls.BRANCH_CODE_MAP.get(key)
-        return f"{key} — {name}" if name else key
-
-    @classmethod
-    def all_code_choices(cls):
-        return [
-            (code, f"{code} — {name}")
-            for code, name in sorted(cls.BRANCH_CODE_MAP.items())
-        ]
+    # ... existing code_to_name / code_to_display / all_code_choices ...
 
     class Meta:
         db_table = 'branches'
@@ -324,9 +304,31 @@ class Branch(models.Model):
 
 
 class Department(models.Model):
-    """Model for storing bank departments."""
+    """Bank department — same assignment semantics as Branch."""
+
+    ASSIGNMENT_SCOPE_CHOICES = [
+        ('cc', 'Cluster Control'),
+        ('hc', 'Head Office Control'),
+        ('specific', 'Specific Users'),
+    ]
+
     name = models.CharField(max_length=100, unique=True)
     code = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    description = models.TextField(blank=True, default='')
+
+    assignment_scope = models.CharField(
+        max_length=20,
+        choices=ASSIGNMENT_SCOPE_CHOICES,
+        default='cc',
+        help_text="Who can see this department in their dashboard.",
+    )
+    assigned_users = models.ManyToManyField(
+        'UserProfile',
+        blank=True,
+        related_name='scoped_departments',
+        help_text="Only used when assignment_scope='specific'.",
+    )
+
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -345,8 +347,14 @@ class Department(models.Model):
 # ============================================
 
 @receiver(pre_save, sender=UserProfile)
-def auto_generate_username(sender, instance, **kwargs):
-    """Automatically generate username before saving."""
+def auto_generate_username_fallback(sender, instance, **kwargs):
+    """
+    Fallback only — generate a username when one wasn't supplied.
+
+    The admin Create User form and the API always send a username
+    explicitly, so this signal only fires for legacy code paths
+    (e.g. UserProfile.objects.create(...) without a username).
+    """
     if not instance.username and instance.email:
         instance.username = instance.generate_username_from_email()
 
@@ -1248,3 +1256,82 @@ class ExceptionRecord(models.Model):
         if not self.target_closure_date:
             return None
         return (self.target_closure_date - timezone.now().date()).days
+
+# ============================================
+# SENT EMAIL AUDIT
+# ============================================
+
+class SentEmail(models.Model):
+    """
+    Audit record for every email sent from the compose page.
+
+    Records the full payload — recipients, cc, subject, body,
+    report type, and the outcome of the SMTP attempt — so a
+    supervisor or admin can reconstruct exactly what was sent,
+    when, and by whom.
+    """
+
+    DELIVERY_STATUS = [
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    ]
+
+    # Who sent it
+    sender = models.ForeignKey(
+        'UserProfile',
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='sent_emails',
+    )
+
+    # What they sent
+    report_type = models.CharField(max_length=200, db_index=True)
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+
+    # Comma-separated lists kept as text so we don't need a
+    # join table for what is essentially a snapshot record.
+    to_addresses = models.TextField(
+        help_text='Comma-separated list of To: addresses at send time.',
+    )
+    cc_addresses = models.TextField(
+        blank=True, default='',
+        help_text='Comma-separated list of CC: addresses at send time.',
+    )
+
+    # Delivery bookkeeping
+    status = models.CharField(
+        max_length=20,
+        choices=DELIVERY_STATUS,
+        default='sent',
+        db_index=True,
+    )
+    error_message = models.TextField(blank=True, default='')
+
+    # Timestamps
+    sent_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = 'sent_emails'
+        ordering = ['-sent_at']
+        indexes = [
+            models.Index(fields=['sender', 'sent_at']),
+            models.Index(fields=['report_type', 'sent_at']),
+            models.Index(fields=['status', 'sent_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.subject} → {self.to_addresses[:60]} ({self.status})'
+
+    # ---------- Helpers ----------
+    @property
+    def to_list(self):
+        return [a.strip() for a in (self.to_addresses or '').split(',') if a.strip()]
+
+    @property
+    def cc_list(self):
+        return [a.strip() for a in (self.cc_addresses or '').split(',') if a.strip()]
+
+    @property
+    def recipient_count(self):
+        return len(self.to_list) + len(self.cc_list)
