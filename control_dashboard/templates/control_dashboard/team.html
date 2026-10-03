@@ -24,24 +24,20 @@
     --tp-text-2: #8993a8;
 
     --tp-accent: #4f6ef7;
-    --tp-accent-soft: #eef1ff;
     --tp-emerald: #17a673;
     --tp-emerald-soft: #e2f7ef;
     --tp-amber: #e08a17;
     --tp-amber-soft: #fdf2e0;
     --tp-rose: #e0456a;
     --tp-rose-soft: #fdeaf0;
-    --tp-violet: #7c5cf0;
 
     --tp-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
                     0 1px 3px rgba(15, 27, 51, 0.03);
-    --tp-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
-                    0 2px 4px rgba(15, 27, 51, 0.03);
+    --tp-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06);
 
     --tp-font: 'Poppins', system-ui, -apple-system, sans-serif;
 }
 
-/* ---------- Container ---------- */
 .table-container {
     background: var(--tp-bg-1);
     border: 1px solid var(--tp-border);
@@ -49,7 +45,6 @@
     overflow: hidden;
     box-shadow: var(--tp-shadow-sm);
     position: relative;
-    transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 .table-container::before {
     content: '';
@@ -70,8 +65,6 @@
     background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
     flex-wrap: wrap;
     gap: 12px;
-    position: relative;
-    z-index: 1;
 }
 .table-header h4 {
     margin: 0;
@@ -81,10 +74,8 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    letter-spacing: 0.2px;
 }
 
-/* Live indicator with last-updated text */
 .live-indicator {
     display: inline-flex;
     align-items: center;
@@ -101,11 +92,6 @@
     margin-left: 10px;
     transition: color .3s ease, background .3s ease, border-color .3s ease;
 }
-.live-indicator.is-stale {
-    color: var(--tp-amber);
-    background: rgba(224, 138, 23, 0.10);
-    border-color: rgba(224, 138, 23, 0.25);
-}
 .live-indicator.is-error {
     color: var(--tp-rose);
     background: rgba(224, 69, 106, 0.10);
@@ -119,8 +105,7 @@
     box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
     animation: fx-pulse-dot 2s ease-in-out infinite;
 }
-.live-indicator.is-stale .dot { background: var(--tp-amber); box-shadow: 0 0 8px rgba(224,138,23,0.7); }
-.live-indicator.is-error .dot { background: var(--tp-rose); box-shadow: 0 0 8px rgba(224,69,106,0.7); animation: none; }
+.live-indicator.is-error .dot { background: var(--tp-rose); animation: none; }
 
 @keyframes fx-pulse-dot {
     0%, 100% { transform: scale(1); opacity: 1; }
@@ -140,8 +125,8 @@
     grid-template-columns:
         40px                                /* rank */
         minmax(180px, 1.4fr)                /* identity */
-        minmax(160px, 1fr)                  /* score */
-        minmax(140px, 0.9fr)                /* stats */
+        minmax(220px, 1.3fr)                /* score (bar + breakdown) */
+        minmax(140px, 0.9fr)                /* net/tasks */
         auto;                               /* status */
     align-items: center;
     gap: 18px;
@@ -161,7 +146,6 @@
     border-color: rgba(224, 138, 23, 0.22);
 }
 
-/* Rank */
 .member-rank {
     display: grid; place-items: center;
     width: 40px; height: 40px;
@@ -172,7 +156,6 @@
     background: var(--tp-bg-2);
     color: var(--tp-text-1);
     border: 1px solid var(--tp-hairline);
-    position: relative;
 }
 .member-rank::before {
     content: '#';
@@ -188,7 +171,6 @@
     box-shadow: 0 2px 8px rgba(224, 138, 23, 0.18);
 }
 
-/* Identity */
 .member-identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .member-avatar {
     width: 38px; height: 38px; flex: 0 0 38px;
@@ -203,14 +185,13 @@
     font-weight: 600; font-size: 13.5px;
     color: var(--tp-text-0);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    letter-spacing: 0.1px;
 }
 .member-position {
     font-size: 11px; color: var(--tp-text-2);
     margin-top: 1px;
 }
 
-/* Score block */
+/* ---------- Score block ---------- */
 .member-score {
     display: flex; flex-direction: column; gap: 6px;
     min-width: 0;
@@ -245,7 +226,6 @@
     background: var(--tp-bg-3);
     border-radius: 999px;
     overflow: hidden;
-    position: relative;
 }
 .progress-bar {
     height: 100%;
@@ -256,7 +236,33 @@
 .progress-bar.bar-warning { background: linear-gradient(90deg, #e08a17 0%, #f59e0b 100%); }
 .progress-bar.bar-danger  { background: linear-gradient(90deg, #e0456a 0%, #f43f5e 100%); }
 
-/* Stats cluster */
+.score-breakdown {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10.5px;
+    color: var(--tp-text-2);
+    font-variant-numeric: tabular-nums;
+    flex-wrap: wrap;
+}
+.score-breakdown__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+}
+.score-breakdown__item b {
+    font-weight: 700;
+    color: var(--tp-text-1);
+}
+.score-breakdown__item.is-plus b { color: var(--tp-emerald); }
+.score-breakdown__item.is-minus b { color: var(--tp-rose); }
+.score-breakdown__divider {
+    width: 1px; height: 10px;
+    background: var(--tp-hairline);
+}
+
+/* ---------- Stats cluster ---------- */
 .member-stats {
     display: flex;
     align-items: center;
@@ -292,7 +298,7 @@
     background: var(--tp-hairline);
 }
 
-/* Status badge */
+/* ---------- Status badge ---------- */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -317,7 +323,7 @@
 .status-badge.pending  { background: var(--tp-amber-soft);   color: var(--tp-amber);   border-color: rgba(224, 138, 23, 0.22); }
 .status-badge.inactive { background: var(--tp-rose-soft);    color: var(--tp-rose);    border-color: rgba(224, 69, 106, 0.22); }
 
-/* Empty state */
+/* ---------- Empty ---------- */
 .tp-empty {
     text-align: center;
     padding: 64px 24px;
@@ -332,14 +338,9 @@
     margin: 0 auto 16px;
 }
 .tp-empty__icon i { font-size: 22px; color: var(--tp-text-2); opacity: 0.6; }
-.tp-empty h5 {
-    margin: 0 0 6px;
-    font-size: 14px; font-weight: 600;
-    color: var(--tp-text-1);
-}
+.tp-empty h5 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--tp-text-1); }
 .tp-empty p { margin: 0; font-size: 12px; max-width: 380px; margin-inline: auto; line-height: 1.5; }
 
-/* Live update flash */
 @keyframes fx-cell-update {
     0%   { background: rgba(79, 110, 247, 0.16); }
     100% { background: transparent; }
@@ -349,10 +350,9 @@
     border-radius: 6px;
 }
 
-/* Responsive */
 @media (max-width: 1100px) {
     .member-row {
-        grid-template-columns: 40px minmax(180px, 1fr) minmax(160px, 1fr) auto;
+        grid-template-columns: 40px minmax(180px, 1fr) minmax(200px, 1fr) auto;
         grid-template-areas:
             "rank identity score status"
             "rank stats    stats stats";
@@ -453,11 +453,14 @@
         <article class="member-row {% if forloop.counter == 1 %}is-top{% endif %}"
                  data-name="{{ member.user.full_name|lower }}"
                  data-member-id="{{ member.user.id }}"
-                 data-net="{{ member.net_score }}"
+                 data-net="{{ member.net_vs_target }}"
                  data-tasks="{{ member.total_tasks }}"
                  data-score="{{ member.percentage }}"
                  data-status="{{ member.status_text }}"
-                 data-position="{{ member.user.get_position_display|default:'-' }}">
+                 data-position="{{ member.user.get_position_display|default:'-' }}"
+                 data-email-score="{{ member.email_score }}"
+                 data-adhoc-credits="{{ member.adhoc_credits }}"
+                 data-adhoc-debits="{{ member.adhoc_debits }}">
 
             <div class="member-rank">{{ forloop.counter }}</div>
 
@@ -488,14 +491,29 @@
                         data-field="percentage-bar"
                         style="width: {{ member.percentage_bar }}%;"></div>
                 </div>
+                <div class="score-breakdown" aria-label="Score breakdown">
+                    <span class="score-breakdown__item">
+                        Email <b data-field="email-score">{{ member.email_score }}</b>
+                        <span>/ {{ member.total_tasks }}×100</span>
+                    </span>
+                    <span class="score-breakdown__divider"></span>
+                    <span class="score-breakdown__item is-plus">
+                        <i class="fas fa-plus" style="font-size:8px;"></i>
+                        <b data-field="adhoc-credits">{{ member.adhoc_credits }}</b>
+                    </span>
+                    <span class="score-breakdown__item is-minus">
+                        <i class="fas fa-minus" style="font-size:8px;"></i>
+                        <b data-field="adhoc-debits">{{ member.adhoc_debits }}</b>
+                    </span>
+                </div>
             </div>
 
             <div class="member-stats">
                 <div class="member-stat">
                     <span class="member-stat__val
-                        {% if member.net_score > 0 %}positive{% elif member.net_score < 0 %}negative{% else %}zero{% endif %}"
+                        {% if member.net_vs_target > 0 %}positive{% elif member.net_vs_target < 0 %}negative{% else %}zero{% endif %}"
                         data-field="net">
-                        {% if member.net_score > 0 %}+{% endif %}{{ member.net_score }}
+                        {% if member.net_vs_target > 0 %}+{% endif %}{{ member.net_vs_target }}
                     </span>
                     <span class="member-stat__lbl">Net</span>
                 </div>
@@ -530,20 +548,12 @@
     const LIVE_ENDPOINT = "{% url 'control_dashboard:api_team_performance_live' %}";
     const REFRESH_INTERVAL_MS = 20000;
 
-    function getCsrfToken() {
-        const meta = document.querySelector('meta[name="csrf-token"]');
-        return meta ? meta.getAttribute('content') : '';
-    }
-
-    /* ---------------------------------------------------------
-       Toast
-    --------------------------------------------------------- */
     function showToast(message, title = 'Success!') {
         const toast = document.getElementById('toastNotification');
         if (!toast) { console.log('[toast]', title, message); return; }
         const msgEl = document.getElementById('toastMessage');
         const titleEl = toast.querySelector('.toast-title');
-        if (msgEl) msgEl.textContent = message || 'Action completed successfully.';
+        if (msgEl) msgEl.textContent = message || '';
         if (titleEl) titleEl.textContent = title;
 
         const icon = toast.querySelector('.toast-icon i');
@@ -567,9 +577,6 @@
         if (window.toastTimeout) { clearTimeout(window.toastTimeout); window.toastTimeout = null; }
     };
 
-    /* ---------------------------------------------------------
-       Client-side search
-    --------------------------------------------------------- */
     function filterTeamMembers() {
         const input = document.getElementById('search-member');
         if (!input) return;
@@ -581,7 +588,6 @@
             row.style.display = (!filter || name.includes(filter)) ? '' : 'none';
         });
 
-        // Re-number visible rows so ranks stay sequential while filtering
         let visibleRank = 0;
         document.querySelectorAll('#teamTable .member-row').forEach(row => {
             if (row.style.display === 'none') return;
@@ -592,9 +598,6 @@
         });
     }
 
-    /* ---------------------------------------------------------
-       Animated number (for smooth live transitions)
-    --------------------------------------------------------- */
     function animateNumber(el, from, to, duration) {
         if (!el || from === to) return;
         const start = performance.now();
@@ -607,9 +610,6 @@
         requestAnimationFrame(tick);
     }
 
-    /* ---------------------------------------------------------
-       Live indicator helpers
-    --------------------------------------------------------- */
     let lastUpdateAt = Date.now();
     let liveErrors = 0;
 
@@ -617,26 +617,17 @@
         const el = document.getElementById('liveIndicator');
         const label = document.getElementById('liveLabel');
         if (!el || !label) return;
-
-        el.classList.remove('is-stale', 'is-error');
+        el.classList.remove('is-error');
         if (state === 'error') {
             el.classList.add('is-error');
             label.textContent = 'Offline';
-        } else if (state === 'stale') {
-            el.classList.add('is-stale');
-            label.textContent = 'Stale';
         } else {
             const secs = Math.round((Date.now() - lastUpdateAt) / 1000);
             label.textContent = secs < 5 ? 'Live' : `Updated ${secs}s ago`;
         }
     }
-
-    // Tick the "updated Xs ago" label every 5s
     setInterval(() => setLiveState(liveErrors > 0 ? 'error' : 'ok'), 5000);
 
-    /* ---------------------------------------------------------
-       Live refresh
-    --------------------------------------------------------- */
     async function refreshPerformance() {
         try {
             const resp = await fetch(LIVE_ENDPOINT, {
@@ -653,16 +644,15 @@
                 const row = document.querySelector(`.member-row[data-member-id="${m.id}"]`);
                 if (!row) return;
 
-                // Net
                 const netEl = row.querySelector('[data-field="net"]');
                 if (netEl) {
-                    const signed = (m.net_score > 0 ? '+' : '') + m.net_score;
+                    const signed = (m.net_vs_target > 0 ? '+' : '') + m.net_vs_target;
                     if (netEl.textContent.trim() !== signed) {
                         netEl.textContent = signed;
                         netEl.classList.remove('positive', 'negative', 'zero');
                         netEl.classList.add(
-                            m.net_score > 0 ? 'positive'
-                            : m.net_score < 0 ? 'negative'
+                            m.net_vs_target > 0 ? 'positive'
+                            : m.net_vs_target < 0 ? 'negative'
                             : 'zero'
                         );
                         netEl.classList.add('cell-updated');
@@ -670,7 +660,6 @@
                     }
                 }
 
-                // Tasks
                 const tasksEl = row.querySelector('[data-field="tasks"]');
                 if (tasksEl && tasksEl.textContent.trim() !== String(m.total_tasks)) {
                     tasksEl.textContent = m.total_tasks;
@@ -678,20 +667,17 @@
                     setTimeout(() => tasksEl.classList.remove('cell-updated'), 1400);
                 }
 
-                // Percentage
                 const scoreEl = row.querySelector('[data-field="percentage"]');
-                const barEl = row.querySelector('[data-field="percentage-bar"]');
+                const barEl   = row.querySelector('[data-field="percentage-bar"]');
                 if (scoreEl && barEl) {
                     const oldVal = parseInt(scoreEl.textContent, 10) || 0;
                     if (oldVal !== m.percentage) {
                         animateNumber(scoreEl, oldVal, m.percentage, 900);
-
                         scoreEl.classList.remove('text-success', 'text-warning', 'text-danger');
                         if (m.percentage >= 90)      scoreEl.classList.add('text-success');
                         else if (m.percentage >= 70) scoreEl.classList.add('text-warning');
                         else                         scoreEl.classList.add('text-danger');
                     }
-
                     barEl.style.width = m.percentage + '%';
                     barEl.classList.remove('bar-success', 'bar-warning', 'bar-danger');
                     if (m.percentage >= 90)      barEl.classList.add('bar-success');
@@ -699,7 +685,18 @@
                     else                         barEl.classList.add('bar-danger');
                 }
 
-                // Status
+                const setVal = (field, val) => {
+                    const el = row.querySelector(`[data-field="${field}"]`);
+                    if (el && String(el.textContent).trim() !== String(val)) {
+                        el.textContent = val;
+                        el.classList.add('cell-updated');
+                        setTimeout(() => el.classList.remove('cell-updated'), 1400);
+                    }
+                };
+                setVal('email-score',    m.email_score ?? 0);
+                setVal('adhoc-credits',  m.adhoc_credits ?? 0);
+                setVal('adhoc-debits',   m.adhoc_debits ?? 0);
+
                 const statusEl = row.querySelector('[data-field="status"]');
                 if (statusEl && statusEl.textContent.trim() !== m.status_text) {
                     statusEl.textContent = m.status_text;
@@ -723,9 +720,6 @@
         }
     }
 
-    /* ---------------------------------------------------------
-       CSV export (data-attribute driven)
-    --------------------------------------------------------- */
     function csvCell(v) {
         return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
     }
@@ -733,7 +727,11 @@
     function exportTeamData() {
         showToast('Exporting team data...', 'Exporting');
 
-        const headers = ['Rank', 'Full Name', 'Position', 'Performance %', 'Net', 'Total Tasks', 'Status'];
+        const headers = [
+            'Rank', 'Full Name', 'Position',
+            'Performance %', 'Email Score', 'AdHoc +', 'AdHoc −',
+            'Net vs Target', 'Total Tasks', 'Status'
+        ];
         const lines = [headers.map(csvCell).join(',')];
 
         let rank = 0;
@@ -743,7 +741,10 @@
             const d = row.dataset;
             const name = row.querySelector('.member-name')?.textContent.trim() || '';
             lines.push([
-                rank, name, d.position, d.score + '%', d.net, d.tasks, d.status
+                rank, name, d.position,
+                d.score + '%',
+                d.emailScore, d.adhocCredits, d.adhocDebits,
+                d.net, d.tasks, d.status
             ].map(csvCell).join(','));
         });
 
@@ -761,18 +762,12 @@
         setTimeout(() => showToast('Team data exported successfully!', 'Exported'), 500);
     }
 
-    /* ---------------------------------------------------------
-       Keyboard
-    --------------------------------------------------------- */
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && e.target.id === 'search-member') {
             filterTeamMembers();
         }
     });
 
-    /* ---------------------------------------------------------
-       Init
-    --------------------------------------------------------- */
     document.addEventListener('DOMContentLoaded', function () {
         setInterval(refreshPerformance, REFRESH_INTERVAL_MS);
     });

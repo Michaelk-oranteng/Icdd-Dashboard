@@ -349,31 +349,33 @@ def count_expected_report_occurrences(report, until=None):
 
     return count
 
+
 def _build_member_scorecard(member, today=None):
     """
-    Compute a member's scorecard from their SentEmail history.
+    Compute a member's scorecard.
 
-    Rules (locked with the business):
-      • Each expected occurrence of an assigned Report is worth up to 100 pts.
-      • Sent on time (sent_at <= deadline)                  → 100 pts (minus deduction)
-      • Sent within 3 days AFTER the deadline               → 40 pts  (minus deduction)
-      • Sent more than 3 days after the deadline            → 0 pts
-      • No email, deadline passed > 3 days ago              → 0 pts
-      • No email, deadline passed but still in grace (<=3d) → 0 pts for now,
-        but the occurrence stays in the denominator so the score has room
-        to grow if they send within the window.
-      • No email, deadline still in the future              → not counted yet.
+    ── Email side ──────────────────────────────────────────────
+    For each expected occurrence of an assigned Report:
+      • Sent on time (sent_at <= deadline)                → 100 pts
+      • Sent within GRACE_DAYS after the deadline         →  40 pts
+      • Sent after the grace window                       →   0 pts
+      • No email at all, deadline has passed              →   0 pts
+      • No email, deadline still in the future            → not counted yet
 
-    Emails are matched to occurrences in deadline order (oldest first),
-    so skipping a period cannot be "papered over" by sending extra
-    emails later.
+    Bonus emails beyond the expected count for a report_type
+    still earn 100 pts each (extra work).
 
-    Bonus emails (more emails than expected occurrences for a report_type)
-    still add credits to the numerator.
+    The email side is worth  E × 100  points max, where E is
+    the number of expected occurrences.
 
-    AdHoc adjustments move the numerator independently.
+    ── AdHoc side ─────────────────────────────────────────────
+    AdHocDeduction.points_added  →  credits  (+)
+    AdHocDeduction.points        →  debits   (−)
 
-    Returns a dict with all fields the team.html template needs.
+    ── Final numbers ───────────────────────────────────────────
+    Net score     = email_score + adhoc_credits − adhoc_debits
+    Percentage    = clamp(Net / (E × 100) × 100, 0, 100)
+    Net vs target = percentage − 100  (negative = below full marks)
     """
     if today is None:
         today = timezone.now()
@@ -382,7 +384,7 @@ def _build_member_scorecard(member, today=None):
 
     GRACE_DAYS = 3
 
-    # ── 1. Assigned reports (excluding internal + uploads) ─────────
+    # ── 1. Assigned reports ─────────────────────────────────────
     assigned_reports = (
         Report.objects
         .filter(Q(assigned_to=member) | Q(is_assigned_to_all=True))
@@ -391,44 +393,35 @@ def _build_member_scorecard(member, today=None):
         .distinct()
     )
 
-    # ── 2. Emails sent by this member ──────────────────────────────
+    # ── 2. Emails sent by this member ───────────────────────────
     emails = list(
         SentEmail.objects
         .filter(sender=member)
         .order_by('sent_at')
     )
 
-    # Bucket emails by report_type (used for the count-based matching)
     emails_by_type = {}
     for email in emails:
         emails_by_type.setdefault(email.report_type, []).append(email)
 
-    total_expected   = 0
-    total_earned     = 0
-    total_deducted   = 0   # supervisor deductions applied on earned emails
+    total_expected = 0
+    email_score    = 0   # sum of points earned on the email side
 
-    # ── 3. Score each report the member is assigned to ─────────────
+    # ── 3. Score each report ────────────────────────────────────
     for report in assigned_reports:
-        # Build the deadline list for this report from its anchor
-        # up to now, respecting the frequency.
         occurrences = _generate_occurrences(report, until=today)
         if not occurrences:
             continue
 
-        rtype_emails = emails_by_type.get(report.report_type, [])
-
-        # Match emails to occurrences oldest-first.
-        # emails are already sorted ascending; occurrences are too.
+        rtype_emails   = emails_by_type.get(report.report_type, [])
         used_email_ids = set()
 
-        for idx, deadline in enumerate(occurrences):
-            # Only count occurrences whose deadline has arrived.
+        for deadline in occurrences:
             if deadline > today:
                 continue
 
             total_expected += 1
 
-            # Find the next unused email for this report_type
             matched_email = None
             for e in rtype_emails:
                 if e.id in used_email_ids:
@@ -437,17 +430,11 @@ def _build_member_scorecard(member, today=None):
                 break
 
             if matched_email is None:
-                # No email → 0 points for this occurrence.
-                # Still counted in the denominator (either missed or
-                # still in grace — either way earns nothing right now).
                 continue
 
             used_email_ids.add(matched_email.id)
 
-            # Score based on lateness
-            delta = matched_email.sent_at - deadline
-            seconds_late = delta.total_seconds()
-
+            seconds_late = (matched_email.sent_at - deadline).total_seconds()
             if seconds_late <= 0:
                 earned = 100
             elif seconds_late <= GRACE_DAYS * 86400:
@@ -455,47 +442,38 @@ def _build_member_scorecard(member, today=None):
             else:
                 earned = 0
 
-            # Supervisor deduction applies to earned points, floored at 0
-            deduction = matched_email.manual_deduction or 0
-            earned = max(0, earned - deduction)
+            email_score += earned
 
-            total_earned   += earned
-            total_deducted += deduction
-
-        # Bonus emails beyond expected occurrences → +100 each (minus deduction)
+        # Bonus emails: extra emails beyond expected occurrences
         bonus_emails = [e for e in rtype_emails if e.id not in used_email_ids]
-        for e in bonus_emails:
-            deduction = e.manual_deduction or 0
-            total_earned   += max(0, 100 - deduction)
-            total_deducted += deduction
+        email_score += 100 * len(bonus_emails)
 
-    # ── 4. AdHoc adjustments ───────────────────────────────────────
-    adhoc_debits = (
-        AdHocDeduction.objects
-        .filter(user=member)
-        .aggregate(total=Sum('points'))
-        .get('total') or 0
-    )
+    # ── 4. AdHoc adjustments ────────────────────────────────────
     adhoc_credits = (
         AdHocDeduction.objects
         .filter(user=member)
         .aggregate(total=Sum('points_added'))
         .get('total') or 0
     )
+    adhoc_debits = (
+        AdHocDeduction.objects
+        .filter(user=member)
+        .aggregate(total=Sum('points'))
+        .get('total') or 0
+    )
 
-    # ── 5. Totals ──────────────────────────────────────────────────
-    credits = total_earned + adhoc_credits
-    debits  = (total_expected * 100 - total_earned) + adhoc_debits
-    net_score = credits - debits
+    # ── 5. Final numbers ────────────────────────────────────────
+    net_score    = email_score + adhoc_credits - adhoc_debits
+    max_possible = total_expected * 100
 
-    email_count = len(emails)
-
-    if total_expected > 0:
-        percentage = max(0, min(100, int(round(net_score / (total_expected * 100) * 100))))
+    if max_possible > 0:
+        percentage = max(0, min(100, int(round(net_score / max_possible * 100))))
     else:
         percentage = 0
 
-    # ── 6. Status label ────────────────────────────────────────────
+    net_vs_target = percentage - 100
+
+    # ── 6. Status label ─────────────────────────────────────────
     if total_expected == 0:
         status = 'danger'
         status_text = 'No Tasks'
@@ -517,18 +495,21 @@ def _build_member_scorecard(member, today=None):
 
     return {
         'user':            member,
-        'email_count':     email_count,
-        'total_tasks':     total_expected,      # kept for template compat
+        'email_count':     len(emails),
+        'total_tasks':     total_expected,
         'expected':        total_expected,
-        'debits':          debits,
-        'credits':         credits,
+        # Component breakdown
+        'email_score':     email_score,
+        'adhoc_credits':   adhoc_credits,
+        'adhoc_debits':    adhoc_debits,
+        # Headline numbers
         'net_score':       net_score,
+        'net_vs_target':   net_vs_target,
         'percentage':      percentage,
         'percentage_bar':  percentage,
         'status':          status,
         'status_text':     status_text,
     }
-
 
 def _generate_occurrences(report, until=None):
     """
@@ -1119,6 +1100,7 @@ def api_delete_user(request, user_id):
 
 # ==================== SUPERVISOR VIEWS ====================
 
+
 @login_required
 def supervisor_dashboard(request):
     try:
@@ -1129,22 +1111,20 @@ def supervisor_dashboard(request):
     except UserProfile.DoesNotExist:
         return redirect_dashboard(request.user)
 
-    today = timezone.now().date()
+    today_date = timezone.now().date()
+    today_dt   = timezone.now()
 
-    # ---- Total exceptions ----
-    exceptions_qs = ExceptionRecord.objects.filter(
-        upload__isnull=False,
-    )
+    exceptions_qs = ExceptionRecord.objects.filter(upload__isnull=False)
     total_exceptions = exceptions_qs.count()
-    today_exceptions = exceptions_qs.filter(created_at__date=today).count()
+    today_exceptions = exceptions_qs.filter(created_at__date=today_date).count()
 
-    # ---- Submitted reports count ----
-    submitted_qs = Report.objects.filter(status='submitted').exclude(
-        report_type=TRIAL_BALANCE_REPORT_TYPE
+    submitted_qs = (
+        Report.objects
+        .filter(status='submitted')
+        .exclude(report_type=TRIAL_BALANCE_REPORT_TYPE)
     )
     submitted_reports_count = submitted_qs.count()
 
-    # ---- Team performance — RANKED BY NET SCORE ----
     team_members = (
         UserProfile.objects
         .filter(role='member', status='active')
@@ -1152,65 +1132,43 @@ def supervisor_dashboard(request):
     )
 
     team_performance = []
+    sum_of_percentages = 0
+
     for member in team_members:
-        member_submitted = submitted_qs.filter(created_by=member).count()
-
-        member_debits = (
-            AdHocDeduction.objects
-            .filter(user=member)
-            .aggregate(total=Sum('points'))
-            .get('total') or 0
-        )
-        member_credits = (
-            AdHocDeduction.objects
-            .filter(user=member)
-            .aggregate(total=Sum('points_added'))
-            .get('total') or 0
-        )
-
-        net_score = member_credits - member_debits
-        percentage = max(0, min(100, net_score))
-
-        if percentage >= 90:
-            status = 'success'
-        elif percentage >= 70:
-            status = 'success'
-        elif percentage >= 50:
-            status = 'warning'
-        elif percentage > 0:
-            status = 'warning'
-        else:
-            status = 'danger'
+        card = _build_member_scorecard(member, today=today_dt)
+        sum_of_percentages += card['percentage']
 
         team_performance.append({
-            'user': member,
-            'submitted': member_submitted,
-            'deductions': member_debits,
-            'credits': member_credits,
-            'net_score': net_score,
-            'final_score': net_score,
-            'percentage': percentage,
-            'status': status,
+            'user':          member,
+            'submitted':     card['email_count'],
+            'deductions':    card['adhoc_debits'],
+            'credits':       card['adhoc_credits'],
+            'net_score':     card['net_score'],
+            'net_vs_target': card['net_vs_target'],
+            'final_score':   card['net_score'],
+            'percentage':    card['percentage'],
+            'status':        card['status'],
+            'status_text':   card['status_text'],
         })
 
     team_performance.sort(
-        key=lambda x: (x['net_score'], x['submitted']),
+        key=lambda x: (x['percentage'], x['net_score'], x['submitted']),
         reverse=True,
     )
 
     completion_rate = (
-        int(sum(m['percentage'] for m in team_performance) / len(team_performance))
+        int(round(sum_of_percentages / len(team_performance)))
         if team_performance else 0
     )
 
     context = {
-        'user_profile': user_profile,
-        'today': timezone.now(),
-        'total_exceptions': total_exceptions,
-        'today_exceptions': today_exceptions,
-        'submitted_reports_count': submitted_reports_count,
-        'team_performance': team_performance,
-        'completion_rate': completion_rate,
+        'user_profile':             user_profile,
+        'today':                    timezone.now(),
+        'total_exceptions':         total_exceptions,
+        'today_exceptions':         today_exceptions,
+        'submitted_reports_count':  submitted_reports_count,
+        'team_performance':         team_performance,
+        'completion_rate':          completion_rate,
     }
 
     return render(request, 'control_dashboard/supervisorboard.html', context)
@@ -3993,8 +3951,8 @@ def team_performance(request):
         card = _build_member_scorecard(member, today=today)
         team_data.append(card)
 
-        grand_total_debits  += card['debits']
-        grand_total_credits += card['credits']
+        grand_total_debits  += card['adhoc_debits']
+        grand_total_credits += card['adhoc_credits']
         sum_of_percentages  += card['percentage']
 
     team_data.sort(
@@ -4018,12 +3976,12 @@ def team_performance(request):
 
     return render(request, 'control_dashboard/team.html', context)
 
+
 @csrf_exempt
 @require_http_methods(["GET"])
 def api_team_performance_live(request):
     """
     Live JSON endpoint for the Team Performance auto-refresh.
-
     Returns the same scorecard computed by _build_member_scorecard,
     one entry per active member.
     """
@@ -4049,10 +4007,15 @@ def api_team_performance_live(request):
             'id':              member.id,
             'full_name':       member.full_name or member.email,
             'email_count':     card['email_count'],
-            'debits':          card['debits'],
-            'credits':         card['credits'],
+            'email_score':     card['email_score'],
+            'adhoc_credits':   card['adhoc_credits'],
+            'adhoc_debits':    card['adhoc_debits'],
             'net_score':       card['net_score'],
+            'net_vs_target':   card['net_vs_target'],
+            'total_tasks':     card['total_tasks'],
             'percentage':      card['percentage'],
+            'status':          card['status'],
+            'status_text':     card['status_text'],
         })
 
     return JsonResponse({'success': True, 'members': members_payload})
@@ -7004,13 +6967,8 @@ def api_edit_excel_row(request, row_id):
 def api_supervisor_top_performers_live(request):
     """
     Live JSON endpoint for the Supervisor Dashboard.
-
-    Top 5 performers are ranked by the SAME scorecard used on the
-    Team Performance page (SentEmail-derived + AdHoc adjustments +
-    deadline penalty for missed/late submissions).
-
-    Also returns the summary numbers shown on the KPI cards so the
-    dashboard can refresh them in place.
+    Top 5 performers are ranked by the same scorecard used on
+    the Team Performance page.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -7047,22 +7005,19 @@ def api_supervisor_top_performers_live(request):
 
     for member in team_members:
         card = _build_member_scorecard(member, today=today_dt)
-
-        # Number of emails this member has actually sent — this is
-        # what the dashboard's "Submitted" column has always shown.
         email_count = card['email_count']
 
         performers.append({
-            'id':          member.id,
-            'full_name':   member.full_name or member.email,
-            'submitted':   email_count,
-            'percentage':  card['percentage'],
-            'net_score':   card['net_score'],
-            'debits':      card['debits'],
-            'credits':     card['credits'],
-            'status':      card['status'],          # 'success' | 'warning' | 'danger'
-            'status_text': card['status_text'],
-            # Status icons used by the small dashboard pill
+            'id':            member.id,
+            'full_name':     member.full_name or member.email,
+            'submitted':     email_count,
+            'percentage':    card['percentage'],
+            'net_score':     card['net_score'],
+            'net_vs_target': card['net_vs_target'],
+            'adhoc_credits': card['adhoc_credits'],
+            'adhoc_debits':  card['adhoc_debits'],
+            'status':        card['status'],
+            'status_text':   card['status_text'],
             'status_icon': (
                 '🌟' if card['percentage'] >= 70
                 else '📈' if card['percentage'] > 0
@@ -7073,8 +7028,6 @@ def api_supervisor_top_performers_live(request):
         sum_of_percentages += card['percentage']
         total_members += 1
 
-    # Sort by the same key the team page uses so the two views never
-    # disagree about who is top performer.
     performers.sort(
         key=lambda x: (x['percentage'], x['net_score'], x['submitted']),
         reverse=True,
@@ -7097,6 +7050,7 @@ def api_supervisor_top_performers_live(request):
             'team_size':               total_members,
         },
     })
+
 
 # ═══ NEW ═══ Avatar upload / delete endpoints
 
