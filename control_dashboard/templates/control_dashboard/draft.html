@@ -8,7 +8,7 @@
 
 <style>
     /* ============================================================
-       UPLOAD EXCEPTION REPORT — PROFESSIONAL LAYOUT
+       UPLOAD EXCEPTION REPORT — clean, uniform layout
        ============================================================ */
 
     :root {
@@ -23,6 +23,10 @@
         --up-success: #17a673;
         --up-warning: #e08a17;
         --up-danger:  #e0456a;
+        --up-radius:  12px;
+        --up-radius-sm: 10px;
+        --up-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04);
+        --up-shadow-md: 0 4px 14px rgba(15, 27, 51, 0.06);
     }
 
     .up-wrap {
@@ -40,7 +44,7 @@
     .up-header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         gap: 16px;
         flex-wrap: wrap;
         padding: 4px 2px 0;
@@ -70,8 +74,8 @@
     .up-card {
         background: var(--up-surface);
         border: 1px solid var(--up-border);
-        border-radius: 12px;
-        box-shadow: 0 1px 2px rgba(15, 27, 51, 0.03);
+        border-radius: var(--up-radius);
+        box-shadow: var(--up-shadow-sm);
         overflow: hidden;
     }
 
@@ -113,22 +117,23 @@
        ============================================================ */
     .up-zone {
         display: grid;
-        grid-template-columns: 320px 1fr;
+        grid-template-columns: 300px 1fr;
         gap: 0;
-        min-height: 260px;
+        min-height: 300px;
     }
 
     @media (max-width: 900px) {
-        .up-zone { grid-template-columns: 1fr; }
+        .up-zone { grid-template-columns: 1fr; min-height: 0; }
     }
 
     /* Left column — report type */
     .up-zone-config {
-        padding: 26px 24px;
+        padding: 28px 24px;
         background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
         border-right: 1px solid var(--up-border-2);
         display: flex;
         flex-direction: column;
+        justify-content: center;
         gap: 20px;
     }
 
@@ -136,6 +141,8 @@
         .up-zone-config {
             border-right: none;
             border-bottom: 1px solid var(--up-border-2);
+            justify-content: flex-start;
+            padding: 24px 20px;
         }
     }
 
@@ -170,10 +177,10 @@
 
     .up-select {
         width: 100%;
-        height: 42px;
+        height: 44px;
         padding: 0 38px 0 14px;
         border: 1px solid var(--up-border);
-        border-radius: 10px;
+        border-radius: var(--up-radius-sm);
         background: var(--up-surface);
         font-family: inherit;
         font-size: 13px;
@@ -197,32 +204,38 @@
     .up-hint {
         font-size: 11.5px;
         color: var(--up-text-3);
-        line-height: 1.5;
+        line-height: 1.55;
     }
 
     /* Right column — drop target */
     .up-zone-drop {
-        padding: 32px 28px;
+        padding: 36px 32px;
         display: flex;
         align-items: center;
         justify-content: center;
         background:
-            radial-gradient(circle at 50% 40%, rgba(79, 110, 247, 0.05) 0%, transparent 60%),
+            radial-gradient(circle at 50% 30%, rgba(79, 110, 247, 0.06) 0%, transparent 55%),
             var(--up-surface);
-        position: relative;
         transition: background 0.18s;
+    }
+
+    @media (max-width: 900px) {
+        .up-zone-drop { padding: 28px 20px; }
     }
 
     .up-drop-target {
         width: 100%;
-        max-width: 460px;
+        max-width: 480px;
         border: 2px dashed #d1d5db;
         border-radius: 14px;
-        padding: 36px 28px;
+        padding: 34px 28px 24px;
         text-align: center;
         transition: all 0.18s ease;
         cursor: pointer;
         background: #fbfcff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .up-drop-target:hover {
@@ -237,15 +250,15 @@
     }
 
     .up-drop-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 14px;
-        margin: 0 auto 16px;
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        margin: 0 auto 18px;
         display: grid;
         place-items: center;
         background: #eef1ff;
         color: var(--up-accent);
-        font-size: 22px;
+        font-size: 24px;
         transition: transform 0.2s;
     }
 
@@ -263,39 +276,21 @@
     .up-drop-desc {
         font-size: 12.5px;
         color: var(--up-text-2);
-        line-height: 1.5;
-        margin-bottom: 18px;
-    }
-
-    .up-drop-formats {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        font-size: 11px;
-        color: var(--up-text-3);
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .up-drop-formats .up-format-pill {
-        padding: 3px 10px;
-        background: #ffffff;
-        border: 1px solid var(--up-border);
-        border-radius: 100px;
-        color: var(--up-text-2);
-        font-weight: 700;
+        line-height: 1.55;
+        margin-bottom: 22px;
+        max-width: 380px;
     }
 
     /* Upload button */
     .up-btn-upload {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
-        padding: 11px 24px;
+        padding: 11px 26px;
+        height: 44px;
         border: none;
-        border-radius: 10px;
+        border-radius: var(--up-radius-sm);
         background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
         color: #ffffff;
         font-family: inherit;
@@ -304,6 +299,7 @@
         cursor: pointer;
         box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
         transition: transform 0.15s, box-shadow 0.15s;
+        min-width: 210px;
     }
 
     .up-btn-upload:hover:not(:disabled) {
@@ -319,6 +315,33 @@
     .up-btn-upload .up-spinner { display: none; }
     .up-btn-upload.loading .up-spinner { display: inline-block; }
     .up-btn-upload.loading .up-btn-text { display: none; }
+
+    /* Format pills strip — sits below the button inside the drop target */
+    .up-drop-formats {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px dashed var(--up-border);
+        width: 100%;
+        font-size: 11px;
+        color: var(--up-text-3);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .up-drop-formats .up-format-pill {
+        padding: 4px 12px;
+        background: #ffffff;
+        border: 1px solid var(--up-border);
+        border-radius: 100px;
+        color: var(--up-text-2);
+        font-weight: 700;
+        letter-spacing: 0.4px;
+    }
 
     /* ============================================================
        PREVIEW CARD
@@ -341,7 +364,7 @@
     .up-preview-toolbar {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         flex-wrap: wrap;
     }
 
@@ -349,23 +372,47 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 6px 12px;
+        padding: 7px 14px;
         background: #eef1ff;
         color: var(--up-accent);
         border-radius: 100px;
         font-size: 12px;
         font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
     }
 
     .up-record-chip i { font-size: 11px; }
+
+    .up-file-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 14px;
+        background: #f3f4f6;
+        color: var(--up-text-2);
+        border-radius: 100px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        max-width: 260px;
+    }
+
+    .up-file-chip span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .up-file-chip i { font-size: 11px; flex-shrink: 0; }
 
     .up-btn-ghost {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 8px 14px;
+        padding: 9px 14px;
         border: 1px solid var(--up-border);
-        border-radius: 9px;
+        border-radius: var(--up-radius-sm);
         background: var(--up-surface);
         color: var(--up-text-2);
         font-family: inherit;
@@ -373,6 +420,7 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.15s;
+        line-height: 1;
     }
 
     .up-btn-ghost:hover {
@@ -381,16 +429,21 @@
         border-color: rgba(224, 69, 106, 0.25);
     }
 
-    /* Table */
+    /* ============================================================
+       PREVIEW TABLE — fixed layout for uniform alignment
+       ============================================================ */
     .up-table-scroll {
         max-height: 620px;
         overflow: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .up-table {
         width: 100%;
+        min-width: 900px;
         border-collapse: collapse;
         font-size: 12.5px;
+        table-layout: auto;
     }
 
     .up-table thead th {
@@ -399,31 +452,43 @@
         z-index: 2;
         background: #f8fafc;
         text-align: left;
-        padding: 11px 14px;
+        padding: 12px 16px;
         font-size: 10.5px;
         font-weight: 700;
         color: var(--up-text-2);
         text-transform: uppercase;
         letter-spacing: 0.5px;
         border-bottom: 1px solid var(--up-border);
+        box-shadow: 0 1px 0 rgba(15, 27, 51, 0.03);
         white-space: nowrap;
+        vertical-align: middle;
     }
 
     .up-table tbody td {
-        padding: 11px 14px;
+        padding: 12px 16px;
         border-bottom: 1px solid var(--up-border-2);
         color: var(--up-text);
-        vertical-align: top;
-        line-height: 1.45;
+        vertical-align: middle;
+        line-height: 1.5;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     .up-table tbody tr:last-child td { border-bottom: none; }
     .up-table tbody tr:hover { background: #fafbfd; }
 
+    /* Column variants */
     .up-table td.wide-cell {
-        max-width: 320px;
+        max-width: 360px;
         white-space: normal;
         word-break: break-word;
+        min-width: 220px;
+    }
+
+    /* Exception column — 100% wider than a normal wide cell */
+    .up-table td.wide-cell.cell-exception {
+        min-width: 440px;
+        max-width: 720px;
     }
 
     .up-table td.num-cell {
@@ -440,27 +505,31 @@
 
     .up-table td.narrow-cell {
         white-space: nowrap;
+        text-align: center;
     }
 
     .up-table td.empty-cell {
         text-align: center;
         color: var(--up-text-3);
         font-style: italic;
-        padding: 24px;
+        padding: 32px 16px;
     }
 
     /* Status badges */
     .up-status-badge {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 4px;
-        padding: 3px 9px;
+        padding: 4px 11px;
         border-radius: 100px;
         font-size: 10.5px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.3px;
         border: 1px solid;
+        white-space: nowrap;
+        line-height: 1;
     }
 
     .up-status-badge.open        { background: #fef3c7; color: #92400e; border-color: rgba(146, 64, 14, 0.2); }
@@ -468,12 +537,14 @@
     .up-status-badge.in-progress { background: #dbeafe; color: #1e40af; border-color: rgba(30, 64, 175, 0.2); }
     .up-status-badge.default     { background: #f3f4f6; color: #6b7280; border-color: rgba(107, 114, 128, 0.2); }
 
-    /* Footer action bar */
+    /* ============================================================
+       FOOTER ACTION BAR
+       ============================================================ */
     .up-preview-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 12px;
+        gap: 16px;
         padding: 16px 20px;
         background: #fbfcff;
         border-top: 1px solid var(--up-border-2);
@@ -481,9 +552,22 @@
     }
 
     .up-footer-summary {
-        font-size: 12.5px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        font-size: 12px;
         color: var(--up-text-2);
+        line-height: 1.45;
+        min-width: 0;
     }
+
+    .up-footer-summary .summary-line {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .up-footer-summary i { color: var(--up-text-3); font-size: 11px; }
 
     .up-footer-summary strong {
         color: var(--up-text);
@@ -495,11 +579,16 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        flex-wrap: wrap;
     }
 
     .up-btn-cancel {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         padding: 11px 22px;
-        border-radius: 10px;
+        height: 44px;
+        border-radius: var(--up-radius-sm);
         border: 1px solid var(--up-border);
         background: var(--up-surface);
         color: var(--up-text-2);
@@ -508,6 +597,7 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.15s;
+        line-height: 1;
     }
 
     .up-btn-cancel:hover {
@@ -519,9 +609,11 @@
     .up-btn-submit {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
         padding: 11px 26px;
-        border-radius: 10px;
+        height: 44px;
+        border-radius: var(--up-radius-sm);
         border: none;
         background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
         color: #ffffff;
@@ -531,6 +623,7 @@
         cursor: pointer;
         box-shadow: 0 4px 14px rgba(79, 110, 247, 0.28);
         transition: transform 0.15s, box-shadow 0.15s;
+        line-height: 1;
     }
 
     .up-btn-submit:hover:not(:disabled) {
@@ -602,8 +695,35 @@
 
     .up-toast-close:hover { background: #f3f4f6; color: var(--up-text); }
 
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
     @media (max-width: 720px) {
+        .up-header { flex-direction: column; align-items: stretch; }
+        .up-header-right { justify-content: flex-start; }
+
+        .up-preview-toolbar { width: 100%; }
+
+        .up-preview-footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .up-footer-actions {
+            width: 100%;
+        }
+
+        .up-footer-actions .up-btn-cancel,
+        .up-footer-actions .up-btn-submit {
+            flex: 1;
+            justify-content: center;
+        }
+
         .up-toast { left: 16px; right: 16px; min-width: 0; }
+
+        .up-table { min-width: 800px; }
+        .up-table thead th,
+        .up-table tbody td { padding: 10px 12px; font-size: 11.5px; }
     }
 </style>
 {% endblock %}
@@ -645,12 +765,6 @@
     <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
         <span class="nav-icon"><i class="fas fa-cash-register"></i></span>
         <span class="nav-text">Daily Trial Balance</span>
-    </a>
-</li>
-<li>
-    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
-        <span class="nav-icon"><i class="fas fa-chart-area"></i></span>
-        <span class="nav-text">Analytics</span>
     </a>
 </li>
 <li>
@@ -747,6 +861,10 @@
             </div>
 
             <div class="up-preview-toolbar">
+                <span class="up-file-chip" title="Uploaded file">
+                    <i class="fas fa-file-excel"></i>
+                    <span id="headerFileName">uploaded.xlsx</span>
+                </span>
                 <span class="up-record-chip">
                     <i class="fas fa-list"></i>
                     <span id="recordCount">0 records</span>
@@ -766,7 +884,14 @@
 
         <footer class="up-preview-footer">
             <div class="up-footer-summary">
-                Preview shows the first rows of <strong id="footerRecordCount">0</strong> record(s) from <strong id="footerFileName">your file</strong>.
+                <div class="summary-line">
+                    <i class="fas fa-file-excel"></i>
+                    <span>File: <strong id="footerFileName">—</strong></span>
+                </div>
+                <div class="summary-line">
+                    <i class="fas fa-list"></i>
+                    <span><strong id="footerRecordCount">0</strong> record(s) ready to submit — preview shows the first 100 rows.</span>
+                </div>
             </div>
 
             <div class="up-footer-actions">
@@ -868,7 +993,9 @@
     function classifyColumn(header) {
         const h = String(header || '').toUpperCase().replace(/\s+/g, ' ').trim();
 
-        if (h.includes('EXCEPTION') && !h.includes('CATEGORY')) return 'wide-cell';
+        // Exception column — wide + extra wide (cell-exception)
+        if (h.includes('EXCEPTION') && !h.includes('CATEGORY')) return 'wide-cell cell-exception';
+
         if (h.includes('AUDITEE') || h.includes('RESPONSE')) return 'wide-cell';
         if (h.includes('REMARK') || h.includes('COMMENT') || h.includes('NOTE')) return 'wide-cell';
 
@@ -1002,9 +1129,10 @@
                 document.getElementById('uploadZoneCard').style.display = 'none';
                 document.getElementById('previewContainer').classList.add('show');
 
-                // Update footer summary
-                document.getElementById('footerRecordCount').textContent = filteredRows.length;
+                // Update chips + footer summary
+                document.getElementById('headerFileName').textContent = fileName;
                 document.getElementById('footerFileName').textContent = fileName;
+                document.getElementById('footerRecordCount').textContent = filteredRows.length;
 
                 showToast(`Loaded ${filteredRows.length} records from ${fileName}`, 'Success');
 
@@ -1202,9 +1330,7 @@
             }
         });
 
-        // Clicking the drop target opens the file picker
         dropTarget.addEventListener('click', function (e) {
-            // Let the upload button click through
             if (e.target.closest('.up-btn-upload')) return;
             document.getElementById('excelFileInput').click();
         });

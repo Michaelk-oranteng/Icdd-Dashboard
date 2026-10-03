@@ -18,6 +18,9 @@ from urllib.parse import urlencode
 # The Report.status value that marks a Report row as an
 # Excel data container (created by draft.html). These are
 # NOT submissions — they are raw exception data.
+#
+# DEPRECATED: Excel uploads now live on `ExceptionUpload`.
+# Kept here so legacy code and migrations still resolve.
 UPLOADED_STATUS = 'uploaded'
 
 # Statuses that count as "actually submitted by a member".
@@ -295,8 +298,6 @@ class Branch(models.Model):
     def __str__(self):
         return self.name
 
-    # ... existing code_to_name / code_to_display / all_code_choices ...
-
     class Meta:
         db_table = 'branches'
         ordering = ['name']
@@ -377,16 +378,21 @@ class Report(models.Model):
     """
     Model for storing reports.
 
-    TWO DISTINCT KINDS OF REPORT ROWS EXIST IN THIS TABLE:
+    After the Trial Balance / Exception upload split, `Report`
+    is used ONLY for:
 
-    1. ADMIN-CREATED REPORTS (assigned / in_progress / submitted /
-       completed / approved / rejected / draft)
+    1. ADMIN-CREATED RECURRING REPORTS
+       (assigned / in_progress / submitted / completed /
+        approved / rejected / draft)
        Created via report_creation.html. Have a frequency and a
        deadline_date anchor.
 
-    2. EXCEL DATA CONTAINERS (status='uploaded')
-       Created by draft.html → api_save_imported_data.
-       Hold TYPED exception rows (ExceptionRecord). Not submissions.
+    2. CONSOLIDATED REPORT DEFINITIONS
+       Report rows whose report_type contains 'consolidated'.
+       These are assignment containers, not data.
+
+    Excel exception uploads now live on `ExceptionUpload`.
+    Trial balance uploads now live on `TrialBalanceUpload`.
     """
     FREQUENCY_CHOICES = [
         ('one-off', 'One Off'),
@@ -405,7 +411,8 @@ class Report(models.Model):
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
         ('draft', 'Draft'),
-        ('uploaded', 'Uploaded (Exception Data)'),
+        # Legacy — kept so any old rows still resolve their display value.
+        ('uploaded', 'Uploaded (Legacy — do not use)'),
     ]
 
     report_type = models.CharField(max_length=200)
@@ -420,6 +427,8 @@ class Report(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Legacy field — only used by old Report rows that were uploads.
+    # New uploads no longer touch this.
     excel_headers = models.TextField(blank=True, default='')
 
     def __str__(self):
@@ -433,6 +442,7 @@ class Report(models.Model):
 
     @property
     def is_exception_upload(self):
+        """Legacy: only True for old Report rows that were uploads."""
         return self.status == UPLOADED_STATUS
 
     @property
@@ -449,6 +459,11 @@ class Report(models.Model):
         ordering = ['-created_at']
 
     def get_display_data(self):
+        """
+        Legacy display builder for old Report rows that were uploads.
+
+        New uploads are rendered from ExceptionUpload, not from here.
+        """
         display_data = {
             'rows': [],
             'headers': [],
@@ -471,6 +486,9 @@ class Report(models.Model):
             display_data['is_excel'] = True
             display_data['headers'] = headers
 
+            # NOTE: legacy rows still point at Report via ExceptionRecord.report.
+            # Once the data migration runs, that FK will be removed from
+            # ExceptionRecord and this block will be dead code.
             for rec in self.exception_records.order_by('source_row_index'):
                 full_row = {
                     'row_id': rec.id,
@@ -515,6 +533,121 @@ class Report(models.Model):
         return display_data
 
 
+# ============================================
+# TRIAL BALANCE UPLOAD — dedicated model
+# ============================================
+
+class TrialBalanceUpload(models.Model):
+    """
+    One row = one uploaded Trial Balance Excel file for a given date.
+
+    Replaces the old pattern where each upload created a Report
+    row with report_type='__TRIAL_BALANCE__'. This table now owns
+    the header metadata; the rows of the file live on
+    `TrialBalanceEntry`, which FKs back to this model.
+    """
+
+    uploaded_by = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE,
+        related_name='trial_balance_uploads',
+        help_text='The user who uploaded this file.',
+    )
+    report_date = models.DateField(
+        db_index=True,
+        help_text='The trading day this trial balance applies to.',
+    )
+    file_name = models.CharField(max_length=255, blank=True, default='')
+    row_count = models.IntegerField(
+        default=0,
+        help_text='Number of data rows stored for this upload.',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'trial_balance_uploads'
+        ordering = ['-report_date', '-created_at']
+        # One trial balance per calendar day, globally.
+        constraints = [
+            models.UniqueConstraint(
+                fields=['report_date'],
+                name='unique_trial_balance_per_day',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['report_date']),
+            models.Index(fields=['uploaded_by', 'report_date']),
+        ]
+
+    def __str__(self):
+        return f'{self.report_date} — {self.file_name or "(no file)"} — {self.row_count} rows'
+
+
+# ============================================
+# EXCEPTION UPLOAD — dedicated model
+# ============================================
+
+class ExceptionUpload(models.Model):
+    """
+    One row = one Excel exception file uploaded from draft.html.
+
+    Replaces the old pattern where each upload created a Report
+    row with status='uploaded'. This table now owns the header
+    metadata; the typed rows of the file live on
+    `ExceptionRecord`, which FKs back to this model.
+    """
+
+    uploaded_by = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE,
+        related_name='exception_uploads',
+        help_text='The user who uploaded this file.',
+    )
+    report_type = models.CharField(
+        max_length=200,
+        db_index=True,
+        help_text="User-chosen report type (e.g. 'Weekly Exceptions Report').",
+    )
+    file_name = models.CharField(max_length=255, blank=True, default='')
+    excel_headers = models.TextField(
+        blank=True,
+        default='',
+        help_text='Comma-separated original Excel headers, preserved for rendering.',
+    )
+    row_count = models.IntegerField(
+        default=0,
+        help_text='Number of exception rows stored for this upload.',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'exception_uploads'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['report_type']),
+            models.Index(fields=['uploaded_by', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.report_type} — {self.file_name or "(no file)"} — {self.row_count} rows'
+
+    # ------------------------------------------------------------
+    # Header helpers
+    # ------------------------------------------------------------
+    def get_excel_headers_list(self):
+        if not self.excel_headers:
+            return []
+        return [h.strip() for h in self.excel_headers.split(',') if h.strip()]
+
+
+# ============================================
+# REPORT SUBMISSION MODELS
+# ============================================
+
 class ReportDataField(models.Model):
     """Model for storing report data fields (replaces JSON)."""
     FIELD_TYPES = [
@@ -542,10 +675,6 @@ class ReportDataField(models.Model):
     def __str__(self):
         return f"{self.report.report_type} - {self.field_name}"
 
-
-# ============================================
-# REPORT SUBMISSION MODELS
-# ============================================
 
 class ReportSubmission(models.Model):
     """Model for storing member report submissions."""
@@ -1123,13 +1252,23 @@ class AdHocDeduction(models.Model):
         return 'low'
 
 
+# ============================================
+# TRIAL BALANCE ENTRY — now FK to TrialBalanceUpload
+# ============================================
+
 class TrialBalanceEntry(models.Model):
-    """One row of an uploaded Daily Trial Balance file."""
-    report = models.ForeignKey(
-        Report,
+    """
+    One row of an uploaded Daily Trial Balance file.
+
+    The header metadata lives on `TrialBalanceUpload`; this row
+    belongs to exactly one upload.
+    """
+    upload = models.ForeignKey(
+        TrialBalanceUpload,
         on_delete=models.CASCADE,
-        related_name='trial_balance_entries',
-        null=True, blank=True
+        related_name='entries',
+        null=True, blank=True,
+        help_text='The upload this row belongs to.',
     )
     uploaded_by = models.ForeignKey(
         UserProfile,
@@ -1163,17 +1302,28 @@ class TrialBalanceEntry(models.Model):
     row_index = models.IntegerField(default=0)
 
     class Meta:
+        db_table = 'trial_balance_entries'
         ordering = ['report_date', 'row_index']
         indexes = [
             models.Index(fields=['report_date', 'uploaded_by']),
+            models.Index(fields=['upload', 'row_index']),
         ]
 
     def __str__(self):
         return f"{self.report_date} | {self.gl_code} | {self.descr[:40]}"
 
 
+# ============================================
+# EXCEPTION RECORD — now FK to ExceptionUpload
+# ============================================
+
 class ExceptionRecord(models.Model):
-    """A single typed exception row from any exception report."""
+    """
+    A single typed exception row from any exception report.
+
+    The header metadata lives on `ExceptionUpload`; this row
+    belongs to exactly one upload.
+    """
     STATUS_CHOICES = [
         ('open', 'Open'),
         ('in_progress', 'In Progress'),
@@ -1184,11 +1334,12 @@ class ExceptionRecord(models.Model):
         ('overdue', 'Overdue'),
     ]
 
-    report = models.ForeignKey(
-        'Report',
+    upload = models.ForeignKey(
+        ExceptionUpload,
         on_delete=models.CASCADE,
         related_name='exception_records',
-        null=True, blank=True
+        null=True, blank=True,
+        help_text='The upload this row belongs to.',
     )
 
     serial_number = models.IntegerField(default=0)
@@ -1231,9 +1382,9 @@ class ExceptionRecord(models.Model):
 
     class Meta:
         db_table = 'exception_records'
-        ordering = ['report', 'serial_number', 'source_row_index']
+        ordering = ['upload', 'serial_number', 'source_row_index']
         indexes = [
-            models.Index(fields=['report', 'status']),
+            models.Index(fields=['upload', 'status']),
             models.Index(fields=['branch_unit', 'status']),
             models.Index(fields=['responsible_officer']),
             models.Index(fields=['target_closure_date']),
@@ -1257,6 +1408,7 @@ class ExceptionRecord(models.Model):
             return None
         return (self.target_closure_date - timezone.now().date()).days
 
+
 # ============================================
 # SENT EMAIL AUDIT
 # ============================================
@@ -1264,11 +1416,7 @@ class ExceptionRecord(models.Model):
 class SentEmail(models.Model):
     """
     Audit record for every email sent from the compose page.
-
-    Records the full payload — recipients, cc, subject, body,
-    report type, and the outcome of the SMTP attempt — so a
-    supervisor or admin can reconstruct exactly what was sent,
-    when, and by whom.
+    ...
     """
 
     DELIVERY_STATUS = [
@@ -1308,6 +1456,45 @@ class SentEmail(models.Model):
     )
     error_message = models.TextField(blank=True, default='')
 
+    # ── SUPERVISOR SCORING ────────────────────────────────────
+    # Points deducted by a supervisor from this submission's
+    # final score. 0 = no deduction.
+    manual_deduction = models.IntegerField(
+        default=0,
+        help_text='Points deducted by a supervisor (0–100).',
+    )
+    override_reason = models.TextField(
+        blank=True, default='',
+        help_text='Optional note explaining the deduction.',
+    )
+    scored_by = models.ForeignKey(
+        'UserProfile',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='scored_emails',
+        help_text='Supervisor who last edited the deduction.',
+    )
+    scored_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text='When the deduction was last edited.',
+    )
+
+    @property
+    def final_score(self):
+        return max(0, min(100, 100 - (self.manual_deduction or 0)))
+
+    @property
+    def badge_class(self):
+        s = self.final_score
+        if s >= 80: return 'success'
+        if s >= 50: return 'warning'
+        return 'danger'
+
+    @property
+    def is_overridden(self):
+        return (self.manual_deduction or 0) > 0
+    # ──────────────────────────────────────────────────────────
+
     # Timestamps
     sent_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
@@ -1322,6 +1509,7 @@ class SentEmail(models.Model):
 
     def __str__(self):
         return f'{self.subject} → {self.to_addresses[:60]} ({self.status})'
+        
 
     # ---------- Helpers ----------
     @property
@@ -1335,3 +1523,23 @@ class SentEmail(models.Model):
     @property
     def recipient_count(self):
         return len(self.to_list) + len(self.cc_list)
+
+    # ---------- Scoring helpers ----------
+    @property
+    def final_score(self):
+        """
+        Auto score is 100 minus the manual deduction.
+        Floored at 0, capped at 100.
+        """
+        return max(0, min(100, 100 - (self.manual_deduction or 0)))
+
+    @property
+    def badge_class(self):
+        s = self.final_score
+        if s >= 80: return 'success'
+        if s >= 50: return 'warning'
+        return 'danger'
+
+    @property
+    def is_overridden(self):
+        return (self.manual_deduction or 0) > 0

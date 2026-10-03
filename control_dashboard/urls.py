@@ -129,4 +129,7 @@ urlpatterns = [
     path('api/supervisor-top-performers-live/',views.api_supervisor_top_performers_live,name='api_supervisor_top_performers_live'),
     path('email/', views.email_page, name='email_page'),
     path('api/send-email/', views.api_send_email, name='api_send_email'),
+    path('api/trial-balance/compare-previous/',views.api_compare_trial_balance_previous,name='tb_compare_previous'),
+    path('api/trial-balance/compare-range/',views.api_compare_trial_balance_range,name='tb_compare_range'),
+    path('api/email/preview-exceptions/', views.api_email_preview_exceptions, name='api_email_preview_exceptions'),
 ]

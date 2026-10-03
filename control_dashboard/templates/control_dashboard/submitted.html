@@ -221,7 +221,7 @@
 }
 
 /* ============================================================
-   REPORT TYPE CHIP + ATTACHMENT PILL
+   REPORT TYPE CHIP + RECIPIENTS LINE
    ============================================================ */
 .sr-report-type {
     display: inline-flex;
@@ -240,20 +240,19 @@
     text-overflow: ellipsis;
 }
 
-.sr-attach-badge {
+.sr-recipients-line {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: var(--sr-emerald-soft);
-    color: var(--sr-emerald);
-    border: 1px solid rgba(23, 166, 115, 0.22);
-    font-size: 9px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 8px;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--sr-text-2);
     margin-top: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.sr-recipients-line i {
+    font-size: 9px;
+    color: var(--sr-accent);
 }
 
 /* ============================================================
@@ -372,7 +371,6 @@
     background: var(--sr-bg-1);
 }
 
-/* Hide native number input spinners for a cleaner look */
 .sr-score-input::-webkit-outer-spin-button,
 .sr-score-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -558,7 +556,6 @@
     .sr-table-header h4 i { width: 24px; height: 24px; font-size: 11px; }
     .sr-count-badge { font-size: 10px; padding: 4px 10px; }
 
-    /* Enable horizontal scroll on mobile */
     .sr-table-container > div[style*="overflow-x"] {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -663,7 +660,7 @@
 
 <div class="sr-table-container">
     <div class="sr-table-header">
-        <h4><i class="fas fa-file-alt"></i> Submitted Reports</h4>
+        <h4><i class="fas fa-paper-plane"></i> Submitted Emails</h4>
         <span class="sr-count-badge">{{ report_data|length }} submission{{ report_data|length|pluralize }}</span>
     </div>
 
@@ -683,6 +680,7 @@
             <tbody>
                 {% for item in report_data %}
                 <tr>
+                    <!-- Team Member -->
                     <td>
                         <div class="sr-member">
                             <div class="sr-avatar">
@@ -694,39 +692,44 @@
                             </div>
                         </div>
                     </td>
+
+                    <!-- Report Type + recipient count -->
                     <td>
                         <span class="sr-report-type">{{ item.report_type }}</span>
-                        {% if item.had_attachment %}
-                        {% endif %}
+                        <div class="sr-recipients-line">
+                            <i class="fas fa-users"></i>
+                            {{ item.recipient_count }} recipient{{ item.recipient_count|pluralize }}
+                        </div>
                     </td>
+
+                    <!-- Submitted at (email send time) -->
                     <td>
                         <div class="sr-deadline">
                             {% if item.submitted_at %}
                                 <span class="sr-deadline-date">{{ item.submitted_at|date:"M d, Y" }}</span>
                                 <span class="sr-deadline-meta"><i class="far fa-clock"></i> {{ item.submitted_at|date:"H:i" }}</span>
                                 {% if item.minutes_late > 0 %}
-                                    <span class="sr-late"><i class="fas fa-exclamation-triangle"></i> {{ item.minutes_late }} min late</span>
+                                    <span class="sr-late">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ item.minutes_late }} min late
+                                    </span>
                                 {% else %}
+                                    <span class="sr-ontime">
+                                        <i class="fas fa-check"></i> On time
+                                    </span>
                                 {% endif %}
                             {% else %}
-                                <span class="sr-na">Never submitted</span>
+                                <span class="sr-na">—</span>
                             {% endif %}
                         </div>
                     </td>
+
+                    <!-- Deadline -->
                     <td>
                         {% if item.deadline_at %}
                             <div class="sr-deadline">
                                 <span class="sr-deadline-date">{{ item.deadline_at|date:"M d, Y" }}</span>
                                 <span class="sr-deadline-meta"><i class="far fa-clock"></i> {{ item.deadline_at|date:"H:i" }}</span>
-                            </div>
-                        {% elif item.report.deadline_date %}
-                            <div class="sr-deadline">
-                                <span class="sr-deadline-date">{{ item.report.deadline_date|date:"M d, Y" }}</span>
-                                <span class="sr-deadline-meta">
-                                    {% if item.report.deadline_time %}
-                                        <i class="far fa-clock"></i> {{ item.report.deadline_time|date:"H:i" }}
-                                    {% endif %}
-                                </span>
                             </div>
                         {% else %}
                             <div class="sr-deadline">
@@ -737,34 +740,41 @@
                             </div>
                         {% endif %}
                     </td>
+
+                    <!-- Deduction input -->
                     <td>
                         <div class="sr-score-cell">
                             <input type="number"
                                    class="sr-score-input"
-                                   id="score_{{ item.score.id }}"
+                                   id="score_{{ item.email.id }}"
                                    placeholder="0"
                                    min="0"
                                    max="100"
                                    value="{{ item.deduction|default:0 }}"
                                    title="Points to deduct from the final score"
-                                   onchange="updateScore({{ item.score.id }})">
+                                   onchange="updateScore({{ item.email.id }})">
                         </div>
                     </td>
+
+                    <!-- Final score badge -->
                     <td style="text-align:center;">
                         <div class="sr-score-stack">
                             <span class="sr-score {{ item.badge_class }}">{{ item.final_score }}%</span>
                             {% if item.is_overridden %}
+                                <span class="sr-override-tag">Override</span>
                             {% endif %}
                         </div>
                     </td>
+
+                    <!-- Actions -->
                     <td style="text-align:center;">
                         <div class="sr-actions">
                             <button class="sr-btn-save"
-                                    id="saveBtn_{{ item.score.id }}"
-                                    onclick="saveScore({{ item.score.id }})">
+                                    id="saveBtn_{{ item.email.id }}"
+                                    onclick="saveScore({{ item.email.id }})">
                                 <i class="fas fa-check"></i> Save
                             </button>
-                            <span class="sr-saving-indicator" id="savingIndicator_{{ item.score.id }}">
+                            <span class="sr-saving-indicator" id="savingIndicator_{{ item.email.id }}">
                                 <i class="fas fa-spinner fa-spin"></i>
                             </span>
                         </div>
@@ -774,8 +784,8 @@
                 <tr>
                     <td colspan="7">
                         <div class="sr-empty">
-                            <i class="fas fa-file-alt"></i>
-                            <p>No submitted reports found.</p>
+                            <i class="fas fa-paper-plane"></i>
+                            <p>No emails sent yet.</p>
                         </div>
                     </td>
                 </tr>
@@ -848,18 +858,18 @@
         window.location.href = window.location.pathname;
     }
 
-    function updateScore(scoreId) {
-        const saveBtn = document.getElementById(`saveBtn_${scoreId}`);
+    function updateScore(emailId) {
+        const saveBtn = document.getElementById(`saveBtn_${emailId}`);
         if (saveBtn) {
             saveBtn.innerHTML = '<i class="fas fa-save"></i> Unsaved';
             saveBtn.style.background = '#f59e0b';
         }
     }
 
-    function saveScore(scoreId) {
-        const input = document.getElementById(`score_${scoreId}`);
-        const saveBtn = document.getElementById(`saveBtn_${scoreId}`);
-        const indicator = document.getElementById(`savingIndicator_${scoreId}`);
+    function saveScore(emailId) {
+        const input = document.getElementById(`score_${emailId}`);
+        const saveBtn = document.getElementById(`saveBtn_${emailId}`);
+        const indicator = document.getElementById(`savingIndicator_${emailId}`);
 
         if (!input || !saveBtn) return;
 
@@ -882,7 +892,7 @@
             },
             credentials: 'same-origin',
             body: JSON.stringify({
-                score_id: scoreId,       // target the SUBMISSION row
+                email_id: emailId,
                 deduction: deduction
             })
         })
@@ -929,12 +939,12 @@
         }
     });
 
-    // Auto-save on blur, keyed per submission row.
+    // Auto-save on blur, keyed per email row.
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.sr-score-input').forEach(input => {
             input.addEventListener('blur', function() {
-                const scoreId = this.id.replace('score_', '');
-                saveScore(scoreId);
+                const emailId = this.id.replace('score_', '');
+                saveScore(emailId);
             });
         });
     });

@@ -22,9 +22,7 @@
     white-space: nowrap;
 }
 
-/* Debit / credit / net cells */
-.cell-debit  { color: #dc2626; font-weight: 700; font-variant-numeric: tabular-nums; }
-.cell-credit { color: #059669; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Net score cell */
 .cell-net    { font-weight: 700; font-variant-numeric: tabular-nums; }
 .cell-net.positive { color: #059669; }
 .cell-net.negative { color: #dc2626; }
@@ -73,11 +71,6 @@
 @keyframes fx-pulse-dot {
     0%, 100% { transform: scale(1); opacity: 1; }
     50%      { transform: scale(1.3); opacity: 0.7; }
-}
-
-/* Slight breathing room below the metric grid */
-.analytics-metrics-grid + .table-container {
-    margin-top: 4px;
 }
 </style>
 {% endblock %}
@@ -131,45 +124,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Stats Summary Cards -->
-<div class="analytics-metrics-grid">
-    <div class="metric-card border-left-primary">
-        <div class="metric-card-content">
-            <span class="card-metric-label">Total Team Members</span>
-            <h3 class="card-metric-value text-primary">{{ total_members|default:0 }}</h3>
-            <span class="card-metric-subtext">Active members</span>
-        </div>
-        <div class="metric-card-icon text-primary-dim"><i class="fas fa-users"></i></div>
-    </div>
-
-    <div class="metric-card border-left-danger">
-        <div class="metric-card-content">
-            <span class="card-metric-label">Total Debits</span>
-            <h3 class="card-metric-value text-danger" id="grand-total-debits">{{ total_debits|default:0 }}</h3>
-            <span class="card-metric-subtext">Sum of all deduction points</span>
-        </div>
-        <div class="metric-card-icon text-danger-dim"><i class="fas fa-arrow-down"></i></div>
-    </div>
-
-    <div class="metric-card border-left-success">
-        <div class="metric-card-content">
-            <span class="card-metric-label">Total Credits</span>
-            <h3 class="card-metric-value text-success" id="grand-total-credits">{{ total_credits|default:0 }}</h3>
-            <span class="card-metric-subtext">Sum of all bonus points</span>
-        </div>
-        <div class="metric-card-icon text-success-dim"><i class="fas fa-arrow-up"></i></div>
-    </div>
-
-    <div class="metric-card border-left-info">
-        <div class="metric-card-content">
-            <span class="card-metric-label">Overall Completion</span>
-            <h3 class="card-metric-value text-info" id="overall-completion">{{ overall_completion|default:0 }}%</h3>
-            <span class="card-metric-subtext">Average performance score</span>
-        </div>
-        <div class="metric-card-icon text-info-dim"><i class="fas fa-chart-pie"></i></div>
-    </div>
-</div>
-
 <!-- Team Performance Table -->
 <div class="table-container">
     <div class="table-header">
@@ -189,13 +143,9 @@
                 <th class="text-center"
                     title="Expected submissions to date (recurrence count across all assigned reports)">Total Tasks</th>
                 <th class="text-center"
-                    title="Sum of deduction points from the Ad-Hoc Scorecard">Total Debits</th>
-                <th class="text-center"
-                    title="Sum of bonus points from the Ad-Hoc Scorecard">Total Credits</th>
-                <th class="text-center"
                     title="Credits − Debits (can be negative)">Net</th>
                 <th style="width: 25%;"
-                    title="clamp(Credits − Debits, 0, 100) — real-time score, capped at 100%">Performance Score</th>
+                    title="Overall performance score based on emailed reports and deadline compliance">Performance Score</th>
                 <th class="text-center">Status</th>
             </tr>
         </thead>
@@ -208,18 +158,6 @@
 
                 <td class="text-center">
                     <span class="task-count-badge">{{ member.total_tasks }}</span>
-                </td>
-
-                <td class="text-center">
-                    <span class="cell-debit" data-field="debits">
-                        {% if member.debits %}−{{ member.debits }}{% else %}—{% endif %}
-                    </span>
-                </td>
-
-                <td class="text-center">
-                    <span class="cell-credit" data-field="credits">
-                        {% if member.credits %}+{{ member.credits }}{% else %}—{% endif %}
-                    </span>
                 </td>
 
                 <td class="text-center">
@@ -261,7 +199,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="text-center">
+                <td colspan="6" class="text-center">
                     <i class="fas fa-users"></i>
                     No team members found. Add members to get started.
                 </td>
@@ -336,7 +274,6 @@
         const start = performance.now();
         function tick(now) {
             const t = Math.min(1, (now - start) / duration);
-            // easeOutCubic
             const eased = 1 - Math.pow(1 - t, 3);
             el.textContent = Math.round(from + (to - from) * eased);
             if (t < 1) requestAnimationFrame(tick);
@@ -357,43 +294,11 @@
             const data = await resp.json();
             if (!data.success) return;
 
-            let totalDebits = 0;
-            let totalCredits = 0;
-            let sumPct = 0;
-            let count = 0;
-
             data.members.forEach(m => {
-                totalDebits += m.debits;
-                totalCredits += m.credits;
-                sumPct += m.percentage;
-                count += 1;
-
                 const row = document.querySelector(
                     `tr[data-member-id="${m.id}"]`
                 );
                 if (!row) return;
-
-                // ---------- Debits ----------
-                const debitEl = row.querySelector('[data-field="debits"]');
-                if (debitEl) {
-                    const newText = m.debits ? `−${m.debits}` : '—';
-                    if (debitEl.textContent.trim() !== newText) {
-                        debitEl.textContent = newText;
-                        debitEl.classList.add('cell-updated');
-                        setTimeout(() => debitEl.classList.remove('cell-updated'), 1400);
-                    }
-                }
-
-                // ---------- Credits ----------
-                const creditEl = row.querySelector('[data-field="credits"]');
-                if (creditEl) {
-                    const newText = m.credits ? `+${m.credits}` : '—';
-                    if (creditEl.textContent.trim() !== newText) {
-                        creditEl.textContent = newText;
-                        creditEl.classList.add('cell-updated');
-                        setTimeout(() => creditEl.classList.remove('cell-updated'), 1400);
-                    }
-                }
 
                 // ---------- Net ----------
                 const netEl = row.querySelector('[data-field="net"]');
@@ -416,23 +321,19 @@
                 const scoreEl = row.querySelector('[data-field="percentage"]');
                 const barEl   = row.querySelector('[data-field="percentage-bar"]');
                 if (scoreEl && barEl) {
-                    // Smoothly animate the numeric text if it changed
                     const oldVal = parseInt(scoreEl.textContent, 10) || 0;
                     if (oldVal !== m.percentage) {
                         animateNumber(scoreEl, oldVal, m.percentage, 900);
-                        // Append % after animation
                         setTimeout(() => {
                             scoreEl.textContent = m.percentage + '%';
                         }, 950);
 
-                        // Colour class swap
                         scoreEl.classList.remove('text-success', 'text-warning', 'text-danger');
                         if (m.percentage >= 90)      scoreEl.classList.add('text-success');
                         else if (m.percentage >= 70) scoreEl.classList.add('text-warning');
                         else                         scoreEl.classList.add('text-danger');
                     }
 
-                    // Progress bar: CSS transition handles the smooth width change
                     barEl.style.width = m.percentage + '%';
                     barEl.classList.remove('bar-success', 'bar-warning', 'bar-danger');
                     if (m.percentage >= 90)      barEl.classList.add('bar-success');
@@ -440,28 +341,6 @@
                     else                         barEl.classList.add('bar-danger');
                 }
             });
-
-            // ---------- Grand totals ----------
-            const gtDebits   = document.getElementById('grand-total-debits');
-            const gtCredits  = document.getElementById('grand-total-credits');
-            const gtOverall  = document.getElementById('overall-completion');
-
-            if (gtDebits) {
-                const prev = parseInt(gtDebits.textContent, 10) || 0;
-                if (prev !== totalDebits) animateNumber(gtDebits, prev, totalDebits, 900);
-            }
-            if (gtCredits) {
-                const prev = parseInt(gtCredits.textContent, 10) || 0;
-                if (prev !== totalCredits) animateNumber(gtCredits, prev, totalCredits, 900);
-            }
-            if (gtOverall && count > 0) {
-                const newOverall = Math.min(100, Math.round(sumPct / count));
-                const prev = parseInt(gtOverall.textContent, 10) || 0;
-                if (prev !== newOverall) {
-                    animateNumber(gtOverall, prev, newOverall, 900);
-                    setTimeout(() => { gtOverall.textContent = newOverall + '%'; }, 950);
-                }
-            }
         } catch (e) {
             console.warn('Live refresh failed:', e);
         }
@@ -473,22 +352,20 @@
     function exportTeamData() {
         showToast('Exporting team data...', 'Exporting');
 
-        let csv = 'Full Name,Position,Total Tasks,Total Debits,Total Credits,Net,Performance Score,Status\n';
+        let csv = 'Full Name,Position,Total Tasks,Net,Performance Score,Status\n';
         const rows = document.querySelectorAll('#teamTable tbody tr');
 
         rows.forEach(row => {
             if (row.style.display !== 'none') {
                 const cells = row.querySelectorAll('td');
-                if (cells.length >= 8) {
-                    const name       = cells[0].textContent.trim();
-                    const position   = cells[1].textContent.trim();
-                    const tasks      = cells[2].textContent.trim();
-                    const debits     = cells[3].textContent.trim();
-                    const credits    = cells[4].textContent.trim();
-                    const net        = cells[5].textContent.trim();
-                    const score      = cells[6].querySelector('.score-text')?.textContent?.trim() || '0%';
-                    const status     = cells[7]?.textContent?.trim() || '';
-                    csv += `"${name}","${position}","${tasks}","${debits}","${credits}","${net}","${score}","${status}"\n`;
+                if (cells.length >= 6) {
+                    const name     = cells[0].textContent.trim();
+                    const position = cells[1].textContent.trim();
+                    const tasks    = cells[2].textContent.trim();
+                    const net      = cells[3].textContent.trim();
+                    const score    = cells[4].querySelector('.score-text')?.textContent?.trim() || '0%';
+                    const status   = cells[5]?.textContent?.trim() || '';
+                    csv += `"${name}","${position}","${tasks}","${net}","${score}","${status}"\n`;
                 }
             }
         });
@@ -522,7 +399,6 @@
         console.log('Team Performance page loaded');
         console.log('Total team members:', {{ team_data|length }});
 
-        // Kick off the live refresh loop
         setInterval(refreshPerformance, REFRESH_INTERVAL_MS);
     });
 </script>

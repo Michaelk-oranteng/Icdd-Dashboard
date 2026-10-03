@@ -9,7 +9,7 @@
 
 <style>
     /* ============================================================
-       MY REPORTS — enhanced UI
+       MY REPORTS — uniform, aligned table headers
        ============================================================ */
 
     :root {
@@ -28,6 +28,8 @@
         --rp-danger:       #e0456a;
         --rp-shadow-sm:    0 1px 2px rgba(15, 27, 51, 0.04);
         --rp-shadow-md:    0 4px 14px rgba(15, 27, 51, 0.06);
+        --rp-radius:       14px;
+        --rp-radius-sm:    10px;
     }
 
     .rp-wrap {
@@ -42,10 +44,11 @@
     .rp-header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
         gap: 16px;
         flex-wrap: wrap;
         margin-bottom: 22px;
+        text-align: center;
     }
 
     .rp-header-left h1 {
@@ -66,11 +69,12 @@
     .rp-toolbar {
         background: var(--rp-bg-1);
         border: 1px solid var(--rp-border);
-        border-radius: 12px;
+        border-radius: var(--rp-radius);
         box-shadow: var(--rp-shadow-sm);
         padding: 14px 18px;
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 14px;
         flex-wrap: wrap;
         margin-bottom: 20px;
@@ -79,7 +83,9 @@
     .rp-toolbar-section {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 10px;
+        flex-wrap: wrap;
     }
 
     .rp-toolbar-label {
@@ -89,12 +95,13 @@
         text-transform: uppercase;
         letter-spacing: 0.9px;
         white-space: nowrap;
+        line-height: 1;
     }
 
     .rp-select {
-        padding: 8px 34px 8px 12px;
+        padding: 9px 34px 9px 14px;
         border: 1px solid var(--rp-border);
-        border-radius: 9px;
+        border-radius: var(--rp-radius-sm);
         font-size: 12.5px;
         font-weight: 500;
         font-family: var(--rp-font);
@@ -125,7 +132,7 @@
         padding: 4px 10px;
         background: var(--rp-bg-1);
         border: 1px solid var(--rp-border);
-        border-radius: 9px;
+        border-radius: var(--rp-radius-sm);
         transition: border-color 0.15s, box-shadow 0.15s;
     }
 
@@ -159,14 +166,15 @@
         background: var(--rp-border);
     }
 
-    .rp-spacer { flex: 1; }
+    .rp-spacer { flex: 1 1 auto; min-width: 0; }
 
     .rp-btn {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 7px;
-        padding: 8px 14px;
-        border-radius: 9px;
+        padding: 9px 16px;
+        border-radius: var(--rp-radius-sm);
         border: 1px solid var(--rp-border);
         background: var(--rp-bg-1);
         color: var(--rp-text-1);
@@ -175,6 +183,7 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.15s;
+        line-height: 1;
     }
 
     .rp-btn:hover {
@@ -189,6 +198,8 @@
         font-size: 12px;
         color: var(--rp-text-2);
         font-weight: 500;
+        text-align: center;
+        white-space: nowrap;
     }
 
     .rp-result-count strong {
@@ -203,31 +214,34 @@
     .report-type-group {
         background: var(--rp-bg-1);
         border: 1px solid var(--rp-border);
-        border-radius: 12px;
+        border-radius: var(--rp-radius);
         box-shadow: var(--rp-shadow-sm);
         margin-bottom: 16px;
         overflow: hidden;
-        transition: box-shadow 0.18s;
+        transition: box-shadow 0.18s, border-color 0.18s;
     }
 
     .report-type-group:hover {
         box-shadow: var(--rp-shadow-md);
+        border-color: var(--rp-border-strong);
     }
 
     .report-type-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 14px 20px;
+        gap: 16px;
+        padding: 16px 22px;
         cursor: pointer;
         user-select: none;
-        background: var(--rp-bg-1);
+        background: linear-gradient(180deg, #fbfcff 0%, #ffffff 100%);
         border-bottom: 1px solid var(--rp-border);
         transition: background 0.12s;
+        min-height: 64px;
     }
 
     .report-type-header:hover {
-        background: #fbfcff;
+        background: linear-gradient(180deg, #f3f5ff 0%, #fbfcff 100%);
     }
 
     .report-type-left {
@@ -235,27 +249,29 @@
         align-items: center;
         gap: 12px;
         min-width: 0;
-        flex: 1;
+        flex: 1 1 auto;
     }
 
     .report-type-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
         display: grid;
         place-items: center;
         background: #e2f7ef;
         color: var(--rp-success);
-        font-size: 13px;
+        font-size: 14px;
         flex-shrink: 0;
     }
 
     .report-type-title {
         margin: 0;
-        font-size: 13.5px;
+        font-size: 14px;
         font-weight: 700;
         color: var(--rp-text-0);
         letter-spacing: -0.1px;
+        line-height: 1.35;
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -264,31 +280,38 @@
     .report-type-count {
         display: inline-flex;
         align-items: center;
-        padding: 3px 10px;
-        background: #f7f8fc;
-        border: 1px solid var(--rp-border);
+        justify-content: center;
+        padding: 4px 12px;
+        background: #eef1ff;
+        border: 1px solid rgba(79, 110, 247, 0.18);
         border-radius: 100px;
         font-size: 11px;
-        font-weight: 600;
-        color: var(--rp-text-2);
+        font-weight: 700;
+        color: var(--rp-accent);
         font-variant-numeric: tabular-nums;
         flex-shrink: 0;
+        white-space: nowrap;
+        line-height: 1;
     }
 
     .report-type-toggle {
-        width: 28px;
-        height: 28px;
-        border-radius: 8px;
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
         display: grid;
         place-items: center;
-        color: var(--rp-text-3);
-        font-size: 11px;
-        transition: transform 0.2s, color 0.15s, background 0.15s;
+        color: var(--rp-text-2);
+        font-size: 12px;
+        flex-shrink: 0;
+        background: #ffffff;
+        border: 1px solid var(--rp-border);
+        transition: transform 0.2s, color 0.15s, background 0.15s, border-color 0.15s;
     }
 
     .report-type-header:hover .report-type-toggle {
-        color: var(--rp-text-1);
-        background: #f7f8fc;
+        color: var(--rp-accent);
+        border-color: rgba(79, 110, 247, 0.3);
+        background: #eef1ff;
     }
 
     .report-type-toggle:not(.open) {
@@ -300,6 +323,7 @@
         max-height: 20000px;
         opacity: 1;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .report-type-body.collapsed {
@@ -309,102 +333,129 @@
     }
 
     /* ============================================================
-       REPORT DETAILS TABLE
+       REPORT DETAILS TABLE — uniform headers, aligned columns
        ============================================================ */
     .report-details-table {
         width: 100%;
+        min-width: 1100px;      /* enough room for 13 columns */
         border-collapse: collapse;
         font-size: 12.5px;
-        /* Fixed layout lets us control column widths precisely.
-           Wide columns (EXCEPTION, REMARKS, etc.) get the space;
-           narrow ones (S/N, dates, status) are locked down. */
-        table-layout: fixed;
+        table-layout: auto;
     }
 
+    /* ---------- Header row — uniform across every column ---------- */
     .report-details-table thead th {
-        text-align: left;
-        padding: 12px 16px;
+        text-align: center;
+        vertical-align: middle;
+        padding: 14px 12px;
         background: #f8fafc;
-        font-size: 10.5px;
+        font-size: 11px;
         font-weight: 700;
+        font-family: var(--rp-font);
         color: var(--rp-text-2);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.6px;
         border-bottom: 1px solid var(--rp-border);
-        white-space: nowrap;
-        vertical-align: middle;
+        border-top: 3px solid #eef1ff;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        line-height: 1.35;
+        height: 60px;
+        box-sizing: border-box;
     }
 
-    .report-details-table thead th.text-center { text-align: center; }
-
+    /* ---------- Body cells ---------- */
     .report-details-table tbody td {
-        padding: 14px 16px;
+        padding: 14px 12px;
         border-bottom: 1px solid #f1f5f9;
         color: var(--rp-text-0);
-        vertical-align: top;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 12.5px;
         line-height: 1.55;
         word-break: break-word;
         overflow-wrap: anywhere;
     }
 
     .report-details-table tbody tr:last-child td { border-bottom: none; }
-    .report-details-table tbody tr:hover { background: #fafbfd; }
+    .report-details-table tbody tr:hover { background: #f5f7ff; }
 
     /* ---------- Cell variants ---------- */
 
-    /* Narrow: S/N, dates, status, category, supervisor, officer */
+    /* Narrow: S/N */
     .report-details-table td.narrow-cell,
     .report-details-table th.narrow-cell {
         white-space: nowrap;
-        vertical-align: top;
+        text-align: center;
+        vertical-align: middle;
     }
 
-    /* Date cells: keep tight */
+    /* Date cells */
     .report-details-table td.date-cell,
     .report-details-table th.date-cell {
         white-space: nowrap;
         color: var(--rp-text-2);
         font-variant-numeric: tabular-nums;
+        text-align: center;
+        vertical-align: middle;
     }
 
-    /* Numbers: right-aligned, tabular */
+    /* Numbers */
     .report-details-table td.num-cell,
     .report-details-table th.num-cell {
-        text-align: right;
+        text-align: center;
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
+        vertical-align: middle;
     }
 
-    /* Wide cells — EXCEPTION, OBSERVATION, REMARKS, AUDITEE'S RESPONSE.
-       These get the bulk of the table's horizontal space. Padding is
-       boosted so multi-line text has room to breathe. */
+    /* Wide text cells */
     .report-details-table td.wide-cell,
     .report-details-table th.wide-cell {
         white-space: normal;
         word-break: break-word;
         overflow-wrap: anywhere;
-        padding-top: 16px;
-        padding-bottom: 16px;
-        line-height: 1.6;
+        padding-top: 14px;
+        padding-bottom: 14px;
+        line-height: 1.65;
         color: var(--rp-text-1);
+        text-align: left;
+        vertical-align: middle;
+        min-width: 180px;
     }
 
-    /* The EXCEPTION column gets the most room and a slightly
-       darker text colour so it reads as the "primary" column. */
-    .report-details-table td.wide-cell.cell-exception,
-    .report-details-table th.wide-cell.cell-exception {
-        font-size: 13px;
+    /* Exception column — body justified, header centered.
+       Relaxed min-width so the table doesn't blow past the viewport
+       and hide the rightmost date columns. */
+    .report-details-table td.wide-cell.cell-exception {
+        font-size: 12.5px;
         color: var(--rp-text-0);
+        text-align: justify;
+        text-justify: inter-word;
+        min-width: 600px;
+    }
+    .report-details-table th.wide-cell.cell-exception {
+        font-size: 11px;
+        color: var(--rp-text-2);
+        text-align: center;
+        min-width: 220px;
     }
 
+    /* Actions column — always shrink-to-fit and centered */
     .report-details-table td.text-center,
-    .report-details-table th.text-center { text-align: center; }
+    .report-details-table th.text-center {
+        text-align: center;
+        vertical-align: middle;
+        white-space: nowrap;
+        width: 1%;
+    }
 
     .report-details-table tr.empty-row td {
         text-align: center;
         color: var(--rp-text-3);
         font-style: italic;
-        padding: 28px 16px;
+        padding: 32px 16px;
         background: #fbfcff;
     }
 
@@ -415,8 +466,9 @@
     .badge-secondary {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 4px;
-        padding: 3px 10px;
+        padding: 4px 11px;
         border-radius: 100px;
         font-size: 10.5px;
         font-weight: 700;
@@ -424,55 +476,63 @@
         letter-spacing: 0.3px;
         border: 1px solid;
         white-space: nowrap;
+        line-height: 1;
     }
     .badge-success   { background: #e2f7ef; color: #065f46; border-color: rgba(6, 95, 70, 0.2); }
     .badge-warning   { background: #fef3c7; color: #92400e; border-color: rgba(146, 64, 14, 0.2); }
     .badge-danger    { background: #fee2e2; color: #991b1b; border-color: rgba(153, 27, 27, 0.2); }
     .badge-secondary { background: #f3f4f6; color: #6b7280; border-color: rgba(107, 114, 128, 0.2); }
 
-    /* Action buttons in tables */
+    /* Action buttons */
     .table-actions-cluster {
         display: inline-flex;
-        gap: 6px;
+        gap: 8px;
         justify-content: center;
+        align-items: center;
     }
 
     .btn-edit-modal,
     .btn-delete {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
         border: 1px solid var(--rp-border);
         background: var(--rp-bg-1);
         color: var(--rp-text-2);
         cursor: pointer;
         display: grid;
         place-items: center;
-        font-size: 11px;
+        font-size: 12px;
         transition: all 0.15s;
     }
 
     .btn-edit-modal:hover {
         background: #eef1ff;
         color: var(--rp-accent);
-        border-color: rgba(79, 110, 247, 0.3);
+        border-color: rgba(79, 110, 247, 0.35);
+        transform: translateY(-1px);
     }
 
     .btn-delete:hover {
         background: #fdeaf0;
         color: var(--rp-danger);
-        border-color: rgba(224, 69, 106, 0.3);
+        border-color: rgba(224, 69, 106, 0.35);
+        transform: translateY(-1px);
     }
 
     /* ============================================================
-       EMPTY STATE
+       EMPTY STATES
        ============================================================ */
     .rp-empty {
         background: var(--rp-bg-1);
         border: 1px dashed var(--rp-border);
-        border-radius: 14px;
-        padding: 60px 24px;
+        border-radius: var(--rp-radius);
+        padding: 64px 24px;
         text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
 
     .rp-empty-icon {
@@ -492,6 +552,7 @@
         font-size: 15px;
         font-weight: 700;
         color: var(--rp-text-0);
+        text-align: center;
     }
 
     .rp-empty p {
@@ -499,18 +560,22 @@
         font-size: 13px;
         color: var(--rp-text-2);
         line-height: 1.5;
+        text-align: center;
     }
 
     .rp-empty p strong { color: var(--rp-text-0); font-weight: 700; }
 
-    /* Filter-empty helper (dynamic) */
     .rp-filter-empty {
         background: var(--rp-bg-1);
         border: 1px dashed var(--rp-border);
-        border-radius: 14px;
-        padding: 48px 24px;
+        border-radius: var(--rp-radius);
+        padding: 52px 24px;
         text-align: center;
         margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
 
     .rp-filter-empty i {
@@ -525,16 +590,18 @@
         font-size: 14px;
         font-weight: 700;
         color: var(--rp-text-0);
+        text-align: center;
     }
 
     .rp-filter-empty p {
         margin: 0;
         font-size: 12.5px;
         color: var(--rp-text-2);
+        text-align: center;
     }
 
     /* ============================================================
-       MODALS (light refresh of existing styles)
+       MODALS
        ============================================================ */
     .modal-wrapper {
         position: fixed;
@@ -574,6 +641,7 @@
         font-size: 15px;
         font-weight: 700;
         color: var(--rp-text-0);
+        text-align: center;
     }
 
     .modal-close {
@@ -586,6 +654,8 @@
         cursor: pointer;
         font-size: 18px;
         line-height: 1;
+        display: grid;
+        place-items: center;
     }
 
     .modal-close:hover { background: #fdeaf0; color: var(--rp-danger); }
@@ -604,7 +674,7 @@
 
     .modal-actions {
         display: flex;
-        justify-content: flex-end;
+        justify-content: center;
         gap: 10px;
         margin-top: 22px;
         padding-top: 16px;
@@ -613,13 +683,18 @@
 
     .btn-cancel,
     .btn-create {
-        padding: 10px 20px;
-        border-radius: 9px;
+        padding: 10px 22px;
+        border-radius: 10px;
         border: none;
         font-family: var(--rp-font);
         font-size: 12.5px;
         font-weight: 600;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        line-height: 1;
     }
 
     .btn-cancel { background: #f3f4f6; color: var(--rp-text-0); }
@@ -722,17 +797,15 @@
        ============================================================ */
     @media (max-width: 1000px) {
         .report-details-table {
-            table-layout: auto;
+            min-width: 1000px;
         }
-        .report-details-table td.wide-cell,
-        .report-details-table th.wide-cell {
-            min-width: 220px;
+        .report-details-table thead th {
+            font-size: 10.5px;
+            padding: 12px 10px;
+            height: 56px;
         }
-        .report-details-table td.narrow-cell,
-        .report-details-table th.narrow-cell,
-        .report-details-table td.date-cell,
-        .report-details-table th.date-cell {
-            min-width: 90px;
+        .report-details-table tbody td {
+            padding: 12px 10px;
         }
     }
 
@@ -742,14 +815,24 @@
         .rp-select { min-width: 100%; }
         .toast-notification { left: 16px; right: 16px; min-width: 0; }
 
-        /* let the group body scroll horizontally instead of squishing */
-        .report-type-body {
-            overflow-x: auto;
-        }
+        .report-type-body { overflow-x: auto; }
         .report-details-table {
-            min-width: 820px;
-            table-layout: auto;
+            min-width: 1000px;
         }
+        .report-details-table thead th {
+            font-size: 10px;
+            padding: 10px 8px;
+            height: 52px;
+        }
+        .report-details-table tbody td {
+            padding: 10px 8px;
+            font-size: 11.5px;
+        }
+
+        .report-type-header { padding: 12px 14px; gap: 10px; }
+        .report-type-icon { width: 30px; height: 30px; font-size: 12px; }
+        .report-type-title { font-size: 12.5px; }
+        .report-type-count { padding: 3px 9px; font-size: 10.5px; }
     }
 </style>
 {% endblock %}
@@ -791,12 +874,6 @@
     <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
         <span class="nav-icon"><i class="fas fa-cash-register"></i></span>
         <span class="nav-text">Daily Trial Balance</span>
-    </a>
-</li>
-<li>
-    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
-        <span class="nav-icon"><i class="fas fa-chart-area"></i></span>
-        <span class="nav-text">Analytics</span>
     </a>
 </li>
 <li>
@@ -878,9 +955,6 @@
                             <h3 class="report-type-title">
                                 {{ type_group.grouper|default:"Uncategorized" }}
                             </h3>
-                            <span class="report-type-count">
-                                {{ type_group.list|length }} upload{{ type_group.list|length|pluralize }}
-                            </span>
                         </div>
                         <div class="report-type-toggle open">
                             <i class="fas fa-chevron-down"></i>
@@ -889,44 +963,53 @@
 
                     <div class="report-type-body">
                         {% for report_item in type_group.list %}
-                            {% with display=report_item.get_display_data %}
+                            {% with display=report_item.display_data %}
                                 {% if forloop.first %}
                                     <table class="report-details-table">
                                         {% if display.is_excel %}
                                         <colgroup>
                                             {% for header in display.headers %}
                                                 {% with h=header|upper %}
+                                                    {# Specific-first ordering — long labels must not                                                       be swallowed by the generic "DATE" branch. #}
                                                     {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
-                                                        <col style="width: 56px;">
-                                                    {% elif "DATE" in h %}
-                                                        <col style="width: 120px;">
-                                                    {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "CATEGORY" in h %}
+                                                        <col style="width: 50px;">
+                                                    {% elif "TARGET DATE" in h or "CLOSURE" in h %}
                                                         <col style="width: 150px;">
-                                                    {% elif "OFFICER" in h or h == "SUPERVISOR" %}
-                                                        <col style="width: 160px;">
+                                                    {% elif "DATE EXCEPTION" in h or "DATE NOTED" in h %}
+                                                        <col style="width: 140px;">
+                                                    {% elif "DATE" in h %}
+                                                        <col style="width: 110px;">
+                                                    {% elif "CATEGORY OF EXCEPTION" in h or "CATEGORY" in h %}
+                                                        <col style="width: 140px;">
+                                                    {% elif "AUDITEE" in h or "RESPONSE" in h %}
+                                                        <col style="width: 16%;">
+                                                    {% elif "REMARK" in h %}
+                                                        <col style="width: 14%;">
+                                                    {% elif "BRANCH" in h or "UNIT" in h %}
+                                                        <col style="width: 130px;">
+                                                    {% elif "OFFICER" in h or "SUPERVISOR" in h %}
+                                                        <col style="width: 140px;">
                                                     {% elif h == "STATUS" %}
                                                         <col style="width: 110px;">
                                                     {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
-                                                        <col style="width: 130px;">
+                                                        <col style="width: 110px;">
                                                     {% elif "EXCEPTION" in h or "OBSERVATION" in h or "DESCRIPTION" in h or "DETAIL" in h %}
-                                                        <col style="width: 32%;">
-                                                    {% elif "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h %}
-                                                        <col style="width: 22%;">
+                                                        <col style="width: 20%;">
                                                     {% else %}
                                                         <col>
                                                     {% endif %}
                                                 {% endwith %}
                                             {% endfor %}
-                                            <col style="width: 96px;">
+                                            <col style="width: 100px;">
                                         </colgroup>
                                         {% else %}
                                         <colgroup>
-                                            <col style="width: 22%;">
-                                            <col style="width: 14%;">
+                                            <col style="width: 18%;">
+                                            <col style="width: 12%;">
                                             <col style="width: 32%;">
                                             <col style="width: 18%;">
-                                            <col style="width: 10%;">
-                                            <col style="width: 96px;">
+                                            <col style="width: 12%;">
+                                            <col style="width: 100px;">
                                         </colgroup>
                                         {% endif %}
                                         <thead>
@@ -934,16 +1017,21 @@
                                                 {% if display.is_excel %}
                                                     {% for header in display.headers %}
                                                         {% with h=header|upper %}
+                                                            {# Same specific-first ordering as colgroup. #}
                                                             {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
                                                                 <th class="narrow-cell">{{ header|default:"Column" }}</th>
+                                                            {% elif "TARGET DATE" in h or "CLOSURE" in h %}
+                                                                <th class="date-cell">{{ header|default:"Column" }}</th>
+                                                            {% elif "DATE EXCEPTION" in h or "DATE NOTED" in h %}
+                                                                <th class="date-cell">{{ header|default:"Column" }}</th>
                                                             {% elif "DATE" in h %}
                                                                 <th class="date-cell">{{ header|default:"Column" }}</th>
-                                                            {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "OFFICER" in h or h == "SUPERVISOR" or h == "STATUS" or "CATEGORY" in h %}
+                                                            {% elif "OFFICER" in h or "SUPERVISOR" in h or h == "STATUS" or "BRANCH" in h or "UNIT" in h or "CATEGORY" in h %}
                                                                 <th class="narrow-cell">{{ header|default:"Column" }}</th>
                                                             {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
                                                                 <th class="num-cell">{{ header|default:"Column" }}</th>
                                                             {% elif "EXCEPTION" in h or "DESCRIPTION" in h or "OBSERVATION" in h or "REMARK" in h or "RESPONSE" in h or "AUDITEE" in h or "DETAIL" in h %}
-                                                                <th class="wide-cell">{{ header|default:"Column" }}</th>
+                                                                <th class="wide-cell cell-exception">{{ header|default:"Column" }}</th>
                                                             {% else %}
                                                                 <th>{{ header|default:"Column" }}</th>
                                                             {% endif %}
@@ -952,7 +1040,7 @@
                                                 {% else %}
                                                     <th>Branch/Unit</th>
                                                     <th>Date</th>
-                                                    <th>Observation</th>
+                                                    <th class="wide-cell cell-exception">Observation</th>
                                                     <th>Responsible Staff</th>
                                                     <th>Status</th>
                                                 {% endif %}
@@ -971,11 +1059,16 @@
                                             class="report-row">
                                             {% for header in display.headers %}
                                                 {% with h=header|upper %}
+                                                    {# Same specific-first ordering as colgroup & thead. #}
                                                     {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
                                                         <td class="narrow-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                    {% elif "TARGET DATE" in h or "CLOSURE" in h %}
+                                                        <td class="date-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
+                                                    {% elif "DATE EXCEPTION" in h or "DATE NOTED" in h %}
+                                                        <td class="date-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
                                                     {% elif "DATE" in h %}
                                                         <td class="date-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
-                                                    {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "OFFICER" in h or h == "SUPERVISOR" or h == "STATUS" or "CATEGORY" in h %}
+                                                    {% elif h == "BRANCH/UNIT" or h == "BRANCH" or h == "UNIT" or "OFFICER" in h or h == "SUPERVISOR" or h == "STATUS" or h == "CATEGORY" in h %}
                                                         <td class="narrow-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
                                                     {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
                                                         <td class="num-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
@@ -1255,8 +1348,6 @@
         const end   = endVal   ? new Date(endVal)   : null;
         if (end) end.setHours(23, 59, 59, 999);
 
-        // Only report-form rows have a reliable date in the date cell.
-        // Excel rows have arbitrary columns, so we skip them by default.
         document.querySelectorAll('.report-details-table tbody tr').forEach(row => {
             if (row.dataset.kind === 'excel') return;
             if (row.querySelector('.empty-row')) return;
@@ -1285,7 +1376,6 @@
         document.querySelectorAll('.report-type-group').forEach(g => g.style.display = '');
         document.querySelectorAll('.report-details-table tbody tr').forEach(r => r.style.display = '');
 
-        // Clear URL query params
         const url = new URL(window.location.href);
         url.searchParams.delete('type');
         url.searchParams.delete('start');
@@ -1442,7 +1532,7 @@
         });
 
         let html = '<div class="form-group">';
-        html += '<p style="font-size:12px;color:#6b7280;margin-bottom:12px;">Editing a single row. Only this row will be updated.</p>';
+        html += '<p style="font-size:12px;color:#6b7280;margin-bottom:12px;text-align:center;">Editing a single row. Only this row will be updated.</p>';
         headers.forEach((h, i) => {
             const val = (cells[i] === '-' || cells[i] === undefined) ? '' : cells[i];
             html += '<label>' + escapeHtml(h) + '</label>';
@@ -1519,7 +1609,6 @@
             return;
         }
 
-        // ---- Report mode ----
         const reportId = document.getElementById('editReportId').value;
         const formContainer = document.getElementById('editFormFields');
         const submitBtn = event.target.querySelector('button[type="submit"]');
@@ -1642,7 +1731,6 @@
         document.querySelectorAll('.report-type-body').forEach(b => b.classList.remove('collapsed'));
         document.querySelectorAll('.report-type-toggle').forEach(t => t.classList.add('open'));
 
-        // Restore filters from URL, if present
         const params = new URLSearchParams(window.location.search);
         const urlType  = params.get('type');
         const urlStart = params.get('start');
@@ -1671,7 +1759,6 @@
             persistFilters();
         });
 
-        // Apply on load (in case URL provided filters)
         if (urlType)  applyTypeFilter();
         if (urlStart || urlEnd) applyDateFilter();
 

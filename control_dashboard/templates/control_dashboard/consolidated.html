@@ -487,6 +487,54 @@
     white-space: nowrap;
 }
 
+/* Uploader cell */
+.cr-table .cell-uploader {
+    white-space: nowrap;
+}
+
+.uploader-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px 4px 4px;
+    border-radius: 999px;
+    background: var(--cr-bg-2);
+    border: 1px solid var(--cr-border);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--cr-text-0);
+    max-width: 220px;
+    overflow: hidden;
+}
+
+.uploader-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--cr-accent-soft);
+    color: var(--cr-accent);
+    font-size: 9px;
+    font-weight: 800;
+    flex-shrink: 0;
+    border: 1px solid rgba(79, 110, 247, 0.22);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.uploader-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.uploader-empty {
+    color: var(--cr-text-2);
+    font-size: 12px;
+}
+
 /* ============================================================
    EMPTY STATES
    ============================================================ */
@@ -624,12 +672,6 @@
     <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
         <span class="nav-icon"><i class="fas fa-cash-register"></i></span>
         <span class="nav-text">Daily Trial Balance</span>
-    </a>
-</li>
-<li>
-    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
-        <span class="nav-icon"><i class="fas fa-chart-area"></i></span>
-        <span class="nav-text">Analytics</span>
     </a>
 </li>
 <li class="active">
@@ -793,6 +835,7 @@
                             <th>Supervisor</th>
                             <th>Status</th>
                             <th style="text-align:right;">Income / Cost Saved</th>
+                            <th>Uploaded By</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -808,10 +851,20 @@
                             <td>{{ row.supervisor }}</td>
                             <td>{{ row.status }}</td>
                             <td class="cell-num">{{ row.income_cost_saved }}</td>
+                            <td class="cell-uploader">
+                                {% if row.uploaded_by_name %}
+                                    <span class="uploader-chip" title="{{ row.uploaded_by_name }}{% if row.uploaded_at %} · {{ row.uploaded_at|date:'M d, Y H:i' }}{% endif %}">
+                                        <span class="uploader-avatar">{{ row.uploaded_by_initials|default:row.uploaded_by_name|slice:":2" }}</span>
+                                        <span class="uploader-name">{{ row.uploaded_by_name }}</span>
+                                    </span>
+                                {% else %}
+                                    <span class="uploader-empty">—</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="10">
+                            <td colspan="11">
                                 <div class="empty-state-card" style="box-shadow:none;border:none;padding:56px 24px;">
                                     <i class="fas fa-inbox"></i>
                                     <h3>No records found</h3>

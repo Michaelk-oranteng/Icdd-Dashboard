@@ -11,25 +11,19 @@
    ============================================================ */
 
 :root {
-    /* Surfaces */
     --tb-bg-0: #eef1f8;
     --tb-bg-1: #ffffff;
     --tb-bg-2: #f7f8fc;
     --tb-bg-3: #f1f3f9;
 
-    /* Glass & borders */
-    --tb-glass: rgba(255, 255, 255, 0.85);
-    --tb-glass-hover: rgba(255, 255, 255, 1);
     --tb-border: rgba(15, 27, 51, 0.08);
     --tb-border-strong: rgba(15, 27, 51, 0.16);
     --tb-hairline: rgba(15, 27, 51, 0.06);
 
-    /* Text */
     --tb-text-0: #0f1b33;
     --tb-text-1: #46536b;
     --tb-text-2: #8993a8;
 
-    /* Accents */
     --tb-accent: #4f6ef7;
     --tb-accent-soft: #eef1ff;
     --tb-cyan: #0ea5a4;
@@ -43,7 +37,6 @@
     --tb-emerald: #17a673;
     --tb-emerald-soft: #e2f7ef;
 
-    /* Shadows */
     --tb-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
                     0 1px 3px rgba(15, 27, 51, 0.03);
     --tb-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
@@ -90,9 +83,7 @@
 
 .tb-date-wrapper:focus-within {
     border-color: var(--tb-accent);
-    box-shadow:
-        0 0 0 3px rgba(79, 110, 247, 0.12),
-        var(--tb-shadow-sm);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12), var(--tb-shadow-sm);
 }
 
 .tb-date-wrapper .tb-date-label {
@@ -152,7 +143,6 @@
 }
 
 .tb-btn:hover:not(:disabled)::before { opacity: 1; }
-
 .tb-btn i { font-size: 13px; }
 
 .tb-btn-primary {
@@ -206,9 +196,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    background:
-        linear-gradient(135deg, rgba(224, 138, 23, 0.06), rgba(224, 69, 106, 0.03)),
-        var(--tb-bg-1);
+    background: linear-gradient(135deg, rgba(224, 138, 23, 0.06), rgba(224, 69, 106, 0.03)), var(--tb-bg-1);
     border: 1px solid rgba(224, 138, 23, 0.28);
     border-radius: 16px;
     padding: 16px 20px;
@@ -220,16 +208,13 @@
 .tb-lock-banner::before {
     content: '';
     position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
+    left: 0; top: 0; bottom: 0;
     width: 3px;
     background: linear-gradient(180deg, var(--tb-amber), var(--tb-rose));
 }
 
 .tb-lock-banner .lock-icon {
-    width: 48px;
-    height: 48px;
+    width: 48px; height: 48px;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -242,241 +227,17 @@
 }
 
 .tb-lock-banner .lock-content { flex: 1; min-width: 0; }
-
 .tb-lock-banner .lock-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #8a5209;
-    margin: 0;
-    letter-spacing: 0.2px;
+    font-size: 13px; font-weight: 700;
+    color: #8a5209; margin: 0; letter-spacing: 0.2px;
 }
-
 .tb-lock-banner .lock-subtitle {
-    font-size: 12px;
-    color: var(--tb-text-1);
-    margin: 3px 0 0 0;
-    line-height: 1.5;
+    font-size: 12px; color: var(--tb-text-1);
+    margin: 3px 0 0 0; line-height: 1.5;
 }
 
 /* ============================================================
-   FILE STATUS CARD
-   ============================================================ */
-.tb-file-status {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    background: var(--tb-bg-1);
-    border: 1px solid var(--tb-border);
-    border-radius: 16px;
-    padding: 16px 20px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--tb-shadow-sm);
-}
-
-.tb-file-status.loaded {
-    border-color: rgba(23, 166, 115, 0.28);
-}
-
-.tb-file-status.loaded::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 0% 50%,
-        rgba(23, 166, 115, 0.06), transparent 45%);
-    pointer-events: none;
-}
-
-.tb-file-status .status-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-    background: var(--tb-bg-2);
-    color: var(--tb-text-2);
-    border: 1px solid var(--tb-border);
-    transition: all 0.3s ease;
-}
-
-.tb-file-status.loaded .status-icon {
-    background: var(--tb-emerald-soft);
-    color: var(--tb-emerald);
-    border-color: rgba(23, 166, 115, 0.28);
-    box-shadow: 0 0 0 4px rgba(23, 166, 115, 0.08);
-}
-
-.tb-file-status .status-content { flex: 1; min-width: 0; }
-
-.tb-file-status .status-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--tb-text-0);
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.tb-file-status .status-subtitle {
-    font-size: 12px;
-    color: var(--tb-text-2);
-    margin: 3px 0 0 0;
-}
-
-.tb-file-status .status-clear {
-    background: var(--tb-bg-1);
-    border: 1px solid var(--tb-border);
-    color: var(--tb-text-1);
-    border-radius: 8px;
-    padding: 7px 14px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: var(--tb-font);
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.tb-file-status .status-clear:hover {
-    background: var(--tb-rose-soft);
-    color: var(--tb-rose);
-    border-color: rgba(224, 69, 106, 0.28);
-}
-
-/* ============================================================
-   SUMMARY TILES
-   ============================================================ */
-.tb-summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 14px;
-}
-
-.tb-summary-tile {
-    position: relative;
-    background: var(--tb-bg-1);
-    border-radius: 16px;
-    padding: 18px 20px;
-    border: 1px solid var(--tb-border);
-    overflow: hidden;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    isolation: isolate;
-    box-shadow: var(--tb-shadow-sm);
-}
-
-.tb-summary-tile::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--tile-accent, var(--tb-accent)) 50%,
-        transparent 100%);
-    opacity: 0.85;
-}
-
-.tb-summary-tile::after {
-    content: '';
-    position: absolute;
-    top: -50%; right: -25%;
-    width: 180px; height: 180px;
-    border-radius: 50%;
-    background: radial-gradient(circle,
-        color-mix(in srgb, var(--tile-accent, var(--tb-accent)) 22%, transparent) 0%,
-        transparent 70%);
-    opacity: 0.55;
-    z-index: -1;
-    transition: opacity 0.4s ease, transform 0.6s ease;
-}
-
-.tb-summary-tile:hover {
-    transform: translateY(-3px);
-    border-color: color-mix(in srgb, var(--tile-accent, var(--tb-accent)) 30%, var(--tb-border));
-    box-shadow:
-        0 12px 28px rgba(15, 27, 51, 0.10),
-        0 2px 6px rgba(15, 27, 51, 0.04);
-}
-
-.tb-summary-tile:hover::after {
-    opacity: 0.9;
-    transform: scale(1.15);
-}
-
-.tb-summary-tile.default { --tile-accent: var(--tb-accent); }
-.tb-summary-tile.success { --tile-accent: var(--tb-emerald); }
-.tb-summary-tile.warning { --tile-accent: var(--tb-amber); }
-.tb-summary-tile.danger  { --tile-accent: var(--tb-rose); }
-.tb-summary-tile.info    { --tile-accent: var(--tb-violet); }
-
-.tb-summary-tile .tile-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
-}
-
-.tb-summary-tile .tile-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--tb-text-2);
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-}
-
-.tb-summary-tile .tile-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
-    font-size: 12px;
-    background: color-mix(in srgb, var(--tile-accent) 12%, transparent);
-    color: var(--tile-accent);
-    border: 1px solid color-mix(in srgb, var(--tile-accent) 22%, transparent);
-}
-
-.tb-summary-tile .tile-value {
-    font-size: 26px;
-    font-weight: 700;
-    color: var(--tb-text-0);
-    line-height: 1.1;
-    letter-spacing: -0.8px;
-    font-variant-numeric: tabular-nums;
-    word-break: break-all;
-}
-
-.tb-summary-tile .tile-value.success { color: var(--tb-emerald); }
-.tb-summary-tile .tile-value.warning { color: var(--tb-amber); }
-.tb-summary-tile .tile-value.info    { color: var(--tb-violet); }
-.tb-summary-tile .tile-value.danger  { color: var(--tb-rose); }
-
-.tb-summary-tile .tile-subtext {
-    font-size: 11px;
-    color: var(--tb-text-2);
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.tb-summary-tile .tile-subtext .dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--tile-accent);
-    box-shadow: 0 0 6px color-mix(in srgb, var(--tile-accent) 70%, transparent);
-}
-
-/* ============================================================
-   FILTER / CONTROL BAR — positioning fixed
+   CONTROL BAR
    ============================================================ */
 .tb-control-bar {
     display: flex;
@@ -491,21 +252,14 @@
 }
 
 .tb-filter-group {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    display: inline-flex; align-items: center; gap: 8px;
 }
 
 .tb-filter-group label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--tb-text-2);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    font-size: 10px; font-weight: 700;
+    color: var(--tb-text-2); text-transform: uppercase;
+    letter-spacing: 1px; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 6px;
 }
 
 .tb-filter-group label i { color: var(--tb-accent); font-size: 11px; }
@@ -514,16 +268,13 @@
     padding: 8px 14px;
     border: 1px solid var(--tb-border);
     border-radius: 10px;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 12px; font-weight: 500;
     font-family: var(--tb-font);
     color: var(--tb-text-0);
     background: var(--tb-bg-1);
-    cursor: pointer;
-    outline: none;
+    cursor: pointer; outline: none;
     transition: all 0.2s ease;
-    min-width: 160px;
-    max-width: 260px;
+    min-width: 160px; max-width: 260px;
     appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
@@ -533,15 +284,11 @@
     box-shadow: var(--tb-shadow-sm);
 }
 
-.tb-filter-select:hover {
-    border-color: var(--tb-border-strong);
-}
+.tb-filter-select:hover { border-color: var(--tb-border-strong); }
 
 .tb-filter-select:focus {
     border-color: var(--tb-accent);
-    box-shadow:
-        0 0 0 3px rgba(79, 110, 247, 0.12),
-        var(--tb-shadow-sm);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12), var(--tb-shadow-sm);
 }
 
 .tb-filter-select option {
@@ -552,16 +299,13 @@
 #tbGLFilter { min-width: 240px; max-width: 340px; }
 
 .tb-filter-divider {
-    width: 1px;
-    height: 24px;
+    width: 1px; height: 24px;
     background: var(--tb-border);
     margin: 0 2px;
 }
 
 /* ============================================================
-   VIEW TOGGLE — no longer pushed to far right; sits with a
-   small auto-margin so it stays grouped with the filters on
-   narrow screens and moves to the right only when there's room
+   VIEW TOGGLE + TABS
    ============================================================ */
 .tb-view-toggle {
     display: inline-flex;
@@ -575,14 +319,10 @@
 }
 
 .tb-view-toggle button {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+    display: inline-flex; align-items: center; gap: 6px;
     padding: 7px 14px;
-    border: none;
-    border-radius: 7px;
-    font-size: 11px;
-    font-weight: 600;
+    border: none; border-radius: 7px;
+    font-size: 11px; font-weight: 600;
     font-family: var(--tb-font);
     letter-spacing: 0.3px;
     color: var(--tb-text-2);
@@ -604,16 +344,10 @@
     box-shadow: 0 2px 6px rgba(224, 138, 23, 0.15);
 }
 
-/* ============================================================
-   FILTER META — pushed to far right with auto margin so it
-   sits flush against the control bar edge
-   ============================================================ */
 .tb-filter-meta {
     font-size: 11px;
     color: var(--tb-text-2);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    display: inline-flex; align-items: center; gap: 8px;
     padding: 6px 12px;
     background: var(--tb-bg-2);
     border: 1px solid var(--tb-border);
@@ -622,32 +356,50 @@
     margin-left: auto;
 }
 
-.tb-filter-meta strong {
-    color: var(--tb-text-0);
-    font-weight: 700;
-}
-
-.tb-filter-meta .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 700;
-    background: var(--tb-rose-soft);
-    color: var(--tb-rose);
-    border: 1px solid rgba(224, 69, 106, 0.22);
-}
-
-.tb-filter-meta .badge.warning {
-    background: var(--tb-amber-soft);
-    color: var(--tb-amber);
-    border-color: rgba(224, 138, 23, 0.22);
-}
+.tb-filter-meta strong { color: var(--tb-text-0); font-weight: 700; }
 
 /* ============================================================
-   PREVIEW TABLE CARD
+   TAB BAR (Overview / Compare Previous / Date Range)
+   ============================================================ */
+.tb-tabbar {
+    display: flex;
+    gap: 4px;
+    background: var(--tb-bg-1);
+    border: 1px solid var(--tb-border);
+    border-radius: 14px;
+    padding: 6px;
+    box-shadow: var(--tb-shadow-sm);
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.tb-tabbar button {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    font-family: var(--tb-font);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--tb-text-2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tb-tabbar button:hover { color: var(--tb-text-0); background: var(--tb-bg-2); }
+
+.tb-tabbar button.active {
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.28);
+}
+
+.tb-tabbar button i { font-size: 12px; }
+
+/* ============================================================
+   CARD
    ============================================================ */
 .tb-card {
     background: var(--tb-bg-1);
@@ -664,6 +416,8 @@
     padding: 18px 22px 14px;
     border-bottom: 1px solid var(--tb-hairline);
     background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .tb-card-header h4 {
@@ -679,11 +433,9 @@
 
 .tb-card-header h4 i {
     font-size: 13px;
-    width: 28px;
-    height: 28px;
+    width: 28px; height: 28px;
     border-radius: 8px;
-    display: grid;
-    place-items: center;
+    display: grid; place-items: center;
     background: var(--tb-accent-soft);
     color: var(--tb-accent);
     border: 1px solid rgba(79, 110, 247, 0.2);
@@ -727,8 +479,7 @@
 
 .tb-table thead {
     background: var(--tb-bg-2);
-    position: sticky;
-    top: 0;
+    position: sticky; top: 0;
     z-index: 2;
     backdrop-filter: blur(8px);
 }
@@ -753,12 +504,8 @@
     white-space: nowrap;
 }
 
-.tb-table tbody tr {
-    transition: background 0.2s ease;
-}
-
+.tb-table tbody tr { transition: background 0.2s ease; }
 .tb-table tbody tr:hover { background: var(--tb-bg-2); }
-
 .tb-table tbody tr:last-child td { border-bottom: none; }
 
 .tb-table .num {
@@ -766,50 +513,38 @@
     font-variant-numeric: tabular-nums;
 }
 
-.tb-table tbody tr.tb-row-exception {
-    background: var(--tb-rose-soft);
-    position: relative;
-}
+.tb-table tbody tr.tb-hidden { display: none; }
 
-.tb-table tbody tr.tb-row-exception td:first-child {
-    position: relative;
+/* Sticky first columns for the wide compare table */
+.tb-table.compare-table th.sticky-col,
+.tb-table.compare-table td.sticky-col {
+    position: sticky;
+    background: var(--tb-bg-1);
+    z-index: 1;
 }
-
-.tb-table tbody tr.tb-row-exception td:first-child::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--tb-rose);
+.tb-table.compare-table thead th.sticky-col {
+    background: var(--tb-bg-2);
+    z-index: 3;
 }
+.tb-table.compare-table .sticky-col-1 { left: 0;    min-width: 90px;  }
+.tb-table.compare-table .sticky-col-2 { left: 90px; min-width: 90px;  }
+.tb-table.compare-table .sticky-col-3 { left: 180px; min-width: 100px; }
+.tb-table.compare-table .sticky-col-4 { left: 280px; min-width: 220px; }
 
-.tb-table tbody tr.tb-row-exception:hover {
-    background: #fbdde7;
-}
-
-.tb-table .tb-variance-badge {
+/* Delta badges */
+.tb-delta {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 3px 9px;
-    border-radius: 10px;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    background: #ffffff;
-    color: var(--tb-rose);
-    border: 1px solid rgba(224, 69, 106, 0.3);
-    margin-left: 8px;
-    vertical-align: middle;
-    box-shadow: 0 1px 2px rgba(224, 69, 106, 0.1);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
-
-.tb-table tbody tr.tb-hidden {
-    display: none;
-}
+.tb-delta.pos { background: var(--tb-rose-soft);   color: var(--tb-rose);   }
+.tb-delta.neg { background: var(--tb-emerald-soft); color: var(--tb-emerald); }
+.tb-delta.zero { background: var(--tb-bg-2);       color: var(--tb-text-2); }
 
 /* ============================================================
    EMPTY STATE
@@ -823,12 +558,10 @@
 }
 
 .tb-empty-glyph {
-    width: 80px;
-    height: 80px;
+    width: 80px; height: 80px;
     margin: 0 auto 20px;
     border-radius: 50%;
-    display: grid;
-    place-items: center;
+    display: grid; place-items: center;
     background: radial-gradient(circle,
         rgba(79, 110, 247, 0.14) 0%,
         rgba(79, 110, 247, 0.04) 60%,
@@ -844,54 +577,72 @@
 }
 
 .tb-empty h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--tb-text-0);
-    margin-bottom: 6px;
+    font-size: 16px; font-weight: 700;
+    color: var(--tb-text-0); margin-bottom: 6px;
     letter-spacing: 0.2px;
 }
 
 .tb-empty p {
-    font-size: 13px;
-    color: var(--tb-text-2);
-    margin: 0 auto;
-    max-width: 400px;
+    font-size: 13px; color: var(--tb-text-2);
+    margin: 0 auto; max-width: 400px;
     line-height: 1.5;
 }
 
 /* ============================================================
-   LOADING OVERLAY
+   LOADING
    ============================================================ */
 .tb-loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 27, 51, 0.35);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    display: none;
-    justify-content: center;
-    align-items: center;
+    position: fixed; inset: 0;
+    background: rgba(15, 27, 51, 0.28);
+    backdrop-filter: blur(8px) saturate(140%);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    display: flex; justify-content: center; align-items: center;
     z-index: 99999;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.28s ease, visibility 0.28s ease;
 }
 
-.tb-loading-overlay.active { display: flex; }
+.tb-loading-overlay.active { opacity: 1; visibility: visible; }
 
 .tb-loading-card {
-    background: var(--tb-bg-1);
-    border: 1px solid var(--tb-border);
-    padding: 40px 50px;
-    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 27, 51, 0.06);
+    padding: 36px 44px 32px;
+    border-radius: 22px;
     text-align: center;
-    box-shadow:
-        0 24px 64px rgba(15, 27, 51, 0.20),
-        0 8px 24px rgba(15, 27, 51, 0.10);
-    min-width: 260px;
+    box-shadow: 0 1px 2px rgba(15, 27, 51, 0.06), 0 12px 32px rgba(15, 27, 51, 0.10), 0 32px 80px rgba(15, 27, 51, 0.12);
+    width: auto;
+    min-width: 280px;
+    max-width: 340px;
+    height: auto;
+    min-height: 0;
+    max-height: 260px;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    align-self: center;
+    transform: scale(0.92) translateY(12px);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.34, 1.36, 0.64, 1), opacity 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.tb-loading-overlay.active .tb-loading-card { transform: scale(1) translateY(0); opacity: 1; }
+
+.tb-loading-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(79, 110, 247, 0.10) 0%, rgba(79, 110, 247, 0.03) 40%, transparent 70%);
+    pointer-events: none;
 }
 
 .tb-spinner {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto 20px;
+    width: 56px; height: 56px;
+    margin: 0 auto 22px;
     position: relative;
 }
 
@@ -899,131 +650,227 @@
 .tb-spinner::after {
     content: '';
     position: absolute;
-    inset: 0;
     border-radius: 50%;
-    border: 3px solid transparent;
 }
 
 .tb-spinner::before {
+    inset: 0;
+    border: 3px solid rgba(79, 110, 247, 0.14);
     border-top-color: var(--tb-accent);
     border-right-color: var(--tb-accent);
-    animation: tb-spin 1s linear infinite;
+    animation: tb-spin 0.9s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+    filter: drop-shadow(0 2px 6px rgba(79, 110, 247, 0.32));
 }
 
 .tb-spinner::after {
-    inset: 8px;
+    inset: 10px;
+    border: 2.5px solid rgba(14, 165, 164, 0.10);
     border-top-color: var(--tb-cyan);
-    animation: tb-spin 1.6s linear infinite reverse;
+    border-left-color: var(--tb-cyan);
+    animation: tb-spin 1.4s linear infinite reverse;
 }
 
-@keyframes tb-spin {
-    to { transform: rotate(360deg); }
-}
+@keyframes tb-spin { to { transform: rotate(360deg); } }
 
 .tb-loading-text {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 13.5px;
+    font-weight: 600;
     color: var(--tb-text-0);
     margin: 0;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.2px;
+    animation: tb-loading-text-in 0.5s ease 0.15s both;
+}
+
+@keyframes tb-loading-text-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+.tb-loading-card::after {
+    content: '';
+    display: block;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--tb-accent);
+    margin: 14px auto 0;
+    box-shadow: -12px 0 0 rgba(79, 110, 247, 0.4), 0 0 0 rgba(79, 110, 247, 0.8), 12px 0 0 rgba(79, 110, 247, 0.4);
+    animation: tb-dot-wave 1.4s ease-in-out infinite;
+}
+
+@keyframes tb-dot-wave {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
 }
 
 /* ============================================================
-   TOAST NOTIFICATION
+   TOAST
    ============================================================ */
 .toast-notification {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--tb-bg-1);
-    border: 1px solid var(--tb-border);
-    border-left: 4px solid var(--tb-emerald);
-    border-radius: 14px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    box-shadow:
-        0 16px 40px rgba(15, 27, 51, 0.15),
-        0 4px 12px rgba(15, 27, 51, 0.08);
-    transform: translateX(120%);
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    bottom: 28px; right: 28px;
     z-index: 100000;
-    min-width: 320px;
-    max-width: 460px;
+    width: auto;
+    min-width: 340px;
+    max-width: 440px;
+    height: auto;
+    min-height: 0;
+    max-height: 200px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 16px 18px 16px 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    align-self: flex-start;
+    flex: 0 0 auto;
+    gap: 13px;
+    box-shadow: 0 1px 2px rgba(15, 27, 51, 0.06), 0 8px 24px rgba(15, 27, 51, 0.10), 0 20px 48px rgba(15, 27, 51, 0.08);
+    border: 1px solid rgba(15, 27, 51, 0.06);
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+    pointer-events: none;
+    transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), transform 0.42s cubic-bezier(0.34, 1.36, 0.64, 1);
+    overflow: hidden;
 }
 
-.toast-notification.show { transform: translateX(0); }
-
-.toast-notification.error {
-    border-left-color: var(--tb-rose);
+.toast-notification.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
 }
+
+.toast-notification::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--toast-accent, var(--tb-emerald));
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+    transition: background 0.3s ease;
+}
+
+.toast-notification::after {
+    content: '';
+    position: absolute;
+    top: -40%; right: -10%;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--toast-accent, var(--tb-emerald)) 18%, transparent) 0%, transparent 65%);
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.toast-notification.success { --toast-accent: var(--tb-emerald); }
+.toast-notification.error   { --toast-accent: var(--tb-rose);    }
+.toast-notification.warning { --toast-accent: var(--tb-amber);   }
+.toast-notification.info    { --toast-accent: var(--tb-accent);  }
 
 .toast-notification .toast-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
+    position: relative;
+    z-index: 1;
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    display: grid; place-items: center;
     font-size: 15px;
     flex-shrink: 0;
-    background: var(--tb-emerald-soft);
-    color: var(--tb-emerald);
-    border: 1px solid rgba(23, 166, 115, 0.28);
+    color: #ffffff;
+    background: linear-gradient(135deg, var(--toast-accent, var(--tb-emerald)) 0%, color-mix(in srgb, var(--toast-accent, var(--tb-emerald)) 78%, black) 100%);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--toast-accent, var(--tb-emerald)) 40%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    animation: toast-icon-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both;
 }
 
-.toast-notification.error .toast-icon {
-    background: var(--tb-rose-soft);
-    color: var(--tb-rose);
-    border-color: rgba(224, 69, 106, 0.28);
+@keyframes toast-icon-in {
+    0%   { transform: scale(0.4) rotate(-12deg); opacity: 0; }
+    60%  { transform: scale(1.12) rotate(4deg);  opacity: 1; }
+    100% { transform: scale(1) rotate(0);        opacity: 1; }
 }
 
-.toast-notification .toast-content { flex: 1; min-width: 0; }
+.toast-notification .toast-content {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    padding-top: 1px;
+    overflow: hidden;
+    animation: toast-content-in 0.4s ease 0.12s both;
+}
+
+@keyframes toast-content-in {
+    from { opacity: 0; transform: translateX(6px); }
+    to   { opacity: 1; transform: translateX(0);   }
+}
 
 .toast-notification .toast-title {
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 700;
     color: var(--tb-text-0);
-    margin: 0 0 2px 0;
-    letter-spacing: 0.2px;
+    margin: 0 0 3px 0;
+    letter-spacing: 0.1px;
+    line-height: 1.3;
 }
 
 .toast-notification .toast-message {
     font-size: 12px;
     color: var(--tb-text-1);
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.5;
     word-break: break-word;
+    font-weight: 400;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
 }
 
 .toast-notification .toast-close {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
     background: transparent;
     border: none;
     color: var(--tb-text-2);
     cursor: pointer;
     padding: 4px;
-    font-size: 12px;
-    border-radius: 6px;
-    transition: all 0.2s;
+    width: 24px; height: 24px;
+    font-size: 11px;
+    border-radius: 7px;
+    display: grid; place-items: center;
+    transition: all 0.18s ease;
+    opacity: 0;
+    animation: toast-content-in 0.3s ease 0.24s forwards;
 }
 
-.toast-notification .toast-close:hover {
-    color: var(--tb-text-0);
-    background: var(--tb-bg-2);
+.toast-notification:hover .toast-close { opacity: 1; }
+.toast-notification .toast-close:hover { color: var(--tb-text-0); background: rgba(15, 27, 51, 0.06); }
+
+.toast-notification .toast-progress {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 2px; width: 100%;
+    background: var(--toast-accent, var(--tb-emerald));
+    opacity: 0.35;
+    transform-origin: left center;
+    animation: toast-progress 4s linear forwards;
+}
+
+@keyframes toast-progress {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
 }
 
 /* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 1024px) {
-    .tb-summary-grid { grid-template-columns: repeat(2, 1fr); }
     .tb-control-bar { padding: 12px 16px; }
     .tb-view-toggle { margin-left: 0; }
     .tb-filter-meta { margin-left: 0; }
 }
 
 @media (max-width: 768px) {
-    .tb-summary-grid { grid-template-columns: 1fr 1fr; }
     .tb-date-wrapper { width: 100%; justify-content: center; }
     .tb-header-actions { width: 100%; }
     .tb-header-actions .tb-btn { flex: 1; justify-content: center; }
@@ -1035,17 +882,18 @@
     .tb-view-toggle { width: 100%; }
     .tb-view-toggle button { flex: 1; justify-content: center; }
     .tb-filter-meta { width: 100%; justify-content: center; }
+    .tb-tabbar { width: 100%; flex-wrap: wrap; }
+    .tb-tabbar button { flex: 1; justify-content: center; }
+}
+
+@media (max-width: 640px) {
     .toast-notification {
-        left: 16px;
-        right: 16px;
-        bottom: 16px;
-        min-width: auto;
+        left: 16px; right: 16px; bottom: 16px;
+        min-width: auto; max-width: none;
     }
 }
 
 @media (max-width: 480px) {
-    .tb-summary-grid { grid-template-columns: 1fr; }
-    .tb-summary-tile .tile-value { font-size: 22px; }
     .tb-card-header { flex-direction: column; align-items: flex-start; gap: 6px; }
     .tb-lock-banner { flex-direction: column; align-items: flex-start; }
 }
@@ -1074,7 +922,7 @@
     </a>
 </li>
 <li>
-    <a href="{% url 'control_dashboard:email_page' %}" data-tooltip="My Reports">
+    <a href="{% url 'control_dashboard:email_page' %}" data-tooltip="Email">
         <span class="nav-icon"><i class="fas fa-envelope"></i></span>
         <span class="nav-text">Email</span>
     </a>
@@ -1092,12 +940,6 @@
     </a>
 </li>
 <li>
-    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
-        <span class="nav-icon"><i class="fas fa-chart-area"></i></span>
-        <span class="nav-text">Analytics</span>
-    </a>
-</li>
-<li>
     <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
         <span class="nav-icon"><i class="fas fa-database"></i></span>
         <span class="nav-text">Consolidated Reports</span>
@@ -1108,27 +950,29 @@
 {% block page_title %}Daily Trial Balance{% endblock %}
 
 {% block top_header_right %}
-<div class="tb-header-actions">
-    <div class="tb-date-wrapper">
-        <label for="tbReportDate" class="tb-date-label">
-            <i class="fas fa-calendar-alt"></i> Report Date
-        </label>
-        <input type="date" id="tbReportDate" class="tb-date-input" required>
-    </div>
-    <button class="tb-btn tb-btn-outline" onclick="loadTrialBalanceByDate()" id="tb-load-btn">
-        <i class="fas fa-search"></i> View
-    </button>
-    <button class="tb-btn tb-btn-primary" onclick="openUploadDialog()" id="tb-upload-btn">
-        <i class="fas fa-cloud-upload-alt"></i> Upload Excel
-    </button>
-    <button class="tb-btn tb-btn-success" onclick="submitTrialBalance()" id="tb-submit-btn" disabled>
-        <i class="fas fa-paper-plane"></i> Submit
-    </button>
-</div>
+
 {% endblock %}
 
 {% block content %}
-<div class="tb-container">
+    <div class="tb-container">
+
+        <div class="tb-header-actions">
+        <div class="tb-date-wrapper">
+            <label for="tbReportDate" class="tb-date-label">
+                <i class="fas fa-calendar-alt"></i> Report Date
+            </label>
+            <input type="date" id="tbReportDate" class="tb-date-input" required>
+        </div>
+        <button class="tb-btn tb-btn-outline" onclick="loadTrialBalanceByDate()" id="tb-load-btn">
+            <i class="fas fa-search"></i> View
+        </button>
+        <button class="tb-btn tb-btn-primary" onclick="openUploadDialog()" id="tb-upload-btn">
+            <i class="fas fa-cloud-upload-alt"></i> Upload Excel
+        </button>
+        <button class="tb-btn tb-btn-success" onclick="submitTrialBalance()" id="tb-submit-btn" disabled>
+            <i class="fas fa-paper-plane"></i> Submit
+        </button>
+    </div>
 
     <input type="file" id="tbFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
 
@@ -1141,72 +985,7 @@
         </div>
     </div>
 
-    <!-- FILE STATUS CARD -->
-    <div class="tb-file-status" id="tb-file-status">
-        <div class="status-icon" id="tb-status-icon">
-            <i class="fas fa-file-excel"></i>
-        </div>
-        <div class="status-content">
-            <p class="status-title" id="tb-status-title">No file uploaded</p>
-            <p class="status-subtitle" id="tb-status-subtitle">Click "Upload Excel" to select your trial balance file</p>
-        </div>
-        <button class="status-clear" id="tb-status-clear" onclick="clearUpload()" style="display:none;">
-            <i class="fas fa-times"></i> Clear
-        </button>
-    </div>
-
-    <!-- SUMMARY TILES -->
-    <div class="tb-summary-grid" id="tb-summary" style="display:none;">
-        <div class="tb-summary-tile default">
-            <div class="tile-head">
-                <span class="tile-label">Total Rows</span>
-                <span class="tile-icon"><i class="fas fa-list-ol"></i></span>
-            </div>
-            <div class="tile-value" id="tb-total-rows">0</div>
-            <div class="tile-subtext">
-                <span class="dot"></span>
-                <span>Entries in file</span>
-            </div>
-        </div>
-
-        <div class="tb-summary-tile success">
-            <div class="tile-head">
-                <span class="tile-label">Total Debit</span>
-                <span class="tile-icon"><i class="fas fa-arrow-down"></i></span>
-            </div>
-            <div class="tile-value success" id="tb-total-debit">0.00</div>
-            <div class="tile-subtext">
-                <span class="dot"></span>
-                <span>GHS · DR_BAL_LCY</span>
-            </div>
-        </div>
-
-        <div class="tb-summary-tile info">
-            <div class="tile-head">
-                <span class="tile-label">Total Credit</span>
-                <span class="tile-icon"><i class="fas fa-arrow-up"></i></span>
-            </div>
-            <div class="tile-value info" id="tb-total-credit">0.00</div>
-            <div class="tile-subtext">
-                <span class="dot"></span>
-                <span>GHS · CR_BAL_LCY</span>
-            </div>
-        </div>
-
-        <div class="tb-summary-tile warning" id="tb-variance-tile">
-            <div class="tile-head">
-                <span class="tile-label">Variance</span>
-                <span class="tile-icon"><i class="fas fa-balance-scale-right"></i></span>
-            </div>
-            <div class="tile-value warning" id="tb-variance">0.00</div>
-            <div class="tile-subtext">
-                <span class="dot"></span>
-                <span>Debit − Credit</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- CONTROL BAR (filters + view toggle) -->
+    <!-- CONTROL BAR (moved up from Overview panel) -->
     <div class="tb-control-bar" id="tb-filter-bar" style="display:none;">
         <div class="tb-filter-group">
             <label for="tbBranchFilter"><i class="fas fa-building"></i> Branch</label>
@@ -1218,8 +997,8 @@
         <div class="tb-filter-divider"></div>
 
         <div class="tb-filter-group">
-            <label for="tbDepartmentFilter"><i class="fas fa-sitemap"></i> Category</label>
-            <select id="tbDepartmentFilter" class="tb-filter-select" onchange="applyFilters()">
+            <label for="tbCategoryFilter"><i class="fas fa-sitemap"></i> Category</label>
+            <select id="tbCategoryFilter" class="tb-filter-select" onchange="applyFilters()">
                 <option value="all">All Categories</option>
             </select>
         </div>
@@ -1233,46 +1012,117 @@
             </select>
         </div>
 
-        <div class="tb-view-toggle" id="tb-view-toggle">
-            <button type="button" class="active" id="tb-view-full" onclick="setViewMode('full')">
-                <i class="fas fa-table"></i> Full View
-            </button>
-            <button type="button" id="tb-view-exceptions" onclick="setViewMode('exceptions')">
-                <i class="fas fa-exclamation-triangle"></i> Exceptions
-            </button>
-        </div>
-
         <div class="tb-filter-meta" id="tb-filter-meta">
             <i class="fas fa-info-circle"></i>
             <span><strong id="tb-visible-count">0</strong> / <strong id="tb-total-count">0</strong></span>
-            <span class="badge" id="tb-exception-badge" style="display:none;">
-                <i class="fas fa-exclamation-triangle"></i>
-                <span id="tb-exception-badge-text">0 irregular</span>
-            </span>
         </div>
     </div>
 
-    <!-- PREVIEW CARD -->
-    <div class="tb-card" id="tb-preview-card" style="display:none;">
-        <div class="tb-card-header">
-            <h4><i class="fas fa-table"></i> <span id="tb-preview-title">Preview</span></h4>
-            <div class="header-meta" id="tb-preview-meta"></div>
+    <!-- ============================================================
+         TAB BAR — Overview / Compare Previous / Date Range
+         ============================================================ -->
+    <div class="tb-tabbar" id="tb-tabbar" style="display:none;">
+        <button type="button" class="active" id="tab-overview" onclick="switchTab('overview')">
+            <i class="fas fa-table"></i> Overview
+        </button>
+        <button type="button" id="tab-compare" onclick="switchTab('compare')">
+            <i class="fas fa-code-compare"></i> Compare Previous
+        </button>
+        <button type="button" id="tab-range" onclick="switchTab('range')">
+            <i class="fas fa-calendar-week"></i> Date Range
+        </button>
+    </div>
+
+    <!-- ============================================================
+         TAB PANEL: OVERVIEW
+         ============================================================ -->
+    <div id="panel-overview">
+        <!-- PREVIEW CARD -->
+        <div class="tb-card" id="tb-preview-card" style="display:none;">
+            <div class="tb-card-header">
+                <h4><i class="fas fa-table"></i> <span id="tb-preview-title">Trial Balance</span></h4>
+                <div class="header-meta" id="tb-preview-meta"></div>
+            </div>
+            <div class="tb-table-wrapper">
+                <table class="tb-table" id="tb-preview-table">
+                    <thead id="tb-preview-thead"></thead>
+                    <tbody id="tb-preview-tbody"></tbody>
+                </table>
+            </div>
         </div>
-        <div class="tb-table-wrapper">
-            <table class="tb-table" id="tb-preview-table">
-                <thead id="tb-preview-thead"></thead>
-                <tbody id="tb-preview-tbody"></tbody>
-            </table>
+
+        <!-- EMPTY STATE -->
+        <div class="tb-empty" id="tb-empty-state">
+            <div class="tb-empty-glyph"><i class="fas fa-balance-scale"></i></div>
+            <h3>No Trial Balance Loaded</h3>
+            <p>Pick a report date, then click "Upload Excel" to load your daily trial balance file — or click "View" to inspect an existing upload.</p>
         </div>
     </div>
 
-    <!-- EMPTY STATE -->
-    <div class="tb-empty" id="tb-empty-state">
-        <div class="tb-empty-glyph">
-            <i class="fas fa-balance-scale"></i>
+    <!-- ============================================================
+         TAB PANEL: COMPARE PREVIOUS
+         ============================================================ -->
+    <div id="panel-compare" style="display:none;">
+        <div class="tb-card" id="tb-compare-card" style="display:none;">
+            <div class="tb-card-header">
+                <h4><i class="fas fa-code-compare"></i> Compare against previous upload</h4>
+                <div class="header-meta" id="tb-compare-meta"></div>
+            </div>
+            <div class="tb-table-wrapper">
+                <table class="tb-table compare-table" id="tb-compare-table">
+                    <thead id="tb-compare-thead"></thead>
+                    <tbody id="tb-compare-tbody"></tbody>
+                </table>
+            </div>
         </div>
-        <h3>No Trial Balance Loaded</h3>
-        <p>Pick a report date, then click "Upload Excel" to load your daily trial balance file — or click "View" to inspect an existing upload.</p>
+
+        <div class="tb-empty" id="tb-compare-empty">
+            <div class="tb-empty-glyph"><i class="fas fa-code-compare"></i></div>
+            <h3>No Comparison Yet</h3>
+            <p>Load a trial balance (or click a date with an existing upload), then click "Compare Previous" to see how it changed against the previous day.</p>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         TAB PANEL: DATE RANGE
+         ============================================================ -->
+    <div id="panel-range" style="display:none;">
+        <div class="tb-control-bar">
+            <div class="tb-filter-group">
+                <label><i class="fas fa-calendar-day"></i> From</label>
+                <input type="date" id="tbRangeStart" class="tb-filter-select" style="min-width:150px;">
+            </div>
+            <div class="tb-filter-group">
+                <label><i class="fas fa-calendar-day"></i> To</label>
+                <input type="date" id="tbRangeEnd" class="tb-filter-select" style="min-width:150px;">
+            </div>
+            <button class="tb-btn tb-btn-primary" onclick="loadRangeComparison()">
+                <i class="fas fa-play"></i> Compare
+            </button>
+            <div class="tb-filter-meta">
+                <i class="fas fa-info-circle"></i>
+                <span>Max 90 days</span>
+            </div>
+        </div>
+
+        <div class="tb-card" id="tb-range-card" style="display:none;">
+            <div class="tb-card-header">
+                <h4><i class="fas fa-calendar-week"></i> Balances across date range</h4>
+                <div class="header-meta" id="tb-range-meta"></div>
+            </div>
+            <div class="tb-table-wrapper">
+                <table class="tb-table compare-table" id="tb-range-table">
+                    <thead id="tb-range-thead"></thead>
+                    <tbody id="tb-range-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tb-empty" id="tb-range-empty">
+            <div class="tb-empty-glyph"><i class="fas fa-calendar-week"></i></div>
+            <h3>Pick a Date Range</h3>
+            <p>Choose a start and end date to see CLOSE_BAL_LCY and CLOSE_BAL_FCY for every GL, side by side across all uploads in that period.</p>
+        </div>
     </div>
 
 </div>
@@ -1286,20 +1136,21 @@
 </div>
 
 <!-- Toast Notification -->
-<div id="toastNotification" class="toast-notification">
+<div id="toastNotification" class="toast-notification success">
     <div class="toast-icon"><i class="fas fa-check"></i></div>
     <div class="toast-content">
         <p class="toast-title">Success!</p>
         <p class="toast-message" id="toastMessage">Action completed successfully.</p>
     </div>
     <button class="toast-close" onclick="closeToast()"><i class="fas fa-times"></i></button>
+    <div class="toast-progress"></div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     // ============================================
-    // FRONTEND FALLBACK: Branch code → name map
+    // BRANCH CODE MAP
     // ============================================
     const BRANCH_CODE_MAP_FALLBACK = {
         '001': 'CMU - ACCRA', '101': 'AIRPORT', '102': 'ABOSSEY OKAI',
@@ -1330,22 +1181,32 @@
                document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
     }
 
-    function showToast(message, title = 'Success!', isError = false) {
-        const toast = document.getElementById('toastNotification');
-        const msgEl = document.getElementById('toastMessage');
-        const titleEl = toast.querySelector('.toast-title');
-        const iconEl = toast.querySelector('.toast-icon i');
+    // ============================================
+    // TOAST
+    // ============================================
+    function showToast(message, title = 'Success!', variant = 'success') {
+        if (variant === true)  variant = 'error';
+        if (variant === false) variant = 'success';
+        if (!['success', 'error', 'warning', 'info'].includes(variant)) variant = 'success';
 
-        msgEl.textContent = message || 'Action completed successfully.';
+        const toast   = document.getElementById('toastNotification');
+        const msgEl   = document.getElementById('toastMessage');
+        const titleEl = toast.querySelector('.toast-title');
+        const iconEl  = toast.querySelector('.toast-icon i');
+        const progEl  = toast.querySelector('.toast-progress');
+
+        msgEl.textContent   = message || 'Action completed successfully.';
         titleEl.textContent = title;
 
-        if (isError) {
-            toast.classList.add('error');
-            iconEl.className = 'fas fa-exclamation-circle';
-        } else {
-            toast.classList.remove('error');
-            iconEl.className = 'fas fa-check';
-        }
+        toast.classList.remove('success', 'error', 'warning', 'info');
+        toast.classList.add(variant);
+
+        const ICONS = { success:'fa-check', error:'fa-xmark', warning:'fa-exclamation', info:'fa-info' };
+        iconEl.className = 'fas ' + (ICONS[variant] || ICONS.success);
+
+        if (progEl) { progEl.style.animation='none'; void progEl.offsetWidth; progEl.style.animation=''; }
+        const iconBox = toast.querySelector('.toast-icon');
+        if (iconBox) { iconBox.style.animation='none'; void iconBox.offsetWidth; iconBox.style.animation=''; }
 
         toast.classList.add('show');
         if (window.toastTimeout) clearTimeout(window.toastTimeout);
@@ -1358,15 +1219,16 @@
         if (window.toastTimeout) { clearTimeout(window.toastTimeout); window.toastTimeout = null; }
     };
 
+    // ============================================
+    // STATE
+    // ============================================
     let uploadedFileName = null;
     let parsedHeaders = [];
-    let parsedRows = [];
     let parsedDicts = [];
     let parsedSummary = null;
 
-    let viewMode = 'full';
     let branchFilter = 'all';
-    let departmentFilter = 'all';
+    let categoryFilter = 'all';
     let glFilter = 'all';
 
     let allowedBranchCodes = null;
@@ -1375,7 +1237,23 @@
     let dayLockInfo = null;
 
     // ============================================
-    // DAY LOCK CHECK
+    // TABS
+    // ============================================
+    function switchTab(tab) {
+        ['overview', 'compare', 'range'].forEach(t => {
+            const btn = document.getElementById('tab-' + t);
+            const panel = document.getElementById('panel-' + t);
+            if (btn) btn.classList.toggle('active', t === tab);
+            if (panel) panel.style.display = (t === tab) ? '' : 'none';
+        });
+
+        if (tab === 'compare') {
+            loadComparePrevious();
+        }
+    }
+
+    // ============================================
+    // DAY LOCK
     // ============================================
     async function checkDayLock() {
         const reportDate = document.getElementById('tbReportDate')?.value || '';
@@ -1409,9 +1287,7 @@
                 banner.style.display = 'flex';
                 bannerTitle.textContent = `Trial balance already uploaded for ${reportDate}`;
                 const by = data.uploaded_by?.full_name || 'another user';
-                const at = data.uploaded_at
-                    ? new Date(data.uploaded_at).toLocaleString()
-                    : '';
+                const at = data.uploaded_at ? new Date(data.uploaded_at).toLocaleString() : '';
                 const count = (data.row_count || 0).toLocaleString();
                 bannerSub.textContent =
                     `Uploaded by ${by}${at ? ' · ' + at : ''} · ${count} rows. ` +
@@ -1438,15 +1314,14 @@
                 `A trial balance for this day has already been uploaded by ` +
                 `${dayLockInfo.uploaded_by?.full_name || 'another user'}. ` +
                 `Only one upload per day is allowed.`,
-                'Day Locked',
-                true
+                'Day Locked', 'error'
             );
             return;
         }
 
         const dateInput = document.getElementById('tbReportDate');
         if (!dateInput.value) {
-            showToast('Please select a report date first.', 'Error', true);
+            showToast('Please select a report date first.', 'Error', 'error');
             dateInput.focus();
             return;
         }
@@ -1463,7 +1338,9 @@
         document.getElementById('tbLoadingOverlay').classList.add('active');
     }
     function hideLoading() {
-        document.getElementById('tbLoadingOverlay').classList.remove('active');
+        const overlay = document.getElementById('tbLoadingOverlay');
+        overlay.classList.remove('active');
+        overlay.style.display = '';
     }
 
     // ============================================
@@ -1486,37 +1363,36 @@
         .then(data => {
             hideLoading();
             if (!data.success) {
-                showToast(data.error || 'Could not parse file.', 'Error', true);
+                showToast(data.error || 'Could not parse file.', 'Error', 'error');
                 resetToEmpty();
                 return;
             }
 
             parsedHeaders = data.headers || [];
             parsedDicts = data.rows || [];
-            parsedRows = parsedDicts.map(d => parsedHeaders.map(h => d[h]));
             parsedSummary = data.summary || {};
 
             allowedBranchCodes = null;
             allowedDepartmentNames = null;
 
             renderPreview(data);
-            showToast(`Parsed ${data.row_count} rows successfully.`, 'Loaded');
+            showToast(`Parsed ${data.row_count} rows successfully.`, 'Loaded', 'success');
         })
         .catch(err => {
             hideLoading();
             console.error(err);
-            showToast('Failed to parse file.', 'Error', true);
+            showToast('Failed to parse file.', 'Error', 'error');
             resetToEmpty();
         });
     }
 
     // ============================================
-    // LOAD EXISTING TRIAL BALANCE BY DATE
+    // LOAD BY DATE
     // ============================================
     function loadTrialBalanceByDate() {
         const reportDate = document.getElementById('tbReportDate')?.value || '';
         if (!reportDate) {
-            showToast('Please pick a report date first.', 'Error', true);
+            showToast('Please pick a report date first.', 'Error', 'error');
             document.getElementById('tbReportDate')?.focus();
             return;
         }
@@ -1532,20 +1408,19 @@
             hideLoading();
 
             if (!data.success) {
-                showToast(data.error || 'Could not load trial balance.', 'Error', true);
+                showToast(data.error || 'Could not load trial balance.', 'Error', 'error');
                 return;
             }
 
             if (!data.found) {
                 resetToEmpty(false);
-                showToast(data.message || `No trial balance found for ${reportDate}.`, 'Info');
+                showToast(data.message || `No trial balance found for ${reportDate}.`, 'Info', 'info');
                 return;
             }
 
             uploadedFileName = data.file_name || 'trial_balance.xlsx';
             parsedHeaders = data.headers || [];
             parsedDicts = data.rows || [];
-            parsedRows = parsedDicts.map(d => parsedHeaders.map(h => d[h]));
             parsedSummary = data.summary || {};
 
             allowedBranchCodes = (Array.isArray(data.allowed_branches) && data.allowed_branches.length > 0)
@@ -1557,12 +1432,12 @@
                 : null;
 
             renderPreviewOnly(data);
-            showToast(`Loaded ${data.row_count} entries for ${reportDate}.`, 'Loaded');
+            showToast(`Loaded ${data.row_count} entries for ${reportDate}.`, 'Loaded', 'success');
         })
         .catch(err => {
             hideLoading();
             console.error(err);
-            showToast('Failed to load trial balance.', 'Error', true);
+            showToast('Failed to load trial balance.', 'Error', 'error');
         });
     }
 
@@ -1581,56 +1456,45 @@
 
     function populateFilterDropdowns() {
         const branchSelect = document.getElementById('tbBranchFilter');
-        const deptSelect = document.getElementById('tbDepartmentFilter');
+        const catSelect = document.getElementById('tbCategoryFilter');
         const glSelect = document.getElementById('tbGLFilter');
 
+        if (!branchSelect || !catSelect || !glSelect) return;
+
         branchSelect.innerHTML = '<option value="all">All Branches</option>';
-        deptSelect.innerHTML = '<option value="all">All Categories</option>';
+        catSelect.innerHTML = '<option value="all">All Categories</option>';
         glSelect.innerHTML = '<option value="all">All GL Names</option>';
 
-        const branchCol = findHeader(['BRANCH_CODE', 'BRANCH']);
-        const branchNameCol = findHeader(['BRANCH_NAME']);
-        const deptCol = findHeader(['CATEGORY', 'DEPARTMENT', 'DEPT']);
-        const descrCol = findHeader(['DESCR', 'DESCRIPTION', 'ACCOUNT_NAME', 'ACCOUNT NAME']);
+        const branchCol = 'BRANCH_CODE';
+        const catCol = 'CATEGORY';
+        const descrCol = 'DESCR';
 
         const branchMap = new Map();
-        const deptValues = new Set();
+        const catValues = new Set();
         const glValues = new Set();
 
-        if (branchCol) {
-            parsedDicts.forEach(row => {
-                const code = String(row[branchCol] ?? '').trim();
-                if (!code) return;
+        parsedDicts.forEach(row => {
+            const code = String(row[branchCol] ?? '').trim();
+            if (code) {
+                if (allowedBranchCodes === null || allowedBranchCodes.includes(code)) {
+                    if (!branchMap.has(code)) {
+                        branchMap.set(code, branchNameFromCode(code));
+                    }
+                }
+            }
 
-                if (allowedBranchCodes !== null && !allowedBranchCodes.includes(code)) return;
+            const cat = String(row[catCol] ?? '').trim();
+            if (cat) {
+                if (allowedDepartmentNames === null || allowedDepartmentNames.includes(cat.toUpperCase())) {
+                    catValues.add(cat);
+                }
+            }
 
-                let displayName = '';
-                if (branchNameCol) displayName = String(row[branchNameCol] ?? '').trim();
-                if (!displayName) displayName = branchNameFromCode(code);
+            const descr = String(row[descrCol] ?? '').trim();
+            if (descr) glValues.add(descr);
+        });
 
-                if (!branchMap.has(code)) branchMap.set(code, displayName);
-            });
-        }
-
-        if (deptCol) {
-            parsedDicts.forEach(row => {
-                const v = String(row[deptCol] ?? '').trim();
-                if (!v) return;
-                if (allowedDepartmentNames !== null &&
-                    !allowedDepartmentNames.includes(v.toUpperCase())) return;
-                deptValues.add(v);
-            });
-        }
-
-        if (descrCol) {
-            parsedDicts.forEach(row => {
-                const v = String(row[descrCol] ?? '').trim();
-                if (v) glValues.add(v);
-            });
-        }
-
-        Array.from(branchMap.entries())
-            .sort((a, b) => a[0].localeCompare(b[0]))
+        Array.from(branchMap.entries()).sort((a,b) => a[0].localeCompare(b[0]))
             .forEach(([code, name]) => {
                 const opt = document.createElement('option');
                 opt.value = code;
@@ -1638,11 +1502,10 @@
                 branchSelect.appendChild(opt);
             });
 
-        Array.from(deptValues).sort().forEach(v => {
+        Array.from(catValues).sort().forEach(v => {
             const opt = document.createElement('option');
-            opt.value = v;
-            opt.textContent = v;
-            deptSelect.appendChild(opt);
+            opt.value = v; opt.textContent = v;
+            catSelect.appendChild(opt);
         });
 
         Array.from(glValues).sort().forEach(v => {
@@ -1655,134 +1518,23 @@
         branchSelect.value = (branchFilter !== 'all' && branchMap.has(branchFilter)) ? branchFilter : 'all';
         if (branchSelect.value === 'all') branchFilter = 'all';
 
-        deptSelect.value = (departmentFilter !== 'all' && deptValues.has(departmentFilter)) ? departmentFilter : 'all';
-        if (deptSelect.value === 'all') departmentFilter = 'all';
+        catSelect.value = (categoryFilter !== 'all' && catValues.has(categoryFilter)) ? categoryFilter : 'all';
+        if (catSelect.value === 'all') categoryFilter = 'all';
 
         glSelect.value = (glFilter !== 'all' && glValues.has(glFilter)) ? glFilter : 'all';
         if (glSelect.value === 'all') glFilter = 'all';
     }
 
     // ============================================
-    // GL CLASSIFICATION
-    // ============================================
-    function classifyGL(row) {
-        const categoryCol = findHeader(['CATEGORY']);
-        if (categoryCol) {
-            const raw = String(row[categoryCol] ?? '').trim().toUpperCase();
-            if (raw === 'ASSET')       return 'asset';
-            if (raw === 'LIABILITY')   return 'liability';
-            if (raw === 'INCOME')      return 'income';
-            if (raw === 'EXPENSE')     return 'expense';
-            if (raw.startsWith('ASSET'))       return 'asset';
-            if (raw.startsWith('LIABILIT'))    return 'liability';
-            if (raw.startsWith('INCOME'))      return 'income';
-            if (raw.startsWith('EXPENSE'))     return 'expense';
-        }
-
-        const descr  = row[findHeader(['DESCR', 'DESCRIPTION', 'ACCOUNT_NAME', 'ACCOUNT NAME'])];
-        const glCode = row[findHeader(['GL_CODE', 'ACCOUNT_CODE', 'ACCOUNT CODE'])];
-        const hay = [String(descr || ''), String(glCode || '')].join(' ').toUpperCase();
-
-        if (hay.includes('INTEREST INCOME') || hay.includes('FEE INCOME') ||
-            hay.includes('COMMISSION INCOME') || hay.includes('FEE AND COMMISSION') ||
-            hay.includes('OTHER INCOME') || hay.includes(' INCOME') ||
-            hay.includes('REVENUE')) return 'income';
-
-        if (hay.includes('EXPENSE') || hay.includes('EXPENDITURE') ||
-            hay.includes('DEPRECIATION') || hay.includes('AMORTIZATION') ||
-            hay.includes('AMORTISATION') || hay.includes('IMPAIRMENT') ||
-            hay.includes('SALARIES') || hay.includes('WAGES')) return 'expense';
-
-        if (hay.includes('LIABILITY') || hay.includes('PAYABLE') ||
-            hay.includes('CREDITOR') || hay.includes('CUSTOMER DEPOSIT') ||
-            hay.includes('BORROWING') || hay.includes('OVERDRAFT')) return 'liability';
-
-        if (hay.includes('ASSET') || hay.includes('RECEIVABLE') ||
-            hay.includes('DEBTOR') || hay.includes('CASH') ||
-            hay.includes('BANK') || hay.includes('INVESTMENT') ||
-            hay.includes('PREPAID') || hay.includes('INVENTORY')) return 'asset';
-
-        return null;
-    }
-
-    const NORMAL_SIGN = {
-        asset:     'negative',
-        expense:   'negative',
-        liability: 'positive',
-        income:    'positive',
-    };
-
-    function getGLBalance(row) {
-        const closeCol = findHeader(['CLOSE_BAL_LCY']);
-        if (!closeCol) return 0;
-        const raw = String(row[closeCol] ?? '')
-            .replace(/,/g, '')
-            .replace(/GHS/gi, '')
-            .trim();
-        if (raw === '' || raw === '-' || raw === '--') return 0;
-        let cleaned = raw;
-        const isParenNegative = /^\(.*\)$/.test(cleaned);
-        if (isParenNegative) cleaned = cleaned.slice(1, -1).trim();
-        const v = parseFloat(cleaned);
-        if (isNaN(v)) return 0;
-        return isParenNegative ? -Math.abs(v) : v;
-    }
-
-    function detectIrregularGLPosition(row) {
-        const glCategory = classifyGL(row);
-        if (!glCategory) return { irregular: false, category: null };
-
-        const balance = getGLBalance(row);
-        if (balance === 0) return { irregular: false, category: glCategory, balance: 0 };
-
-        const actualSign   = balance > 0 ? 'positive' : 'negative';
-        const expectedSign = NORMAL_SIGN[glCategory];
-        const irregular    = (expectedSign !== actualSign);
-
-        return {
-            irregular,
-            category: glCategory,
-            expected: expectedSign,
-            actual: actualSign,
-            balance,
-            reason: irregular
-                ? `${glCategory.toUpperCase()} has a ${actualSign.toUpperCase()} CLOSE_BAL_LCY (expected ${expectedSign.toUpperCase()})`
-                : null,
-        };
-    }
-
-    function isExceptionRow(row) {
-        if (row.IS_IRREGULAR !== undefined) return !!row.IS_IRREGULAR;
-        return detectIrregularGLPosition(row).irregular;
-    }
-
-    function updateExceptionBadge() {
-        const exceptionCount = parsedDicts.filter(isExceptionRow).length;
-        const badge = document.getElementById('tb-exception-badge');
-        const badgeText = document.getElementById('tb-exception-badge-text');
-        if (exceptionCount > 0) {
-            badgeText.textContent = `${exceptionCount} irregular GL${exceptionCount !== 1 ? 's' : ''}`;
-            badge.style.display = 'inline-flex';
-            badge.classList.add('warning');
-        } else {
-            badge.style.display = 'none';
-            badge.classList.remove('warning');
-        }
-    }
-
-    // ============================================
-    // APPLY FILTERS
+    // FILTERS
     // ============================================
     function applyFilters() {
         branchFilter = document.getElementById('tbBranchFilter')?.value || 'all';
-        departmentFilter = document.getElementById('tbDepartmentFilter')?.value || 'all';
+        categoryFilter = document.getElementById('tbCategoryFilter')?.value || 'all';
         glFilter = document.getElementById('tbGLFilter')?.value || 'all';
 
-        const branchCol = findHeader(['BRANCH_CODE', 'BRANCH']);
-        const deptCol = findHeader(['CATEGORY', 'DEPARTMENT', 'DEPT']);
-        const descrCol = findHeader(['DESCR', 'DESCRIPTION', 'ACCOUNT_NAME', 'ACCOUNT NAME']);
-
         const tbody = document.getElementById('tb-preview-tbody');
+        if (!tbody) return;
         const rows = tbody.querySelectorAll('tr');
         let visible = 0;
 
@@ -1790,20 +1542,20 @@
             const row = parsedDicts[idx];
             if (!row) return;
 
-            if (branchFilter !== 'all' && branchCol) {
-                const v = String(row[branchCol] ?? '').trim();
-                if (v !== branchFilter) { tr.classList.add('tb-hidden'); return; }
+            if (branchFilter !== 'all') {
+                if (String(row['BRANCH_CODE'] ?? '').trim() !== branchFilter) {
+                    tr.classList.add('tb-hidden'); return;
+                }
             }
-            if (departmentFilter !== 'all' && deptCol) {
-                const v = String(row[deptCol] ?? '').trim();
-                if (v !== departmentFilter) { tr.classList.add('tb-hidden'); return; }
+            if (categoryFilter !== 'all') {
+                if (String(row['CATEGORY'] ?? '').trim() !== categoryFilter) {
+                    tr.classList.add('tb-hidden'); return;
+                }
             }
-            if (glFilter !== 'all' && descrCol) {
-                const v = String(row[descrCol] ?? '').trim();
-                if (v !== glFilter) { tr.classList.add('tb-hidden'); return; }
-            }
-            if (viewMode === 'exceptions') {
-                if (!isExceptionRow(row)) { tr.classList.add('tb-hidden'); return; }
+            if (glFilter !== 'all') {
+                if (String(row['DESCR'] ?? '').trim() !== glFilter) {
+                    tr.classList.add('tb-hidden'); return;
+                }
             }
 
             tr.classList.remove('tb-hidden');
@@ -1814,106 +1566,38 @@
         document.getElementById('tb-total-count').textContent = parsedDicts.length;
     }
 
-    function setViewMode(mode) {
-        viewMode = mode;
-
-        document.getElementById('tb-view-full').classList.toggle('active', mode === 'full');
-        document.getElementById('tb-view-full').classList.remove('warning');
-        document.getElementById('tb-view-exceptions').classList.toggle('active', mode === 'exceptions');
-        document.getElementById('tb-view-exceptions').classList.toggle('warning', mode === 'exceptions');
-
-        document.getElementById('tb-preview-title').textContent =
-            mode === 'exceptions' ? 'Irregular GL Positions' : 'Preview';
-
-        applyFilters();
-    }
-
     // ============================================
-    // BUILD TABLE ROWS
+    // BUILD TABLE
     // ============================================
     function buildTableRows(tbody, headers, rows) {
         tbody.innerHTML = '';
         rows.forEach(row => {
             const tr = document.createElement('tr');
-            const exc = detectIrregularGLPosition(row);
-
-            if (exc.irregular) {
-                tr.classList.add('tb-row-exception');
-                tr.title = exc.reason || 'Irregular GL position';
-            }
-
-            const descrHeader = findHeader(['DESCR', 'DESCRIPTION', 'ACCOUNT_NAME', 'ACCOUNT NAME']);
-
             headers.forEach(h => {
                 const td = document.createElement('td');
                 const v = row[h] ?? '';
                 const hu = String(h).toUpperCase();
                 if (hu.includes('BAL_LCY') || hu.includes('BAL_FCY')) td.classList.add('num');
-
-                if (exc.irregular && descrHeader && h === descrHeader) {
-                    td.innerHTML =
-                        `${escapeHtml(v)} <span class="tb-variance-badge" title="${escapeHtml(exc.reason || '')}">
-                            <i class="fas fa-exclamation-triangle"></i> Irregular
-                        </span>`;
-                } else {
-                    td.textContent = v;
-                }
+                td.textContent = v;
                 tr.appendChild(td);
             });
-
             tbody.appendChild(tr);
         });
     }
 
     // ============================================
-    // RENDER FULL PREVIEW
+    // RENDER PREVIEW
     // ============================================
     function renderPreview(data) {
         const headers = data.headers || [];
         const rows = data.rows || [];
-        const summary = data.summary || {};
 
         populateFilterDropdowns();
-        updateExceptionBadge();
-
-        const statusCard = document.getElementById('tb-file-status');
-        statusCard.style.display = '';
-        statusCard.classList.add('loaded');
-        document.getElementById('tb-status-icon').innerHTML = '<i class="fas fa-file-excel"></i>';
-        document.getElementById('tb-status-title').textContent = data.file_name || uploadedFileName || 'File loaded';
-        document.getElementById('tb-status-subtitle').textContent =
-            `${summary.total_rows ?? rows.length} rows · ${headers.length} columns`;
-        document.getElementById('tb-status-clear').style.display = 'inline-flex';
 
         document.getElementById('tb-empty-state').style.display = 'none';
         document.getElementById('tb-preview-card').style.display = '';
         document.getElementById('tb-filter-bar').style.display = 'flex';
-
-        document.getElementById('tb-summary').style.display = '';
-        document.getElementById('tb-total-rows').textContent = summary.total_rows ?? rows.length;
-        document.getElementById('tb-total-debit').textContent =
-            (summary.total_debit ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        document.getElementById('tb-total-credit').textContent =
-            (summary.total_credit ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const variance = summary.variance ?? 0;
-        const varianceEl = document.getElementById('tb-variance');
-        const varianceTile = document.getElementById('tb-variance-tile');
-        varianceEl.textContent =
-            variance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-        // Color-code the variance tile based on magnitude
-        varianceTile.classList.remove('success', 'warning', 'danger');
-        const absVar = Math.abs(variance);
-        if (absVar === 0) {
-            varianceTile.classList.add('success');
-            varianceEl.className = 'tile-value success';
-        } else if (absVar < 100) {
-            varianceTile.classList.add('warning');
-            varianceEl.className = 'tile-value warning';
-        } else {
-            varianceTile.classList.add('danger');
-            varianceEl.className = 'tile-value danger';
-        }
+        document.getElementById('tb-tabbar').style.display = 'flex';
 
         const thead = document.getElementById('tb-preview-thead');
         thead.innerHTML = '<tr>' + headers.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr>';
@@ -1929,23 +1613,16 @@
         applyFilters();
     }
 
-    // ============================================
-    // RENDER PREVIEW ONLY (load by date)
-    // ============================================
     function renderPreviewOnly(data) {
         const headers = data.headers || [];
         const rows = data.rows || [];
 
         populateFilterDropdowns();
-        updateExceptionBadge();
-
-        document.getElementById('tb-file-status').style.display = 'none';
-        document.getElementById('tb-summary').style.display = 'none';
-        document.getElementById('tb-status-clear').style.display = 'none';
 
         document.getElementById('tb-filter-bar').style.display = 'flex';
         document.getElementById('tb-empty-state').style.display = 'none';
         document.getElementById('tb-preview-card').style.display = '';
+        document.getElementById('tb-tabbar').style.display = 'flex';
 
         const thead = document.getElementById('tb-preview-thead');
         thead.innerHTML = '<tr>' + headers.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr>';
@@ -1968,21 +1645,245 @@
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    // ============================================
+    // COMPARE PREVIOUS
+    // ============================================
+    function loadComparePrevious() {
+        const reportDate = document.getElementById('tbReportDate')?.value || '';
+        if (!reportDate) {
+            showToast('Pick a report date to compare against the previous upload.', 'Error', 'error');
+            return;
+        }
+
+        showLoading('Loading comparison...');
+
+        fetch(`/adminboard/api/trial-balance/compare-previous/?date=${encodeURIComponent(reportDate)}`, {
+            headers: { 'X-CSRFToken': getCsrfToken() }
+        })
+        .then(r => r.json())
+        .then(data => {
+            hideLoading();
+            if (!data.success) {
+                showToast(data.error || 'Compare failed.', 'Error', 'error');
+                return;
+            }
+            renderCompare(data);
+        })
+        .catch(err => {
+            hideLoading();
+            console.error(err);
+            showToast('Failed to load comparison.', 'Error', 'error');
+        });
+    }
+
+    function renderCompare(data) {
+        const card = document.getElementById('tb-compare-card');
+        const empty = document.getElementById('tb-compare-empty');
+        const thead = document.getElementById('tb-compare-thead');
+        const tbody = document.getElementById('tb-compare-tbody');
+        const metaEl = document.getElementById('tb-compare-meta');
+
+        const merged = data.merged || [];
+        if (merged.length === 0) {
+            card.style.display = 'none';
+            empty.style.display = '';
+            return;
+        }
+
+        card.style.display = '';
+        empty.style.display = 'none';
+
+        const curDate = data.current?.date || '—';
+        const prevDate = data.previous?.date || '—';
+        metaEl.textContent = `${merged.length} GLs · ${curDate} vs ${prevDate}`;
+
+        thead.innerHTML =
+            '<tr>' +
+            '<th class="sticky-col sticky-col-1">Branch</th>' +
+            '<th class="sticky-col sticky-col-2">Category</th>' +
+            '<th class="sticky-col sticky-col-3">GL Code</th>' +
+            '<th class="sticky-col sticky-col-4">Description</th>' +
+            '<th class="num">Current LCY</th>' +
+            '<th class="num">Previous LCY</th>' +
+            '<th class="num">Variance LCY</th>' +
+            '<th class="num">Current FCY</th>' +
+            '<th class="num">Previous FCY</th>' +
+            '<th class="num">VarianceFCY</th>' +
+            '</tr>';
+
+        tbody.innerHTML = '';
+        merged.forEach(row => {
+            const tr = document.createElement('tr');
+
+            const cell = (val, cls) => {
+                const td = document.createElement('td');
+                if (cls) td.className = cls;
+                td.textContent = val;
+                return td;
+            };
+
+            const fmt = n => (n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            const deltaClass = (d) => d > 0 ? 'pos' : (d < 0 ? 'neg' : 'zero');
+
+            tr.appendChild(cell(row.BRANCH_CODE || '', 'sticky-col sticky-col-1'));
+            tr.appendChild(cell(row.CATEGORY || '', 'sticky-col sticky-col-2'));
+            tr.appendChild(cell(row.GL_CODE || '', 'sticky-col sticky-col-3'));
+            tr.appendChild(cell(row.DESCR || '', 'sticky-col sticky-col-4'));
+            tr.appendChild(cell(fmt(row.CURRENT_LCY), 'num'));
+            tr.appendChild(cell(fmt(row.PREVIOUS_LCY), 'num'));
+
+            const tdDeltaLCY = document.createElement('td');
+            tdDeltaLCY.className = 'num';
+            tdDeltaLCY.innerHTML =
+                `<span class="tb-delta ${deltaClass(row.DELTA_LCY)}">${fmt(row.DELTA_LCY)}</span>`;
+            tr.appendChild(tdDeltaLCY);
+
+            tr.appendChild(cell(fmt(row.CURRENT_FCY), 'num'));
+            tr.appendChild(cell(fmt(row.PREVIOUS_FCY), 'num'));
+
+            const tdDeltaFCY = document.createElement('td');
+            tdDeltaFCY.className = 'num';
+            tdDeltaFCY.innerHTML =
+                `<span class="tb-delta ${deltaClass(row.DELTA_FCY)}">${fmt(row.DELTA_FCY)}</span>`;
+            tr.appendChild(tdDeltaFCY);
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ============================================
+    // DATE RANGE
+    // ============================================
+    function loadRangeComparison() {
+        const start = document.getElementById('tbRangeStart')?.value || '';
+        const end = document.getElementById('tbRangeEnd')?.value || '';
+
+        if (!start || !end) {
+            showToast('Please pick both a start and end date.', 'Error', 'error');
+            return;
+        }
+
+        showLoading('Loading date range...');
+
+        fetch(`/adminboard/api/trial-balance/compare-range/?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`, {
+            headers: { 'X-CSRFToken': getCsrfToken() }
+        })
+        .then(r => r.json())
+        .then(data => {
+            hideLoading();
+            if (!data.success) {
+                showToast(data.error || 'Range compare failed.', 'Error', 'error');
+                return;
+            }
+            renderRange(data);
+        })
+        .catch(err => {
+            hideLoading();
+            console.error(err);
+            showToast('Failed to load range.', 'Error', 'error');
+        });
+    }
+
+    function renderRange(data) {
+        const card = document.getElementById('tb-range-card');
+        const empty = document.getElementById('tb-range-empty');
+        const thead = document.getElementById('tb-range-thead');
+        const tbody = document.getElementById('tb-range-tbody');
+        const metaEl = document.getElementById('tb-range-meta');
+
+        const dates = data.dates || [];
+        const merged = data.merged || [];
+
+        if (dates.length === 0 || merged.length === 0) {
+            card.style.display = 'none';
+            empty.style.display = '';
+            if (data.message) showToast(data.message, 'Info', 'info');
+            return;
+        }
+
+        card.style.display = '';
+        empty.style.display = 'none';
+        metaEl.textContent = `${merged.length} GLs · ${dates.length} date${dates.length === 1 ? '' : 's'}`;
+
+        // Build header: sticky meta columns + one pair per date
+        let headHtml =
+            '<tr>' +
+            '<th class="sticky-col sticky-col-1">Branch</th>' +
+            '<th class="sticky-col sticky-col-2">Category</th>' +
+            '<th class="sticky-col sticky-col-3">GL Code</th>' +
+            '<th class="sticky-col sticky-col-4">Description</th>';
+
+        dates.forEach(d => {
+            headHtml += `<th class="num" colspan="2">${d}</th>`;
+        });
+        headHtml += '</tr><tr>' +
+            '<th class="sticky-col sticky-col-1"></th>' +
+            '<th class="sticky-col sticky-col-2"></th>' +
+            '<th class="sticky-col sticky-col-3"></th>' +
+            '<th class="sticky-col sticky-col-4"></th>';
+        dates.forEach(() => {
+            headHtml += '<th class="num">LCY</th><th class="num">FCY</th>';
+        });
+        headHtml += '</tr>';
+
+        thead.innerHTML = headHtml;
+
+        tbody.innerHTML = '';
+        merged.forEach(row => {
+            const tr = document.createElement('tr');
+
+            const cell = (val, cls) => {
+                const td = document.createElement('td');
+                if (cls) td.className = cls;
+                td.textContent = val;
+                return td;
+            };
+
+            tr.appendChild(cell(row.BRANCH_CODE || '', 'sticky-col sticky-col-1'));
+            tr.appendChild(cell(row.CATEGORY || '', 'sticky-col sticky-col-2'));
+            tr.appendChild(cell(row.GL_CODE || '', 'sticky-col sticky-col-3'));
+            tr.appendChild(cell(row.DESCR || '', 'sticky-col sticky-col-4'));
+
+            const fmt = n => (n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            dates.forEach(d => {
+                const bal = row.balances?.[d];
+                if (bal) {
+                    tr.appendChild(cell(fmt(bal.lcy), 'num'));
+                    tr.appendChild(cell(fmt(bal.fcy), 'num'));
+                } else {
+                    const tdL = document.createElement('td');
+                    tdL.className = 'num';
+                    tdL.innerHTML = '<span style="color:var(--tb-text-2);">—</span>';
+                    tr.appendChild(tdL);
+                    const tdF = document.createElement('td');
+                    tdF.className = 'num';
+                    tdF.innerHTML = '<span style="color:var(--tb-text-2);">—</span>';
+                    tr.appendChild(tdF);
+                }
+            });
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ============================================
+    // RESET / SUBMIT
+    // ============================================
     function clearUpload() {
         resetToEmpty();
-        showToast('Cleared.', 'Info');
+        showToast('Cleared.', 'Info', 'info');
     }
 
     function resetToEmpty(resetDate = true) {
         uploadedFileName = null;
         parsedHeaders = [];
-        parsedRows = [];
         parsedDicts = [];
         parsedSummary = null;
 
-        viewMode = 'full';
         branchFilter = 'all';
-        departmentFilter = 'all';
+        categoryFilter = 'all';
         glFilter = 'all';
         allowedBranchCodes = null;
         allowedDepartmentNames = null;
@@ -1994,50 +1895,40 @@
             if (dateInput) dateInput.value = new Date().toISOString().slice(0, 10);
         }
 
-        const statusCard = document.getElementById('tb-file-status');
-        statusCard.style.display = '';
-        statusCard.classList.remove('loaded');
-        document.getElementById('tb-status-icon').innerHTML = '<i class="fas fa-file-excel"></i>';
-        document.getElementById('tb-status-title').textContent = 'No file uploaded';
-        document.getElementById('tb-status-subtitle').textContent = 'Click "Upload Excel" to select your trial balance file';
-        document.getElementById('tb-status-clear').style.display = 'none';
-
-        document.getElementById('tb-summary').style.display = 'none';
         document.getElementById('tb-preview-card').style.display = 'none';
         document.getElementById('tb-filter-bar').style.display = 'none';
         document.getElementById('tb-empty-state').style.display = '';
         document.getElementById('tb-submit-btn').disabled = true;
+        document.getElementById('tb-tabbar').style.display = 'none';
 
-        document.getElementById('tb-view-full').classList.add('active');
-        document.getElementById('tb-view-full').classList.remove('warning');
-        document.getElementById('tb-view-exceptions').classList.remove('active');
-        document.getElementById('tb-view-exceptions').classList.remove('warning');
-        document.getElementById('tb-preview-title').textContent = 'Preview';
+        // Reset tab panels
+        switchTab('overview');
+
+        document.getElementById('tb-compare-card').style.display = 'none';
+        document.getElementById('tb-compare-empty').style.display = '';
+        document.getElementById('tb-range-card').style.display = 'none';
+        document.getElementById('tb-range-empty').style.display = '';
     }
 
-    // ============================================
-    // SUBMIT
-    // ============================================
     function submitTrialBalance() {
         if (dayLockInfo && dayLockInfo.locked) {
             showToast(
                 `A trial balance for this day has already been uploaded by ` +
                 `${dayLockInfo.uploaded_by?.full_name || 'another user'}. ` +
                 `Only one upload per day is allowed.`,
-                'Day Locked',
-                true
+                'Day Locked', 'error'
             );
             return;
         }
 
         if (!parsedDicts.length) {
-            showToast('Upload a file first.', 'Error', true);
+            showToast('Upload a file first.', 'Error', 'error');
             return;
         }
 
         const reportDate = document.getElementById('tbReportDate')?.value || '';
         if (!reportDate) {
-            showToast('Please select a report date.', 'Error', true);
+            showToast('Please select a report date.', 'Error', 'error');
             document.getElementById('tbReportDate')?.focus();
             return;
         }
@@ -2050,10 +1941,7 @@
 
         fetch('/adminboard/api/trial-balance/submit/', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            },
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
             body: JSON.stringify({
                 file_name: uploadedFileName,
                 report_date: reportDate,
@@ -2066,29 +1954,25 @@
             hideLoading();
 
             if (status === 409 && body.locked) {
-                showToast(
-                    body.error || 'A trial balance for this day already exists.',
-                    'Day Locked',
-                    true
-                );
+                showToast(body.error || 'A trial balance for this day already exists.', 'Day Locked', 'warning');
                 checkDayLock();
                 return;
             }
 
             if (body.success) {
-                showToast(body.message || 'Trial balance submitted.', 'Submitted');
+                showToast(body.message || 'Trial balance submitted.', 'Submitted', 'success');
                 setTimeout(() => {
                     resetToEmpty(true);
                     checkDayLock();
                 }, 1500);
             } else {
-                showToast(body.error || 'Submission failed.', 'Error', true);
+                showToast(body.error || 'Submission failed.', 'Error', 'error');
             }
         })
         .catch(err => {
             hideLoading();
             console.error(err);
-            showToast('Submission failed. Please try again.', 'Error', true);
+            showToast('Submission failed. Please try again.', 'Error', 'error');
         });
     }
 
@@ -2101,6 +1985,18 @@
             dateInput.value = new Date().toISOString().slice(0, 10);
             dateInput.addEventListener('change', checkDayLock);
         }
+
+        const rangeStart = document.getElementById('tbRangeStart');
+        const rangeEnd = document.getElementById('tbRangeEnd');
+        if (rangeStart && !rangeStart.value) {
+            const d = new Date();
+            d.setDate(d.getDate() - 6);
+            rangeStart.value = d.toISOString().slice(0, 10);
+        }
+        if (rangeEnd && !rangeEnd.value) {
+            rangeEnd.value = new Date().toISOString().slice(0, 10);
+        }
+
         checkDayLock();
         console.log('[TB] Daily Trial Balance page ready');
     });

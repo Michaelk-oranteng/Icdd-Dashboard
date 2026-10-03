@@ -7,6 +7,8 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 from django.db import transaction
+from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.conf import settings
 from django.db.models import Q, Count, Sum
 from django.db.models.functions import Coalesce
 from django.contrib.auth.decorators import login_required
@@ -20,6 +22,9 @@ import io
 import os, logging
 import uuid
 import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+from html import escape as html_escape
 import re
 
 from .models import (
@@ -37,6 +42,9 @@ from .models import (
     ReportSubmissionField,
     ReportSchedule,
     ExceptionRecord,
+    ExceptionUpload,
+    TrialBalanceUpload,
+    TrialBalanceEntry,
     SentEmail,
 )
 from .forms import UserProfileForm
@@ -45,10 +53,8 @@ logger = logging.getLogger(__name__)
 
 
 # ==================== CONSTANTS ====================
-
 TRIAL_BALANCE_REPORT_TYPE = '__TRIAL_BALANCE__'
 UPLOADED_STATUS = 'uploaded'
-
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -67,6 +73,24 @@ def log_activity(user, activity_type, details, request=None):
     except Exception as exc:
         logger.warning("log_activity failed: %s", exc)
 
+def _initials_from_name(full_name):
+    """Return 1–2 uppercase initials from a name or email."""
+    if not full_name:
+        return ''
+    s = str(full_name).strip()
+    if not s:
+        return ''
+    # If it looks like an email, use the local part before the @
+    if '@' in s:
+        s = s.split('@', 1)[0]
+    # Split on spaces, dots, underscores, hyphens
+    parts = re.split(r'[\s._\-]+', s)
+    parts = [p for p in parts if p]
+    if not parts:
+        return ''
+    if len(parts) == 1:
+        return parts[0][:2].upper()
+    return (parts[0][0] + parts[1][0]).upper()
 
 def get_week_start(d):
     """Friday-based week start. Single source of truth."""
@@ -311,6 +335,233 @@ def count_expected_report_occurrences(report, until=None):
 
     return count
 
+def _build_member_scorecard(member, today=None):
+    """
+    Compute a member's scorecard from their SentEmail history.
+
+    Rules (locked with the business):
+      • Each expected occurrence of an assigned Report is worth up to 100 pts.
+      • Sent on time (sent_at <= deadline)                  → 100 pts (minus deduction)
+      • Sent within 3 days AFTER the deadline               → 40 pts  (minus deduction)
+      • Sent more than 3 days after the deadline            → 0 pts
+      • No email, deadline passed > 3 days ago              → 0 pts
+      • No email, deadline passed but still in grace (<=3d) → 0 pts for now,
+        but the occurrence stays in the denominator so the score has room
+        to grow if they send within the window.
+      • No email, deadline still in the future              → not counted yet.
+
+    Emails are matched to occurrences in deadline order (oldest first),
+    so skipping a period cannot be "papered over" by sending extra
+    emails later.
+
+    Bonus emails (more emails than expected occurrences for a report_type)
+    still add credits to the numerator.
+
+    AdHoc adjustments move the numerator independently.
+
+    Returns a dict with all fields the team.html template needs.
+    """
+    if today is None:
+        today = timezone.now()
+    if timezone.is_naive(today):
+        today = timezone.make_aware(today)
+
+    GRACE_DAYS = 3
+
+    # ── 1. Assigned reports (excluding internal + uploads) ─────────
+    assigned_reports = (
+        Report.objects
+        .filter(Q(assigned_to=member) | Q(is_assigned_to_all=True))
+        .exclude(report_type=TRIAL_BALANCE_REPORT_TYPE)
+        .exclude(status=UPLOADED_STATUS)
+        .distinct()
+    )
+
+    # ── 2. Emails sent by this member ──────────────────────────────
+    emails = list(
+        SentEmail.objects
+        .filter(sender=member)
+        .order_by('sent_at')
+    )
+
+    # Bucket emails by report_type (used for the count-based matching)
+    emails_by_type = {}
+    for email in emails:
+        emails_by_type.setdefault(email.report_type, []).append(email)
+
+    total_expected   = 0
+    total_earned     = 0
+    total_deducted   = 0   # supervisor deductions applied on earned emails
+
+    # ── 3. Score each report the member is assigned to ─────────────
+    for report in assigned_reports:
+        # Build the deadline list for this report from its anchor
+        # up to now, respecting the frequency.
+        occurrences = _generate_occurrences(report, until=today)
+        if not occurrences:
+            continue
+
+        rtype_emails = emails_by_type.get(report.report_type, [])
+
+        # Match emails to occurrences oldest-first.
+        # emails are already sorted ascending; occurrences are too.
+        used_email_ids = set()
+
+        for idx, deadline in enumerate(occurrences):
+            # Only count occurrences whose deadline has arrived.
+            if deadline > today:
+                continue
+
+            total_expected += 1
+
+            # Find the next unused email for this report_type
+            matched_email = None
+            for e in rtype_emails:
+                if e.id in used_email_ids:
+                    continue
+                matched_email = e
+                break
+
+            if matched_email is None:
+                # No email → 0 points for this occurrence.
+                # Still counted in the denominator (either missed or
+                # still in grace — either way earns nothing right now).
+                continue
+
+            used_email_ids.add(matched_email.id)
+
+            # Score based on lateness
+            delta = matched_email.sent_at - deadline
+            seconds_late = delta.total_seconds()
+
+            if seconds_late <= 0:
+                earned = 100
+            elif seconds_late <= GRACE_DAYS * 86400:
+                earned = 40
+            else:
+                earned = 0
+
+            # Supervisor deduction applies to earned points, floored at 0
+            deduction = matched_email.manual_deduction or 0
+            earned = max(0, earned - deduction)
+
+            total_earned   += earned
+            total_deducted += deduction
+
+        # Bonus emails beyond expected occurrences → +100 each (minus deduction)
+        bonus_emails = [e for e in rtype_emails if e.id not in used_email_ids]
+        for e in bonus_emails:
+            deduction = e.manual_deduction or 0
+            total_earned   += max(0, 100 - deduction)
+            total_deducted += deduction
+
+    # ── 4. AdHoc adjustments ───────────────────────────────────────
+    adhoc_debits = (
+        AdHocDeduction.objects
+        .filter(user=member)
+        .aggregate(total=Sum('points'))
+        .get('total') or 0
+    )
+    adhoc_credits = (
+        AdHocDeduction.objects
+        .filter(user=member)
+        .aggregate(total=Sum('points_added'))
+        .get('total') or 0
+    )
+
+    # ── 5. Totals ──────────────────────────────────────────────────
+    credits = total_earned + adhoc_credits
+    debits  = (total_expected * 100 - total_earned) + adhoc_debits
+    net_score = credits - debits
+
+    email_count = len(emails)
+
+    if total_expected > 0:
+        percentage = max(0, min(100, int(round(net_score / (total_expected * 100) * 100))))
+    else:
+        percentage = 0
+
+    # ── 6. Status label ────────────────────────────────────────────
+    if total_expected == 0:
+        status = 'danger'
+        status_text = 'No Tasks'
+    elif percentage >= 90:
+        status = 'success'
+        status_text = 'Outstanding'
+    elif percentage >= 70:
+        status = 'success'
+        status_text = 'Excellent'
+    elif percentage >= 50:
+        status = 'warning'
+        status_text = 'In Progress'
+    elif percentage > 0:
+        status = 'warning'
+        status_text = 'Building Up'
+    else:
+        status = 'danger'
+        status_text = 'Needs Attention'
+
+    return {
+        'user':            member,
+        'email_count':     email_count,
+        'total_tasks':     total_expected,      # kept for template compat
+        'expected':        total_expected,
+        'debits':          debits,
+        'credits':         credits,
+        'net_score':       net_score,
+        'percentage':      percentage,
+        'percentage_bar':  percentage,
+        'status':          status,
+        'status_text':     status_text,
+    }
+
+
+def _generate_occurrences(report, until=None):
+    """
+    Walk a Report forward from its anchor (deadline_date + deadline_time)
+    using its frequency, and return the list of deadline datetimes that
+    are anchored to it.
+
+    The list is sorted ascending. Each entry is a timezone-aware datetime
+    representing "the moment the submission becomes late".
+
+    For one-off reports, this returns a single entry (its anchor) if the
+    anchor exists.
+    """
+    if until is None:
+        until = timezone.now()
+    if timezone.is_naive(until):
+        until = timezone.make_aware(until)
+
+    if not report.deadline_date:
+        return []
+
+    anchor_time = (
+        report.deadline_time
+        or datetime.strptime('23:59', '%H:%M').time()
+    )
+    anchor_dt = timezone.make_aware(
+        datetime.combine(report.deadline_date, anchor_time)
+    )
+
+    frequency = report.frequency or 'one-off'
+
+    if frequency == 'one-off':
+        return [anchor_dt]
+
+    # Recurring — walk forward until we pass `until`
+    occurrences = []
+    current = anchor_dt
+    safety = 0
+    while current <= until and safety < 2000:
+        occurrences.append(current)
+        nxt = _add_frequency(current, frequency)
+        if nxt is None:
+            break
+        current = nxt
+        safety += 1
+
+    return occurrences
 
 # ==================== LOGIN VIEWS ====================
 
@@ -866,16 +1117,14 @@ def supervisor_dashboard(request):
 
     today = timezone.now().date()
 
-    # ---- Total exceptions (unchanged) ----
+    # ---- Total exceptions ----
     exceptions_qs = ExceptionRecord.objects.filter(
-        report__isnull=False,
-    ).exclude(
-        report__report_type=TRIAL_BALANCE_REPORT_TYPE,
+        upload__isnull=False,
     )
     total_exceptions = exceptions_qs.count()
     today_exceptions = exceptions_qs.filter(created_at__date=today).count()
 
-    # ---- Submitted reports count (unchanged) ----
+    # ---- Submitted reports count ----
     submitted_qs = Report.objects.filter(status='submitted').exclude(
         report_type=TRIAL_BALANCE_REPORT_TYPE
     )
@@ -930,7 +1179,6 @@ def supervisor_dashboard(request):
             'status': status,
         })
 
-    # Rank: highest net score first, tie-break on submissions
     team_performance.sort(
         key=lambda x: (x['net_score'], x['submitted']),
         reverse=True,
@@ -952,6 +1200,7 @@ def supervisor_dashboard(request):
     }
 
     return render(request, 'control_dashboard/supervisorboard.html', context)
+
 # ==================== REPORT CREATION & CENTER VIEWS ====================
 
 @login_required
@@ -1685,20 +1934,11 @@ def member_dashboard(request):
     month_start = today.replace(day=1)
     total_checklists_completed = 0
 
-    user_reports = Report.objects.filter(created_by=user_profile).exclude(report_type=TRIAL_BALANCE_REPORT_TYPE)
-
-    excel_entry_count = ExceptionRecord.objects.filter(
-        report__created_by=user_profile,
-    ).exclude(
-        report__report_type=TRIAL_BALANCE_REPORT_TYPE,
+    # Exceptions captured = total typed exception rows the member has
+    # uploaded (across all their ExceptionUpload containers).
+    total_exceptions_captured = ExceptionRecord.objects.filter(
+        upload__uploaded_by=user_profile,
     ).count()
-
-    non_excel_reports = user_reports.filter(
-        exception_records__isnull=True,
-        excel_headers='',
-    ).count()
-
-    total_exceptions_captured = excel_entry_count + non_excel_reports
 
     exceptions_this_week = Report.objects.filter(
         created_by=user_profile,
@@ -2164,7 +2404,69 @@ def drafts_page(request):
     }
     return render(request, 'control_dashboard/draft.html', context)
 
-# control_dashboard/views.py — VERIFY/REPLACE reports_page
+# ============================================================
+# MY REPORTS — display builder for Excel uploads
+# ============================================================
+CANONICAL_EXCEPTION_HEADERS = [
+    'S/N',
+    'BRANCH/UNIT',
+    'EXCEPTION',
+    'DATE EXCEPTION WAS NOTED',
+    'TARGET DATE FOR CLOSURE',
+    'CATEGORY OF EXCEPTION',
+    'RESPONSIBLE OFFICER',
+    'SUPERVISOR',
+    "AUDITEE'S RESPONSE",
+    'REMARKS',
+    'STATUS',
+    'INCOME/COST SAVED',
+]
+
+
+def _build_exception_display(upload):
+    """
+    Build the {is_excel, headers, rows} display dict for an ExceptionUpload.
+
+    Header strings and row keys come from the SAME literals, so
+    `row|get_item:header` can never drift out of sync.
+    """
+    records = upload.exception_records.all().order_by('source_row_index', 'serial_number')
+
+    rows = []
+    for rec in records:
+        rows.append({
+            'row_id': rec.id,
+            'S/N': rec.serial_number if rec.serial_number is not None else '',
+            'BRANCH/UNIT': rec.branch_unit or '',
+            'EXCEPTION': rec.exception or '',
+            'DATE EXCEPTION WAS NOTED': (
+                rec.date_noted.strftime('%Y-%m-%d')
+                if rec.date_noted
+                else (rec.date_noted_raw or '')
+            ),
+            'TARGET DATE FOR CLOSURE': (
+                rec.target_closure_date.strftime('%Y-%m-%d')
+                if rec.target_closure_date
+                else (rec.target_closure_date_raw or '')
+            ),
+            'CATEGORY OF EXCEPTION': rec.category or '',
+            'RESPONSIBLE OFFICER': rec.responsible_officer or '',
+            'SUPERVISOR': rec.supervisor or '',
+            "AUDITEE'S RESPONSE": rec.auditee_response or '',
+            'REMARKS': rec.remarks or '',
+            'STATUS': rec.get_status_display() or rec.status_raw or '',
+            'INCOME/COST SAVED': (
+                f'{rec.income_cost_saved:,.2f}'
+                if rec.income_cost_saved is not None else ''
+            ),
+        })
+
+    return {
+        'is_excel': True,
+        'headers': CANONICAL_EXCEPTION_HEADERS,
+        'rows': rows,
+    }
+
 
 @login_required
 def reports_page(request):
@@ -2173,13 +2475,7 @@ def reports_page(request):
 
     Two distinct groups:
       • submitted_reports  — Report rows the member actually sent
-                             (status: submitted / completed / draft)
-      • exception_uploads  — Excel data containers from draft.html
-                             (status='uploaded')
-
-    The filter dropdown includes every type from EITHER group,
-    plus a count of how many uploads exist per type, so members
-    can always filter to the data they can actually see.
+      • exception_uploads  — ExceptionUpload rows (Excel data)
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -2187,7 +2483,7 @@ def reports_page(request):
         return redirect('control_dashboard:member_dashboard')
 
     # ------------------------------------------------------------
-    # Submitted reports
+    # Submitted reports — still on Report (recurring, submitted, draft)
     # ------------------------------------------------------------
     submitted_reports = Report.objects.filter(
         created_by=user_profile
@@ -2202,19 +2498,23 @@ def reports_page(request):
     ).order_by('-created_at')
 
     # ------------------------------------------------------------
-    # Excel exception uploads
+    # Exception uploads — now from ExceptionUpload
     # ------------------------------------------------------------
-    exception_uploads = Report.objects.filter(
-        created_by=user_profile,
-        status=UPLOADED_STATUS,
-    ).exclude(
-        report_type=TRIAL_BALANCE_REPORT_TYPE
-    ).filter(
-        Q(exception_records__isnull=False) | Q(data_fields__isnull=False)
-    ).distinct().order_by('-created_at')
+    exception_uploads = (
+        ExceptionUpload.objects
+        .filter(uploaded_by=user_profile)
+        .filter(row_count__gt=0)
+        .filter(exception_records__isnull=False)
+        .distinct()
+        .order_by('-created_at')
+    )
+
+    # Attach the display dict
+    for upload in exception_uploads:
+        upload.display_data = _build_exception_display(upload)
 
     # ------------------------------------------------------------
-    # Filter dropdown — union of BOTH groups, with counts
+    # Filter dropdown — union of both groups, with counts
     # ------------------------------------------------------------
     from collections import defaultdict
 
@@ -2226,8 +2526,6 @@ def reports_page(request):
         if rt:
             type_counts[rt] += 1
 
-    # Sort alphabetically, but ship as a list of dicts so the
-    # template can render the count next to the label.
     report_type_options = sorted(
         (
             {'value': rt, 'label': rt, 'count': cnt}
@@ -2236,12 +2534,11 @@ def reports_page(request):
         key=lambda o: o['label'].lower(),
     )
 
-    # Keep the plain list too, in case other templates depend on it.
     report_types = [o['value'] for o in report_type_options]
 
     branches = Branch.objects.filter(is_active=True).order_by('name')
 
-    # Attach schedule + display data
+    # Attach schedule + display data for submitted reports
     for report in submitted_reports:
         schedule = ReportSchedule.objects.filter(report=report, is_active=True).first()
         report.has_schedule = bool(schedule)
@@ -2250,16 +2547,13 @@ def reports_page(request):
             report.schedule_frequency = schedule.get_frequency_display()
         report._display_data = report.get_display_data()
 
-    for report in exception_uploads:
-        report._display_data = report.get_display_data()
-
     context = {
         'user_profile':         user_profile,
         'today':                timezone.now(),
         'reports':              submitted_reports,
         'exception_uploads':    exception_uploads,
-        'report_types':         report_types,           # legacy plain list
-        'report_type_options':  report_type_options,    # new: with counts
+        'report_types':         report_types,
+        'report_type_options':  report_type_options,
         'branches':             branches,
     }
 
@@ -2427,12 +2721,8 @@ def api_save_imported_data(request):
     """
     Persist an Excel upload from draft.html as typed exception records.
 
-    ONLY ExceptionRecord rows are created for Excel uploads.
-    The Report container stores headers on `excel_headers` so the UI
-    can render the correct columns.
-
-    NO ReportDataField rows are created here — those are only for
-    single-row form-based reports from submit.html.
+    Creates one ExceptionUpload row + N ExceptionRecord rows.
+    No Report rows are touched.
     """
     try:
         data = json.loads(request.body)
@@ -2472,33 +2762,27 @@ def api_save_imported_data(request):
                 'validation': validation,
             }, status=400)
 
-        # Remove any empty containers left over from previous failed uploads
-        Report.objects.filter(
-            created_by=user_profile,
-            status=UPLOADED_STATUS,
-            exception_records__isnull=True,
-        ).delete()
-
-        # Create the Report container — NO ReportDataField rows!
-        report = Report.objects.create(
+        # Create the dedicated upload container
+        upload = ExceptionUpload.objects.create(
+            uploaded_by=user_profile,
             report_type=report_type,
-            frequency='one-off',
-            description=f'Excel Import: {file_name}',
-            status=UPLOADED_STATUS,
-            created_by=user_profile,
+            file_name=file_name,
             excel_headers=','.join(str(h) for h in headers),
+            row_count=0,
         )
 
-        # Build typed ExceptionRecord rows — this is the ONLY data storage
         typed_count = 0
         try:
             typed_count = _build_exception_records(
-                report=report,
+                upload=upload,
                 headers=headers,
                 rows_data=rows_data,
             )
         except Exception as exc:
             logger.exception("Failed to build typed ExceptionRecord rows: %s", exc)
+
+        upload.row_count = typed_count
+        upload.save(update_fields=['row_count'])
 
         log_activity(
             user=user_profile,
@@ -2516,7 +2800,7 @@ def api_save_imported_data(request):
                 f'Successfully saved {len(rows_data)} records from {file_name} '
                 f'({typed_count} typed as exceptions)'
             ),
-            'report_id': report.id,
+            'upload_id': upload.id,
             'record_count': len(rows_data),
             'typed_record_count': typed_count,
             'validation': validation,
@@ -3661,18 +3945,12 @@ def api_export_logs(request):
 @login_required
 def team_performance(request):
     """
-    Team Performance.
+    Team Performance — score derived from SentEmail history.
 
-    Scoring model (from AdHocDeduction):
-      • Total Credits = Σ points_added
-      • Total Debits  = Σ points
-      • Net Score     = Credits − Debits  (can be negative)
-      • Performance % = clamp(Net Score, 0, 100)
-
-    The performance percentage is the NET of credits minus debits,
-    capped at 100% so it can never exceed the ceiling.
-    Excel uploads (status='uploaded') are EXCLUDED from the task
-    denominator.
+    For every expected occurrence of an assigned Report, the member
+    can earn up to 100 points (see _build_member_scorecard). Missed
+    deadlines, late emails past the 3-day grace window, and supervisor
+    deductions all pull the score down. AdHoc adjustments move it too.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -3684,109 +3962,41 @@ def team_performance(request):
 
     today = timezone.now()
 
-    team_members = UserProfile.objects.filter(
-        role='member', status='active'
-    ).order_by('full_name')
+    team_members = (
+        UserProfile.objects
+        .filter(role='member', status='active')
+        .order_by('full_name')
+    )
 
     team_data = []
-    total_members = team_members.count()
-    grand_total_tasks = 0
-    grand_total_completed = 0
+    total_members = 0
     grand_total_debits = 0
     grand_total_credits = 0
     sum_of_percentages = 0
 
     for member in team_members:
-        # ------------------------------------------------------------
-        # 1. Total Tasks (denominator) — expected occurrences across
-        #    every Report assigned to this member (excluding uploads
-        #    and the internal trial balance container).
-        # ------------------------------------------------------------
-        assigned_reports = Report.objects.filter(
-            Q(assigned_to=member) | Q(is_assigned_to_all=True)
-        ).exclude(
-            report_type=TRIAL_BALANCE_REPORT_TYPE
-        ).exclude(
-            status=UPLOADED_STATUS
-        ).distinct()
+        total_members += 1
+        card = _build_member_scorecard(member, today=today)
+        team_data.append(card)
 
-        member_total_tasks = 0
-        for report in assigned_reports:
-            member_total_tasks += count_expected_report_occurrences(report, until=today)
+        grand_total_debits  += card['debits']
+        grand_total_credits += card['credits']
+        sum_of_percentages  += card['percentage']
 
-        # ------------------------------------------------------------
-        # 2. Total Debits (deductions) and Total Credits (bonuses)
-        #    pulled live from control_dashboard_adhocdeduction.
-        # ------------------------------------------------------------
-        member_debits = (
-            AdHocDeduction.objects
-            .filter(user=member)
-            .aggregate(total=Sum('points'))
-            .get('total') or 0
-        )
-        member_credits = (
-            AdHocDeduction.objects
-            .filter(user=member)
-            .aggregate(total=Sum('points_added'))
-            .get('total') or 0
-        )
-
-        # ------------------------------------------------------------
-        # 3. Net Score = Credits − Debits
-        #    The difference is CAPPED at 100% and floored at 0%.
-        # ------------------------------------------------------------
-        net_score = member_credits - member_debits
-        raw_percentage = net_score              # signed, for the "Net" column
-        percentage = max(0, min(100, net_score))  # 0 ≤ performance ≤ 100
-
-        if percentage >= 90:
-            status = 'success'
-            status_text = 'Outstanding'
-        elif percentage >= 70:
-            status = 'success'
-            status_text = 'Excellent'
-        elif percentage >= 50:
-            status = 'warning'
-            status_text = 'In Progress'
-        elif percentage > 0:
-            status = 'warning'
-            status_text = 'Building Up'
-        else:
-            status = 'danger'
-            status_text = 'Needs Attention'
-
-        team_data.append({
-            'user': member,
-            'total_tasks': member_total_tasks,
-            'completed': 0,
-            'debits': member_debits,
-            'credits': member_credits,
-            'net_score': net_score,
-            'raw_percentage': raw_percentage,
-            'percentage': percentage,
-            'percentage_bar': percentage,
-            'status': status,
-            'status_text': status_text,
-        })
-
-        grand_total_tasks += member_total_tasks
-        grand_total_completed += 0
-        grand_total_debits += member_debits
-        grand_total_credits += member_credits
-        sum_of_percentages += percentage
-
-    team_data.sort(key=lambda x: x['percentage'], reverse=True)
+    team_data.sort(
+        key=lambda x: (x['percentage'], x['net_score'], x['email_count']),
+        reverse=True,
+    )
 
     overall_completion = (
-        min(100, int(sum_of_percentages / total_members)) if total_members else 0
+        min(100, int(round(sum_of_percentages / total_members)))
+        if total_members else 0
     )
 
     context = {
         'user_profile': user_profile,
         'team_data': team_data,
         'total_members': total_members,
-        'total_tasks': grand_total_tasks,
-        'total_completed': grand_total_completed,
         'total_debits': grand_total_debits,
         'total_credits': grand_total_credits,
         'overall_completion': overall_completion,
@@ -3794,15 +4004,14 @@ def team_performance(request):
 
     return render(request, 'control_dashboard/team.html', context)
 
-
 @csrf_exempt
 @require_http_methods(["GET"])
 def api_team_performance_live(request):
     """
-    Lightweight JSON endpoint for real-time team performance refreshes.
+    Live JSON endpoint for the Team Performance auto-refresh.
 
-    Returns the same scoring model used by `team_performance`:
-      Net = Credits − Debits,  Performance % = clamp(Net, 0, 100).
+    Returns the same scorecard computed by _build_member_scorecard,
+    one entry per active member.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -3812,33 +4021,24 @@ def api_team_performance_live(request):
         return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
 
     today = timezone.now()
-    team_members = UserProfile.objects.filter(role='member', status='active').order_by('full_name')
+
+    team_members = (
+        UserProfile.objects
+        .filter(role='member', status='active')
+        .order_by('full_name')
+    )
 
     members_payload = []
     for member in team_members:
-        member_debits = (
-            AdHocDeduction.objects
-            .filter(user=member)
-            .aggregate(total=Sum('points'))
-            .get('total') or 0
-        )
-        member_credits = (
-            AdHocDeduction.objects
-            .filter(user=member)
-            .aggregate(total=Sum('points_added'))
-            .get('total') or 0
-        )
-
-        net_score = member_credits - member_debits
-        percentage = max(0, min(100, net_score))
-
+        card = _build_member_scorecard(member, today=today)
         members_payload.append({
-            'id': member.id,
-            'full_name': member.full_name or member.email,
-            'debits': member_debits,
-            'credits': member_credits,
-            'net_score': net_score,
-            'percentage': percentage,
+            'id':              member.id,
+            'full_name':       member.full_name or member.email,
+            'email_count':     card['email_count'],
+            'debits':          card['debits'],
+            'credits':         card['credits'],
+            'net_score':       card['net_score'],
+            'percentage':      card['percentage'],
         })
 
     return JsonResponse({'success': True, 'members': members_payload})
@@ -3847,9 +4047,16 @@ def api_team_performance_live(request):
 def submitted_reports(request):
     """
     Submitted Reports (supervisor view).
-    
-    Now shows Excel uploads (status='uploaded') since email
-    submissions have been removed.
+
+    Each row = ONE email that was sent (a SentEmail record).
+    Filters: user, category/report_type, date range on sent_at.
+
+    For each email we attach:
+      • the sender (from SentEmail.sender)
+      • the matching Report (for the deadline) — matched by report_type
+      • lateness = sent_at vs (deadline_date + deadline_time)
+      • deduction from SentEmail.manual_deduction
+      • final_score = 100 - deduction
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -3859,71 +4066,123 @@ def submitted_reports(request):
     except UserProfile.DoesNotExist:
         return redirect_dashboard(request.user)
 
-    user_filter = request.GET.get('user', 'all')
+    user_filter     = request.GET.get('user', 'all')
     category_filter = request.GET.get('category', 'all')
-    start_date = request.GET.get('start_date', '')
-    end_date = request.GET.get('end_date', '')
+    start_date      = request.GET.get('start_date', '')
+    end_date        = request.GET.get('end_date', '')
 
-    # Show Excel uploads (data containers)
-    uploads = Report.objects.exclude(
-        report_type=TRIAL_BALANCE_REPORT_TYPE
-    ).filter(
-        status=UPLOADED_STATUS
-    ).order_by('-created_at')
+    # ── Base queryset: every email that was sent ─────────────
+    emails_qs = (
+        SentEmail.objects
+        .select_related('sender')
+        .order_by('-sent_at')
+    )
 
     if user_filter != 'all':
         try:
-            uploads = uploads.filter(created_by_id=int(user_filter))
+            emails_qs = emails_qs.filter(sender_id=int(user_filter))
         except ValueError:
             pass
 
     if category_filter != 'all':
-        uploads = uploads.filter(report_type=category_filter)
+        emails_qs = emails_qs.filter(report_type=category_filter)
 
     if start_date:
         try:
             start_d = datetime.strptime(start_date, '%Y-%m-%d').date()
-            uploads = uploads.filter(created_at__date__gte=start_d)
+            emails_qs = emails_qs.filter(sent_at__date__gte=start_d)
         except ValueError:
             pass
 
     if end_date:
         try:
             end_d = datetime.strptime(end_date, '%Y-%m-%d').date()
-            uploads = uploads.filter(created_at__date__lte=end_d)
+            emails_qs = emails_qs.filter(sent_at__date__lte=end_d)
         except ValueError:
             pass
 
-    users = UserProfile.objects.filter(role='member', status='active').order_by('full_name')
-    categories = Report.objects.exclude(
-        report_type=TRIAL_BALANCE_REPORT_TYPE
-    ).filter(
-        status=UPLOADED_STATUS
-    ).values_list('report_type', flat=True).distinct()
+    # ── Build a report_type → Report map for deadline lookup ─
+    # If multiple Reports share a report_type, prefer the most
+    # recently created (which is usually the active one).
+    report_type_list = (
+        emails_qs
+        .values_list('report_type', flat=True)
+        .distinct()
+    )
+    report_lookup = {}
+    for rt in report_type_list:
+        rpt = (
+            Report.objects
+            .filter(report_type=rt)
+            .exclude(report_type=TRIAL_BALANCE_REPORT_TYPE)
+            .order_by('-created_at')
+            .first()
+        )
+        if rpt:
+            report_lookup[rt] = rpt
 
+    # ── Build the row data ───────────────────────────────────
     report_data = []
-    for report in uploads:
-        record_count = report.exception_records.count()
+    for email in emails_qs:
+        matching_report = report_lookup.get(email.report_type)
+
+        # Compute the deadline as an aware datetime, if we have one
+        deadline_at = None
+        if matching_report and matching_report.deadline_date:
+            deadline_time = (
+                matching_report.deadline_time
+                or datetime.strptime('23:59', '%H:%M').time()
+            )
+            deadline_at = timezone.make_aware(
+                datetime.combine(matching_report.deadline_date, deadline_time)
+            )
+
+        # Compute lateness
+        minutes_late = 0
+        if deadline_at and email.sent_at:
+            delta = email.sent_at - deadline_at
+            if delta.total_seconds() > 0:
+                minutes_late = int(delta.total_seconds() // 60)
+
         report_data.append({
-            'report': report,
-            'created_by': report.created_by,
-            'report_type': report.report_type,
-            'status': report.status,
-            'status_display': report.get_status_display(),
-            'submitted_at': report.created_at,
-            'record_count': record_count,
+            'email': email,
+            'created_by': email.sender,
+            'report_type': email.report_type,
+            'submitted_at': email.sent_at,
+            'deadline_at': deadline_at,
+            'minutes_late': minutes_late,
+            'report': matching_report,
+            'deduction': email.manual_deduction or 0,
+            'final_score': email.final_score,
+            'badge_class': email.badge_class,
+            'is_overridden': email.is_overridden,
+            'recipient_count': email.recipient_count,
         })
 
+    users = (
+        UserProfile.objects
+        .filter(role='member', status='active')
+        .order_by('full_name')
+    )
+
+    # Category dropdown — every distinct report_type we've emailed
+    categories = (
+        SentEmail.objects
+        .values_list('report_type', flat=True)
+        .distinct()
+        .order_by('report_type')
+    )
+
     context = {
-        'user_profile': user_profile,
-        'report_data': report_data,
-        'users': users,
-        'categories': categories,
-        'user_filter': user_filter,
-        'category_filter': category_filter,
-        'start_date': start_date,
-        'end_date': end_date,
-        'total_reports': len(report_data),
+        'user_profile':     user_profile,
+        'report_data':      report_data,
+        'users':            users,
+        'categories':       categories,
+        'user_filter':      user_filter,
+        'category_filter':  category_filter,
+        'start_date':       start_date,
+        'end_date':         end_date,
+        'total_reports':    len(report_data),
     }
 
     return render(request, 'control_dashboard/submitted.html', context)
@@ -4159,10 +4418,7 @@ def api_delete_ad_hoc_deduction(request, deduction_id):
 @login_required
 def logged_exceptions(request):
     """
-    Logged Exceptions (supervisor view).
-
-    Shows Excel data containers (status='uploaded') that have at least
-    one typed ExceptionRecord attached.
+    Logged Exceptions (supervisor view) — now reads from ExceptionUpload.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -4173,23 +4429,15 @@ def logged_exceptions(request):
         return redirect_dashboard(request.user)
 
     type_filter = request.GET.get('type', 'all')
-    status_filter = request.GET.get('status', 'all')
     start_date = request.GET.get('start_date', '')
     end_date = request.GET.get('end_date', '')
 
-    # Only show Excel uploads that actually carry exception records
-    exceptions = Report.objects.exclude(
-        report_type=TRIAL_BALANCE_REPORT_TYPE
-    ).filter(
-        status=UPLOADED_STATUS,
-        exception_records__isnull=False,
-    ).distinct().order_by('-created_at')
+    exceptions = ExceptionUpload.objects.filter(
+        row_count__gt=0,
+    ).order_by('-created_at')
 
     if type_filter != 'all':
         exceptions = exceptions.filter(report_type=type_filter)
-
-    if status_filter != 'all':
-        exceptions = exceptions.filter(status=status_filter)
 
     if start_date:
         try:
@@ -4205,11 +4453,8 @@ def logged_exceptions(request):
         except ValueError:
             pass
 
-    report_types = Report.objects.exclude(
-        report_type=TRIAL_BALANCE_REPORT_TYPE
-    ).filter(
-        status=UPLOADED_STATUS,
-        exception_records__isnull=False,
+    report_types = ExceptionUpload.objects.filter(
+        row_count__gt=0,
     ).values_list('report_type', flat=True).distinct()
 
     context = {
@@ -4217,12 +4462,12 @@ def logged_exceptions(request):
         'exceptions': exceptions,
         'report_types': report_types,
         'type_filter': type_filter,
-        'status_filter': status_filter,
         'start_date': start_date,
         'end_date': end_date,
     }
 
     return render(request, 'control_dashboard/logged.html', context)
+
 @login_required
 def supervisor_checklist(request):
     try:
@@ -4775,18 +5020,11 @@ def activity_logs(request):
 @login_required
 def analytics_dashboard(request):
     """
-    Analytics Dashboard — feeds directly from ExceptionRecord.
+    All Submitted Exceptions (supervisor view).
 
-    Role scoping:
-      admin / supervisor → see ALL exception records
-      member             → see only records in Reports they created
-
-    Filters (query params, all optional):
-      branch, month, year, start_date, end_date, category, status
-
-    Template dispatch:
-      admin / supervisor → analytics-sup.html
-      member             → analytics.html
+    Shows every exception submitted by every user, grouped by
+    uploader. Admins / supervisors see everyone; members see only
+    their own.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -4798,34 +5036,32 @@ def analytics_dashboard(request):
         return redirect_dashboard(request.user)
 
     from decimal import Decimal
+    from collections import OrderedDict
 
     today = timezone.now().date()
     is_privileged = user_profile.role in ('admin', 'supervisor')
 
-    # ============================================================
-    # BASE QUERYSET — all exception records the user can see
-    # ============================================================
-    base_qs = ExceptionRecord.objects.filter(
-        report__isnull=False,
-    ).exclude(
-        report__report_type=TRIAL_BALANCE_REPORT_TYPE,
-    )
+    base_qs = ExceptionRecord.objects.filter(upload__isnull=False)
 
+    # Members see only their own uploads.
     if not is_privileged:
-        base_qs = base_qs.filter(report__created_by=user_profile)
+        base_qs = base_qs.filter(upload__uploaded_by=user_profile)
 
-    # ============================================================
-    # FILTERS
-    # ============================================================
+    # ── Filters ────────────────────────────────────────────────
+    uploader_filter = request.GET.get('uploader', 'all').strip()
     branch_filter   = request.GET.get('branch', 'all').strip()
-    month_filter    = request.GET.get('month', 'all').strip()
-    year_filter     = request.GET.get('year', 'all').strip()
-    start_date_str  = request.GET.get('start_date', '').strip()
-    end_date_str    = request.GET.get('end_date', '').strip()
     category_filter = request.GET.get('category', 'all').strip()
     status_filter   = request.GET.get('status', 'all').strip()
+    start_date_str  = request.GET.get('start_date', '').strip()
+    end_date_str    = request.GET.get('end_date', '').strip()
 
     filtered_qs = base_qs
+
+    if uploader_filter and uploader_filter != 'all':
+        try:
+            filtered_qs = filtered_qs.filter(upload__uploaded_by_id=int(uploader_filter))
+        except ValueError:
+            pass
 
     if branch_filter and branch_filter != 'all':
         filtered_qs = filtered_qs.filter(branch_unit=branch_filter)
@@ -4835,20 +5071,6 @@ def analytics_dashboard(request):
 
     if status_filter and status_filter != 'all':
         filtered_qs = filtered_qs.filter(status=status_filter)
-
-    if year_filter and year_filter != 'all':
-        try:
-            y = int(year_filter)
-            filtered_qs = filtered_qs.filter(date_noted__year=y)
-        except ValueError:
-            pass
-
-    if month_filter and month_filter != 'all':
-        try:
-            m = int(month_filter)  # 1-12 expected from the front-end
-            filtered_qs = filtered_qs.filter(date_noted__month=m)
-        except ValueError:
-            pass
 
     if start_date_str:
         try:
@@ -4864,77 +5086,38 @@ def analytics_dashboard(request):
         except ValueError:
             pass
 
-    # ============================================================
-    # KPI 1 — TOTAL EXCEPTIONS
-    # ============================================================
-    total_exceptions = filtered_qs.count()
-
-    # ============================================================
-    # KPI 2 / 3 — OPEN vs CLOSED
-    # Treat 'closed' and 'resolved' as CLOSED; everything else as OPEN
-    # ============================================================
-    OPEN_STATUSES   = ['open', 'in_progress', 'pending', 'overdue', 'rejected']
-    CLOSED_STATUSES = ['closed', 'resolved']
-
-    open_exceptions   = filtered_qs.filter(status__in=OPEN_STATUSES).count()
-    closed_exceptions = filtered_qs.filter(status__in=CLOSED_STATUSES).count()
-
-    # ============================================================
-    # KPI 4 — RESOLUTION RATE
-    # ============================================================
-    resolution_pct = (
-        int(round((closed_exceptions / total_exceptions) * 100))
-        if total_exceptions else 0
-    )
-
-    # ============================================================
-    # KPI 5 — COST SAVED
-    # ============================================================
-    cost_saved_total = (
+    # ── Group by uploader ──────────────────────────────────────
+    filtered_qs = (
         filtered_qs
-        .aggregate(total=Sum('income_cost_saved'))
-        .get('total') or Decimal('0')
+        .select_related('upload', 'upload__uploaded_by')
+        .order_by('upload__uploaded_by__full_name', 'upload__created_at', 'source_row_index')
     )
 
-    # ============================================================
-    # PIE 1 — TOP 3 BRANCHES / DEPARTMENTS
-    # ============================================================
-    branch_counter = (
-        filtered_qs
-        .exclude(branch_unit='')
-        .values('branch_unit')
-        .annotate(count=Count('id'))
-        .order_by('-count')[:3]
-    )
-    top_branch_labels = [b['branch_unit'] for b in branch_counter]
-    top_branch_values = [b['count'] for b in branch_counter]
+    grouped = OrderedDict()
+    for rec in filtered_qs:
+        uploader = getattr(rec.upload, 'uploaded_by', None) if rec.upload else None
+        if not uploader:
+            continue
+        key = uploader.id
+        if key not in grouped:
+            grouped[key] = {
+                'uploader': uploader,
+                'count': 0,
+                'rows': [],
+            }
+        grouped[key]['count'] += 1
+        grouped[key]['rows'].append(rec)
 
-    # ============================================================
-    # PIE 2 — TOP 3 CATEGORIES
-    # ============================================================
-    category_counter = (
-        filtered_qs
-        .exclude(category='')
-        .values('category')
-        .annotate(count=Count('id'))
-        .order_by('-count')[:3]
-    )
-    top_category_labels = [c['category'] for c in category_counter]
-    top_category_values = [c['count'] for c in category_counter]
+    uploader_groups = list(grouped.values())
 
-    # ============================================================
-    # OPEN EXCEPTIONS TABLE — full detail, open items only
-    # ============================================================
-    open_exceptions_list = (
-        filtered_qs
-        .filter(status__in=OPEN_STATUSES)
-        .order_by('-date_noted', '-created_at')[:100]
+    # ── Filter dropdown options ────────────────────────────────
+    available_uploaders = (
+        UserProfile.objects
+        .filter(exception_uploads__isnull=False)
+        .distinct()
+        .order_by('full_name')
     )
 
-    # ============================================================
-    # FILTER DROPDOWN DATA
-    # Built from the UNFILTERED base so users can always switch
-    # ============================================================
     available_branches = list(
         base_qs
         .exclude(branch_unit='')
@@ -4951,22 +5134,6 @@ def analytics_dashboard(request):
         .order_by('category')
     )
 
-    available_years = sorted(
-        {
-            d.year
-            for d in base_qs
-            .exclude(date_noted__isnull=True)
-            .values_list('date_noted', flat=True)
-        },
-        reverse=True,
-    )
-
-    month_names = [
-        (1, 'January'), (2, 'February'), (3, 'March'), (4, 'April'),
-        (5, 'May'), (6, 'June'), (7, 'July'), (8, 'August'),
-        (9, 'September'), (10, 'October'), (11, 'November'), (12, 'December'),
-    ]
-
     available_statuses = [
         ('open', 'Open'),
         ('in_progress', 'In Progress'),
@@ -4976,60 +5143,34 @@ def analytics_dashboard(request):
         ('resolved', 'Resolved'),
     ]
 
-    # ============================================================
-    # CONTEXT
-    # ============================================================
     context = {
         'user_profile': user_profile,
         'today': today,
         'is_privileged': is_privileged,
 
-        # --- KPI cards ---
-        'total_exceptions': total_exceptions,
-        'open_exceptions': open_exceptions,
-        'closed_exceptions': closed_exceptions,
-        'resolution_pct': resolution_pct,
-        'cost_saved_total': f'{cost_saved_total:,.2f}',
+        'uploader_groups': uploader_groups,
 
-        # --- Pie charts ---
-        'top_branch_labels': json.dumps(top_branch_labels),
-        'top_branch_values': json.dumps(top_branch_values),
-        'top_category_labels': json.dumps(top_category_labels),
-        'top_category_values': json.dumps(top_category_values),
-        'open_closed_labels': json.dumps(['Open', 'Closed']),
-        'open_closed_values': json.dumps([open_exceptions, closed_exceptions]),
-
-        # --- Open table ---
-        'open_exceptions_list': open_exceptions_list,
-
-        # --- Filter options + current values ---
+        'available_uploaders': available_uploaders,
         'available_branches': available_branches,
         'available_categories': available_categories,
-        'available_years': available_years,
         'available_statuses': available_statuses,
-        'month_names': month_names,
+
+        'uploader_filter': uploader_filter,
         'branch_filter': branch_filter,
         'category_filter': category_filter,
         'status_filter': status_filter,
-        'year_filter': year_filter,
-        'month_filter': month_filter,
         'start_date': start_date_str,
         'end_date': end_date_str,
     }
 
-    # ------------------------------------------------------------
-    # Template dispatch — supervisors/admins get the supervisor
-    # skin; members get the standard member skin. Both read the
-    # exact same context, so any future field additions only need
-    # to be made once.
-    # ------------------------------------------------------------
     template = (
-        'control_dashboard/analytics-sup.html'
+        'control_dashboard/report-sup.html'
         if is_privileged
         else 'control_dashboard/analytics.html'
     )
 
     return render(request, template, context)
+
 # ==================== SUBMIT SELECTED REPORTS ====================
 
 @login_required
@@ -5355,7 +5496,6 @@ def api_parse_trial_balance(request):
         logger.exception("Error in api_parse_trial_balance")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_submit_trial_balance(request):
@@ -5382,26 +5522,16 @@ def api_submit_trial_balance(request):
         except UserProfile.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
 
-        from .models import TrialBalanceEntry
+        # One trial balance per day: wipe any existing upload for that date
+        existing = TrialBalanceUpload.objects.filter(report_date=report_date).first()
+        if existing:
+            existing.delete()
 
-        existing_any = TrialBalanceEntry.objects.filter(report_date=report_date).exists()
-        if existing_any:
-            anchor_report_ids = list(
-                TrialBalanceEntry.objects.filter(report_date=report_date)
-                .values_list('report_id', flat=True).distinct()
-            )
-            TrialBalanceEntry.objects.filter(report_date=report_date).delete()
-            Report.objects.filter(
-                id__in=anchor_report_ids,
-                report_type=TRIAL_BALANCE_REPORT_TYPE
-            ).delete()
-
-        report = Report.objects.create(
-            report_type=TRIAL_BALANCE_REPORT_TYPE,
-            frequency='daily',
-            description=f'Trial Balance for {report_date.isoformat()} ({file_name})',
-            status='submitted',
-            created_by=user_profile,
+        upload = TrialBalanceUpload.objects.create(
+            uploaded_by=user_profile,
+            report_date=report_date,
+            file_name=file_name,
+            row_count=0,
         )
 
         norm_map = {h: str(h).strip().upper().replace(' ', '_') for h in headers}
@@ -5428,9 +5558,8 @@ def api_submit_trial_balance(request):
         for idx, row in enumerate(rows_data):
             if not isinstance(row, dict):
                 continue
-
-            entry = TrialBalanceEntry(
-                report=report,
+            entries.append(TrialBalanceEntry(
+                upload=upload,                                       # <-- CHANGED
                 uploaded_by=user_profile,
                 report_date=report_date,
                 file_name=file_name,
@@ -5451,10 +5580,12 @@ def api_submit_trial_balance(request):
                 cr_bal_fcy=to_decimal(get_field(row, 'CR_BAL_FCY')),
                 close_bal_fcy=to_decimal(get_field(row, 'CLOSE_BAL_FCY')),
                 gl_status=str(get_field(row, 'GL_STATUS'))[:50],
-            )
-            entries.append(entry)
+            ))
 
         TrialBalanceEntry.objects.bulk_create(entries, batch_size=500)
+
+        upload.row_count = len(entries)
+        upload.save(update_fields=['row_count'])
 
         log_activity(
             user=user_profile,
@@ -5466,7 +5597,7 @@ def api_submit_trial_balance(request):
         return JsonResponse({
             'success': True,
             'message': f'Successfully saved {len(entries)} trial balance entries for {report_date}.',
-            'report_id': report.id,
+            'upload_id': upload.id,
             'report_date': report_date.isoformat(),
             'record_count': len(entries)
         })
@@ -5476,7 +5607,6 @@ def api_submit_trial_balance(request):
     except Exception as e:
         logger.exception("Error in api_submit_trial_balance")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
 
 @login_required
 def api_download_trial_balance_template(request):
@@ -5520,34 +5650,12 @@ def api_download_trial_balance_template(request):
 def consolidated_reports(request):
     """
     Consolidated Reports — cross-user view of exception data.
-
-    Access rule:
-        The logged-in user may open this page ONLY if they have at
-        least one Report assigned to them whose report_type contains
-        the word "consolidated" (case-insensitive).
-
-    Data rule:
-        The consolidated report is a VIEW over the underlying
-        exception data, not a data container of its own. When the
-        report name implies a scope:
-
-          • "Head Office" / "Headoffice" / "Head-Office"
-                → aggregate EVERY non-TB exception record uploaded by
-                  users with position='hc' (across all their reports)
-          • "Cluster"
-                → same, but for position='cc'
-
-        When no scope can be derived from the name, fall back to
-        exact report_type matching.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
     except UserProfile.DoesNotExist:
         return redirect('control_dashboard:member_dashboard')
 
-    # ------------------------------------------------------------------
-    # Determine which consolidated report types this user may access
-    # ------------------------------------------------------------------
     assigned_consolidated_qs = Report.objects.filter(
         Q(assigned_to=user_profile) |
         Q(is_assigned_to_all=True) |
@@ -5566,9 +5674,6 @@ def consolidated_reports(request):
 
     has_access = len(available_report_types) > 0
 
-    # ------------------------------------------------------------------
-    # Resolve the selected report type
-    # ------------------------------------------------------------------
     selected_report_type = (request.GET.get('report_type') or '').strip()
     if not selected_report_type or selected_report_type == 'all':
         if available_report_types:
@@ -5577,9 +5682,6 @@ def consolidated_reports(request):
     if selected_report_type not in available_report_types:
         selected_report_type = available_report_types[0] if available_report_types else ''
 
-    # ------------------------------------------------------------------
-    # Derive uploader scope from the report name
-    # ------------------------------------------------------------------
     def _derive_position_scope(report_type):
         name = (report_type or '').lower()
         if 'head office' in name or 'headoffice' in name or 'head-office' in name:
@@ -5590,9 +5692,6 @@ def consolidated_reports(request):
 
     uploader_scope = _derive_position_scope(selected_report_type)
 
-    # ------------------------------------------------------------------
-    # Build the preview across ALL matching exception records
-    # ------------------------------------------------------------------
     exception_rows = []
     total_count = 0
     total_cost = 0
@@ -5600,26 +5699,21 @@ def consolidated_reports(request):
 
     if has_access and selected_report_type:
         er_qs = ExceptionRecord.objects.filter(
-            report__isnull=False,
-        ).exclude(
-            report__report_type=TRIAL_BALANCE_REPORT_TYPE,
+            upload__isnull=False,
         )
 
         if uploader_scope:
-            # CONSOLIDATED VIEW: aggregate from every report
-            # uploaded by users of the scoped position.
             er_qs = er_qs.filter(
-                report__created_by__position=uploader_scope,
+                upload__uploaded_by__position=uploader_scope,
             )
         else:
-            # No scope derivable → exact report_type match only
             er_qs = er_qs.filter(
-                report__report_type=selected_report_type,
+                upload__report_type=selected_report_type,
             )
 
         er_qs = er_qs.select_related(
-            'report', 'report__created_by'
-        ).order_by('-report__created_at', 'source_row_index')
+            'upload', 'upload__uploaded_by'
+        ).order_by('-upload__created_at', 'source_row_index')
 
         total_count = er_qs.count()
 
@@ -5629,9 +5723,18 @@ def consolidated_reports(request):
         except (TypeError, ValueError):
             total_cost = 0.0
 
-        distinct_uploaders = er_qs.values('report__created_by').distinct().count()
+        distinct_uploaders = er_qs.values('upload__uploaded_by').distinct().count()
 
         for rec in er_qs[:100]:
+            # ---- Resolve the report's uploader ----
+            uploader = getattr(rec.upload, 'uploaded_by', None) if rec.upload else None
+            if uploader:
+                uploader_name = uploader.full_name or uploader.email or ''
+                uploader_initials = _initials_from_name(uploader_name)
+            else:
+                uploader_name = ''
+                uploader_initials = ''
+
             exception_rows.append({
                 'serial_number': rec.serial_number,
                 'branch_unit': rec.branch_unit or '—',
@@ -5643,7 +5746,11 @@ def consolidated_reports(request):
                 'supervisor': rec.supervisor or '—',
                 'status': rec.get_status_display() or rec.status_raw or '—',
                 'income_cost_saved': rec.income_cost_saved,
-                'source_report': (rec.report.report_type if rec.report else '—'),
+                'source_report': (rec.upload.report_type if rec.upload else '—'),
+                # ---- New uploader fields for the template ----
+                'uploaded_by_name': uploader_name,
+                'uploaded_by_initials': uploader_initials,
+                'uploaded_at': rec.upload.created_at if rec.upload else None,
             })
 
     context = {
@@ -5685,11 +5792,6 @@ def api_consolidated_filter_options(request):
 def generate_consolidated_excel(request):
     """
     Export a consolidated report as Excel.
-
-    Uses the same aggregation logic as `consolidated_reports`:
-    when the report name implies Head Office / Cluster, ALL
-    exception records from that scope are pulled in — not just
-    rows whose report_type matches the consolidated name.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -5697,9 +5799,6 @@ def generate_consolidated_excel(request):
         messages.error(request, 'User profile not found.')
         return redirect('control_dashboard:consolidated_reports')
 
-    # ------------------------------------------------------------------
-    # Access check
-    # ------------------------------------------------------------------
     assigned_consolidated_qs = Report.objects.filter(
         Q(assigned_to=user_profile) |
         Q(is_assigned_to_all=True) |
@@ -5731,9 +5830,6 @@ def generate_consolidated_excel(request):
         messages.error(request, f'You do not have access to "{report_type_filter}".')
         return redirect('control_dashboard:consolidated_reports')
 
-    # ------------------------------------------------------------------
-    # Derive position scope
-    # ------------------------------------------------------------------
     def _derive_position_scope(report_type):
         name = (report_type or '').lower()
         if 'head office' in name or 'headoffice' in name or 'head-office' in name:
@@ -5744,27 +5840,22 @@ def generate_consolidated_excel(request):
 
     uploader_scope = _derive_position_scope(report_type_filter)
 
-    # ------------------------------------------------------------------
-    # Query — same aggregation logic as the preview view
-    # ------------------------------------------------------------------
     er_qs = ExceptionRecord.objects.filter(
-        report__isnull=False,
-    ).exclude(
-        report__report_type=TRIAL_BALANCE_REPORT_TYPE,
+        upload__isnull=False,
     )
 
     if uploader_scope:
         er_qs = er_qs.filter(
-            report__created_by__position=uploader_scope,
+            upload__uploaded_by__position=uploader_scope,
         )
     else:
         er_qs = er_qs.filter(
-            report__report_type=report_type_filter,
+            upload__report_type=report_type_filter,
         )
 
     er_qs = er_qs.select_related(
-        'report', 'report__created_by'
-    ).order_by('-report__created_at', 'source_row_index')
+        'upload', 'upload__uploaded_by'
+    ).order_by('-upload__created_at', 'source_row_index')
 
     if start_date_str:
         try:
@@ -5786,9 +5877,6 @@ def generate_consolidated_excel(request):
         messages.warning(request, f'No exception records found for "{report_type_filter}".')
         return redirect('control_dashboard:consolidated_reports')
 
-    # ------------------------------------------------------------------
-    # Workbook
-    # ------------------------------------------------------------------
     wb = openpyxl.Workbook()
     ws = wb.active
     safe_title = re.sub(r'[\[\]\:\*\?\/\\]', '_', report_type_filter)[:31] or 'Consolidated'
@@ -5826,7 +5914,7 @@ def generate_consolidated_excel(request):
             ws.cell(row=row_idx, column=12, value=float(rec.income_cost_saved) if rec.income_cost_saved is not None else 0)
         except (TypeError, ValueError):
             ws.cell(row=row_idx, column=12, value=0)
-        ws.cell(row=row_idx, column=13, value=(rec.report.report_type if rec.report else ''))
+        ws.cell(row=row_idx, column=13, value=(rec.upload.report_type if rec.upload else ''))
         row_idx += 1
 
     for col in range(1, len(headers) + 1):
@@ -5956,11 +6044,18 @@ def api_get_trial_balance_by_date(request):
                             f'on {report_date.isoformat()}.')
             })
 
+                # ------------------------------------------------------------
+        # Whitelist of 8 columns to expose to the frontend.
+        # Keep this in sync with the exception side view.
+        # ------------------------------------------------------------
         headers = [
-            'BRANCH_CODE', 'BRANCH_NAME', 'TODAY', 'CATEGORY', 'PARENT_GL',
-            'GL_CODE', 'DESCR', 'CCY',
-            'OPEN_BAL_LCY', 'DR_BAL_LCY', 'CR_BAL_LCY', 'CLOSE_BAL_LCY',
-            'OPEN_BAL_FCY', 'DR_BAL_FCY', 'CR_BAL_FCY', 'CLOSE_BAL_FCY',
+            'BRANCH_CODE',
+            'CATEGORY',
+            'GL_CODE',
+            'DESCR',
+            'CCY',
+            'CLOSE_BAL_LCY',
+            'CLOSE_BAL_FCY',
             'GL_STATUS',
         ]
 
@@ -5969,27 +6064,20 @@ def api_get_trial_balance_by_date(request):
         total_credit = 0.0
 
         for entry in visible_entries:
-            raw_code = str(entry.branch_code or '').strip()
-            branch_name = code_to_name.get(raw_code, raw_code)
+            # -------- Filter: only active GLs --------
+            status_raw = str(entry.gl_status or '').strip().lower()
+            if status_raw != 'active':
+                continue
 
             rows.append({
-                'BRANCH_CODE': entry.branch_code,
-                'BRANCH_NAME': branch_name,
-                'TODAY': entry.today,
-                'CATEGORY': entry.category,
-                'PARENT_GL': entry.parent_gl,
-                'GL_CODE': entry.gl_code,
-                'DESCR': entry.descr,
-                'CCY': entry.ccy,
-                'OPEN_BAL_LCY': str(entry.open_bal_lcy),
-                'DR_BAL_LCY': str(entry.dr_bal_lcy),
-                'CR_BAL_LCY': str(entry.cr_bal_lcy),
+                'BRANCH_CODE': entry.branch_code or '',
+                'CATEGORY': entry.category or '',
+                'GL_CODE': entry.gl_code or '',
+                'DESCR': entry.descr or '',
+                'CCY': entry.ccy or '',
                 'CLOSE_BAL_LCY': str(entry.close_bal_lcy),
-                'OPEN_BAL_FCY': str(entry.open_bal_fcy),
-                'DR_BAL_FCY': str(entry.dr_bal_fcy),
-                'CR_BAL_FCY': str(entry.cr_bal_fcy),
                 'CLOSE_BAL_FCY': str(entry.close_bal_fcy),
-                'GL_STATUS': entry.gl_status,
+                'GL_STATUS': entry.gl_status or '',
             })
 
             try:
@@ -6046,7 +6134,6 @@ def api_get_trial_balance_by_date(request):
         logger.exception("Error in api_get_trial_balance_by_date")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-
 @csrf_exempt
 @require_http_methods(["GET"])
 def api_check_trial_balance_day(request):
@@ -6061,17 +6148,14 @@ def api_check_trial_balance_day(request):
         except ValueError:
             return JsonResponse({'success': False, 'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
 
-        from .models import TrialBalanceEntry
-
-        first_entry = (
-            TrialBalanceEntry.objects
+        upload = (
+            TrialBalanceUpload.objects
             .filter(report_date=report_date)
             .select_related('uploaded_by')
-            .order_by('created_at')
             .first()
         )
 
-        if not first_entry:
+        if not upload:
             return JsonResponse({
                 'success': True,
                 'locked': False,
@@ -6081,36 +6165,393 @@ def api_check_trial_balance_day(request):
                 'row_count': 0,
             })
 
-        row_count = TrialBalanceEntry.objects.filter(report_date=report_date).count()
-        uploader = first_entry.uploaded_by
-
         return JsonResponse({
             'success': True,
             'locked': True,
             'report_date': report_date.isoformat(),
             'uploaded_by': {
-                'id': uploader.id,
-                'full_name': uploader.full_name or uploader.email,
-                'email': uploader.email,
+                'id': upload.uploaded_by.id,
+                'full_name': upload.uploaded_by.full_name or upload.uploaded_by.email,
+                'email': upload.uploaded_by.email,
             },
-            'uploaded_at': first_entry.created_at.isoformat() if first_entry.created_at else None,
-            'row_count': row_count,
+            'uploaded_at': upload.created_at.isoformat() if upload.created_at else None,
+            'row_count': upload.row_count,
         })
 
     except Exception as e:
         logger.exception("Error in api_check_trial_balance_day")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+# ============================================================
+# COMPARISON APIs — previous-day & date-range side-by-side
+# ============================================================
+
+COMPARISON_HEADERS = [
+    'BRANCH_CODE',
+    'CATEGORY',
+    'GL_CODE',
+    'DESCR',
+    'CCY',
+    'CLOSE_BAL_LCY',
+    'CLOSE_BAL_FCY',
+    'GL_STATUS',
+]
+
+
+def _serialize_tb_entry(entry):
+    """Serialize a single TrialBalanceEntry for side-by-side comparison."""
+    return {
+        'BRANCH_CODE': entry.branch_code or '',
+        'CATEGORY': entry.category or '',
+        'GL_CODE': entry.gl_code or '',
+        'DESCR': entry.descr or '',
+        'CCY': entry.ccy or '',
+        'CLOSE_BAL_LCY': str(entry.close_bal_lcy),
+        'CLOSE_BAL_FCY': str(entry.close_bal_fcy),
+        'GL_STATUS': entry.gl_status or '',
+    }
+
+
+def _visible_entries_for_date(user_profile, report_date):
+    """
+    Return TrialBalanceEntry queryset for a date, respecting the
+    same branch/department filtering rules as api_get_trial_balance_by_date.
+    Only returns ACTIVE GLS.
+    """
+    from .models import TrialBalanceEntry
+
+    code_to_name = dict(Branch.BRANCH_CODE_MAP)
+    for b in Branch.objects.filter(is_active=True):
+        if b.code:
+            code_to_name[str(b.code).strip()] = b.name
+
+    entries = list(
+        TrialBalanceEntry.objects
+        .filter(report_date=report_date)
+        .order_by('row_index')
+    )
+
+    if not entries:
+        return []
+
+    user_branches = list(user_profile.branches.all())
+    user_departments = list(user_profile.departments.all())
+
+    allowed_branch_codes = set()
+    for b in user_branches:
+        if b.code:
+            allowed_branch_codes.add(str(b.code).strip())
+        if b.name:
+            for code, name in Branch.BRANCH_CODE_MAP.items():
+                if name.upper() == b.name.upper():
+                    allowed_branch_codes.add(code)
+                    break
+
+    allowed_branch_names = {str(b.name).strip().upper() for b in user_branches if b.name}
+    allowed_department_names = {str(d.name).strip().upper() for d in user_departments if d.name}
+
+    has_branch_restriction = len(allowed_branch_codes) > 0 or len(allowed_branch_names) > 0
+    has_department_restriction = len(allowed_department_names) > 0
+
+    is_privileged = user_profile.role in ('admin', 'supervisor')
+    is_hc_staff = (user_profile.position == 'hc')
+
+    def passes(entry):
+        if is_privileged:
+            return True
+        code = str(entry.branch_code or '').strip()
+        name = code_to_name.get(code, '').upper()
+        if is_hc_staff and code == '000':
+            return True
+        if not has_branch_restriction and not has_department_restriction:
+            return True
+        if has_branch_restriction:
+            if code in allowed_branch_codes:
+                return True
+            if name and name in allowed_branch_names:
+                return True
+        if has_department_restriction:
+            cat = str(entry.category or '').strip().upper()
+            if cat in allowed_department_names:
+                return True
+        return False
+
+    visible = [e for e in entries if passes(e)]
+
+    # Only active GLs
+    visible = [e for e in visible if str(e.gl_status or '').strip().lower() == 'active']
+
+    return visible
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_compare_trial_balance_previous(request):
+    """
+    Compare a trial balance against the previous upload.
+
+    Query params:
+        date    (required)  — YYYY-MM-DD of the "current" day
+
+    Response:
+        {
+          "success": true,
+          "current": { "date": "...", "found": bool, "rows": [...] },
+          "previous": { "date": "...", "found": bool, "rows": [...] },
+          "merged": [
+             { "key": "BRANCH|GL_CODE", "BRANCH_CODE": ..., ...,
+               "CURRENT_LCY": ..., "PREVIOUS_LCY": ..., "DELTA_LCY": ...,
+               "CURRENT_FCY": ..., "PREVIOUS_FCY": ..., "DELTA_FCY": ... }
+          ]
+        }
+    """
+    try:
+        date_str = (request.GET.get('date') or '').strip()
+        if not date_str:
+            return JsonResponse({'success': False, 'error': 'date parameter is required.'}, status=400)
+
+        try:
+            current_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        from .models import TrialBalanceEntry
+
+        # ---- Find the previous upload before current_date ----
+        prev_upload = (
+            TrialBalanceUpload.objects
+            .filter(report_date__lt=current_date)
+            .order_by('-report_date')
+            .first()
+        )
+        previous_date = prev_upload.report_date if prev_upload else None
+
+        current_visible = _visible_entries_for_date(user_profile, current_date)
+        previous_visible = (
+            _visible_entries_for_date(user_profile, previous_date)
+            if previous_date else []
+        )
+
+        # ---- Build lookups keyed by (BRANCH_CODE, GL_CODE) ----
+        def to_key(e):
+            return f"{str(e.branch_code or '').strip()}|{str(e.gl_code or '').strip()}"
+
+        current_map = {to_key(e): e for e in current_visible}
+        previous_map = {to_key(e): e for e in previous_visible}
+
+        all_keys = set(current_map.keys()) | set(previous_map.keys())
+
+        merged = []
+        for key in sorted(all_keys):
+            cur = current_map.get(key)
+            prev = previous_map.get(key)
+            base = cur or prev  # for metadata
+
+            def _dec(v):
+                try:
+                    return float(v or 0)
+                except (TypeError, ValueError):
+                    return 0.0
+
+            cur_lcy = _dec(cur.close_bal_lcy) if cur else 0.0
+            prev_lcy = _dec(prev.close_bal_lcy) if prev else 0.0
+            cur_fcy = _dec(cur.close_bal_fcy) if cur else 0.0
+            prev_fcy = _dec(prev.close_bal_fcy) if prev else 0.0
+
+            merged.append({
+                'key': key,
+                'BRANCH_CODE': base.branch_code or '',
+                'CATEGORY': base.category or '',
+                'GL_CODE': base.gl_code or '',
+                'DESCR': base.descr or '',
+                'CCY': base.ccy or '',
+                'GL_STATUS': base.gl_status or '',
+                'CURRENT_LCY': cur_lcy,
+                'PREVIOUS_LCY': prev_lcy,
+                'DELTA_LCY': cur_lcy - prev_lcy,
+                'CURRENT_FCY': cur_fcy,
+                'PREVIOUS_FCY': prev_fcy,
+                'DELTA_FCY': cur_fcy - prev_fcy,
+                'IN_CURRENT':  cur is not None,
+                'IN_PREVIOUS': prev is not None,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'current': {
+                'date': current_date.isoformat(),
+                'found': len(current_visible) > 0,
+                'row_count': len(current_visible),
+                'rows': [_serialize_tb_entry(e) for e in current_visible],
+            },
+            'previous': {
+                'date': previous_date.isoformat() if previous_date else None,
+                'found': len(previous_visible) > 0,
+                'row_count': len(previous_visible),
+                'rows': [_serialize_tb_entry(e) for e in previous_visible],
+            },
+            'merged': merged,
+            'headers': COMPARISON_HEADERS,
+        })
+
+    except Exception as e:
+        logger.exception("Error in api_compare_trial_balance_previous")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_compare_trial_balance_range(request):
+    """
+    Compare a trial balance across a date range.
+
+    Query params:
+        start   (required)  — YYYY-MM-DD
+        end     (required)  — YYYY-MM-DD (inclusive)
+
+    Response:
+        {
+          "success": true,
+          "dates":   ["2026-09-20", "2026-09-21", ...],
+          "merged":  [
+            {
+              "key": "BRANCH|GL_CODE",
+              "BRANCH_CODE": ..., "GL_CODE": ..., "DESCR": ...,
+              "balances": {
+                 "2026-09-20": {"lcy": 1234.5, "fcy": 100.0},
+                 "2026-09-21": {"lcy": 1300.0, "fcy": 105.0}
+              }
+            }
+          ]
+        }
+    """
+    try:
+        start_str = (request.GET.get('start') or '').strip()
+        end_str   = (request.GET.get('end') or '').strip()
+
+        if not start_str or not end_str:
+            return JsonResponse({'success': False, 'error': 'start and end parameters are required.'}, status=400)
+
+        try:
+            start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+            end_date   = datetime.strptime(end_str,   '%Y-%m-%d').date()
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+
+        if end_date < start_date:
+            start_date, end_date = end_date, start_date
+
+        # Cap range to avoid runaway queries
+        if (end_date - start_date).days > 90:
+            return JsonResponse({
+                'success': False,
+                'error': 'Date range cannot exceed 90 days.',
+            }, status=400)
+
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        # ---- Collect all dates in the range that have a TB upload ----
+        upload_dates = list(
+            TrialBalanceUpload.objects
+            .filter(report_date__gte=start_date, report_date__lte=end_date)
+            .values_list('report_date', flat=True)
+            .distinct()
+            .order_by('report_date')
+        )
+
+        if not upload_dates:
+            return JsonResponse({
+                'success': True,
+                'dates': [],
+                'merged': [],
+                'message': 'No trial balance uploads in that range.',
+            })
+
+        # ---- Fetch each day, build a per-day map keyed by BRANCH|GL_CODE ----
+        per_day = {}  # { date_iso: { key: entry } }
+        metadata = {} # { key: { BRANCH_CODE, CATEGORY, GL_CODE, DESCR, CCY } }
+
+        for d in upload_dates:
+            entries = _visible_entries_for_date(user_profile, d)
+            day_map = {}
+            for e in entries:
+                k = f"{str(e.branch_code or '').strip()}|{str(e.gl_code or '').strip()}"
+                day_map[k] = e
+                if k not in metadata:
+                    metadata[k] = {
+                        'BRANCH_CODE': e.branch_code or '',
+                        'CATEGORY': e.category or '',
+                        'GL_CODE': e.gl_code or '',
+                        'DESCR': e.descr or '',
+                        'CCY': e.ccy or '',
+                    }
+            per_day[d.isoformat()] = day_map
+
+        date_isos = [d.isoformat() for d in upload_dates]
+
+        # ---- Merge across days ----
+        all_keys = set()
+        for day_map in per_day.values():
+            all_keys.update(day_map.keys())
+
+        merged = []
+        for k in sorted(all_keys):
+            meta = metadata.get(k, {})
+            balances = {}
+            for d_iso in date_isos:
+                entry = per_day.get(d_iso, {}).get(k)
+                if entry:
+                    try:
+                        lcy = float(entry.close_bal_lcy or 0)
+                    except (TypeError, ValueError):
+                        lcy = 0.0
+                    try:
+                        fcy = float(entry.close_bal_fcy or 0)
+                    except (TypeError, ValueError):
+                        fcy = 0.0
+                    balances[d_iso] = {'lcy': lcy, 'fcy': fcy}
+                else:
+                    balances[d_iso] = None
+
+            merged.append({
+                'key': k,
+                **meta,
+                'balances': balances,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'dates': date_isos,
+            'merged': merged,
+            'headers': COMPARISON_HEADERS,
+        })
+
+    except Exception as e:
+        logger.exception("Error in api_compare_trial_balance_range")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_update_report_score(request):
     """
-    Supervisor deduction override on a SINGLE submission.
+    Supervisor deduction override on a SINGLE sent email.
 
-    The frontend now sends `score_id` (the SubmittedReportScore row),
-    so each leg of the journey can be scored independently.
-    `report_id` is still accepted for backward compatibility.
+    Payload:
+    {
+        "email_id": 123,
+        "deduction": 15
+    }
+
+    Sets SentEmail.manual_deduction. final_score is derived
+    as 100 - deduction.
     """
     try:
         try:
@@ -6122,9 +6563,9 @@ def api_update_report_score(request):
             return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
 
         data = json.loads(request.body)
-        score_id = data.get('score_id')
-        report_id = data.get('report_id')      # legacy fallback
+        email_id  = data.get('email_id')
         deduction = data.get('deduction', 0)
+        reason    = (data.get('reason') or '').strip()
 
         try:
             deduction = int(deduction)
@@ -6134,59 +6575,35 @@ def api_update_report_score(request):
         if deduction < 0 or deduction > 100:
             return JsonResponse({'success': False, 'error': 'Deduction must be between 0 and 100'}, status=400)
 
-        # ------------------------------------------------------------
-        # Resolve the target submission row.
-        # ------------------------------------------------------------
-        if score_id:
-            score_obj = get_object_or_404(SubmittedReportScore, id=score_id)
-        elif report_id:
-            # Legacy: fall back to latest submission for this report.
-            score_obj = (
-                SubmittedReportScore.objects
-                .filter(report_id=report_id)
-                .order_by('-sent_at', '-created_at')
-                .first()
-            )
-            if score_obj is None:
-                return JsonResponse({'success': False, 'error': 'No submission found for this report'}, status=404)
-        else:
-            return JsonResponse({'success': False, 'error': 'score_id is required'}, status=400)
+        if not email_id:
+            return JsonResponse({'success': False, 'error': 'email_id is required'}, status=400)
 
-        report = score_obj.report
-        if report.report_type == TRIAL_BALANCE_REPORT_TYPE:
-            return JsonResponse({'success': False, 'error': 'Not found'}, status=404)
+        email_obj = get_object_or_404(SentEmail, id=email_id)
 
-        # Apply the deduction.
-        if deduction == 0:
-            score_obj.manual_score = None
-            score_obj.override_reason = ''
-            action = 'cleared'
-        else:
-            score_obj.manual_score = max(0, score_obj.auto_score - deduction)
-            action = f'set (deduction {deduction}%)'
-
-        score_obj.save()
-
-        # NOTE: snapshot_final_score is intentionally NOT updated here.
-        # Team performance reads the frozen snapshot so historical
-        # metrics don't shift when a supervisor edits an old submission.
+        email_obj.manual_deduction = deduction
+        email_obj.override_reason  = reason
+        email_obj.scored_by        = user_profile
+        email_obj.scored_at        = timezone.now()
+        email_obj.save(update_fields=[
+            'manual_deduction', 'override_reason', 'scored_by', 'scored_at',
+        ])
 
         log_activity(
             user=user_profile,
             activity_type='score_updated',
-            details=f'Deduction {action} on submission #{score_obj.id} ({report.report_type})',
-            request=request
+            details=(
+                f'Deduction {deduction} on email #{email_obj.id} '
+                f'({email_obj.report_type}) — final score {email_obj.final_score}%'
+            ),
+            request=request,
         )
 
         return JsonResponse({
-            'success': True,
-            'message': f'Score {action}',
-            'score_id': score_obj.id,
-            'report_id': report.id,
-            'auto_score': score_obj.auto_score,
-            'manual_score': score_obj.manual_score,
-            'final_score': score_obj.final_score,
-            'deduction': deduction,
+            'success':      True,
+            'message':      f'Deduction set to {deduction}',
+            'email_id':     email_obj.id,
+            'deduction':    email_obj.manual_deduction,
+            'final_score':  email_obj.final_score,
         })
 
     except json.JSONDecodeError:
@@ -6394,10 +6811,12 @@ def _parse_status_safe(raw):
         return 'overdue', raw_str
     return 'open', raw_str
 
-def _build_exception_records(report, headers, rows_data):
+
+def _build_exception_records(upload, headers, rows_data):
     """
     Parse Excel rows into typed ExceptionRecord rows.
 
+    `upload` is an ExceptionUpload instance (the container).
     Only ExceptionRecord rows are created — no raw cell mirror.
     Returns the number of records created.
     """
@@ -6426,16 +6845,12 @@ def _build_exception_records(report, headers, rows_data):
             serial_number = row_idx + 1
 
         date_noted, date_noted_raw = _parse_date_safe(extracted.get('date_noted'))
-        target_date, target_date_raw = _parse_date_safe(
-            extracted.get('target_closure_date')
-        )
-        cost_saved, cost_saved_raw = _parse_decimal_safe(
-            extracted.get('income_cost_saved')
-        )
+        target_date, target_date_raw = _parse_date_safe(extracted.get('target_closure_date'))
+        cost_saved, cost_saved_raw = _parse_decimal_safe(extracted.get('income_cost_saved'))
         status_val, status_raw = _parse_status_safe(extracted.get('status'))
 
         records_to_create.append(ExceptionRecord(
-            report=report,
+            upload=upload,                                        # <-- CHANGED
             serial_number=serial_number,
             branch_unit=str(extracted.get('branch_unit', '') or '').strip()[:200],
             exception=str(extracted.get('exception', '') or '').strip(),
@@ -6444,13 +6859,9 @@ def _build_exception_records(report, headers, rows_data):
             target_closure_date=target_date,
             target_closure_date_raw=target_date_raw[:50],
             category=str(extracted.get('category', '') or '').strip()[:200],
-            responsible_officer=str(
-                extracted.get('responsible_officer', '') or ''
-            ).strip()[:200],
+            responsible_officer=str(extracted.get('responsible_officer', '') or '').strip()[:200],
             supervisor=str(extracted.get('supervisor', '') or '').strip()[:200],
-            auditee_response=str(
-                extracted.get('auditee_response', '') or ''
-            ).strip(),
+            auditee_response=str(extracted.get('auditee_response', '') or '').strip(),
             remarks=str(extracted.get('remarks', '') or '').strip(),
             status=status_val,
             status_raw=status_raw[:100],
@@ -6464,155 +6875,34 @@ def _build_exception_records(report, headers, rows_data):
 
     return len(records_to_create)
 
-# ============================================================
-# REPLACE api_save_imported_data with this version
-# ============================================================
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def api_save_imported_data(request):
-    """
-    Persist an Excel upload from draft.html as typed exception records.
-
-    Only ExceptionRecord rows are created. The Report container keeps
-    the original headers on `excel_headers` so the UI can render the
-    correct columns.
-    """
-    try:
-        data = json.loads(request.body)
-
-        headers = data.get('headers', [])
-        rows_data = data.get('data', [])
-        report_type = data.get('report_type', '')
-        file_name = data.get('file_name', 'uploaded.xlsx')
-
-        if not headers or not rows_data:
-            return JsonResponse({'success': False, 'error': 'No data to save. Please import an Excel file first.'}, status=400)
-
-        if not report_type:
-            return JsonResponse({'success': False, 'error': 'Please select a report type.'}, status=400)
-
-        if report_type == TRIAL_BALANCE_REPORT_TYPE:
-            return JsonResponse({'success': False, 'error': 'This report type is reserved for internal use.'}, status=400)
-
-        try:
-            user_profile = UserProfile.objects.get(email=request.user.email)
-        except UserProfile.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
-
-        validation = _validate_exception_headers(headers)
-
-        if validation['status'] == 'error':
-            return JsonResponse({
-                'success': False,
-                'error': (
-                    'Column headers in row 1 do not match the standard exception '
-                    'template. Matched {matched} of {total}. Missing: {missing}'
-                ).format(
-                    matched=validation['match_count'],
-                    total=validation['total_canonical'],
-                    missing=', '.join(validation['missing']),
-                ),
-                'validation': validation,
-            }, status=400)
-
-        # Remove any empty containers left over from previous failed uploads
-        Report.objects.filter(
-            created_by=user_profile,
-            status=UPLOADED_STATUS,
-            exception_records__isnull=True,
-            data_fields__isnull=True,
-        ).delete()
-
-        report = Report.objects.create(
-            report_type=report_type,
-            frequency='one-off',
-            description=f'Excel Import: {file_name}',
-            status=UPLOADED_STATUS,
-            created_by=user_profile,
-            excel_headers=','.join(str(h) for h in headers),
-        )
-
-        # Keep ReportDataField rows for any legacy consumers (single-row
-        # form reports). Excel uploads never read from them.
-        for i, header in enumerate(headers):
-            ReportDataField.objects.create(
-                report=report,
-                field_name=header or f'Column_{i+1}',
-                field_value='',
-                field_type='text',
-                order=i,
-            )
-
-        typed_count = 0
-        try:
-            typed_count = _build_exception_records(
-                report=report,
-                headers=headers,
-                rows_data=rows_data,
-            )
-        except Exception as exc:
-            logger.exception("Failed to build typed ExceptionRecord rows: %s", exc)
-
-        log_activity(
-            user=user_profile,
-            activity_type='report_submitted',
-            details=(
-                f'Uploaded {report_type} with {len(rows_data)} exception records '
-                f'({typed_count} typed) from Excel'
-            ),
-            request=request,
-        )
-
-        return JsonResponse({
-            'success': True,
-            'message': (
-                f'Successfully saved {len(rows_data)} records from {file_name} '
-                f'({typed_count} typed as exceptions)'
-            ),
-            'report_id': report.id,
-            'record_count': len(rows_data),
-            'typed_record_count': typed_count,
-            'validation': validation,
-        })
-
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
-    except Exception as e:
-        logger.exception("Error saving imported data")
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 # ==================== API - EXCEL ROW (SINGLE) EDIT / DELETE ====================
 
 @csrf_exempt
 @require_http_methods(["DELETE"])
 def api_delete_excel_row(request, row_id):
-    """
-    Delete a SINGLE ExceptionRecord row.
-    The URL parameter is now the ExceptionRecord.id, not ReportExcelRow.id.
-    """
+    """Delete a SINGLE ExceptionRecord row."""
     try:
         record = get_object_or_404(ExceptionRecord, id=row_id)
-        report = record.report
-
-        if report is None or report.report_type == TRIAL_BALANCE_REPORT_TYPE:
-            return JsonResponse({'success': False, 'error': 'Not found'}, status=404)
+        upload = record.upload
 
         try:
             user_profile = UserProfile.objects.get(email=request.user.email)
-            if report.created_by != user_profile and user_profile.role != 'admin':
+            if upload.uploaded_by != user_profile and user_profile.role != 'admin':
                 return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
         except UserProfile.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
 
         record.delete()
 
-        remaining = report.exception_records.count()
+        remaining = upload.exception_records.count()
+        upload.row_count = remaining
+        upload.save(update_fields=['row_count'])
 
         log_activity(
             user=user_profile,
             activity_type='draft_deleted',
-            details=f'Deleted 1 exception row from report #{report.id} ({report.report_type})',
+            details=f'Deleted 1 exception row from upload #{upload.id} ({upload.report_type})',
             request=request,
         )
 
@@ -6626,23 +6916,18 @@ def api_delete_excel_row(request, row_id):
         logger.exception("Error in api_delete_excel_row")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_edit_excel_row(request, row_id):
-    """
-    Edit a SINGLE ExceptionRecord row.
-    Body: { "cells": { "COLUMN_NAME": "new value", ... } }
-    """
+    """Edit a SINGLE ExceptionRecord row."""
     try:
         record = get_object_or_404(ExceptionRecord, id=row_id)
-        report = record.report
-
-        if report is None or report.report_type == TRIAL_BALANCE_REPORT_TYPE:
-            return JsonResponse({'success': False, 'error': 'Not found'}, status=404)
+        upload = record.upload
 
         try:
             user_profile = UserProfile.objects.get(email=request.user.email)
-            if report.created_by != user_profile and user_profile.role != 'admin':
+            if upload.uploaded_by != user_profile and user_profile.role != 'admin':
                 return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
         except UserProfile.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
@@ -6688,7 +6973,7 @@ def api_edit_excel_row(request, row_id):
         log_activity(
             user=user_profile,
             activity_type='report_updated',
-            details=f'Edited 1 exception row (#{record.id}) in report #{report.id}',
+            details=f'Edited 1 exception row (#{record.id}) in upload #{upload.id}',
             request=request,
         )
 
@@ -6699,6 +6984,7 @@ def api_edit_excel_row(request, row_id):
     except Exception as e:
         logger.exception("Error in api_edit_excel_row")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -6713,9 +6999,7 @@ def api_supervisor_top_performers_live(request):
     today = timezone.now().date()
 
     exceptions_qs = ExceptionRecord.objects.filter(
-        report__isnull=False,
-    ).exclude(
-        report__report_type=TRIAL_BALANCE_REPORT_TYPE,
+        upload__isnull=False,
     )
     total_exceptions = exceptions_qs.count()
     today_exceptions = exceptions_qs.filter(created_at__date=today).count()
@@ -6782,7 +7066,6 @@ def api_supervisor_top_performers_live(request):
         total_members += 1
         sum_of_percentages += percentage
 
-    # Rank: highest net score first, tie-break on submissions
     performers.sort(
         key=lambda x: (x['net_score'], x['submitted']),
         reverse=True,
@@ -6804,118 +7087,6 @@ def api_supervisor_top_performers_live(request):
             'team_size': total_members,
         },
     })
-    """
-    Lightweight JSON endpoint for the Supervisor Dashboard's
-    'Top Performers' widget.
-
-    Returns the top 5 members ranked by the same score model used
-    in the initial render:
-        final_score = max(0, submitted − deductions)
-        percentage  = min(100, final_score / max_submissions × 100)
-
-    Also returns the summary aggregates so the KPI header cards can
-    refresh in the same round-trip.
-    """
-    try:
-        user_profile = UserProfile.objects.get(email=request.user.email)
-        if user_profile.role not in ('supervisor', 'admin'):
-            return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
-    except UserProfile.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
-
-    today = timezone.now().date()
-
-    # -------- Summary counters (mirrors supervisor_dashboard) --------
-    exceptions_qs = ExceptionRecord.objects.filter(
-        report__isnull=False,
-    ).exclude(
-        report__report_type=TRIAL_BALANCE_REPORT_TYPE,
-    )
-    total_exceptions = exceptions_qs.count()
-    today_exceptions = exceptions_qs.filter(created_at__date=today).count()
-
-    submitted_qs = Report.objects.filter(status='submitted').exclude(
-        report_type=TRIAL_BALANCE_REPORT_TYPE
-    )
-    submitted_reports_count = submitted_qs.count()
-
-    team_members = (
-        UserProfile.objects
-        .filter(role='member', status='active')
-        .order_by('full_name')
-    )
-
-    max_submissions = (
-        submitted_qs.values('created_by')
-        .annotate(c=Count('id'))
-        .order_by('-c')
-        .values_list('c', flat=True)
-        .first()
-    ) or 1
-
-    performers = []
-    sum_of_percentages = 0
-    total_members = 0
-
-    for member in team_members:
-        member_submitted = submitted_qs.filter(created_by=member).count()
-        member_deductions = (
-            AdHocDeduction.objects
-            .filter(user=member)
-            .aggregate(total=Sum('points'))
-            .get('total') or 0
-        )
-        final_score = max(0, member_submitted - member_deductions)
-        percentage = int((final_score / max_submissions) * 100) if max_submissions > 0 else 0
-        percentage = min(percentage, 100)
-
-        if percentage >= 80:
-            status = 'success'
-            status_icon = '🌟'
-            status_text = 'Excellent'
-        elif percentage >= 50:
-            status = 'warning'
-            status_icon = '📈'
-            status_text = 'Good'
-        else:
-            status = 'danger'
-            status_icon = '⚠️'
-            status_text = 'Needs Attention'
-
-        performers.append({
-            'id': member.id,
-            'full_name': member.full_name or member.email,
-            'submitted': member_submitted,
-            'deductions': member_deductions,
-            'final_score': final_score,
-            'percentage': percentage,
-            'status': status,
-            'status_text': status_text,
-            'status_icon': status_icon,
-        })
-
-        total_members += 1
-        sum_of_percentages += percentage
-
-    performers.sort(key=lambda x: x['percentage'], reverse=True)
-    top_performers = performers[:5]
-
-    completion_rate = (
-        int(sum_of_percentages / total_members) if total_members else 0
-    )
-
-    return JsonResponse({
-        'success': True,
-        'top_performers': top_performers,
-        'summary': {
-            'total_exceptions': total_exceptions,
-            'today_exceptions': today_exceptions,
-            'submitted_reports_count': submitted_reports_count,
-            'completion_rate': completion_rate,
-            'team_size': total_members,
-        },
-    })
-
 
 # ═══ NEW ═══ Avatar upload / delete endpoints
 
@@ -7407,25 +7578,174 @@ def email_page(request):
     return render(request, 'control_dashboard/email.html', context)
 
 
+# ── Canonical exception headers (used in both email HTML and Excel) ──
+EXCEPTION_CANONICAL_HEADERS = [
+    'S/N',
+    'BRANCH/UNIT',
+    'EXCEPTION',
+    'DATE EXCEPTION WAS NOTED',
+    'TARGET DATE FOR CLOSURE',
+    'CATEGORY OF EXCEPTION',
+    'RESPONSIBLE OFFICER',
+    'SUPERVISOR',
+    "AUDITEE'S RESPONSE",
+    'REMARKS',
+    'STATUS',
+    'INCOME/COST SAVED',
+]
+
+
+def _build_consolidated_email_html(report_type, header_line, date_from, date_to, rows):
+    """
+    Build the HTML body — ONE table, one header, all rows flowing through.
+    Uses inline styles so it survives Gmail/Outlook/Apple Mail.
+    """
+    # Header row
+    th_style = (
+        'background:#1a3a6b;color:#ffffff;padding:8px 6px;'
+        'border:1px solid #1a3a6b;text-align:left;font-weight:700;'
+        'font-size:10px;letter-spacing:0.4px;text-transform:uppercase;'
+        'vertical-align:middle;'
+    )
+    td_style = (
+        'padding:6px;border:1px solid #d0d7e2;font-size:11px;'
+        'color:#1a2332;vertical-align:top;'
+    )
+
+    header_cells = ''.join(
+        f'<th style="{th_style}">{html_escape(h)}</th>'
+        for h in EXCEPTION_CANONICAL_HEADERS
+    )
+
+    body_rows = []
+    for idx, r in enumerate(rows, start=1):
+        cells = [
+            idx,                          # renumbered S/N
+            r['branch_unit'],
+            r['exception'],
+            r['date_noted'],
+            r['target_closure_date'],
+            r['category'],
+            r['responsible_officer'],
+            r['supervisor'],
+            r['auditee_response'],
+            r['remarks'],
+            r['status'],
+            r['income_cost_saved'],
+        ]
+        tds = ''.join(
+            f'<td style="{td_style}">{html_escape(str(c if c not in (None, "") else ""))}</td>'
+            for c in cells
+        )
+        body_rows.append(f'<tr>{tds}</tr>')
+
+    # Range label
+    from_label = date_from.strftime('%b %d, %Y') if date_from else 'the beginning'
+    to_label   = date_to.strftime('%b %d, %Y')   if date_to   else 'today'
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f5f7fb;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:1200px;margin:0 auto;padding:24px;">
+
+    <div style="background:#ffffff;border:1px solid #e2e6ef;border-radius:10px;padding:24px;">
+
+      <h2 style="margin:0 0 6px 0;font-size:16px;color:#0f1b33;">
+        {html_escape(report_type)}
+      </h2>
+      <p style="margin:0 0 18px 0;font-size:12px;color:#6b7280;">
+        Range: <strong>{from_label}</strong> → <strong>{to_label}</strong>
+        &nbsp;·&nbsp; {len(rows)} exception{'s' if len(rows) != 1 else ''}
+      </p>
+
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <table cellpadding="0" cellspacing="0" border="0"
+               style="border-collapse:collapse;width:100%;min-width:1100px;">
+          <thead><tr>{header_cells}</tr></thead>
+          <tbody>{''.join(body_rows)}</tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <p style="margin:18px 0 0 0;font-size:11px;color:#9aa3b2;text-align:center;">
+      Sent automatically from the Exception Reporting System.
+    </p>
+
+  </div>
+</body>
+</html>"""
+    return html
+
+
+def _build_consolidated_email_excel(report_type, date_from, date_to, rows):
+    """
+    Build the Excel workbook — ONE sheet, ONE header, all rows flowing through.
+    Matches the uploaded source format (Calibri 11, dark-blue header,
+    white bold text, wrapped, thin borders, auto column widths).
+    """
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Exceptions'
+
+    # ---- Header row ----
+    header_font = Font(name='Calibri', size=11, bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='1A3A6B', end_color='1A3A6B', fill_type='solid')
+    header_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    thin = Side(border_style='thin', color='9AA3B2')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    for col, h in enumerate(EXCEPTION_CANONICAL_HEADERS, start=1):
+        c = ws.cell(row=1, column=col, value=h)
+        c.font = header_font
+        c.fill = header_fill
+        c.alignment = header_align
+        c.border = border
+
+    # ---- Data rows ----
+    body_font = Font(name='Calibri', size=11)
+    body_align_top = Alignment(vertical='top', wrap_text=True)
+
+    for idx, r in enumerate(rows, start=1):
+        values = [
+            idx,
+            r['branch_unit'],
+            r['exception'],
+            r['date_noted'],
+            r['target_closure_date'],
+            r['category'],
+            r['responsible_officer'],
+            r['supervisor'],
+            r['auditee_response'],
+            r['remarks'],
+            r['status'],
+            r['income_cost_saved'],
+        ]
+        for col, v in enumerate(values, start=1):
+            c = ws.cell(row=idx + 1, column=col, value=v if v not in (None, '') else '')
+            c.font = body_font
+            c.alignment = body_align_top
+            c.border = border
+
+    # ---- Column widths (approximations of the source sheet) ----
+    widths = [6, 16, 55, 12, 14, 16, 16, 14, 30, 20, 12, 16]
+    for col, w in enumerate(widths, start=1):
+        ws.column_dimensions[get_column_letter(col)].width = w
+
+    ws.freeze_panes = 'A2'
+    ws.auto_filter.ref = f'A1:{get_column_letter(len(EXCEPTION_CANONICAL_HEADERS))}{ws.max_row}'
+
+    # Save to bytes
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_send_email(request):
-    """
-    Send an email from the compose page.
-
-    Every attempt — successful or not — is recorded in the
-    SentEmail table so there is a durable audit trail of who
-    sent what, to whom, and when.
-
-    Body (JSON):
-    {
-        "to":          ["a@x.com", "b@y.com"],
-        "cc":          ["c@z.com"],
-        "report_type": "Daily Exception Report",
-        "header":      "Subject line",
-        "body":        "Email body text"
-    }
-    """
     try:
         if not request.body:
             return JsonResponse({'success': False, 'error': 'Empty request body.'}, status=400)
@@ -7435,23 +7755,38 @@ def api_send_email(request):
         to_list       = data.get('to') or []
         cc_list       = data.get('cc') or []
         report_type   = (data.get('report_type') or '').strip()
+        date_from_str = (data.get('date_from') or '').strip()
+        date_to_str   = (data.get('date_to')   or '').strip()
         header        = (data.get('header') or '').strip()
         body          = (data.get('body') or '').strip()
 
         # ---- Validation ----
         if not isinstance(to_list, list) or not to_list:
             return JsonResponse({'success': False, 'error': 'At least one "To" recipient is required.'}, status=400)
-
         if not report_type:
             return JsonResponse({'success': False, 'error': 'Report type is required.'}, status=400)
-
         if not header:
             return JsonResponse({'success': False, 'error': 'Email header is required.'}, status=400)
-
         if not body:
             return JsonResponse({'success': False, 'error': 'Email body is required.'}, status=400)
 
-        # Normalize + deduplicate recipient lists
+        # ---- Parse optional date range ----
+        date_from = None
+        date_to   = None
+        if date_from_str:
+            try:
+                date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'success': False, 'error': 'Invalid "From" date.'}, status=400)
+        if date_to_str:
+            try:
+                date_to = datetime.strptime(date_to_str, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'success': False, 'error': 'Invalid "To" date.'}, status=400)
+        if date_from and date_to and date_from > date_to:
+            return JsonResponse({'success': False, 'error': '"From" date must not be after "To" date.'}, status=400)
+
+        # ---- Normalize recipients ----
         def _clean(lst):
             out = []
             for addr in lst:
@@ -7463,7 +7798,6 @@ def api_send_email(request):
         to_list = _clean(to_list)
         cc_list = _clean(cc_list)
 
-        # Simple email-format guard
         email_re = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
         bad = [a for a in (to_list + cc_list) if not email_re.match(a)]
         if bad:
@@ -7478,33 +7812,133 @@ def api_send_email(request):
         except UserProfile.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
 
-        # ---- Build the final subject ----
+        # ================================================================
+        # Collect exception rows.
+        #
+        # If the sender ticked specific rows, only those are sent.
+        # If nothing was ticked, we fall back to the full range —
+        # every exception this user uploaded for the chosen report type.
+        # ================================================================
+        selected_ids = data.get('selected_ids') or []
+
+        if selected_ids:
+            # Sender hand-picked rows — enforce they belong to this user
+            records_qs = (
+                ExceptionRecord.objects
+                .filter(
+                    id__in=selected_ids,
+                    upload__uploaded_by=user_profile,
+                )
+                .select_related('upload')
+                .order_by('upload__created_at', 'source_row_index', 'serial_number')
+            )
+        else:
+            # Nothing selected → send everything in range
+            uploads_qs = ExceptionUpload.objects.filter(
+                uploaded_by=user_profile,
+                report_type=report_type,
+            )
+            if date_from:
+                uploads_qs = uploads_qs.filter(created_at__date__gte=date_from)
+            if date_to:
+                uploads_qs = uploads_qs.filter(created_at__date__lte=date_to)
+            uploads_qs = uploads_qs.order_by('created_at')
+
+            records_qs = (
+                ExceptionRecord.objects
+                .filter(upload__in=uploads_qs)
+                .select_related('upload')
+                .order_by('upload__created_at', 'source_row_index', 'serial_number')
+            )
+
+        def _fmt_date(d, raw):
+            if d:
+                return d.strftime('%d-%b-%y')
+            return raw or ''
+
+        def _fmt_money(v):
+            try:
+                return f'{float(v):,.2f}' if v is not None else ''
+            except (TypeError, ValueError):
+                return ''
+
+        rows = []
+        for rec in records_qs:
+            rows.append({
+                'branch_unit':         rec.branch_unit or '',
+                'exception':           rec.exception or '',
+                'date_noted':          _fmt_date(rec.date_noted, rec.date_noted_raw),
+                'target_closure_date': _fmt_date(rec.target_closure_date, rec.target_closure_date_raw),
+                'category':            rec.category or '',
+                'responsible_officer': rec.responsible_officer or '',
+                'supervisor':          rec.supervisor or '',
+                'auditee_response':    rec.auditee_response or '',
+                'remarks':             rec.remarks or '',
+                'status':              rec.get_status_display() or rec.status_raw or '',
+                'income_cost_saved':   _fmt_money(rec.income_cost_saved),
+            })
+
+        # ================================================================
+        # Build HTML + Excel
+        # ================================================================
+        html_body = _build_consolidated_email_html(
+            report_type, header, date_from, date_to, rows,
+        ) if rows else None
+
+        excel_bytes = _build_consolidated_email_excel(
+            report_type, date_from, date_to, rows,
+        ) if rows else None
+
+        # ---- Compose message ----
         full_subject = f'[{report_type}] {header}'
+        from_email   = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or user_profile.email
 
-        # ---- Compose the message ----
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or user_profile.email
+        # Plain-text fallback for clients that don't render HTML
+        from_label = date_from.strftime('%b %d, %Y') if date_from else 'the beginning'
+        to_label   = date_to.strftime('%b %d, %Y')   if date_to   else 'today'
+        plain_body = (
+            f'{body}\n\n'
+            f'---\n'
+            f'Report type: {report_type}\n'
+            f'Range: {from_label} → {to_label}\n'
+            f'Exceptions included: {len(rows)}\n'
+            f'---\n\n'
+            f'The full table is in the attached Excel workbook.'
+        )
 
-        message = EmailMessage(
+        msg = EmailMultiAlternatives(
             subject=full_subject,
-            body=body,
+            body=plain_body,
             from_email=from_email,
             to=to_list,
             cc=cc_list,
         )
 
-        # ---- Attempt to send ----
+        if html_body:
+            msg.attach_alternative(html_body, 'text/html')
+
+        if excel_bytes:
+            safe_rt = re.sub(r'[^A-Za-z0-9_-]', '_', report_type)[:40]
+            file_from = date_from.strftime('%Y%m%d') if date_from else 'start'
+            file_to   = date_to.strftime('%Y%m%d')   if date_to   else 'today'
+            filename  = f'{safe_rt}_{file_from}_{file_to}.xlsx'
+            msg.attach(
+                filename,
+                excel_bytes,
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            )
+
+        # ---- Send ----
         send_error = None
         try:
-            message.send(fail_silently=False)
+            msg.send(fail_silently=False)
             delivery_status = 'sent'
         except Exception as exc:
             logger.exception("SMTP send failed")
             send_error = str(exc)
             delivery_status = 'failed'
 
-        # ---- PERSIST THE SENT EMAIL RECORD ----
-        # This runs regardless of SMTP outcome so we have a full
-        # audit trail of what was attempted.
+        # ---- Persist audit row (records sender, time, recipients) ----
         try:
             SentEmail.objects.create(
                 sender=user_profile,
@@ -7519,13 +7953,14 @@ def api_send_email(request):
         except Exception:
             logger.exception("Failed to persist SentEmail audit row")
 
-        # ---- Mirror into the ActivityLog for the activity timeline ----
         log_activity(
             user=user_profile,
             activity_type='email_sent',
             details=(
                 f'Sent email "{full_subject}" to {", ".join(to_list)}'
                 + (f' (cc: {", ".join(cc_list)})' if cc_list else '')
+                + (f' — range {date_from_str or "…"} → {date_to_str or "…"}'
+                   f' ({len(rows)} exceptions)' if (date_from or date_to) else '')
                 + (f' — SMTP error: {send_error}' if send_error else '')
             ),
             request=request,
@@ -7542,7 +7977,7 @@ def api_send_email(request):
             'message': (
                 f'Email sent to {len(to_list)} recipient(s)'
                 + (f' and {len(cc_list)} cc' if cc_list else '')
-                + '.'
+                + (f' — {len(rows)} exception(s) attached.' if rows else '.')
             ),
         })
 
@@ -7551,115 +7986,83 @@ def api_send_email(request):
     except Exception as e:
         logger.exception("Error in api_send_email")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-    """
-    Send an email from the compose page.
 
-    Body (JSON):
-    {
-        "to":          ["a@x.com", "b@y.com"],
-        "cc":          ["c@z.com"],
-        "report_type": "Daily Exception Report",
-        "header":      "Subject line",
-        "body":        "Email body text"
-    }
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_email_preview_exceptions(request):
+    """
+    Return the current user's own exception rows for a given
+    report type and upload-date range, so the compose page can
+    offer a picker and a live preview.
     """
     try:
-        if not request.body:
-            return JsonResponse({'success': False, 'error': 'Empty request body.'}, status=400)
-
-        data = json.loads(request.body)
-
-        to_list       = data.get('to') or []
-        cc_list       = data.get('cc') or []
-        report_type   = (data.get('report_type') or '').strip()
-        header        = (data.get('header') or '').strip()
-        body          = (data.get('body') or '').strip()
-
-        # ---- Validation ----
-        if not isinstance(to_list, list) or not to_list:
-            return JsonResponse({'success': False, 'error': 'At least one "To" recipient is required.'}, status=400)
+        report_type = (request.GET.get('report_type') or '').strip()
+        date_from_s = (request.GET.get('date_from') or '').strip()
+        date_to_s   = (request.GET.get('date_to')   or '').strip()
 
         if not report_type:
-            return JsonResponse({'success': False, 'error': 'Report type is required.'}, status=400)
-
-        if not header:
-            return JsonResponse({'success': False, 'error': 'Email header is required.'}, status=400)
-
-        if not body:
-            return JsonResponse({'success': False, 'error': 'Email body is required.'}, status=400)
-
-        # Normalize + clean recipient lists
-        def _clean(lst):
-            out = []
-            for addr in lst:
-                a = str(addr or '').strip()
-                if a and a not in out:
-                    out.append(a)
-            return out
-
-        to_list = _clean(to_list)
-        cc_list = _clean(cc_list)
-
-        # Simple email-format guard (Django will validate the rest at send time)
-        email_re = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-        bad = [a for a in (to_list + cc_list) if not email_re.match(a)]
-        if bad:
-            return JsonResponse({
-                'success': False,
-                'error': f'Invalid email address(es): {", ".join(bad)}',
-            }, status=400)
+            return JsonResponse({'success': True, 'rows': []})
 
         try:
             user_profile = UserProfile.objects.get(email=request.user.email)
         except UserProfile.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
 
-        # ---- Prepend report type into the subject for traceability ----
-        full_subject = f'[{report_type}] {header}'
+        date_from = None
+        date_to   = None
+        if date_from_s:
+            try: date_from = datetime.strptime(date_from_s, '%Y-%m-%d').date()
+            except ValueError: pass
+        if date_to_s:
+            try: date_to = datetime.strptime(date_to_s, '%Y-%m-%d').date()
+            except ValueError: pass
 
-        # ---- Compose the message ----
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or user_profile.email
-        message = EmailMessage(
-            subject=full_subject,
-            body=body,
-            from_email=from_email,
-            to=to_list,
-            cc=cc_list,
+        uploads_qs = ExceptionUpload.objects.filter(
+            uploaded_by=user_profile,
+            report_type=report_type,
+        )
+        if date_from:
+            uploads_qs = uploads_qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            uploads_qs = uploads_qs.filter(created_at__date__lte=date_to)
+
+        uploads_qs = uploads_qs.order_by('created_at')
+
+        records_qs = (
+            ExceptionRecord.objects
+            .filter(upload__in=uploads_qs)
+            .select_related('upload')
+            .order_by('upload__created_at', 'source_row_index', 'serial_number')[:500]
         )
 
-        # ---- Attempt to send ----
-        send_error = None
-        try:
-            message.send(fail_silently=False)
-        except Exception as exc:
-            logger.exception("SMTP send failed")
-            send_error = str(exc)
+        def _fmt_date(d, raw):
+            if d: return d.strftime('%d-%b-%y')
+            return raw or ''
 
-        # ---- Log the attempt regardless of SMTP outcome ----
-        log_activity(
-            user=user_profile,
-            activity_type='email_sent',
-            details=(
-                f'Sent email "{full_subject}" to {", ".join(to_list)}'
-                + (f' (cc: {", ".join(cc_list)})' if cc_list else '')
-                + (f' — SMTP error: {send_error}' if send_error else '')
-            ),
-            request=request,
-        )
+        def _fmt_money(v):
+            try:    return f'{float(v):,.2f}' if v is not None else ''
+            except (TypeError, ValueError): return ''
 
-        if send_error:
-            return JsonResponse({
-                'success': False,
-                'error': f'Email saved but could not be sent: {send_error}',
-            }, status=500)
+        rows = []
+        for rec in records_qs:
+            rows.append({
+                'id':                  rec.id,
+                'serial_number':       rec.serial_number,
+                'branch_unit':         rec.branch_unit or '',
+                'exception':           rec.exception or '',
+                'date_noted':          _fmt_date(rec.date_noted, rec.date_noted_raw),
+                'target_closure_date': _fmt_date(rec.target_closure_date, rec.target_closure_date_raw),
+                'category':            rec.category or '',
+                'responsible_officer': rec.responsible_officer or '',
+                'supervisor':          rec.supervisor or '',
+                'auditee_response':    rec.auditee_response or '',
+                'remarks':             rec.remarks or '',
+                'status':              rec.get_status_display() or rec.status_raw or '',
+                'income_cost_saved':   _fmt_money(rec.income_cost_saved),
+            })
 
-        return JsonResponse({
-            'success': True,
-            'message': f'Email sent to {len(to_list)} recipient(s)' + (f' and {len(cc_list)} cc' if cc_list else '') + '.',
-        })
+        return JsonResponse({'success': True, 'count': len(rows), 'rows': rows})
 
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
     except Exception as e:
-        logger.exception("Error in api_send_email")
+        logger.exception("Error in api_email_preview_exceptions")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)

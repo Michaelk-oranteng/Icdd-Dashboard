@@ -1,0 +1,740 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}All Submitted Exceptions{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* ============================================================
+   ALL SUBMITTED EXCEPTIONS — Supervisor view
+   ============================================================ */
+
+:root {
+    --an-bg-0: #eef1f8;
+    --an-bg-1: #ffffff;
+    --an-bg-2: #f7f8fc;
+    --an-bg-3: #f1f3f9;
+
+    --an-border: rgba(15, 27, 51, 0.08);
+    --an-border-strong: rgba(15, 27, 51, 0.16);
+    --an-hairline: rgba(15, 27, 51, 0.06);
+
+    --an-text-0: #0f1b33;
+    --an-text-1: #46536b;
+    --an-text-2: #8993a8;
+
+    --an-accent: #4f6ef7;
+    --an-accent-soft: #eef1ff;
+    --an-emerald: #17a673;
+    --an-emerald-soft: #e2f7ef;
+    --an-amber: #e08a17;
+    --an-amber-soft: #fdf2e0;
+    --an-rose: #e0456a;
+    --an-rose-soft: #fdeaf0;
+    --an-violet: #7c5cf0;
+    --an-violet-soft: #f0ebff;
+
+    --an-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --an-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+
+    --an-font: 'Poppins', system-ui, -apple-system, sans-serif;
+}
+
+.analytics-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 4px 0 40px;
+    font-family: var(--an-font);
+    color: var(--an-text-0);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+.an-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--an-bg-1);
+    border: 1px solid var(--an-border);
+    border-radius: 16px;
+    box-shadow: var(--an-shadow-sm);
+    position: relative;
+}
+
+.an-filter-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--an-accent) 50%,
+        transparent 100%);
+    opacity: 0.7;
+    border-radius: 16px 16px 0 0;
+}
+
+.an-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.an-filter-group label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--an-text-2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.an-filter-group select,
+.an-filter-group input {
+    padding: 8px 32px 8px 14px;
+    border: 1px solid var(--an-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--an-font);
+    background: var(--an-bg-1);
+    color: var(--an-text-0);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+    height: 38px;
+    box-sizing: border-box;
+    min-width: 130px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 13px;
+}
+
+.an-filter-group input[type="date"] {
+    background-image: none;
+    padding-right: 14px;
+    min-width: 130px;
+    color-scheme: light;
+}
+
+.an-filter-group select:hover,
+.an-filter-group input:hover {
+    border-color: var(--an-border-strong);
+}
+
+.an-filter-group select:focus,
+.an-filter-group input:focus {
+    border-color: var(--an-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.an-filter-group select option {
+    background: var(--an-bg-1);
+    color: var(--an-text-0);
+}
+
+.an-filter-spacer { flex: 1; }
+
+.an-btn-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--an-bg-1);
+    color: var(--an-text-1);
+    border: 1px solid var(--an-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--an-font);
+    cursor: pointer;
+    text-decoration: none;
+    height: 38px;
+    box-shadow: var(--an-shadow-sm);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.an-btn-reset:hover {
+    background: var(--an-bg-2);
+    color: var(--an-text-0);
+    border-color: var(--an-border-strong);
+    transform: translateY(-1px);
+}
+
+/* ============================================================
+   UPLOADER GROUP HEADER
+   ============================================================ */
+.uploader-group {
+    background: var(--an-bg-1);
+    border: 1px solid var(--an-border);
+    border-radius: 18px;
+    box-shadow: var(--an-shadow-sm);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 16px;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.uploader-group:hover {
+    box-shadow: var(--an-shadow-md);
+    border-color: var(--an-border-strong);
+}
+
+.uploader-group::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--an-amber) 50%,
+        transparent 100%);
+    opacity: 0.7;
+    z-index: 2;
+}
+
+.uploader-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--an-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    flex-wrap: wrap;
+}
+
+.uploader-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.uploader-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f6ef7 0%, #7c5cf0 100%);
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(79, 110, 247, 0.25);
+}
+
+.uploader-text {
+    min-width: 0;
+}
+
+.uploader-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--an-text-0);
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.uploader-meta {
+    font-size: 11px;
+    color: var(--an-text-2);
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.uploader-meta i {
+    font-size: 10px;
+    color: var(--an-accent);
+    margin-right: 3px;
+}
+
+.uploader-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--an-accent-soft);
+    color: var(--an-accent);
+    border: 1px solid rgba(79, 110, 247, 0.22);
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   EXCEPTIONS TABLE
+   ============================================================ */
+.exc-table-wrap {
+    max-height: 520px;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 27, 51, 0.15) transparent;
+}
+
+.exc-table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+.exc-table-wrap::-webkit-scrollbar-track { background: var(--an-bg-2); }
+.exc-table-wrap::-webkit-scrollbar-thumb {
+    background: rgba(15, 27, 51, 0.18);
+    border-radius: 4px;
+}
+
+.exc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: var(--an-font);
+    font-variant-numeric: tabular-nums;
+}
+
+.exc-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--an-bg-2);
+    color: var(--an-text-2);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--an-border);
+    z-index: 3;
+    white-space: nowrap;
+}
+
+.exc-table tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--an-hairline);
+    color: var(--an-text-1);
+    vertical-align: top;
+    line-height: 1.5;
+}
+
+.exc-table tbody tr:hover { background: var(--an-bg-2); }
+.exc-table tbody tr:last-child td { border-bottom: none; }
+
+.exc-table .cell-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--an-accent);
+    font-weight: 600;
+}
+
+.exc-table .cell-wide {
+    min-width: 380px;
+    max-width: 720px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    color: var(--an-text-0);
+    line-height: 1.6;
+}
+
+.exc-table .cell-num {
+    text-align: right;
+    font-weight: 700;
+    color: var(--an-emerald);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.exc-table .cell-date {
+    white-space: nowrap;
+    color: var(--an-text-2);
+    font-variant-numeric: tabular-nums;
+    font-size: 11.5px;
+}
+
+/* Status pills */
+.exc-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+    border: 1px solid;
+}
+
+.exc-status.open {
+    background: var(--an-amber-soft);
+    color: var(--an-amber);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+.exc-status.closed,
+.exc-status.resolved {
+    background: var(--an-emerald-soft);
+    color: var(--an-emerald);
+    border-color: rgba(23, 166, 115, 0.22);
+}
+
+.exc-status.in_progress {
+    background: var(--an-violet-soft);
+    color: var(--an-violet);
+    border-color: rgba(124, 92, 240, 0.22);
+}
+
+.exc-status.rejected,
+.exc-status.overdue {
+    background: var(--an-rose-soft);
+    color: var(--an-rose);
+    border-color: rgba(224, 69, 106, 0.22);
+}
+
+.exc-status.pending {
+    background: var(--an-bg-2);
+    color: var(--an-text-1);
+    border-color: var(--an-border);
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.exc-empty {
+    padding: 72px 24px;
+    text-align: center;
+    color: var(--an-text-2);
+    background: var(--an-bg-1);
+    border: 1px dashed var(--an-border-strong);
+    border-radius: 18px;
+}
+
+.exc-empty i {
+    font-size: 44px;
+    width: 80px;
+    height: 80px;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+        rgba(23, 166, 115, 0.14) 0%,
+        rgba(23, 166, 115, 0.04) 60%,
+        transparent 70%);
+    color: var(--an-emerald);
+    animation: an-float 3s ease-in-out infinite;
+}
+
+@keyframes an-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+.exc-empty h3 {
+    margin: 0 0 6px 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--an-text-0);
+}
+
+.exc-empty p {
+    margin: 0;
+    font-size: 13px;
+}
+
+/* ============================================================
+   HEADER ACTION BUTTONS
+   ============================================================ */
+.btn-back-dashboard {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--an-bg-1);
+    color: var(--an-text-1);
+    border: 1px solid var(--an-border);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--an-font);
+    letter-spacing: 0.3px;
+    height: 38px;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: var(--an-shadow-sm);
+    transition: all 0.25s ease;
+    margin-right: 8px;
+}
+
+.btn-back-dashboard:hover {
+    background: var(--an-bg-2);
+    color: var(--an-text-0);
+    border-color: var(--an-border-strong);
+    transform: translateY(-1px);
+}
+
+.btn-back-dashboard i { font-size: 12px; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+    .an-filter-bar { padding: 12px 14px; }
+    .an-filter-group { flex: 1 1 calc(50% - 8px); min-width: 140px; }
+    .an-filter-group select,
+    .an-filter-group input { flex: 1; width: 100%; min-width: unset; }
+    .an-btn-reset { width: 100%; }
+}
+
+@media (max-width: 768px) {
+    .exc-table-wrap { max-height: none; }
+    .exc-table { min-width: 900px; }
+
+    .uploader-header { padding: 12px 16px; gap: 10px; }
+    .uploader-avatar { width: 34px; height: 34px; font-size: 12px; }
+    .uploader-name { font-size: 13px; }
+}
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:supervisor_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li><a href="{% url 'control_dashboard:supervisor_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+    <span class="nav-text">Dashboard</span>
+</a></li>
+<li class="active"><a href="{% url 'control_dashboard:analytics_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Analytics</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:team_performance' %}">
+    <span class="nav-icon"><i class="fas fa-users"></i></span>
+    <span class="nav-text">Team Performance</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:ad_hoc_scorecard' %}">
+    <span class="nav-icon"><i class="fas fa-star"></i></span>
+    <span class="nav-text">Ad-Hoc Scorecard</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:submitted_reports' %}">
+    <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
+    <span class="nav-text">Submitted Reports</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:supervisor_checklist' %}">
+    <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+    <span class="nav-text">Activity Checklist</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
+    <span class="nav-icon"><i class="fas fa-search"></i></span>
+    <span class="nav-text">Activity Logs</span>
+</a></li>
+{% endblock %}
+
+{% block page_title %}All Submitted Exceptions{% endblock %}
+
+{% block top_header_right %}
+<a href="{% url 'control_dashboard:supervisor_dashboard' %}" class="btn-back-dashboard">
+    <i class="fas fa-arrow-left"></i> Back to Dashboard
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="analytics-container">
+
+    <!-- ============================================================
+         FILTER BAR
+         ============================================================ -->
+    <form class="an-filter-bar" method="get" id="analyticsFilterForm">
+
+        <div class="an-filter-group">
+            <label for="uploader">Uploader</label>
+            <select name="uploader" id="uploader" onchange="submitFilters()">
+                <option value="all">All Uploaders</option>
+                {% for u in available_uploaders %}
+                <option value="{{ u.id }}" {% if uploader_filter == u.id|stringformat:"s" %}selected{% endif %}>
+                    {{ u.full_name|default:u.email }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="an-filter-group">
+            <label for="branch">Branch / Dept</label>
+            <select name="branch" id="branch" onchange="submitFilters()">
+                <option value="all">All</option>
+                {% for b in available_branches %}
+                <option value="{{ b }}" {% if branch_filter == b %}selected{% endif %}>{{ b }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="an-filter-group">
+            <label for="category">Category</label>
+            <select name="category" id="category" onchange="submitFilters()">
+                <option value="all">All</option>
+                {% for c in available_categories %}
+                <option value="{{ c }}" {% if category_filter == c %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="an-filter-group">
+            <label for="status">Status</label>
+            <select name="status" id="status" onchange="submitFilters()">
+                <option value="all">All</option>
+                {% for code, label in available_statuses %}
+                <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="an-filter-group">
+            <label for="start_date">From</label>
+            <input type="date" name="start_date" id="start_date" value="{{ start_date }}" onchange="submitFilters()">
+        </div>
+
+        <div class="an-filter-group">
+            <label for="end_date">To</label>
+            <input type="date" name="end_date" id="end_date" value="{{ end_date }}" onchange="submitFilters()">
+        </div>
+
+        <div class="an-filter-spacer"></div>
+
+        <a href="{% url 'control_dashboard:analytics_dashboard' %}" class="an-btn-reset">
+            <i class="fas fa-undo"></i> Reset
+        </a>
+    </form>
+
+    <!-- ============================================================
+         UPLOADER GROUPS
+         ============================================================ -->
+    {% if uploader_groups %}
+
+        {% for group in uploader_groups %}
+        <div class="uploader-group">
+            <div class="uploader-header">
+                <div class="uploader-info">
+                    <div class="uploader-avatar">
+                        {{ group.uploader.full_name|default:group.uploader.email|slice:":2"|upper }}
+                    </div>
+                    <div class="uploader-text">
+                        <div class="uploader-name">
+                            {{ group.uploader.full_name|default:group.uploader.email }}
+                        </div>
+                        <div class="uploader-meta">
+                            <span>
+                                <i class="fas fa-envelope"></i>{{ group.uploader.email }}
+                            </span>
+                            {% if group.uploader.position %}
+                            <span>
+                                <i class="fas fa-briefcase"></i>{{ group.uploader.get_position_display }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <span class="uploader-badge">
+                    <i class="fas fa-file-lines"></i>
+                    {{ group.count }} exception{{ group.count|pluralize }}
+                </span>
+            </div>
+
+            <div class="exc-table-wrap">
+                <table class="exc-table">
+                    <thead>
+                        <tr>
+                            <th>S/N</th>
+                            <th>Branch / Unit</th>
+                            <th>Exception</th>
+                            <th>Date Noted</th>
+                            <th>Target Closure</th>
+                            <th>Category</th>
+                            <th>Responsible Officer</th>
+                            <th>Supervisor</th>
+                            <th>Status</th>
+                            <th>Income / Cost Saved</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in group.rows %}
+                        <tr>
+                            <td class="cell-mono">{{ e.serial_number }}</td>
+                            <td>{{ e.branch_unit|default:"—" }}</td>
+                            <td class="cell-wide">{{ e.exception|default:"—" }}</td>
+                            <td class="cell-date">{{ e.date_noted|date:"M d, Y"|default:"—" }}</td>
+                            <td class="cell-date">{{ e.target_closure_date|date:"M d, Y"|default:"—" }}</td>
+                            <td>{{ e.category|default:"—" }}</td>
+                            <td>{{ e.responsible_officer|default:"—" }}</td>
+                            <td>{{ e.supervisor|default:"—" }}</td>
+                            <td>
+                                {% with s=e.status|lower %}
+                                <span class="exc-status
+                                    {% if s == 'closed' or s == 'resolved' %}closed
+                                    {% elif s == 'in_progress' %}in_progress
+                                    {% elif s == 'rejected' or s == 'overdue' %}rejected
+                                    {% elif s == 'pending' %}pending
+                                    {% else %}open{% endif %}">
+                                    {{ e.get_status_display|default:e.status_raw|default:"—" }}
+                                </span>
+                                {% endwith %}
+                            </td>
+                            <td class="cell-num">{{ e.income_cost_saved }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+
+    {% else %}
+        <div class="exc-empty">
+            <i class="fas fa-inbox"></i>
+            <h3>No Exceptions Found</h3>
+            <p>No submitted exceptions match the current filters.</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function submitFilters() {
+        const form = document.getElementById('analyticsFilterForm');
+        if (form) form.submit();
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const t = e.target;
+            if (t.id === 'start_date' || t.id === 'end_date') submitFilters();
+        }
+    });
+</script>
+{% endblock %}

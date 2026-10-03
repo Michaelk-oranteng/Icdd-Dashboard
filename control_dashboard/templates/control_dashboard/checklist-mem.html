@@ -471,6 +471,9 @@
     vertical-align: top;
 }
 
+/* NEW: header alignment helper for the middle column */
+.dashboard-table thead th.col-center { text-align: center; }
+
 .dashboard-table tbody td {
     padding: 14px 16px;
     color: var(--cl-text-1);
@@ -482,6 +485,12 @@
 
 .dashboard-table tbody tr:hover { background: var(--cl-bg-2); }
 .dashboard-table tbody tr:last-child td { border-bottom: none; }
+
+/* NEW: middle column cell — vertically & horizontally centered */
+.dashboard-table tbody td.col-center {
+    text-align: center;
+    vertical-align: middle;
+}
 
 /* ============================================================
    ACTIVITY + TASKS
@@ -565,31 +574,29 @@
 }
 
 /* ============================================================
-   CALENDAR + PER-ACTIVITY PIE
+   MIDDLE COLUMN — FREQUENCY + PIE (stacked, centered)
    ============================================================ */
-.calendar-cell {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 18px;
-    width: 100%;
-}
-
-.calendar-left {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.calendar-right {
+.freq-pie-cell {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-    padding-top: 2px;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 100%;
+}
+
+/* ============================================================
+   CALENDAR (now narrower, no pie inside)
+   ============================================================ */
+.calendar-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+    max-width: 360px;          /* NEW: caps calendar width */
+    margin: 0 auto;            /* NEW: keeps it centered in its cell */
 }
 
 .calendar-head {
@@ -969,13 +976,7 @@
 }
 
 @media (max-width: 900px) {
-    .calendar-cell { flex-direction: column; align-items: stretch; gap: 12px; }
-    .calendar-right {
-        flex-direction: row;
-        justify-content: center;
-        gap: 10px;
-        padding-top: 0;
-    }
+    .calendar-cell { max-width: 100%; }
 }
 
 @media (max-width: 768px) {
@@ -1057,12 +1058,6 @@
     <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
         <span class="nav-icon"><i class="fas fa-cash-register"></i></span>
         <span class="nav-text">Daily Trial Balance</span>
-    </a>
-</li>
-<li>
-    <a href="{% url 'control_dashboard:analytics_dashboard' %}">
-        <span class="nav-icon"><i class="fas fa-chart-area"></i></span>
-        <span class="nav-text">Analytics</span>
     </a>
 </li>
 <li>
@@ -1177,7 +1172,6 @@
         <div class="filter-group">
             <span class="filter-group-label">Branch/Dept</span>
             <select id="combinedFilter" onchange="applyFilters()">
-                <option value="all" {% if active_combined_filter == 'all' %}selected{% endif %}>Branch/Dept</option>
                 {% for option in combined_filter_options %}
                 <option value="{{ option.value }}" {% if active_combined_filter == option.value %}selected{% endif %}>{{ option.display }}</option>
                 {% endfor %}
@@ -1240,6 +1234,11 @@
 
     <!-- ============================================================
          TABLE
+         ------------------------------------------------------------
+         Column order (left → right):
+           1. Activity Name  → widened (was 30%, now 42%)
+           2. Frequency+Pie  → NEW middle column, centered
+           3. Calendar       → narrowed (was 60%, now 38%, capped)
          ============================================================ -->
     <div class="glass-card">
         <div class="table-header">
@@ -1250,9 +1249,9 @@
         <table class="dashboard-table">
             <thead>
                 <tr>
-                    <th style="width: 30%;">Activity Name</th>
-                    <th style="width: 10%;">Frequency</th>
-                    <th style="width: 60%;">Calendar</th>
+                    <th style="width: 42%;">Activity Name</th>
+                    <th class="col-center" style="width: 20%;">Frequency &amp; Progress</th>
+                    <th style="width: 38%;">Calendar</th>
                 </tr>
             </thead>
             <tbody id="taskTableBody">
@@ -1263,6 +1262,9 @@
                     data-unit-id="{{ item.unit_id }}"
                     class="checklist-row">
 
+                    <!-- ==================================================
+                         1. ACTIVITY NAME (widened)
+                         ================================================== -->
                     <td>
                         <div class="activity-cell">
                             <div class="activity-title">
@@ -1288,10 +1290,26 @@
                         </div>
                     </td>
 
-                    <td>
-                        <span class="frequency-tag {{ item.frequency }}">{{ item.frequency_display }}</span>
+                    <!-- ==================================================
+                         2. FREQUENCY + PIE (NEW middle column, centered)
+                         ================================================== -->
+                    <td class="col-center">
+                        <div class="freq-pie-cell">
+                            <span class="frequency-tag {{ item.frequency }}">{{ item.frequency_display }}</span>
+                            <div class="row-pie status-good" data-row-pie style="--pie-pct: 0;">
+                                <div class="row-pie-hole">
+                                    <div class="row-pie-value">
+                                        <span data-row-pie-value>0</span><span class="row-pie-suffix">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="row-pie-caption">This month</span>
+                        </div>
                     </td>
 
+                    <!-- ==================================================
+                         3. CALENDAR (narrowed, no pie inside)
+                         ================================================== -->
                     <td>
                         <div class="calendar-cell"
                              data-checklist-id="{{ item.id }}"
@@ -1300,33 +1318,20 @@
                              data-unit-name="{{ item.unit_name|escapejs }}"
                              data-activity-name="{{ item.name|escapejs }}">
 
-                            <div class="calendar-left">
-                                <div class="calendar-head">
-                                    <span class="cal-label" data-cal-label></span>
-                                    <span class="cal-progress-chip" data-cal-chip>0%</span>
-                                </div>
-                                <div class="calendar-dow">
-                                    <span class="dow">Mon</span>
-                                    <span class="dow">Tue</span>
-                                    <span class="dow">Wed</span>
-                                    <span class="dow">Thu</span>
-                                    <span class="dow">Fri</span>
-                                    <span class="dow weekend">Sat</span>
-                                    <span class="dow weekend">Sun</span>
-                                </div>
-                                <div class="calendar-grid" data-cal-grid></div>
+                            <div class="calendar-head">
+                                <span class="cal-label" data-cal-label></span>
+                                <span class="cal-progress-chip" data-cal-chip>0%</span>
                             </div>
-
-                            <div class="calendar-right">
-                                <div class="row-pie status-good" data-row-pie style="--pie-pct: 0;">
-                                    <div class="row-pie-hole">
-                                        <div class="row-pie-value">
-                                            <span data-row-pie-value>0</span><span class="row-pie-suffix">%</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <span class="row-pie-caption">This month</span>
+                            <div class="calendar-dow">
+                                <span class="dow">Mon</span>
+                                <span class="dow">Tue</span>
+                                <span class="dow">Wed</span>
+                                <span class="dow">Thu</span>
+                                <span class="dow">Fri</span>
+                                <span class="dow weekend">Sat</span>
+                                <span class="dow weekend">Sun</span>
                             </div>
+                            <div class="calendar-grid" data-cal-grid></div>
 
                         </div>
                     </td>
@@ -1433,7 +1438,7 @@ CHECKLISTS.forEach(c => { LOGS_BY_KEY[c.rowKey] = Array.isArray(c.logs) ? [...c.
 function getPeriodRange(freq, dateStr) {
     const d   = new Date(dateStr + 'T00:00:00');
     const y   = d.getFullYear();
-    const m   = d.getMonth();   // 0-based
+    const m   = d.getMonth();
     const day = d.getDate();
 
     function iso(dt) {
@@ -1446,8 +1451,8 @@ function getPeriodRange(freq, dateStr) {
     if (freq === 'weekly') {
         const dow = d.getDay();
         let shift;
-        if (dow >= 5) shift = dow - 5;       // Fri → 0, Sat → 1
-        else          shift = dow + 2;       // Sun → 2, Mon → 3, ..., Thu → 6
+        if (dow >= 5) shift = dow - 5;
+        else          shift = dow + 2;
         const start = new Date(y, m, day - shift);
         const end   = new Date(y, m, day - shift + 6);
         return [iso(start), iso(end)];
@@ -1476,7 +1481,6 @@ function getPeriodRange(freq, dateStr) {
         return [iso(new Date(y, 0, 1)), iso(new Date(y, 12, 0))];
     }
 
-    // daily → single day
     return [dateStr, dateStr];
 }
 
@@ -1519,7 +1523,12 @@ function updatePie(scope, pct) {
 }
 
 function updateRowPie(cellEl, pct) {
-    const pie = cellEl.querySelector('[data-row-pie]');
+    // NOTE: the row pie now lives in the frequency cell, not the calendar cell.
+    // We look it up via the row instead of the calendar cell.
+    const row = cellEl.closest('tr');
+    if (!row) return;
+
+    const pie = row.querySelector('[data-row-pie]');
     if (!pie) return;
 
     const clamped = Math.max(0, Math.min(100, pct));
@@ -1596,7 +1605,6 @@ function renderOneCalendar(cell) {
         const isToday   = (dateStr === todayStr);
         const isFuture  = dateObj > todayDate && !isToday;
 
-        // --- Period lock detection (client side) ---
         const lockingDay      = findLockingLog(task.frequency, dateStr, logs);
         const isPeriodLocked  = lockingDay !== null;
 
@@ -1649,7 +1657,6 @@ function renderOneCalendar(cell) {
 
 /* ============================================================
    EXPECTED OCCURRENCES (per month)
-   Must match Python's count_expected_occurrences() block boundaries.
    ============================================================ */
 function expectedForMonth(freq, month, year) {
     const daysInMonth = new Date(year, month, 0).getDate();
@@ -1664,15 +1671,14 @@ function expectedForMonth(freq, month, year) {
     }
 
     if (freq === 'weekly') {
-        // Count Friday-anchored weeks overlapping [firstOfMonth, lastOfMonth]
         const firstOfMonth = new Date(year, month - 1, 1);
         const lastOfMonth  = new Date(year, month, 0);
 
         function weekStart(d) {
             const dow = d.getDay();
             let shift;
-            if (dow >= 5) shift = dow - 5; // Fri=0, Sat=1
-            else          shift = dow + 2; // Sun=2, Mon=3, ..., Thu=6
+            if (dow >= 5) shift = dow - 5;
+            else          shift = dow + 2;
             return new Date(d.getFullYear(), d.getMonth(), d.getDate() - shift);
         }
 
@@ -1758,10 +1764,6 @@ function toggleLog(rowKey, dateStr, boxEl) {
 
 /* ============================================================
    KPI CARDS
-   ------------------------------------------------------------
-   Aggregates across visible rows using the same per-month
-   expectedForMonth() function that powers each row's pie.
-   This guarantees the KPI cards and the row pies never drift.
    ============================================================ */
 function updateAllProgressCards() {
     const month   = ACTIVE_MONTH;
@@ -1782,14 +1784,12 @@ function updateAllProgressCards() {
 
         const logs = LOGS_BY_KEY[rowKey] || [];
 
-        // ---- MONTH ----
         const mExp = expectedForMonth(task.frequency, month, year);
         const mPrefix = `${year}-${String(month).padStart(2,'0')}-`;
         const mAct = logs.filter(d => d.startsWith(mPrefix)).length;
         monthExpected += mExp;
         monthActual += Math.min(mAct, mExp > 0 ? mExp : mAct);
 
-        // ---- QUARTER ----
         const qStartMonth = (quarter - 1) * 3 + 1;
         const qEndMonth   = quarter * 3;
         let qExp = 0;
@@ -1804,7 +1804,6 @@ function updateAllProgressCards() {
         quarterExpected += qExp;
         quarterActual   += Math.min(qAct, qExp > 0 ? qExp : qAct);
 
-        // ---- YEAR ----
         let yExp = 0;
         for (let m = 1; m <= 12; m++) {
             yExp += expectedForMonth(task.frequency, m, year);
