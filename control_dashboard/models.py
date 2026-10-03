@@ -1543,3 +1543,322 @@ class SentEmail(models.Model):
     @property
     def is_overridden(self):
         return (self.manual_deduction or 0) > 0
+
+# ============================================
+# CHECKLIST CHANGE REQUESTS
+# ============================================
+
+class ChecklistChangeRequest(models.Model):
+    """
+    A member-initiated request to create, modify, delete, or extend
+    a checklist. Supervisors approve or reject; on approval the
+    payload is applied to the real Checklist/ChecklistTask rows.
+    """
+
+    class RequestType(models.TextChoices):
+        CREATE   = 'create',   'Create new checklist'
+        MODIFY   = 'modify',   'Modify existing checklist'
+        DELETE   = 'delete',   'Delete checklist'
+        ADD_TASK = 'add_task', 'Add task to checklist'
+
+    class Status(models.TextChoices):
+        PENDING   = 'pending',   'Pending review'
+        APPROVED  = 'approved',  'Approved'
+        REJECTED  = 'rejected',  'Rejected'
+        CANCELLED = 'cancelled', 'Cancelled by requester'
+
+    requester = models.ForeignKey(
+        'UserProfile',
+        on_delete=models.CASCADE,
+        related_name='checklist_requests',
+    )
+    request_type = models.CharField(max_length=16, choices=RequestType.choices)
+    status = models.CharField(
+        max_length=12,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+
+    target_checklist = models.ForeignKey(
+        'Checklist',
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='change_requests',
+        help_text='Null for CREATE requests.',
+    )
+
+    # Snapshot of the checklist as it was when the request was made.
+    # Lets a supervisor see the diff even if the checklist changed
+    # in the meantime.
+    current_snapshot = models.JSONField(default=dict, blank=True)
+
+    # Proposed state. Shape depends on request_type:
+    #   CREATE   → {name, description, frequency, tasks:[{description}],
+    #               assigned_branches:[id], assigned_departments:[id]}
+    #   MODIFY   → any subset of the above
+    #   DELETE   → {} (empty)
+    #   ADD_TASK → {description}
+    payload = models.JSONField(default=dict)
+
+    justification = models.TextField(blank=True)
+
+    reviewed_by = models.ForeignKey(
+        'UserProfile',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='reviewed_checklist_requests',
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_note = models.TextField(blank=True)
+
+    # Populated after a CREATE request is approved.
+    created_checklist = models.ForeignKey(
+        'Checklist',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='originating_request',
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'checklist_change_requests'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status', '-created_at']),
+            models.Index(fields=['requester', '-created_at']),
+            models.Index(fields=['target_checklist', 'status']),
+        ]
+
+    def __str__(self):
+        return f'{self.get_request_type_display()} — {self.requester} ({self.status})'
+
+    @property
+    def is_pending(self):
+        return self.status == self.Status.PENDING
+
+    # ------------------------------------------------------------------
+    # Serialization — used by the API views
+    # ------------------------------------------------------------------
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'request_type': self.request_type,
+            'request_type_display': self.get_request_type_display(),
+            'status': self.status,
+            'status_display': self.get_status_display(),
+            'requester': {
+                'id': self.requester_id,
+                'name': self.requester.full_name or self.requester.email,
+                'email': self.requester.email,
+                'avatar_url': self.requester.avatar_url,
+            },
+            'target_checklist': (
+                {'id': self.target_checklist_id, 'name': self.target_checklist.name}
+                if self.target_checklist else None
+            ),
+            'current_snapshot': self.current_snapshot,
+            'payload': self.payload,
+            'justification': self.justification,
+            'reviewed_by': (
+                {
+                    'id': self.reviewed_by_id,
+                    'name': self.reviewed_by.full_name or self.reviewed_by.email,
+                }
+                if self.reviewed_by else None
+            ),
+            'reviewed_at': self.reviewed_at.isoformat() if self.reviewed_at else None,
+            'review_note': self.review_note,
+            'created_checklist_id': self.created_checklist_id,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+        }
+
+    # ------------------------------------------------------------------
+    # Review actions
+    # ------------------------------------------------------------------
+    def approve(self, supervisor, note=''):
+        from django.db import transaction
+
+        if self.status != self.Status.PENDING:
+            raise ValueError(f'Cannot approve a {self.status} request.')
+
+        with transaction.atomic():
+            result = self._apply()
+            self.status = self.Status.APPROVED
+            self.reviewed_by = supervisor
+            self.reviewed_at = timezone.now()
+            self.review_note = note
+            if result is not None and self.request_type == self.RequestType.CREATE:
+                self.created_checklist = result
+            self.save(update_fields=[
+                'status', 'reviewed_by', 'reviewed_at',
+                'review_note', 'created_checklist', 'updated_at',
+            ])
+
+        # Log to ActivityLog — fires after transaction commits
+        ActivityLog.objects.create(
+            user=supervisor,
+            activity_type='score_updated',   # reuse existing choice
+            details=(
+                f'Approved {self.get_request_type_display()} request '
+                f'#{self.id} from {self.requester.full_name}.'
+                + (f' Note: {note}' if note else '')
+            ),
+        )
+
+        return self
+
+    def reject(self, supervisor, note=''):
+        if self.status != self.Status.PENDING:
+            raise ValueError(f'Cannot reject a {self.status} request.')
+
+        self.status = self.Status.REJECTED
+        self.reviewed_by = supervisor
+        self.reviewed_at = timezone.now()
+        self.review_note = note
+        self.save(update_fields=[
+            'status', 'reviewed_by', 'reviewed_at', 'review_note', 'updated_at',
+        ])
+
+        ActivityLog.objects.create(
+            user=supervisor,
+            activity_type='score_updated',
+            details=(
+                f'Rejected {self.get_request_type_display()} request '
+                f'#{self.id} from {self.requester.full_name}.'
+                + (f' Reason: {note}' if note else '')
+            ),
+        )
+
+        return self
+
+    def cancel(self):
+        if self.status != self.Status.PENDING:
+            raise ValueError('Only pending requests can be cancelled.')
+        self.status = self.Status.CANCELLED
+        self.save(update_fields=['status', 'updated_at'])
+        return self
+
+    # ------------------------------------------------------------------
+    # Payload appliers
+    # ------------------------------------------------------------------
+    def _apply(self):
+        handler = {
+            self.RequestType.CREATE:   self._apply_create,
+            self.RequestType.MODIFY:   self._apply_modify,
+            self.RequestType.DELETE:   self._apply_delete,
+            self.RequestType.ADD_TASK: self._apply_add_task,
+        }.get(self.request_type)
+
+        if not handler:
+            raise ValueError(f'Unknown request_type: {self.request_type}')
+        return handler()
+
+    def _apply_create(self):
+        from django.db import transaction
+
+        p = self.payload
+        with transaction.atomic():
+            checklist = Checklist.objects.create(
+                name=p['name'],
+                description=p.get('description', ''),
+                frequency=p['frequency'],
+                assignment_target='specific',
+                created_by=self.requester,
+            )
+            for i, t in enumerate(p.get('tasks', [])):
+                ChecklistTask.objects.create(
+                    checklist=checklist,
+                    description=t['description'][:500],
+                    order=i,
+                )
+            if p.get('assigned_branches'):
+                checklist.assigned_branches.set(p['assigned_branches'])
+            if p.get('assigned_departments'):
+                checklist.assigned_departments.set(p['assigned_departments'])
+        return checklist
+
+    def _apply_modify(self):
+        from django.db import transaction
+
+        if not self.target_checklist:
+            raise ValueError('Modify request has no target checklist.')
+
+        p = self.payload
+        c = self.target_checklist
+
+        with transaction.atomic():
+            if 'name' in p:        c.name = p['name']
+            if 'description' in p: c.description = p['description']
+            if 'frequency' in p:   c.frequency = p['frequency']
+            c.save()
+
+            if 'tasks' in p:
+                c.tasks.all().delete()
+                for i, t in enumerate(p['tasks']):
+                    ChecklistTask.objects.create(
+                        checklist=c,
+                        description=t['description'][:500],
+                        order=i,
+                    )
+
+            if 'assigned_branches' in p:
+                c.assigned_branches.set(p['assigned_branches'])
+            if 'assigned_departments' in p:
+                c.assigned_departments.set(p['assigned_departments'])
+
+        return c
+
+    def _apply_delete(self):
+        if not self.target_checklist:
+            raise ValueError('Delete request has no target checklist.')
+        c = self.target_checklist
+        # Soft-delete so historical ChecklistLog rows remain meaningful.
+        c.is_active = False
+        c.save(update_fields=['is_active', 'updated_at'])
+        return c
+
+    def _apply_add_task(self):
+        from django.db import transaction
+
+        if not self.target_checklist:
+            raise ValueError('Add-task request has no target checklist.')
+
+        p = self.payload
+        c = self.target_checklist
+        with transaction.atomic():
+            next_order = c.tasks.count()
+            ChecklistTask.objects.create(
+                checklist=c,
+                description=p['description'][:500],
+                order=next_order,
+            )
+        return c
+
+
+# ============================================
+# SIGNAL — snapshot checklist before Modify/Delete requests
+# ============================================
+
+def snapshot_checklist(checklist):
+    """Return a serializable snapshot of a Checklist and its tasks."""
+    return {
+        'id': checklist.id,
+        'name': checklist.name,
+        'description': checklist.description,
+        'frequency': checklist.frequency,
+        'is_active': checklist.is_active,
+        'assigned_branches': list(
+            checklist.assigned_branches.values_list('id', flat=True)
+        ),
+        'assigned_departments': list(
+            checklist.assigned_departments.values_list('id', flat=True)
+        ),
+        'tasks': [
+            {'id': t.id, 'description': t.description, 'order': t.order}
+            for t in checklist.tasks.all()
+        ],
+    }

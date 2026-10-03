@@ -46,10 +46,24 @@ from .models import (
     TrialBalanceUpload,
     TrialBalanceEntry,
     SentEmail,
+    ChecklistChangeRequest,
+    snapshot_checklist,
 )
 from .forms import UserProfileForm
 
 logger = logging.getLogger(__name__)
+
+def _is_supervisor(user):
+    """Check UserProfile.role for the supervisor role."""
+    profile = getattr(user, 'profile', None)
+    return bool(profile and profile.role in ('supervisor', 'admin'))
+
+
+def _json_body(request):
+    try:
+        return json.loads(request.body or '{}')
+    except (json.JSONDecodeError, TypeError):
+        return {}
 
 
 # ==================== CONSTANTS ====================
@@ -8062,3 +8076,4 @@ def api_email_preview_exceptions(request):
     except Exception as e:
         logger.exception("Error in api_email_preview_exceptions")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
