@@ -7,42 +7,84 @@
 <link rel="stylesheet" href="{% static 'stylesheets/team-performance.css' %}" type="text/css">
 <style>
 /* ============================================================
-   TEAM PERFORMANCE — Local template overrides
+   TEAM PERFORMANCE — Local template styles
    ============================================================ */
 
-/* Prevent the score text from wrapping when it has three digits */
-.score-text {
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-    transition: color 0.5s ease;
+:root {
+    --tp-bg-1: #ffffff;
+    --tp-bg-2: #f7f8fc;
+    --tp-bg-3: #f1f3f9;
+
+    --tp-border: rgba(15, 27, 51, 0.08);
+    --tp-border-strong: rgba(15, 27, 51, 0.16);
+    --tp-hairline: rgba(15, 27, 51, 0.06);
+
+    --tp-text-0: #0f1b33;
+    --tp-text-1: #46536b;
+    --tp-text-2: #8993a8;
+
+    --tp-accent: #4f6ef7;
+    --tp-accent-soft: #eef1ff;
+    --tp-emerald: #17a673;
+    --tp-emerald-soft: #e2f7ef;
+    --tp-amber: #e08a17;
+    --tp-amber-soft: #fdf2e0;
+    --tp-rose: #e0456a;
+    --tp-rose-soft: #fdeaf0;
+    --tp-violet: #7c5cf0;
+
+    --tp-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
+                    0 1px 3px rgba(15, 27, 51, 0.03);
+    --tp-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
+                    0 2px 4px rgba(15, 27, 51, 0.03);
+
+    --tp-font: 'Poppins', system-ui, -apple-system, sans-serif;
 }
 
-/* Prevent the number badges from ever wrapping */
-.task-count-badge {
-    white-space: nowrap;
+/* ---------- Container ---------- */
+.table-container {
+    background: var(--tp-bg-1);
+    border: 1px solid var(--tp-border);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--tp-shadow-sm);
+    position: relative;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.table-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, var(--tp-accent) 50%, transparent 100%);
+    opacity: 0.85;
+    z-index: 2;
 }
 
-/* Net score cell */
-.cell-net    { font-weight: 700; font-variant-numeric: tabular-nums; }
-.cell-net.positive { color: #059669; }
-.cell-net.negative { color: #dc2626; }
-.cell-net.zero     { color: #94a3b8; }
-
-/* Smooth live pulse when a cell updates */
-@keyframes fx-cell-update {
-    0%   { background: rgba(79, 110, 247, 0.16); }
-    100% { background: transparent; }
+.table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px 16px;
+    border-bottom: 1px solid var(--tp-hairline);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    flex-wrap: wrap;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
 }
-.cell-updated {
-    animation: fx-cell-update 1.4s ease-out;
+.table-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--tp-text-0);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.2px;
 }
 
-/* Progress bar transitions smoothly when values change */
-.progress-bar {
-    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Small live indicator in the table header */
+/* Live indicator with last-updated text */
 .live-indicator {
     display: inline-flex;
     align-items: center;
@@ -54,11 +96,21 @@
     color: #059669;
     background: rgba(16, 185, 129, 0.10);
     border: 1px solid rgba(16, 185, 129, 0.25);
-    padding: 3px 9px;
+    padding: 4px 10px;
     border-radius: 999px;
     margin-left: 10px;
+    transition: color .3s ease, background .3s ease, border-color .3s ease;
 }
-
+.live-indicator.is-stale {
+    color: var(--tp-amber);
+    background: rgba(224, 138, 23, 0.10);
+    border-color: rgba(224, 138, 23, 0.25);
+}
+.live-indicator.is-error {
+    color: var(--tp-rose);
+    background: rgba(224, 69, 106, 0.10);
+    border-color: rgba(224, 69, 106, 0.25);
+}
 .live-indicator .dot {
     width: 6px;
     height: 6px;
@@ -67,10 +119,270 @@
     box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
     animation: fx-pulse-dot 2s ease-in-out infinite;
 }
+.live-indicator.is-stale .dot { background: var(--tp-amber); box-shadow: 0 0 8px rgba(224,138,23,0.7); }
+.live-indicator.is-error .dot { background: var(--tp-rose); box-shadow: 0 0 8px rgba(224,69,106,0.7); animation: none; }
 
 @keyframes fx-pulse-dot {
     0%, 100% { transform: scale(1); opacity: 1; }
     50%      { transform: scale(1.3); opacity: 0.7; }
+}
+
+/* ---------- Leaderboard ---------- */
+.leaderboard {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px;
+}
+
+.member-row {
+    display: grid;
+    grid-template-columns:
+        40px                                /* rank */
+        minmax(180px, 1.4fr)                /* identity */
+        minmax(160px, 1fr)                  /* score */
+        minmax(140px, 0.9fr)                /* stats */
+        auto;                               /* status */
+    align-items: center;
+    gap: 18px;
+    padding: 14px 18px;
+    background: var(--tp-bg-1);
+    border: 1px solid var(--tp-border);
+    border-radius: 14px;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.member-row:hover {
+    border-color: rgba(79, 110, 247, 0.28);
+    box-shadow: 0 6px 20px rgba(15, 27, 51, 0.06);
+    transform: translateY(-1px);
+}
+.member-row.is-top {
+    background: linear-gradient(180deg, #fffef9 0%, #ffffff 100%);
+    border-color: rgba(224, 138, 23, 0.22);
+}
+
+/* Rank */
+.member-rank {
+    display: grid; place-items: center;
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background: var(--tp-bg-2);
+    color: var(--tp-text-1);
+    border: 1px solid var(--tp-hairline);
+    position: relative;
+}
+.member-rank::before {
+    content: '#';
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--tp-text-2);
+    margin-right: 1px;
+}
+.member-row.is-top .member-rank {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+    border-color: rgba(224, 138, 23, 0.32);
+    box-shadow: 0 2px 8px rgba(224, 138, 23, 0.18);
+}
+
+/* Identity */
+.member-identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.member-avatar {
+    width: 38px; height: 38px; flex: 0 0 38px;
+    border-radius: 10px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, #eef1fe, #dde3fb);
+    color: #3b56d8;
+    font-weight: 700; font-size: 14px;
+}
+.member-who { display: flex; flex-direction: column; min-width: 0; }
+.member-name {
+    font-weight: 600; font-size: 13.5px;
+    color: var(--tp-text-0);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    letter-spacing: 0.1px;
+}
+.member-position {
+    font-size: 11px; color: var(--tp-text-2);
+    margin-top: 1px;
+}
+
+/* Score block */
+.member-score {
+    display: flex; flex-direction: column; gap: 6px;
+    min-width: 0;
+}
+.member-score__head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px;
+}
+.score-text {
+    font-size: 17px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.4px;
+    line-height: 1;
+    transition: color 0.5s ease;
+}
+.score-text.text-success { color: var(--tp-emerald); }
+.score-text.text-warning { color: var(--tp-amber); }
+.score-text.text-danger  { color: var(--tp-rose); }
+
+.score-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--tp-text-2);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.progress-track {
+    width: 100%;
+    height: 6px;
+    background: var(--tp-bg-3);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+.progress-bar {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+}
+.progress-bar.bar-success { background: linear-gradient(90deg, #17a673 0%, #10b981 100%); }
+.progress-bar.bar-warning { background: linear-gradient(90deg, #e08a17 0%, #f59e0b 100%); }
+.progress-bar.bar-danger  { background: linear-gradient(90deg, #e0456a 0%, #f43f5e 100%); }
+
+/* Stats cluster */
+.member-stats {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 14px;
+    background: var(--tp-bg-2);
+    border: 1px solid var(--tp-hairline);
+    border-radius: 10px;
+    min-width: 0;
+}
+.member-stat {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 38px;
+}
+.member-stat__val {
+    font-size: 12.5px; font-weight: 700;
+    color: var(--tp-text-0);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+.member-stat__val.positive { color: var(--tp-emerald); }
+.member-stat__val.negative { color: var(--tp-rose); }
+.member-stat__val.zero     { color: var(--tp-text-2); }
+.member-stat__lbl {
+    font-size: 8.5px; font-weight: 700;
+    color: var(--tp-text-2);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-top: 3px;
+}
+.member-stat__divider {
+    width: 1px; height: 22px;
+    background: var(--tp-hairline);
+}
+
+/* Status badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 10px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border: 1px solid;
+}
+.status-badge::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.status-badge.active   { background: var(--tp-emerald-soft); color: var(--tp-emerald); border-color: rgba(23, 166, 115, 0.22); }
+.status-badge.pending  { background: var(--tp-amber-soft);   color: var(--tp-amber);   border-color: rgba(224, 138, 23, 0.22); }
+.status-badge.inactive { background: var(--tp-rose-soft);    color: var(--tp-rose);    border-color: rgba(224, 69, 106, 0.22); }
+
+/* Empty state */
+.tp-empty {
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--tp-text-2);
+}
+.tp-empty__icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: var(--tp-bg-2);
+    border: 1px solid var(--tp-hairline);
+    display: grid; place-items: center;
+    margin: 0 auto 16px;
+}
+.tp-empty__icon i { font-size: 22px; color: var(--tp-text-2); opacity: 0.6; }
+.tp-empty h5 {
+    margin: 0 0 6px;
+    font-size: 14px; font-weight: 600;
+    color: var(--tp-text-1);
+}
+.tp-empty p { margin: 0; font-size: 12px; max-width: 380px; margin-inline: auto; line-height: 1.5; }
+
+/* Live update flash */
+@keyframes fx-cell-update {
+    0%   { background: rgba(79, 110, 247, 0.16); }
+    100% { background: transparent; }
+}
+.cell-updated {
+    animation: fx-cell-update 1.4s ease-out;
+    border-radius: 6px;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .member-row {
+        grid-template-columns: 40px minmax(180px, 1fr) minmax(160px, 1fr) auto;
+        grid-template-areas:
+            "rank identity score status"
+            "rank stats    stats stats";
+        gap: 12px;
+    }
+    .member-rank     { grid-area: rank; align-self: start; }
+    .member-identity { grid-area: identity; }
+    .member-score    { grid-area: score; }
+    .member-stats    { grid-area: stats; justify-self: start; }
+    .status-badge    { grid-area: status; }
+}
+
+@media (max-width: 640px) {
+    .leaderboard { padding: 10px; }
+    .member-row {
+        grid-template-columns: 34px 1fr auto;
+        grid-template-areas:
+            "rank identity status"
+            "score score  score"
+            "stats stats  stats";
+        gap: 10px;
+        padding: 12px 14px;
+    }
+    .member-rank    { width: 34px; height: 34px; font-size: 12px; border-radius: 10px; }
+    .member-avatar  { width: 32px; height: 32px; flex: 0 0 32px; font-size: 12px; }
+    .member-name    { font-size: 13px; }
+    .score-text     { font-size: 15px; }
+    .member-stats   { width: 100%; justify-content: space-between; }
+    .table-header h4 { font-size: 13px; }
+    .live-indicator  { font-size: 9px; padding: 3px 8px; }
 }
 </style>
 {% endblock %}
@@ -84,7 +396,7 @@
 </a></li>
 <li><a href="{% url 'control_dashboard:analytics_dashboard' %}">
     <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
-    <span class="nav-text">Analytics</span>
+    <span class="nav-text">Reports</span>
 </a></li>
 <li class="active"><a href="{% url 'control_dashboard:team_performance' %}">
     <span class="nav-icon"><i class="fas fa-users"></i></span>
@@ -124,89 +436,92 @@
 {% endblock %}
 
 {% block content %}
-<!-- Team Performance Table -->
 <div class="table-container">
     <div class="table-header">
         <h4>
+            <i class="fas fa-users" style="color: var(--tp-accent);"></i>
             Team Members ({{ team_data|length }})
-            <span class="live-indicator" title="Auto-refreshes every 20 seconds">
-                <span class="dot"></span> Live
+            <span class="live-indicator" id="liveIndicator" title="Auto-refreshes every 20 seconds">
+                <span class="dot"></span>
+                <span id="liveLabel">Live</span>
             </span>
         </h4>
     </div>
 
-    <table class="users-table" id="teamTable">
-        <thead>
-            <tr>
-                <th>Full Name</th>
-                <th>Position</th>
-                <th class="text-center"
-                    title="Expected submissions to date (recurrence count across all assigned reports)">Total Tasks</th>
-                <th class="text-center"
-                    title="Credits − Debits (can be negative)">Net</th>
-                <th style="width: 25%;"
-                    title="Overall performance score based on emailed reports and deadline compliance">Performance Score</th>
-                <th class="text-center">Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for member in team_data %}
-            <tr data-name="{{ member.user.full_name|lower }}"
-                data-member-id="{{ member.user.id }}">
-                <td class="font-bold">{{ member.user.full_name|default:member.user.email }}</td>
-                <td>{{ member.user.get_position_display|default:"-" }}</td>
+    <div class="leaderboard" id="teamTable">
+        {% for member in team_data %}
+        <article class="member-row {% if forloop.counter == 1 %}is-top{% endif %}"
+                 data-name="{{ member.user.full_name|lower }}"
+                 data-member-id="{{ member.user.id }}"
+                 data-net="{{ member.net_score }}"
+                 data-tasks="{{ member.total_tasks }}"
+                 data-score="{{ member.percentage }}"
+                 data-status="{{ member.status_text }}"
+                 data-position="{{ member.user.get_position_display|default:'-' }}">
 
-                <td class="text-center">
-                    <span class="task-count-badge">{{ member.total_tasks }}</span>
-                </td>
+            <div class="member-rank">{{ forloop.counter }}</div>
 
-                <td class="text-center">
-                    <span class="cell-net {% if member.net_score > 0 %}positive{% elif member.net_score < 0 %}negative{% else %}zero{% endif %}"
-                          data-field="net">
+            <div class="member-identity">
+                <div class="member-avatar">{{ member.user.full_name|default:member.user.email|slice:":1"|upper }}</div>
+                <div class="member-who">
+                    <span class="member-name">{{ member.user.full_name|default:member.user.email }}</span>
+                    <span class="member-position">{{ member.user.get_position_display|default:"-" }}</span>
+                </div>
+            </div>
+
+            <div class="member-score">
+                <div class="member-score__head">
+                    <span class="score-text
+                        {% if member.percentage >= 90 %}text-success
+                        {% elif member.percentage >= 70 %}text-warning
+                        {% else %}text-danger{% endif %}"
+                        data-field="percentage">
+                        {{ member.percentage }}%
+                    </span>
+                    <span class="score-label">Performance</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-bar
+                        {% if member.percentage >= 90 %}bar-success
+                        {% elif member.percentage >= 70 %}bar-warning
+                        {% else %}bar-danger{% endif %}"
+                        data-field="percentage-bar"
+                        style="width: {{ member.percentage_bar }}%;"></div>
+                </div>
+            </div>
+
+            <div class="member-stats">
+                <div class="member-stat">
+                    <span class="member-stat__val
+                        {% if member.net_score > 0 %}positive{% elif member.net_score < 0 %}negative{% else %}zero{% endif %}"
+                        data-field="net">
                         {% if member.net_score > 0 %}+{% endif %}{{ member.net_score }}
                     </span>
-                </td>
+                    <span class="member-stat__lbl">Net</span>
+                </div>
+                <div class="member-stat__divider"></div>
+                <div class="member-stat">
+                    <span class="member-stat__val" data-field="tasks">{{ member.total_tasks }}</span>
+                    <span class="member-stat__lbl">Tasks</span>
+                </div>
+            </div>
 
-                <td>
-                    <div class="performance-metric-wrapper">
-                        <span class="score-text
-                            {% if member.percentage >= 90 %}text-success
-                            {% elif member.percentage >= 70 %}text-warning
-                            {% else %}text-danger{% endif %}"
-                            data-field="percentage">
-                            {{ member.percentage }}%
-                        </span>
-                        <div class="progress-track">
-                            <div class="progress-bar
-                                {% if member.percentage >= 90 %}bar-success
-                                {% elif member.percentage >= 70 %}bar-warning
-                                {% else %}bar-danger{% endif %}"
-                                data-field="percentage-bar"
-                                style="width: {{ member.percentage_bar }}%;"></div>
-                        </div>
-                    </div>
-                </td>
-
-                <td class="text-center">
-                    <span class="status-badge
-                        {% if member.status == 'success' %}active
-                        {% elif member.status == 'warning' %}pending
-                        {% else %}inactive{% endif %}"
-                        data-field="status">
-                        {{ member.status_text }}
-                    </span>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" class="text-center">
-                    <i class="fas fa-users"></i>
-                    No team members found. Add members to get started.
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            <span class="status-badge
+                {% if member.status == 'success' %}active
+                {% elif member.status == 'warning' %}pending
+                {% else %}inactive{% endif %}"
+                data-field="status">
+                {{ member.status_text }}
+            </span>
+        </article>
+        {% empty %}
+        <div class="tp-empty">
+            <div class="tp-empty__icon"><i class="fas fa-users"></i></div>
+            <h5>No team members found</h5>
+            <p>Add members to your team to see their performance scores, net credits, and task activity here.</p>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}
 
@@ -220,87 +535,125 @@
         return meta ? meta.getAttribute('content') : '';
     }
 
-    // ============================================
-    // TOAST NOTIFICATION
-    // ============================================
+    /* ---------------------------------------------------------
+       Toast
+    --------------------------------------------------------- */
     function showToast(message, title = 'Success!') {
         const toast = document.getElementById('toastNotification');
-        if (!toast) return;
+        if (!toast) { console.log('[toast]', title, message); return; }
         const msgEl = document.getElementById('toastMessage');
         const titleEl = toast.querySelector('.toast-title');
-        if (msgEl)    msgEl.textContent = message || 'Action completed successfully.';
-        if (titleEl)  titleEl.textContent = title;
-        toast.classList.add('show');
+        if (msgEl) msgEl.textContent = message || 'Action completed successfully.';
+        if (titleEl) titleEl.textContent = title;
 
+        const icon = toast.querySelector('.toast-icon i');
+        const iconContainer = toast.querySelector('.toast-icon');
+        const isError = /error|warning/i.test(title);
+        if (icon) icon.className = isError ? 'fas fa-exclamation-circle' : 'fas fa-check';
+        if (iconContainer) {
+            iconContainer.style.color = isError ? '#ef4444' : '#10b981';
+            iconContainer.style.background = isError ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)';
+        }
+        toast.style.borderLeftColor = isError ? '#ef4444' : '#10b981';
+        toast.classList.add('show');
         if (window.toastTimeout) clearTimeout(window.toastTimeout);
-        window.toastTimeout = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    window.closeToast = function() {
+    window.closeToast = function () {
         const toast = document.getElementById('toastNotification');
         if (!toast) return;
         toast.classList.remove('show');
-        if (window.toastTimeout) {
-            clearTimeout(window.toastTimeout);
-            window.toastTimeout = null;
-        }
+        if (window.toastTimeout) { clearTimeout(window.toastTimeout); window.toastTimeout = null; }
     };
 
-    // ============================================
-    // FILTER TEAM MEMBERS
-    // ============================================
+    /* ---------------------------------------------------------
+       Client-side search
+    --------------------------------------------------------- */
     function filterTeamMembers() {
         const input = document.getElementById('search-member');
-        const filter = input.value.toLowerCase();
-        const table = document.getElementById('teamTable');
-        const rows = table.getElementsByTagName('tr');
+        if (!input) return;
+        const filter = input.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('#teamTable .member-row');
 
-        for (let i = 1; i < rows.length; i++) {
-            const nameCell = rows[i].getElementsByTagName('td')[0];
-            if (nameCell) {
-                const name = nameCell.textContent.toLowerCase();
-                rows[i].style.display = name.includes(filter) ? '' : 'none';
-            }
-        }
+        rows.forEach(row => {
+            const name = (row.dataset.name || '').toLowerCase();
+            row.style.display = (!filter || name.includes(filter)) ? '' : 'none';
+        });
+
+        // Re-number visible rows so ranks stay sequential while filtering
+        let visibleRank = 0;
+        document.querySelectorAll('#teamTable .member-row').forEach(row => {
+            if (row.style.display === 'none') return;
+            visibleRank++;
+            const rankEl = row.querySelector('.member-rank');
+            if (rankEl) rankEl.textContent = visibleRank;
+            row.classList.toggle('is-top', visibleRank === 1);
+        });
     }
 
-    // ============================================
-    // ANIMATED NUMBER (for smooth transitions)
-    // ============================================
+    /* ---------------------------------------------------------
+       Animated number (for smooth live transitions)
+    --------------------------------------------------------- */
     function animateNumber(el, from, to, duration) {
         if (!el || from === to) return;
         const start = performance.now();
         function tick(now) {
             const t = Math.min(1, (now - start) / duration);
             const eased = 1 - Math.pow(1 - t, 3);
-            el.textContent = Math.round(from + (to - from) * eased);
+            el.textContent = Math.round(from + (to - from) * eased) + '%';
             if (t < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
     }
 
-    // ============================================
-    // LIVE REFRESH
-    // ============================================
+    /* ---------------------------------------------------------
+       Live indicator helpers
+    --------------------------------------------------------- */
+    let lastUpdateAt = Date.now();
+    let liveErrors = 0;
+
+    function setLiveState(state) {
+        const el = document.getElementById('liveIndicator');
+        const label = document.getElementById('liveLabel');
+        if (!el || !label) return;
+
+        el.classList.remove('is-stale', 'is-error');
+        if (state === 'error') {
+            el.classList.add('is-error');
+            label.textContent = 'Offline';
+        } else if (state === 'stale') {
+            el.classList.add('is-stale');
+            label.textContent = 'Stale';
+        } else {
+            const secs = Math.round((Date.now() - lastUpdateAt) / 1000);
+            label.textContent = secs < 5 ? 'Live' : `Updated ${secs}s ago`;
+        }
+    }
+
+    // Tick the "updated Xs ago" label every 5s
+    setInterval(() => setLiveState(liveErrors > 0 ? 'error' : 'ok'), 5000);
+
+    /* ---------------------------------------------------------
+       Live refresh
+    --------------------------------------------------------- */
     async function refreshPerformance() {
         try {
             const resp = await fetch(LIVE_ENDPOINT, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'same-origin',
             });
-            if (!resp.ok) return;
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
             const data = await resp.json();
-            if (!data.success) return;
+            if (!data.success) throw new Error(data.error || 'Bad response');
+
+            liveErrors = 0;
 
             data.members.forEach(m => {
-                const row = document.querySelector(
-                    `tr[data-member-id="${m.id}"]`
-                );
+                const row = document.querySelector(`.member-row[data-member-id="${m.id}"]`);
                 if (!row) return;
 
-                // ---------- Net ----------
+                // Net
                 const netEl = row.querySelector('[data-field="net"]');
                 if (netEl) {
                     const signed = (m.net_score > 0 ? '+' : '') + m.net_score;
@@ -317,16 +670,21 @@
                     }
                 }
 
-                // ---------- Percentage ----------
+                // Tasks
+                const tasksEl = row.querySelector('[data-field="tasks"]');
+                if (tasksEl && tasksEl.textContent.trim() !== String(m.total_tasks)) {
+                    tasksEl.textContent = m.total_tasks;
+                    tasksEl.classList.add('cell-updated');
+                    setTimeout(() => tasksEl.classList.remove('cell-updated'), 1400);
+                }
+
+                // Percentage
                 const scoreEl = row.querySelector('[data-field="percentage"]');
-                const barEl   = row.querySelector('[data-field="percentage-bar"]');
+                const barEl = row.querySelector('[data-field="percentage-bar"]');
                 if (scoreEl && barEl) {
                     const oldVal = parseInt(scoreEl.textContent, 10) || 0;
                     if (oldVal !== m.percentage) {
                         animateNumber(scoreEl, oldVal, m.percentage, 900);
-                        setTimeout(() => {
-                            scoreEl.textContent = m.percentage + '%';
-                        }, 950);
 
                         scoreEl.classList.remove('text-success', 'text-warning', 'text-danger');
                         if (m.percentage >= 90)      scoreEl.classList.add('text-success');
@@ -340,37 +698,57 @@
                     else if (m.percentage >= 70) barEl.classList.add('bar-warning');
                     else                         barEl.classList.add('bar-danger');
                 }
+
+                // Status
+                const statusEl = row.querySelector('[data-field="status"]');
+                if (statusEl && statusEl.textContent.trim() !== m.status_text) {
+                    statusEl.textContent = m.status_text;
+                    statusEl.classList.remove('active', 'pending', 'inactive');
+                    statusEl.classList.add(
+                        m.status === 'success' ? 'active'
+                        : m.status === 'warning' ? 'pending'
+                        : 'inactive'
+                    );
+                    statusEl.classList.add('cell-updated');
+                    setTimeout(() => statusEl.classList.remove('cell-updated'), 1400);
+                }
             });
+
+            lastUpdateAt = Date.now();
+            setLiveState('ok');
         } catch (e) {
             console.warn('Live refresh failed:', e);
+            liveErrors++;
+            setLiveState('error');
         }
     }
 
-    // ============================================
-    // EXPORT TEAM DATA
-    // ============================================
+    /* ---------------------------------------------------------
+       CSV export (data-attribute driven)
+    --------------------------------------------------------- */
+    function csvCell(v) {
+        return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    }
+
     function exportTeamData() {
         showToast('Exporting team data...', 'Exporting');
 
-        let csv = 'Full Name,Position,Total Tasks,Net,Performance Score,Status\n';
-        const rows = document.querySelectorAll('#teamTable tbody tr');
+        const headers = ['Rank', 'Full Name', 'Position', 'Performance %', 'Net', 'Total Tasks', 'Status'];
+        const lines = [headers.map(csvCell).join(',')];
 
-        rows.forEach(row => {
-            if (row.style.display !== 'none') {
-                const cells = row.querySelectorAll('td');
-                if (cells.length >= 6) {
-                    const name     = cells[0].textContent.trim();
-                    const position = cells[1].textContent.trim();
-                    const tasks    = cells[2].textContent.trim();
-                    const net      = cells[3].textContent.trim();
-                    const score    = cells[4].querySelector('.score-text')?.textContent?.trim() || '0%';
-                    const status   = cells[5]?.textContent?.trim() || '';
-                    csv += `"${name}","${position}","${tasks}","${net}","${score}","${status}"\n`;
-                }
-            }
+        let rank = 0;
+        document.querySelectorAll('#teamTable .member-row').forEach(row => {
+            if (row.style.display === 'none') return;
+            rank++;
+            const d = row.dataset;
+            const name = row.querySelector('.member-name')?.textContent.trim() || '';
+            lines.push([
+                rank, name, d.position, d.score + '%', d.net, d.tasks, d.status
+            ].map(csvCell).join(','));
         });
 
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const csv = lines.join('\n');
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -383,22 +761,19 @@
         setTimeout(() => showToast('Team data exported successfully!', 'Exported'), 500);
     }
 
-    // ============================================
-    // ENTER KEY SUPPORT FOR SEARCH
-    // ============================================
-    document.addEventListener('keydown', function(e) {
+    /* ---------------------------------------------------------
+       Keyboard
+    --------------------------------------------------------- */
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && e.target.id === 'search-member') {
             filterTeamMembers();
         }
     });
 
-    // ============================================
-    // INITIALIZATION
-    // ============================================
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Team Performance page loaded');
-        console.log('Total team members:', {{ team_data|length }});
-
+    /* ---------------------------------------------------------
+       Init
+    --------------------------------------------------------- */
+    document.addEventListener('DOMContentLoaded', function () {
         setInterval(refreshPerformance, REFRESH_INTERVAL_MS);
     });
 </script>

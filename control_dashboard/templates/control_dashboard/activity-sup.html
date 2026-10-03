@@ -5,6 +5,328 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'stylesheets/activity-logs.css' %}" type="text/css">
+<style>
+/* ============================================================
+   ACTIVITY LOGS — Local template styles
+   ============================================================ */
+
+:root {
+    --al-bg-1: #ffffff;
+    --al-bg-2: #f7f8fc;
+    --al-bg-3: #eef1f8;
+    --al-hairline: rgba(15, 27, 51, 0.06);
+    --al-border: rgba(15, 27, 51, 0.08);
+    --al-border-strong: rgba(15, 27, 51, 0.16);
+    --al-text-0: #0f1b33;
+    --al-text-1: #46536b;
+    --al-text-2: #7b879e;
+    --al-text-3: #9aa5b8;
+    --al-accent: #4f6ef7;
+    --al-accent-soft: #eef1ff;
+    --al-emerald: #17a673;
+    --al-amber: #e08a17;
+    --al-rose: #e0456a;
+    --al-violet: #8b5cf6;
+    --al-cyan: #0ea5e9;
+}
+
+/* ---------- Filter toolbar summary ---------- */
+.filter-summary {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, rgba(79,110,247,0.05), rgba(79,110,247,0.01));
+    border-bottom: 1px solid var(--al-hairline);
+    font-size: 12px;
+    color: var(--al-text-1);
+    flex-wrap: wrap;
+}
+.filter-summary__label {
+    font-weight: 600;
+    color: var(--al-text-2);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+.filter-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: var(--al-bg-1);
+    border: 1px solid var(--al-border);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+    color: var(--al-text-0);
+}
+.filter-chip i { color: var(--al-text-3); font-size: 10px; }
+.filter-chip.is-empty { color: var(--al-text-3); font-style: italic; font-weight: 500; }
+.filter-summary__spacer { flex: 1; }
+.filter-summary__count {
+    font-weight: 700;
+    color: var(--al-text-0);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Container ---------- */
+.table-container {
+    background: var(--al-bg-1);
+    border: 1px solid var(--al-border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15,27,51,0.04);
+}
+.table-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--al-hairline);
+}
+.table-header h4 {
+    margin: 0; font-size: 13px; font-weight: 700;
+    color: var(--al-text-0);
+}
+
+/* ---------- Timeline ---------- */
+.timeline {
+    padding: 8px 20px 20px;
+}
+
+.day-group { position: relative; }
+
+.day-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px 0 12px;
+    position: sticky;
+    top: 0;
+    background: var(--al-bg-1);
+    z-index: 1;
+}
+.day-header__dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--al-accent);
+    box-shadow: 0 0 0 4px rgba(79,110,247,0.14);
+    flex: 0 0 10px;
+}
+.day-header__label {
+    font-size: 12px; font-weight: 700;
+    color: var(--al-text-0);
+    letter-spacing: .02em;
+}
+.day-header__weekday {
+    font-size: 11px; font-weight: 500;
+    color: var(--al-text-3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+.day-header__count {
+    margin-left: auto;
+    font-size: 10px; font-weight: 700;
+    color: var(--al-text-3);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    background: var(--al-bg-2);
+    padding: 3px 9px;
+    border-radius: 999px;
+}
+
+/* The vertical rail */
+.day-group__rail {
+    position: relative;
+    padding-left: 4px;
+}
+.day-group__rail::before {
+    content: '';
+    position: absolute;
+    left: 4px; top: 6px; bottom: 6px;
+    width: 1px;
+    background: var(--al-hairline);
+}
+
+/* ---------- Log entry ---------- */
+.log-entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: 72px 22px 1fr;
+    gap: 0 12px;
+    padding: 12px 14px 12px 0;
+    border-radius: 12px;
+    transition: background .18s ease;
+}
+.log-entry:hover { background: var(--al-bg-2); }
+
+.log-entry__time {
+    grid-column: 1;
+    display: flex; flex-direction: column;
+    align-items: flex-end;
+    padding-top: 2px;
+    font-variant-numeric: tabular-nums;
+}
+.log-entry__time-val {
+    font-size: 13px; font-weight: 700;
+    color: var(--al-text-0);
+    line-height: 1;
+}
+.log-entry__time-ampm {
+    font-size: 9px; font-weight: 700;
+    color: var(--al-text-3);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-top: 3px;
+}
+
+.log-entry__marker {
+    grid-column: 2;
+    display: flex; justify-content: center;
+    padding-top: 4px;
+    position: relative;
+    z-index: 1;
+}
+.log-entry__marker-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--al-bg-1);
+    border: 2px solid var(--al-text-3);
+    transition: border-color .2s ease, transform .2s ease;
+}
+.log-entry:hover .log-entry__marker-dot { transform: scale(1.15); }
+
+/* Category-colored markers */
+.log-entry[data-type="report"]    .log-entry__marker-dot { border-color: var(--al-accent); }
+.log-entry[data-type="checklist"] .log-entry__marker-dot { border-color: var(--al-emerald); }
+.log-entry[data-type="login"]     .log-entry__marker-dot { border-color: var(--al-cyan); }
+.log-entry[data-type="logout"]    .log-entry__marker-dot { border-color: var(--al-text-3); }
+.log-entry[data-type="scorecard"] .log-entry__marker-dot { border-color: var(--al-amber); }
+.log-entry[data-type="warning"]   .log-entry__marker-dot { border-color: var(--al-rose); }
+.log-entry[data-type="system"]    .log-entry__marker-dot { border-color: var(--al-violet); }
+
+.log-entry__body {
+    grid-column: 3;
+    display: flex; flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+/* Top row: tag + user */
+.log-entry__head {
+    display: flex; align-items: center; gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.activity-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10px; font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+.activity-tag i { font-size: 10px; }
+
+.activity-tag.report     { color: #3b56d8; background: rgba(79,110,247,0.10); border-color: rgba(79,110,247,0.18); }
+.activity-tag.checklist  { color: var(--al-emerald); background: rgba(23,166,115,0.10); border-color: rgba(23,166,115,0.18); }
+.activity-tag.login      { color: #0284c7; background: rgba(14,165,233,0.10); border-color: rgba(14,165,233,0.18); }
+.activity-tag.logout     { color: var(--al-text-2); background: rgba(15,27,51,0.06); border-color: var(--al-hairline); }
+.activity-tag.scorecard  { color: var(--al-amber); background: rgba(224,138,23,0.10); border-color: rgba(224,138,23,0.18); }
+.activity-tag.warning    { color: var(--al-rose); background: rgba(224,69,106,0.10); border-color: rgba(224,69,106,0.18); }
+.activity-tag.system     { color: var(--al-violet); background: rgba(139,92,246,0.10); border-color: rgba(139,92,246,0.18); }
+.activity-tag.default    { color: var(--al-text-1); background: var(--al-bg-2); border-color: var(--al-hairline); }
+
+.log-entry__user {
+    font-size: 12px; font-weight: 600;
+    color: var(--al-text-1);
+    display: inline-flex; align-items: center; gap: 8px;
+    min-width: 0;
+}
+.log-entry__user-avatar {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #eef1fe, #dde3fb);
+    color: #3b56d8;
+    display: grid; place-items: center;
+    font-size: 10px; font-weight: 700;
+    flex: 0 0 20px;
+}
+.log-entry__user-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Details text */
+.log-entry__details {
+    font-size: 12.5px;
+    color: var(--al-text-1);
+    line-height: 1.5;
+    word-break: break-word;
+}
+.log-entry__details.is-empty {
+    color: var(--al-text-3);
+    font-style: italic;
+}
+
+/* ---------- Empty state ---------- */
+.al-empty {
+    text-align: center;
+    padding: 64px 24px;
+    color: var(--al-text-2);
+}
+.al-empty__icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: var(--al-bg-2);
+    border: 1px solid var(--al-hairline);
+    display: grid; place-items: center;
+    margin: 0 auto 16px;
+}
+.al-empty__icon i {
+    font-size: 22px;
+    color: var(--al-text-3);
+}
+.al-empty h5 {
+    margin: 0 0 6px;
+    font-size: 14px; font-weight: 600;
+    color: var(--al-text-1);
+}
+.al-empty p {
+    margin: 0;
+    font-size: 12px;
+    max-width: 380px;
+    margin-inline: auto;
+    line-height: 1.5;
+}
+.al-empty button {
+    margin-top: 18px;
+    padding: 9px 18px;
+    font-size: 12px; font-weight: 600;
+    background: var(--al-bg-1);
+    border: 1px solid var(--al-border-strong);
+    border-radius: 10px;
+    color: var(--al-text-1);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s ease;
+}
+.al-empty button:hover {
+    background: var(--al-bg-2);
+    color: var(--al-text-0);
+    transform: translateY(-1px);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 720px) {
+    .timeline { padding: 8px 14px 16px; }
+    .log-entry {
+        grid-template-columns: 56px 18px 1fr;
+        gap: 0 10px;
+        padding: 10px 8px 10px 0;
+    }
+    .log-entry__time-val { font-size: 12px; }
+    .log-entry__head { gap: 6px; }
+    .log-entry__details { font-size: 12px; }
+    .day-header__weekday { display: none; }
+}
+</style>
 {% endblock %}
 
 {% block dashboard_url %}{% url 'control_dashboard:supervisor_dashboard' %}{% endblock %}
@@ -16,7 +338,7 @@
 </a></li>
 <li><a href="{% url 'control_dashboard:analytics_dashboard' %}">
     <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
-    <span class="nav-text">Analytics</span>
+    <span class="nav-text">Reports</span>
 </a></li>
 <li><a href="{% url 'control_dashboard:team_performance' %}">
     <span class="nav-icon"><i class="fas fa-users"></i></span>
@@ -93,50 +415,114 @@
         <h4>Activity Logs ({{ activity_logs|length }})</h4>
     </div>
 
-    <div class="table-responsive">
-        <table class="activity-table">
-            <thead>
-                <tr>
-                    <th>Date & Time</th>
-                    <th>User</th>
-                    <th>Activity</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in activity_logs %}
-                <tr>
-                    <td>
-                        <span class="time-stamp">
-                            <i class="far fa-calendar-alt"></i> {{ log.created_at|date:"M d, Y" }}
-                            <br>
-                            <i class="far fa-clock"></i> {{ log.created_at|date:"H:i" }}
-                        </span>
-                    </td>
-                    <td class="font-bold">{{ log.user.full_name|default:log.user.email }}</td>
-                    <td>
-                        <span class="activity-tag {{ log.activity_type }}">
-                            <i class="fas {{ log.get_activity_icon }}"></i>
-                            {{ log.get_activity_type_display }}
-                        </span>
-                    </td>
-                    <td>
-                        <div class="activity-details">
-                            <i class="fas fa-info-circle"></i>
-                            {{ log.details|default:"No details available" }}
+    <!-- Active filter summary strip -->
+    <div class="filter-summary">
+        <span class="filter-summary__label">Filters</span>
+
+        <span class="filter-chip {% if not user_filter or user_filter == 'all' %}is-empty{% endif %}">
+            <i class="fas fa-user"></i>
+            {% if user_filter and user_filter != 'all' %}
+                {% for user in users %}{% if user_filter|add:"0" == user.id %}{{ user.full_name|default:user.email }}{% endif %}{% endfor %}
+            {% else %}
+                All users
+            {% endif %}
+        </span>
+
+        <span class="filter-chip {% if not start_date and not end_date %}is-empty{% endif %}">
+            <i class="fas fa-calendar"></i>
+            {% if start_date or end_date %}
+                {{ start_date|default:"…" }} → {{ end_date|default:"…" }}
+            {% else %}
+                All dates
+            {% endif %}
+        </span>
+
+        <span class="filter-chip {% if not activity_filter or activity_filter == 'all' %}is-empty{% endif %}">
+            <i class="fas fa-filter"></i>
+            {% if activity_filter and activity_filter != 'all' %}
+                {% for type_code, type_name in activity_types %}{% if activity_filter == type_code %}{{ type_name }}{% endif %}{% endfor %}
+            {% else %}
+                All activities
+            {% endif %}
+        </span>
+
+        <span class="filter-summary__spacer"></span>
+        <span class="filter-summary__count">{{ activity_logs|length }} result{{ activity_logs|length|pluralize }}</span>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline">
+        {% regroup activity_logs by created_at|date:"Y-m-d" as day_groups %}
+        {% for day in day_groups %}
+        <section class="day-group">
+            <header class="day-header">
+                <span class="day-header__dot" aria-hidden="true"></span>
+                <span class="day-header__label">{{ day.grouper|date:"M d, Y" }}</span>
+                <span class="day-header__weekday">{{ day.grouper|date:"l" }}</span>
+                <span class="day-header__count">{{ day.list|length }} event{{ day.list|length|pluralize }}</span>
+            </header>
+
+            <div class="day-group__rail">
+                {% for log in day.list %}
+                <article class="log-entry"
+                         data-type="{{ log.activity_type }}"
+                         data-id="{{ log.id }}">
+
+                    <div class="log-entry__time">
+                        <span class="log-entry__time-val">{{ log.created_at|date:"H:i" }}</span>
+                        <span class="log-entry__time-ampm">{{ log.created_at|date:"A" }}</span>
+                    </div>
+
+                    <div class="log-entry__marker" aria-hidden="true">
+                        <span class="log-entry__marker-dot"></span>
+                    </div>
+
+                    <div class="log-entry__body">
+                        <div class="log-entry__head">
+                            <span class="activity-tag {{ log.activity_type }}">
+                                <i class="fas {{ log.get_activity_icon }}"></i>
+                                {{ log.get_activity_type_display }}
+                            </span>
+                            <span class="log-entry__user">
+                                <span class="log-entry__user-avatar">
+                                    {{ log.user.full_name|default:log.user.email|slice:":1"|upper }}
+                                </span>
+                                <span class="log-entry__user-name">
+                                    {{ log.user.full_name|default:log.user.email }}
+                                </span>
+                            </span>
                         </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center empty-row">
-                        <i class="fas fa-clipboard-list"></i>
-                        <p>No activity logs found.</p>
-                    </td>
-                </tr>
+
+                        {% if log.details %}
+                        <div class="log-entry__details">{{ log.details }}</div>
+                        {% else %}
+                        <div class="log-entry__details is-empty">No additional details</div>
+                        {% endif %}
+                    </div>
+                </article>
                 {% endfor %}
-            </tbody>
-        </table>
+            </div>
+        </section>
+        {% empty %}
+        <div class="al-empty">
+            <div class="al-empty__icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h5>No activity logs found</h5>
+            <p>
+                {% if user_filter or start_date or end_date or activity_filter %}
+                    Nothing matches the current filters. Try widening the date range or clearing a filter.
+                {% else %}
+                    Activity will appear here as your team submits reports, completes checklists, and signs in.
+                {% endif %}
+            </p>
+            {% if user_filter or start_date or end_date or activity_filter %}
+            <button onclick="resetFilters()">
+                <i class="fas fa-undo"></i> Reset filters
+            </button>
+            {% endif %}
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
@@ -144,74 +530,76 @@
 {% block extra_js %}
 <script>
     function getCsrfToken() {
-        return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) return meta.getAttribute('content');
+        const input = document.querySelector('input[name=csrfmiddlewaretoken]');
+        if (input) return input.value;
+        const name = 'csrftoken';
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        for (let i = 0; i < cookies.length; i++) {
+            const c = cookies[i].trim();
+            if (c.substring(0, name.length + 1) === (name + '=')) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
+        }
+        return '';
     }
 
-    // ============================================
-    // TOAST NOTIFICATION
-    // ============================================
-
+    /* ---------------------------------------------------------
+       Toast
+    --------------------------------------------------------- */
     function showToast(message, title = 'Success!') {
         const toast = document.getElementById('toastNotification');
+        if (!toast) { console.log('[toast]', title, message); return; }
+
         const msgEl = document.getElementById('toastMessage');
         const titleEl = toast.querySelector('.toast-title');
-        
-        msgEl.textContent = message || 'Action completed successfully.';
-        titleEl.textContent = title;
-        
+        if (msgEl) msgEl.textContent = message || 'Action completed successfully.';
+        if (titleEl) titleEl.textContent = title;
+
         const icon = toast.querySelector('.toast-icon i');
-        if (title.toLowerCase().includes('error') || title.toLowerCase().includes('warning')) {
-            icon.className = 'fas fa-exclamation-circle';
-            toast.style.borderLeftColor = '#ef4444';
-            toast.querySelector('.toast-icon').style.color = '#ef4444';
-            toast.querySelector('.toast-icon').style.background = 'rgba(239, 68, 68, 0.1)';
-        } else {
-            icon.className = 'fas fa-check';
-            toast.style.borderLeftColor = '#10b981';
-            toast.querySelector('.toast-icon').style.color = '#10b981';
-            toast.querySelector('.toast-icon').style.background = 'rgba(16, 185, 129, 0.1)';
+        const iconContainer = toast.querySelector('.toast-icon');
+        const isError = /error|warning/i.test(title);
+
+        if (icon) icon.className = isError ? 'fas fa-exclamation-circle' : 'fas fa-check';
+        if (iconContainer) {
+            iconContainer.style.color = isError ? '#ef4444' : '#10b981';
+            iconContainer.style.background = isError ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)';
         }
-        
+        toast.style.borderLeftColor = isError ? '#ef4444' : '#10b981';
+
         toast.classList.add('show');
-        
-        if (window.toastTimeout) {
-            clearTimeout(window.toastTimeout);
-        }
-        
-        window.toastTimeout = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3000);
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    window.closeToast = function() {
+    window.closeToast = function () {
         const toast = document.getElementById('toastNotification');
-        toast.classList.remove('show');
-        if (window.toastTimeout) {
-            clearTimeout(window.toastTimeout);
-            window.toastTimeout = null;
-        }
+        if (toast) toast.classList.remove('show');
+        if (window.toastTimeout) { clearTimeout(window.toastTimeout); window.toastTimeout = null; }
     };
 
-    // ============================================
-    // FILTER FUNCTIONS
-    // ============================================
-
-    function applyFilters() {
+    /* ---------------------------------------------------------
+       Filters
+    --------------------------------------------------------- */
+    function buildFilterParams() {
         const user = document.getElementById('user-filter').value;
         const startDate = document.getElementById('start-date').value;
         const endDate = document.getElementById('end-date').value;
         const activity = document.getElementById('activity-filter').value;
-        
-        let url = window.location.pathname + '?';
-        if (user && user !== 'all') url += `user=${user}&`;
-        if (startDate) url += `start_date=${startDate}&`;
-        if (endDate) url += `end_date=${endDate}&`;
-        if (activity && activity !== 'all') url += `activity=${activity}`;
-        
-        // Remove trailing & or ?
-        url = url.replace(/[?&]$/, '');
-        
-        window.location.href = url;
+
+        const params = new URLSearchParams();
+        if (user && user !== 'all') params.set('user', user);
+        if (startDate) params.set('start_date', startDate);
+        if (endDate) params.set('end_date', endDate);
+        if (activity && activity !== 'all') params.set('activity', activity);
+        return params;
+    }
+
+    function applyFilters() {
+        const params = buildFilterParams();
+        const qs = params.toString();
+        window.location.href = window.location.pathname + (qs ? '?' + qs : '');
     }
 
     function resetFilters() {
@@ -219,41 +607,22 @@
     }
 
     function exportLogs() {
-        const user = document.getElementById('user-filter').value;
-        const startDate = document.getElementById('start-date').value;
-        const endDate = document.getElementById('end-date').value;
-        const activity = document.getElementById('activity-filter').value;
-        
-        let url = "/adminboard/api/export-logs/?";
-        if (user && user !== 'all') url += `user=${user}&`;
-        if (startDate) url += `start_date=${startDate}&`;
-        if (endDate) url += `end_date=${endDate}&`;
-        if (activity && activity !== 'all') url += `activity=${activity}`;
-        
-        url = url.replace(/[?&]$/, '');
-        window.location.href = url;
+        const params = buildFilterParams();
+        const qs = params.toString();
+        window.location.href = '/adminboard/api/export-logs/' + (qs ? '?' + qs : '');
     }
 
-    // ============================================
-    // ENTER KEY SUPPORT
-    // ============================================
-
-    document.addEventListener('keydown', function(e) {
+    /* ---------------------------------------------------------
+       Keyboard
+    --------------------------------------------------------- */
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
-            const target = e.target;
-            if (target.id === 'start-date' || target.id === 'end-date') {
+            const id = e.target.id;
+            if (id === 'start-date' || id === 'end-date') {
+                e.preventDefault();
                 applyFilters();
             }
         }
-    });
-
-    // ============================================
-    // INITIALIZATION
-    // ============================================
-
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Supervisor Activity Logs page loaded');
-        console.log('Total logs:', {{ activity_logs|length }});
     });
 </script>
 {% endblock %}
