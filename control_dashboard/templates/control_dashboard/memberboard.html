@@ -8,33 +8,55 @@
 
 <style>
     /* ============================================================
-       MEMBER DASHBOARD — PROFESSIONAL LAYOUT
+       MEMBER DASHBOARD — ENHANCED UX
        ============================================================ */
 
     :root {
-        --dash-bg:      #f7f8fc;
+        --dash-bg:      #f6f7fb;
         --dash-surface: #ffffff;
-        --dash-border:  #e5e7eb;
-        --dash-border-2:#f1f5f9;
+        --dash-border:  #e6e8ef;
+        --dash-border-2:#f0f2f8;
         --dash-text:    #0f1b33;
-        --dash-text-2:  #6b7280;
-        --dash-text-3:  #9ca3af;
+        --dash-text-2:  #5b6577;
+        --dash-text-3:  #9aa3b2;
         --dash-accent:  #4f6ef7;
         --dash-success: #17a673;
         --dash-warning: #e08a17;
         --dash-danger:  #e0456a;
         --dash-violet:  #7c5cf0;
+        --dash-cyan:    #0ea5a4;
+
+        --dash-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04);
+        --dash-shadow-md: 0 4px 16px rgba(15, 27, 51, 0.06);
+        --dash-shadow-lg: 0 12px 32px rgba(15, 27, 51, 0.08);
     }
 
     .dp-wrap {
         max-width: 1440px;
         margin: 0 auto;
-        padding: 4px 0 48px;
+        padding: 4px 0 56px;
         font-family: 'Poppins', system-ui, -apple-system, sans-serif;
         color: var(--dash-text);
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 22px;
+    }
+
+    /* Fade-up entrance, staggered */
+    @keyframes dp-fade-up {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .dp-wrap > * {
+        animation: dp-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .dp-wrap > *:nth-child(2) { animation-delay: 0.04s; }
+    .dp-wrap > *:nth-child(3) { animation-delay: 0.08s; }
+    .dp-wrap > *:nth-child(4) { animation-delay: 0.12s; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .dp-wrap > * { animation: none; }
     }
 
     /* ---------- Page header ---------- */
@@ -49,14 +71,14 @@
 
     .dp-header-left h1 {
         margin: 0;
-        font-size: 20px;
+        font-size: 22px;
         font-weight: 700;
-        letter-spacing: -0.3px;
+        letter-spacing: -0.4px;
         color: var(--dash-text);
     }
 
     .dp-header-left p {
-        margin: 4px 0 0 0;
+        margin: 5px 0 0 0;
         font-size: 12.5px;
         color: var(--dash-text-2);
     }
@@ -70,14 +92,15 @@
     .dp-date-chip {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
-        padding: 8px 14px;
+        gap: 8px;
+        padding: 9px 15px;
         background: var(--dash-surface);
         border: 1px solid var(--dash-border);
         border-radius: 10px;
         font-size: 12.5px;
         font-weight: 500;
         color: var(--dash-text-2);
+        box-shadow: var(--dash-shadow-sm);
     }
 
     .dp-date-chip i { color: var(--dash-accent); font-size: 11px; }
@@ -87,7 +110,7 @@
        ============================================================ */
     .dp-kpi-row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
         gap: 14px;
     }
 
@@ -95,19 +118,19 @@
         position: relative;
         background: var(--dash-surface);
         border: 1px solid var(--dash-border);
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 18px 20px 16px;
-        box-shadow: 0 1px 2px rgba(15, 27, 51, 0.03);
-        transition: border-color 0.15s, box-shadow 0.15s;
+        box-shadow: var(--dash-shadow-sm);
+        transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
         overflow: hidden;
     }
 
     .dp-kpi:hover {
-        border-color: #d1d5db;
-        box-shadow: 0 4px 14px rgba(15, 27, 51, 0.05);
+        border-color: #d3d8e4;
+        box-shadow: var(--dash-shadow-md);
+        transform: translateY(-1px);
     }
 
-    /* Left accent stripe */
     .dp-kpi::before {
         content: '';
         position: absolute;
@@ -124,6 +147,21 @@
     .dp-kpi[data-accent="warning"] { --kpi-accent: var(--dash-warning); }
     .dp-kpi[data-accent="violet"]  { --kpi-accent: var(--dash-violet); }
 
+    /* ---- Scorecard KPI (personal performance) ---- */
+    .dp-kpi[data-accent="score"]      { --kpi-accent: #17a673; }
+    .dp-kpi[data-accent="score-warn"] { --kpi-accent: #e08a17; }
+    .dp-kpi[data-accent="score-bad"]  { --kpi-accent: #e0456a; }
+
+    .dp-kpi[data-accent="score"],
+    .dp-kpi[data-accent="score-warn"],
+    .dp-kpi[data-accent="score-bad"] {
+        background:
+            radial-gradient(circle at 82% 22%,
+                color-mix(in srgb, var(--kpi-accent) 6%, transparent) 0%,
+                transparent 55%),
+            var(--dash-surface);
+    }
+
     .dp-kpi-head {
         display: flex;
         justify-content: space-between;
@@ -136,13 +174,13 @@
         font-weight: 700;
         color: var(--dash-text-2);
         text-transform: uppercase;
-        letter-spacing: 0.6px;
+        letter-spacing: 0.7px;
     }
 
     .dp-kpi-icon {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
+        width: 32px;
+        height: 32px;
+        border-radius: 9px;
         display: grid;
         place-items: center;
         background: color-mix(in srgb, var(--kpi-accent, var(--dash-accent)) 12%, transparent);
@@ -151,13 +189,13 @@
     }
 
     .dp-kpi-value {
-        font-size: 30px;
+        font-size: 32px;
         font-weight: 700;
         line-height: 1;
-        letter-spacing: -0.8px;
+        letter-spacing: -1px;
         color: var(--dash-text);
         font-variant-numeric: tabular-nums;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
 
     .dp-kpi-meta {
@@ -166,12 +204,120 @@
         gap: 6px;
         font-size: 11.5px;
         color: var(--dash-text-2);
-        line-height: 1.35;
+        line-height: 1.4;
     }
 
     .dp-kpi-meta i { font-size: 10px; color: var(--dash-text-3); }
-
     .dp-kpi-meta strong { color: var(--dash-text); font-weight: 600; }
+
+    /* ============================================================
+       SCORECARD RING (personal performance)
+       ============================================================ */
+    .dp-score-ring {
+        position: relative;
+        width: 104px;
+        height: 104px;
+        margin: 2px auto 12px;
+    }
+
+    .dp-score-ring::after {
+        content: '';
+        position: absolute;
+        inset: 14px;
+        border-radius: 50%;
+        background: radial-gradient(circle,
+            color-mix(in srgb, var(--kpi-accent) 10%, transparent) 0%,
+            transparent 70%);
+        pointer-events: none;
+    }
+
+    .dp-score-ring svg {
+        transform: rotate(-90deg);
+        width: 100%;
+        height: 100%;
+        position: relative;
+        z-index: 1;
+    }
+
+    .dp-score-ring .track {
+        fill: none;
+        stroke: #eef1f8;
+        stroke-width: 8;
+    }
+
+    .dp-score-ring .meter {
+        fill: none;
+        stroke: var(--kpi-accent, var(--dash-accent));
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1.1s cubic-bezier(0.22, 1, 0.36, 1);
+        filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--kpi-accent) 30%, transparent));
+    }
+
+    .dp-score-ring .pct {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--dash-text);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.8px;
+        z-index: 2;
+    }
+
+    .dp-score-ring .pct small {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--dash-text-2);
+        margin-left: 1px;
+    }
+
+    .dp-score-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 5px 12px;
+        border-radius: 100px;
+        font-size: 10.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: color-mix(in srgb, var(--kpi-accent, var(--dash-accent)) 12%, transparent);
+        color: var(--kpi-accent, var(--dash-accent));
+        margin: 0 auto 12px;
+        width: fit-content;
+    }
+
+    .dp-score-breakdown {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px 14px;
+        padding-top: 12px;
+        border-top: 1px dashed var(--dash-border);
+        font-size: 11px;
+        color: var(--dash-text-2);
+    }
+
+    .dp-score-breakdown > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .dp-score-breakdown > span i { color: var(--dash-text-3); font-size: 10px; }
+
+    .dp-score-breakdown span strong {
+        color: var(--dash-text);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .dp-score-breakdown .up   { color: var(--dash-success); font-weight: 700; }
+    .dp-score-breakdown .down { color: var(--dash-danger);  font-weight: 700; }
 
     /* ============================================================
        PROGRESS PANEL
@@ -179,8 +325,8 @@
     .dp-progress-panel {
         background: var(--dash-surface);
         border: 1px solid var(--dash-border);
-        border-radius: 12px;
-        box-shadow: 0 1px 2px rgba(15, 27, 51, 0.03);
+        border-radius: 14px;
+        box-shadow: var(--dash-shadow-sm);
         padding: 20px 22px;
     }
 
@@ -192,9 +338,9 @@
     }
 
     .dp-progress-panel > header i {
-        width: 26px;
-        height: 26px;
-        border-radius: 7px;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
         display: grid;
         place-items: center;
         background: #eef1ff;
@@ -212,14 +358,24 @@
 
     .dp-progress-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
     }
 
     .dp-progress-item {
+        background: linear-gradient(180deg, #fbfcff 0%, #ffffff 100%);
+        border: 1px solid var(--dash-border-2);
+        border-radius: 11px;
+        padding: 14px 16px 12px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 9px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .dp-progress-item:hover {
+        border-color: var(--dash-border);
+        box-shadow: 0 2px 8px rgba(15, 27, 51, 0.04);
     }
 
     .dp-progress-head {
@@ -230,19 +386,19 @@
     }
 
     .dp-progress-label {
-        font-size: 12px;
-        font-weight: 600;
+        font-size: 11px;
+        font-weight: 700;
         color: var(--dash-text-2);
         text-transform: uppercase;
-        letter-spacing: 0.4px;
+        letter-spacing: 0.5px;
     }
 
     .dp-progress-value {
-        font-size: 15px;
+        font-size: 18px;
         font-weight: 700;
         color: var(--dash-text);
         font-variant-numeric: tabular-nums;
-        letter-spacing: -0.3px;
+        letter-spacing: -0.4px;
     }
 
     .dp-progress-value.green  { color: var(--dash-success); }
@@ -254,13 +410,14 @@
         border-radius: 100px;
         background: var(--dash-border-2);
         overflow: hidden;
+        position: relative;
     }
 
     .dp-progress-fill {
         height: 100%;
         border-radius: 100px;
         width: 0;
-        transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+        transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
     .dp-progress-meta {
@@ -289,8 +446,8 @@
     .dp-card {
         background: var(--dash-surface);
         border: 1px solid var(--dash-border);
-        border-radius: 12px;
-        box-shadow: 0 1px 2px rgba(15, 27, 51, 0.03);
+        border-radius: 14px;
+        box-shadow: var(--dash-shadow-sm);
         overflow: hidden;
     }
 
@@ -302,6 +459,7 @@
         padding: 16px 20px;
         border-bottom: 1px solid var(--dash-border-2);
         flex-wrap: wrap;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
     }
 
     .dp-card-title {
@@ -315,9 +473,9 @@
     }
 
     .dp-card-title i {
-        width: 26px;
-        height: 26px;
-        border-radius: 7px;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
         display: grid;
         place-items: center;
         background: #eef1ff;
@@ -328,10 +486,7 @@
     .dp-card-title.danger i  { background: #fee2e2; color: var(--dash-danger); }
     .dp-card-title.success i { background: #e2f7ef; color: var(--dash-success); }
 
-    .dp-card-body {
-        padding: 0;
-    }
-
+    .dp-card-body { padding: 0; }
     .dp-card-body.padded { padding: 18px 20px; }
 
     /* ============================================================
@@ -357,7 +512,7 @@
         outline: none;
         appearance: none;
         -webkit-appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b6577' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
         background-repeat: no-repeat;
         background-position: right 10px center;
         background-size: 13px;
@@ -396,6 +551,7 @@
 
     .dp-date-input.is-empty {
         border-color: var(--dash-warning);
+        background: #fffbf2;
     }
 
     .dp-mini-btn {
@@ -403,7 +559,7 @@
         align-items: center;
         gap: 6px;
         height: 36px;
-        padding: 0 12px;
+        padding: 0 13px;
         border-radius: 9px;
         border: 1px solid var(--dash-border);
         background: var(--dash-surface);
@@ -419,7 +575,7 @@
     .dp-mini-btn:hover {
         background: #f7f8fc;
         color: var(--dash-text);
-        border-color: #d1d5db;
+        border-color: #d3d8e4;
     }
 
     .dp-mini-btn i { font-size: 11px; }
@@ -464,7 +620,7 @@
 
     /* Table */
     .dp-table-scroll {
-        max-height: 520px;
+        max-height: 560px;
         overflow: auto;
     }
 
@@ -477,7 +633,7 @@
     .dp-table thead th {
         position: sticky;
         top: 0;
-        z-index: 1;
+        z-index: 2;
         background: #f8fafc;
         text-align: left;
         padding: 11px 16px;
@@ -485,9 +641,10 @@
         font-weight: 700;
         color: var(--dash-text-2);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.6px;
         border-bottom: 1px solid var(--dash-border);
         white-space: nowrap;
+        box-shadow: 0 1px 0 var(--dash-border-2);
     }
 
     .dp-table thead th.num { text-align: right; }
@@ -500,8 +657,9 @@
         line-height: 1.4;
     }
 
+    .dp-table tbody tr:nth-child(even) { background: #fcfdff; }
     .dp-table tbody tr:last-child td { border-bottom: none; }
-    .dp-table tbody tr:hover { background: #fafbfd; }
+    .dp-table tbody tr:hover { background: #f5f7ff; }
 
     .dp-table td.num {
         text-align: right;
@@ -527,20 +685,31 @@
 
     /* Empty state */
     .dp-empty {
-        padding: 60px 24px;
+        padding: 64px 24px;
         text-align: center;
     }
 
     .dp-empty-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 14px;
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
         margin: 0 auto 16px;
         display: grid;
         place-items: center;
-        background: #f7f8fc;
+        background: radial-gradient(circle,
+            rgba(79, 110, 247, 0.10) 0%,
+            rgba(79, 110, 247, 0.03) 60%,
+            transparent 70%);
         color: var(--dash-text-3);
-        font-size: 20px;
+        font-size: 22px;
+    }
+
+    .dp-empty-icon.is-success {
+        background: radial-gradient(circle,
+            rgba(23, 166, 115, 0.12) 0%,
+            rgba(23, 166, 115, 0.03) 60%,
+            transparent 70%);
+        color: var(--dash-success);
     }
 
     .dp-empty-title {
@@ -553,9 +722,9 @@
     .dp-empty-text {
         font-size: 12.5px;
         color: var(--dash-text-2);
-        max-width: 400px;
+        max-width: 420px;
         margin: 0 auto;
-        line-height: 1.5;
+        line-height: 1.55;
     }
 
     /* ============================================================
@@ -568,10 +737,7 @@
     }
 
     /* Quick actions */
-    .dp-actions {
-        display: flex;
-        flex-direction: column;
-    }
+    .dp-actions { display: flex; flex-direction: column; }
 
     .dp-action {
         display: flex;
@@ -588,16 +754,19 @@
     .dp-action:hover { background: #fafbfd; }
 
     .dp-action-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 9px;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
         display: grid;
         place-items: center;
         font-size: 12px;
         flex-shrink: 0;
         background: #eef1ff;
         color: var(--dash-accent);
+        transition: transform 0.2s;
     }
+
+    .dp-action:hover .dp-action-icon { transform: scale(1.05); }
 
     .dp-action[data-accent="rose"]   .dp-action-icon { background: #fee2e2; color: var(--dash-danger); }
     .dp-action[data-accent="cyan"]   .dp-action-icon { background: #e0f2fe; color: #0284c7; }
@@ -619,12 +788,12 @@
     .dp-action-arrow {
         color: var(--dash-text-3);
         font-size: 10px;
-        transition: transform 0.15s;
+        transition: transform 0.15s, color 0.15s;
     }
 
     .dp-action:hover .dp-action-arrow {
         color: var(--dash-accent);
-        transform: translateX(2px);
+        transform: translateX(3px);
     }
 
     /* Summary stats list */
@@ -639,9 +808,12 @@
         justify-content: space-between;
         align-items: center;
         gap: 12px;
-        padding: 11px 20px;
+        padding: 12px 20px;
         font-size: 12.5px;
+        transition: background 0.12s;
     }
+
+    .dp-stat-row:hover { background: #fafbfd; }
 
     .dp-stat-row + .dp-stat-row {
         border-top: 1px solid var(--dash-border-2);
@@ -651,11 +823,11 @@
         color: var(--dash-text-2);
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 9px;
     }
 
     .dp-stat-label i {
-        width: 14px;
+        width: 16px;
         text-align: center;
         font-size: 11px;
         color: var(--dash-text-3);
@@ -677,13 +849,16 @@
        ============================================================ */
     @media (max-width: 900px) {
         .dp-header { flex-direction: column; align-items: stretch; }
-        .dp-kpi-value { font-size: 26px; }
+        .dp-kpi-value { font-size: 28px; }
+        .dp-progress-value { font-size: 16px; }
+
         .dp-table thead { display: none; }
         .dp-table tbody, .dp-table tr, .dp-table td { display: block; width: 100%; }
         .dp-table tbody tr {
             padding: 12px 16px;
             border-bottom: 1px solid var(--dash-border-2);
         }
+        .dp-table tbody tr:nth-child(even) { background: #fcfdff; }
         .dp-table tbody td {
             border: none;
             padding: 3px 0;
@@ -807,17 +982,67 @@
                 {% endif %}
             </div>
         </article>
+
+        <!-- ===== PERSONAL PERFORMANCE SCORECARD ===== -->
+        {% with pct=scorecard_percentage|default:0 %}
+        <article class="dp-kpi"
+                 data-accent="{% if pct >= 70 %}score{% elif pct >= 40 %}score-warn{% else %}score-bad{% endif %}">
+
+            <div class="dp-kpi-head">
+                <span class="dp-kpi-label">My Performance</span>
+                <span class="dp-kpi-icon"><i class="fas fa-star"></i></span>
+            </div>
+
+            <div class="dp-score-ring">
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <circle class="track" cx="50" cy="50" r="42"></circle>
+                    <circle class="meter"
+                            cx="50" cy="50" r="42"
+                            stroke-dasharray="263.9"
+                            stroke-dashoffset="263.9"
+                            data-pct="{{ pct }}"></circle>
+                </svg>
+                <div class="pct">{{ pct }}<small>%</small></div>
+            </div>
+
+            <div class="dp-score-status">
+                {% if pct >= 70 %}
+                    <i class="fas fa-circle-check"></i>
+                {% elif pct >= 40 %}
+                    <i class="fas fa-hourglass-half"></i>
+                {% else %}
+                    <i class="fas fa-circle-exclamation"></i>
+                {% endif %}
+                {{ scorecard_status_text|default:"No Tasks" }}
+            </div>
+
+            <div class="dp-score-breakdown">
+                <span>
+                    <i class="fas fa-envelope"></i>
+                    <strong>{{ scorecard_email_count|default:0 }}</strong> sent
+                </span>
+                {% if scorecard_credits %}
+                <span>
+                    <i class="fas fa-arrow-up"></i>
+                    <span class="up">+{{ scorecard_credits }}</span>
+                </span>
+                {% endif %}
+                {% if scorecard_debits %}
+                <span>
+                    <i class="fas fa-arrow-down"></i>
+                    <span class="down">−{{ scorecard_debits }}</span>
+                </span>
+                {% endif %}
+            </div>
+        </article>
+        {% endwith %}
+
     </section>
 
     <!-- ============================================================
          PROGRESS PANEL
          ============================================================ -->
     <section class="dp-progress-panel">
-        <header>
-            <i class="fas fa-chart-line"></i>
-            <h3>Progress Overview</h3>
-        </header>
-
         <div class="dp-progress-grid">
             <div class="dp-progress-item">
                 <div class="dp-progress-head">
@@ -983,7 +1208,7 @@
                     </div>
                 {% else %}
                     <div class="dp-empty">
-                        <div class="dp-empty-icon" style="background: #e2f7ef; color: var(--dash-success);">
+                        <div class="dp-empty-icon is-success">
                             <i class="fas fa-shield-alt"></i>
                         </div>
                         <div class="dp-empty-title">All GL positions balanced on {{ selected_gl_date_display }}</div>
@@ -1104,9 +1329,28 @@
     };
 
     /* ============================================================
+       Animate the personal performance score ring
+       ============================================================ */
+    function animateScoreRing() {
+        document.querySelectorAll('.dp-score-ring .meter').forEach(function (ring) {
+            var pct = parseFloat(ring.getAttribute('data-pct')) || 0;
+            var circumference = 2 * Math.PI * 42;
+
+            pct = Math.max(0, Math.min(100, pct));
+            ring.setAttribute('stroke-dashoffset', circumference);
+
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    ring.setAttribute('stroke-dashoffset', circumference * (1 - pct / 100));
+                });
+            });
+        });
+    }
+
+    /* ============================================================
        Animate progress bars on load
        ============================================================ */
-    function animateOnLoad() {
+    function animateProgressBars() {
         document.querySelectorAll('.dp-progress-fill').forEach(function (bar) {
             var target = bar.getAttribute('data-width') || '0%';
             requestAnimationFrame(function () {
@@ -1117,10 +1361,28 @@
         });
     }
 
+    function boot() {
+        animateProgressBars();
+        animateScoreRing();
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', animateOnLoad);
+        document.addEventListener('DOMContentLoaded', boot);
     } else {
-        animateOnLoad();
+        boot();
+    }
+
+    // Respect reduced-motion: if user has it on, skip the initial 0-width
+    // state so bars/rings appear already filled.
+    if (window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.querySelectorAll('.dp-progress-fill').forEach(function (bar) {
+            bar.style.width = bar.getAttribute('data-width') || '0%';
+        });
+        document.querySelectorAll('.dp-score-ring .meter').forEach(function (ring) {
+            var pct = Math.max(0, Math.min(100, parseFloat(ring.getAttribute('data-pct')) || 0));
+            ring.setAttribute('stroke-dashoffset', (2 * Math.PI * 42) * (1 - pct / 100));
+        });
     }
 })();
 </script>

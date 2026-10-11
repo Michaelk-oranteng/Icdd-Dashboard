@@ -251,6 +251,14 @@
         font-size: 11px;
         color: #46536b;
     }
+    .cll-unit.all {
+    background: #eef1ff;
+    border-color: rgba(79, 110, 247, 0.3);
+    color: #4f6ef7;
+    font-weight: 600;
+}
+
+.cll-unit.all i { color: #4f6ef7; }
 
     .cll-unit i { font-size: 9px; color: #9ca3af; }
 
@@ -717,19 +725,38 @@
                     <!-- Assigned units -->
                     <td>
                         <div class="cll-units">
-                            {% for b in cl.assigned_branches.all %}
-                                <span class="cll-unit">
-                                    <i class="fas fa-building"></i> {{ b.name }}
+
+                            {# ---- BRANCHES ---- #}
+                            {% if cl.all_branches %}
+                                <span class="cll-unit all">
+                                    <i class="fas fa-building"></i> All Branches
                                 </span>
-                            {% endfor %}
-                            {% for d in cl.assigned_departments.all %}
-                                <span class="cll-unit">
-                                    <i class="fas fa-sitemap"></i> {{ d.name }}
+                            {% else %}
+                                {% for b in cl.assigned_branches.all %}
+                                    <span class="cll-unit">
+                                        <i class="fas fa-building"></i> {{ b.name }}
+                                    </span>
+                                {% endfor %}
+                            {% endif %}
+
+                            {# ---- DEPARTMENTS ---- #}
+                            {% if cl.all_departments %}
+                                <span class="cll-unit all">
+                                    <i class="fas fa-sitemap"></i> All Departments
                                 </span>
-                            {% endfor %}
-                            {% if not cl.assigned_branches.exists and not cl.assigned_departments.exists %}
+                            {% else %}
+                                {% for d in cl.assigned_departments.all %}
+                                    <span class="cll-unit">
+                                        <i class="fas fa-sitemap"></i> {{ d.name }}
+                                    </span>
+                                {% endfor %}
+                            {% endif %}
+
+                            {# ---- EMPTY STATE ---- #}
+                            {% if not cl.all_branches and not cl.all_departments and not cl.assigned_branches.exists and not cl.assigned_departments.exists %}
                                 <span style="color:#9ca3af;font-size:11px;font-style:italic;">No units</span>
                             {% endif %}
+
                         </div>
                     </td>
 

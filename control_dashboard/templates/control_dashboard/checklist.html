@@ -247,6 +247,57 @@
         color: #17a673;
         flex-shrink: 0;
     }
+    /* Select-all row above each multi-select */
+.clb-multi-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.clb-multi-toolbar .clb-multi-count {
+    font-size: 11px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.clb-multi-toolbar .clb-select-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid rgba(79, 110, 247, 0.3);
+    border-radius: 8px;
+    background: #f7f8ff;
+    color: #4f6ef7;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.clb-multi-toolbar .clb-select-all:hover {
+    background: #eef1ff;
+    border-color: rgba(79, 110, 247, 0.6);
+}
+
+.clb-multi-toolbar .clb-select-all.is-clear {
+    border-color: rgba(224, 69, 106, 0.3);
+    background: #fff5f8;
+    color: #e0456a;
+}
+
+.clb-multi-toolbar .clb-select-all.is-clear:hover {
+    background: #fdeaf0;
+    border-color: rgba(224, 69, 106, 0.55);
+}
+
+.clb-multi-toolbar .clb-select-all:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
     .clb-toast.error .icon { background: #fdeaf0; color: #e0456a; }
     .clb-toast .title { font-size: 13px; font-weight: 700; color: #0f1b33; margin: 0; }
@@ -335,14 +386,7 @@
                        required>
             </div>
 
-            <!-- 2. DESCRIPTION -->
-            <div class="clb-field">
-                <label for="clbDescription">Description</label>
-                <textarea id="clbDescription"
-                          placeholder="What does this checklist cover? (optional)"></textarea>
-            </div>
-
-            <!-- 3. TASKS -->
+            <!-- 2. TASKS -->
             <div class="clb-field">
                 <label>Tasks <span class="req">*</span></label>
                 <div id="clbTasksEditor">
@@ -360,7 +404,7 @@
                 </button>
             </div>
 
-            <!-- 4. FREQUENCY -->
+            <!-- 3. FREQUENCY -->
             <div class="clb-field">
                 <label for="clbFrequency">Frequency <span class="req">*</span></label>
                 <select id="clbFrequency" required>
@@ -370,10 +414,19 @@
                 </select>
             </div>
 
-            <!-- 5. BRANCHES -->
+            <!-- 4. BRANCHES -->
             <div class="clb-field">
                 <label>Assign to Branches</label>
-                <div class="clb-multi">
+                <div class="clb-multi-toolbar">
+                    <span class="clb-multi-count" id="clbBranchCount">0 of {{ branches|length }} selected</span>
+                    <button type="button"
+                            class="clb-select-all"
+                            id="clbBranchSelectAll"
+                            onclick="toggleSelectAllBranches()">
+                        <i class="fas fa-check-double"></i> Select All Branches
+                    </button>
+                </div>
+                <div class="clb-multi" id="clbBranchList">
                     {% for b in branches %}
                         <label>
                             <input type="checkbox" class="clb-branch-check" value="{{ b.id }}">
@@ -385,10 +438,19 @@
                 </div>
             </div>
 
-            <!-- 6. DEPARTMENTS -->
+            <!-- 5. DEPARTMENTS -->
             <div class="clb-field">
                 <label>Assign to Departments</label>
-                <div class="clb-multi">
+                <div class="clb-multi-toolbar">
+                    <span class="clb-multi-count" id="clbDeptCount">0 of {{ departments|length }} selected</span>
+                    <button type="button"
+                            class="clb-select-all"
+                            id="clbDeptSelectAll"
+                            onclick="toggleSelectAllDepartments()">
+                        <i class="fas fa-check-double"></i> Select All Departments
+                    </button>
+                </div>
+                <div class="clb-multi" id="clbDeptList">
                     {% for d in departments %}
                         <label>
                             <input type="checkbox" class="clb-dept-check" value="{{ d.id }}">
@@ -400,7 +462,7 @@
                 </div>
             </div>
 
-            <!-- 7. CREATE BUTTON -->
+            <!-- 6. CREATE BUTTON -->
             <div class="clb-actions">
                 <button type="submit" class="clb-btn-create" id="clbCreateBtn">
                     <i class="fas fa-plus"></i> Create Checklist
@@ -469,11 +531,81 @@
         }
     }
 
+    /* ============================================================
+   SELECT-ALL / CLEAR-ALL for Branches and Departments
+   ============================================================ */
+
+function updateMultiCounts() {
+    const branchChecks = document.querySelectorAll('.clb-branch-check');
+    const deptChecks   = document.querySelectorAll('.clb-dept-check');
+
+    const branchChecked = document.querySelectorAll('.clb-branch-check:checked').length;
+    const deptChecked   = document.querySelectorAll('.clb-dept-check:checked').length;
+
+    // ---- Branches ----
+    const branchCountEl = document.getElementById('clbBranchCount');
+    const branchBtn     = document.getElementById('clbBranchSelectAll');
+    if (branchCountEl) {
+        branchCountEl.textContent = `${branchChecked} of ${branchChecks.length} selected`;
+    }
+    if (branchBtn && branchChecks.length > 0) {
+        const allSelected = branchChecked === branchChecks.length;
+        branchBtn.classList.toggle('is-clear', allSelected);
+        branchBtn.innerHTML = allSelected
+            ? '<i class="fas fa-times"></i> Clear All Branches'
+            : '<i class="fas fa-check-double"></i> Select All Branches';
+        branchBtn.disabled = branchChecks.length === 0;
+    }
+
+    // ---- Departments ----
+    const deptCountEl = document.getElementById('clbDeptCount');
+    const deptBtn     = document.getElementById('clbDeptSelectAll');
+    if (deptCountEl) {
+        deptCountEl.textContent = `${deptChecked} of ${deptChecks.length} selected`;
+    }
+    if (deptBtn && deptChecks.length > 0) {
+        const allSelected = deptChecked === deptChecks.length;
+        deptBtn.classList.toggle('is-clear', allSelected);
+        deptBtn.innerHTML = allSelected
+            ? '<i class="fas fa-times"></i> Clear All Departments'
+            : '<i class="fas fa-check-double"></i> Select All Departments';
+        deptBtn.disabled = deptChecks.length === 0;
+    }
+}
+
+function toggleSelectAllBranches() {
+    const checks = document.querySelectorAll('.clb-branch-check');
+    if (!checks.length) return;
+
+    const allSelected = Array.from(checks).every(cb => cb.checked);
+    checks.forEach(cb => { cb.checked = !allSelected; });
+
+    updateMultiCounts();
+}
+
+function toggleSelectAllDepartments() {
+    const checks = document.querySelectorAll('.clb-dept-check');
+    if (!checks.length) return;
+
+    const allSelected = Array.from(checks).every(cb => cb.checked);
+    checks.forEach(cb => { cb.checked = !allSelected; });
+
+    updateMultiCounts();
+}
+
+/* Wire up change listeners on every checkbox so the counts and
+   button label stay in sync when the user ticks items manually. */
+function bindMultiCheckboxListeners() {
+    document.querySelectorAll('.clb-branch-check, .clb-dept-check').forEach(cb => {
+        cb.addEventListener('change', updateMultiCounts);
+    });
+    updateMultiCounts();
+}
+
     async function saveChecklist(event) {
         event.preventDefault();
 
         const name        = document.getElementById('clbName').value.trim();
-        const description = document.getElementById('clbDescription').value.trim();
         const frequency   = document.getElementById('clbFrequency').value;
 
         const tasks = Array.from(document.querySelectorAll('#clbTasksEditor .clb-task-input'))
@@ -516,7 +648,6 @@
                 credentials: 'same-origin',
                 body: JSON.stringify({
                     name,
-                    description,
                     frequency,
                     tasks,
                     assigned_branches,
@@ -543,5 +674,9 @@
             btn.innerHTML = orig;
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+    bindMultiCheckboxListeners();
+});
 </script>
 {% endblock %}

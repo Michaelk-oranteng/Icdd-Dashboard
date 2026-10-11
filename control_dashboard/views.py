@@ -1533,11 +1533,36 @@ def checklist_list(request):
     except UserProfile.DoesNotExist:
         return redirect_dashboard(request.user)
 
-    checklists = (
+    checklists = list(
         Checklist.objects
         .prefetch_related('tasks', 'assigned_branches', 'assigned_departments')
         .order_by('-created_at')
     )
+
+    # All currently active units — used to detect "assign to all"
+    all_active_branch_ids = set(
+        Branch.objects.filter(is_active=True).values_list('id', flat=True)
+    )
+    all_active_dept_ids = set(
+        Department.objects.filter(is_active=True).values_list('id', flat=True)
+    )
+
+    # Attach convenience flags so the template doesn't have to
+    # recompute set membership on every render.
+    for cl in checklists:
+        assigned_b = set(cl.assigned_branches.values_list('id', flat=True))
+        assigned_d = set(cl.assigned_departments.values_list('id', flat=True))
+
+        # "All" means: at least one active branch exists AND
+        # every active branch is assigned.
+        cl.all_branches = (
+            bool(all_active_branch_ids) and
+            all_active_branch_ids.issubset(assigned_b)
+        )
+        cl.all_departments = (
+            bool(all_active_dept_ids) and
+            all_active_dept_ids.issubset(assigned_d)
+        )
 
     context = {
         'user_profile': user_profile,
@@ -1548,7 +1573,6 @@ def checklist_list(request):
         'today':        timezone.now(),
     }
     return render(request, 'control_dashboard/checklist_list.html', context)
-
 
 # ==================== API - CHECKLIST MANAGEMENT ====================
 
@@ -1807,9 +1831,6 @@ def api_delete_checklist(request, checklist_id):
 
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-
-# ==================== MEMBER DASHBOARD VIEW ====================
 
 # ==================== MEMBER DASHBOARD VIEW ====================
 
@@ -2280,7 +2301,28 @@ def member_dashboard(request):
         selected_gl_date = None
         selected_gl_date_display = ''
         is_today_gl = False
-
+        # ============================================================
+    # PERSONAL PERFORMANCE SCORECARD
+    # Uses the same helper as the supervisor Team Performance page,
+    # so the number this member sees is always identical to what
+    # their supervisor sees for them.
+    # ============================================================
+    try:
+        scorecard = _build_member_scorecard(user_profile, today=timezone.now())
+    except Exception:
+        logger.exception("Error building member scorecard for dashboard")
+        scorecard = {
+            'percentage': 0,
+            'status': 'danger',
+            'status_text': 'No Tasks',
+            'email_score': 0,
+            'adhoc_credits': 0,
+            'adhoc_debits': 0,
+            'net_score': 0,
+            'net_vs_target': -100,
+            'total_tasks': 0,
+            'email_count': 0,
+        }
     context = {
         'user_profile': user_profile,
         'today': today,
@@ -2331,6 +2373,16 @@ def member_dashboard(request):
         'quarter_ring_offset': 100 - overall_quarter_progress,
         'year_ring_offset':    100 - overall_year_progress,
         'weekly_ring_offset':  100 - weekly_completion_rate,
+                # ---- Personal performance scorecard ----
+        'scorecard':            scorecard,
+        'scorecard_percentage': scorecard['percentage'],
+        'scorecard_status':     scorecard['status'],
+        'scorecard_status_text': scorecard['status_text'],
+        'scorecard_net_score':  scorecard['net_score'],
+        'scorecard_vs_target':  scorecard['net_vs_target'],
+        'scorecard_email_count': scorecard['email_count'],
+        'scorecard_credits':    scorecard['adhoc_credits'],
+        'scorecard_debits':     scorecard['adhoc_debits'],
     }
 
     return render(request, 'control_dashboard/memberboard.html', context)
@@ -5940,8 +5992,6 @@ def api_get_trial_balance_by_date(request):
         except UserProfile.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
 
-        from .models import TrialBalanceEntry
-
         code_to_name = dict(Branch.BRANCH_CODE_MAP)
         for b in Branch.objects.filter(is_active=True):
             if b.code:
@@ -5954,14 +6004,17 @@ def api_get_trial_balance_by_date(request):
             .order_by('row_index')
         )
 
+        # ---- No upload at all for that date ----
         if not entries:
             return JsonResponse({
                 'success': True,
                 'found': False,
+                'upload_exists': False,
                 'report_date': report_date.isoformat(),
                 'message': f'No trial balance has been uploaded for {report_date.isoformat()} yet.'
             })
 
+        # ---- Upload exists — determine what the user can see ----
         user_branches = list(user_profile.branches.all())
         user_departments = list(user_profile.departments.all())
 
@@ -6012,19 +6065,35 @@ def api_get_trial_balance_by_date(request):
 
         visible_entries = [e for e in entries if passes_assignment(e)]
 
+        first_entry = entries[0]
+        uploader = getattr(first_entry, 'uploaded_by', None)
+        uploaded_by_info = None
+        if uploader:
+            uploaded_by_info = {
+                'id': uploader.id,
+                'full_name': uploader.full_name or uploader.email,
+                'email': uploader.email,
+            }
+        uploaded_at_iso = first_entry.created_at.isoformat() if first_entry.created_at else None
+
+        # ---- Upload exists, but the user can't see any of its rows ----
         if not visible_entries:
             return JsonResponse({
                 'success': True,
                 'found': False,
+                'upload_exists': True,
                 'report_date': report_date.isoformat(),
-                'message': (f'No entries visible for your assigned branches/departments '
-                            f'on {report_date.isoformat()}.')
+                'uploaded_by': uploaded_by_info,
+                'uploaded_at': uploaded_at_iso,
+                'file_name': first_entry.file_name or 'trial_balance.xlsx',
+                'message': (
+                    f'A trial balance exists for {report_date.isoformat()} '
+                    f'(uploaded by {uploaded_by_info["full_name"] if uploaded_by_info else "another user"}), '
+                    f'but no entries match your assigned branches/departments.'
+                ),
             })
 
-                # ------------------------------------------------------------
-        # Whitelist of 8 columns to expose to the frontend.
-        # Keep this in sync with the exception side view.
-        # ------------------------------------------------------------
+        # ---- Build the visible payload ----
         headers = [
             'BRANCH_CODE',
             'CATEGORY',
@@ -6041,7 +6110,7 @@ def api_get_trial_balance_by_date(request):
         total_credit = 0.0
 
         for entry in visible_entries:
-            # -------- Filter: only active GLs --------
+            # Only active GLs
             status_raw = str(entry.gl_status or '').strip().lower()
             if status_raw != 'active':
                 continue
@@ -6066,16 +6135,6 @@ def api_get_trial_balance_by_date(request):
             except (ValueError, TypeError):
                 pass
 
-        first_entry = visible_entries[0]
-        uploader = getattr(first_entry, 'uploaded_by', None)
-        uploaded_by_info = None
-        if uploader:
-            uploaded_by_info = {
-                'id': uploader.id,
-                'full_name': uploader.full_name or uploader.email,
-                'email': uploader.email,
-            }
-
         if is_hc_staff and not is_privileged:
             combined_allowed = set(allowed_branch_codes)
             combined_allowed.add('000')
@@ -6088,6 +6147,7 @@ def api_get_trial_balance_by_date(request):
         return JsonResponse({
             'success': True,
             'found': True,
+            'upload_exists': True,
             'report_date': report_date.isoformat(),
             'file_name': first_entry.file_name or 'trial_balance.xlsx',
             'headers': headers,
@@ -6104,7 +6164,7 @@ def api_get_trial_balance_by_date(request):
             'allowed_branches': allowed_branches_list,
             'allowed_departments': allowed_departments_list,
             'uploaded_by': uploaded_by_info,
-            'uploaded_at': first_entry.created_at.isoformat() if first_entry.created_at else None,
+            'uploaded_at': uploaded_at_iso,
         })
 
     except Exception as e:
@@ -6140,6 +6200,7 @@ def api_check_trial_balance_day(request):
                 'uploaded_by': None,
                 'uploaded_at': None,
                 'row_count': 0,
+                'file_name': '',
             })
 
         return JsonResponse({
@@ -6153,6 +6214,7 @@ def api_check_trial_balance_day(request):
             },
             'uploaded_at': upload.created_at.isoformat() if upload.created_at else None,
             'row_count': upload.row_count,
+            'file_name': upload.file_name or '',
         })
 
     except Exception as e:
@@ -7275,7 +7337,6 @@ def api_create_unit(request):
         code        = (data.get('code') or '').strip()
         assignment  = (data.get('assignment') or 'cc').strip().lower()
         user_ids    = data.get('user_ids') or []
-        description = (data.get('description') or '').strip()
 
         # ---- Validation ----
         if unit_type not in ('branch', 'department'):

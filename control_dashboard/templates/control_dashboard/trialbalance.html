@@ -955,25 +955,20 @@
 
 {% block content %}
     <div class="tb-container">
-
-        <div class="tb-header-actions">
-        <div class="tb-date-wrapper">
-            <label for="tbReportDate" class="tb-date-label">
-                <i class="fas fa-calendar-alt"></i> Report Date
-            </label>
-            <input type="date" id="tbReportDate" class="tb-date-input" required>
-        </div>
-        <button class="tb-btn tb-btn-outline" onclick="loadTrialBalanceByDate()" id="tb-load-btn">
-            <i class="fas fa-search"></i> View
-        </button>
-        <button class="tb-btn tb-btn-primary" onclick="openUploadDialog()" id="tb-upload-btn">
-            <i class="fas fa-cloud-upload-alt"></i> Upload Excel
-        </button>
-        <button class="tb-btn tb-btn-success" onclick="submitTrialBalance()" id="tb-submit-btn" disabled>
-            <i class="fas fa-paper-plane"></i> Submit
-        </button>
+    <div class="tb-header-actions">
+    <div class="tb-date-wrapper">
+        <label for="tbReportDate" class="tb-date-label">
+            <i class="fas fa-calendar-alt"></i> Report Date
+        </label>
+        <input type="date" id="tbReportDate" class="tb-date-input" required>
     </div>
-
+    <button class="tb-btn tb-btn-primary" onclick="openUploadDialog()" id="tb-upload-btn">
+        <i class="fas fa-cloud-upload-alt"></i> Upload Excel
+    </button>
+    <button class="tb-btn tb-btn-success" onclick="submitTrialBalance()" id="tb-submit-btn" disabled>
+        <i class="fas fa-paper-plane"></i> Submit
+    </button>
+</div>
     <input type="file" id="tbFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
 
     <!-- DAY LOCK BANNER -->
@@ -1051,11 +1046,10 @@
             </div>
         </div>
 
-        <!-- EMPTY STATE -->
         <div class="tb-empty" id="tb-empty-state">
             <div class="tb-empty-glyph"><i class="fas fa-balance-scale"></i></div>
             <h3>No Trial Balance Loaded</h3>
-            <p>Pick a report date, then click "Upload Excel" to load your daily trial balance file — or click "View" to inspect an existing upload.</p>
+            <p>Pick a report date to automatically load the trial balance uploaded on that day — or click "Upload Excel" to submit a new one.</p>
         </div>
     </div>
 
@@ -1290,8 +1284,8 @@
                 const at = data.uploaded_at ? new Date(data.uploaded_at).toLocaleString() : '';
                 const count = (data.row_count || 0).toLocaleString();
                 bannerSub.textContent =
-                    `Uploaded by ${by}${at ? ' · ' + at : ''} · ${count} rows. ` +
-                    `Only one upload per day is allowed — you can still view the data.`;
+                `Uploaded by ${by}${at ? ' · ' + at : ''} · ${count} rows. ` +
+                `All users can view this data. Only one upload per day is allowed.`;
 
                 uploadBtn.disabled = true;
                 uploadBtn.title = 'Only one upload per day is allowed';
@@ -1389,58 +1383,92 @@
     // ============================================
     // LOAD BY DATE
     // ============================================
-    function loadTrialBalanceByDate() {
-        const reportDate = document.getElementById('tbReportDate')?.value || '';
-        if (!reportDate) {
-            showToast('Please pick a report date first.', 'Error', 'error');
-            document.getElementById('tbReportDate')?.focus();
+function loadTrialBalanceByDate() {
+    const reportDate = document.getElementById('tbReportDate')?.value || '';
+    if (!reportDate) {
+        resetToEmpty(false);
+        return;
+    }
+
+    showLoading('Loading trial balance...');
+
+    fetch(`/adminboard/api/trial-balance/by-date/?date=${encodeURIComponent(reportDate)}`, {
+        method: 'GET',
+        headers: { 'X-CSRFToken': getCsrfToken() }
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoading();
+
+        if (!data.success) {
+            showToast(data.error || 'Could not load trial balance.', 'Error', 'error');
+            resetToEmpty(false);
             return;
         }
 
-        showLoading('Loading trial balance...');
+        if (!data.found) {
+            resetToEmpty(false);
 
-        fetch(`/adminboard/api/trial-balance/by-date/?date=${encodeURIComponent(reportDate)}`, {
-            method: 'GET',
-            headers: { 'X-CSRFToken': getCsrfToken() }
-        })
-        .then(r => r.json())
-        .then(data => {
-            hideLoading();
-
-            if (!data.success) {
-                showToast(data.error || 'Could not load trial balance.', 'Error', 'error');
-                return;
+            // Distinguish between "no upload at all" vs
+            // "upload exists but no rows match your assigned units"
+            if (data.upload_exists === false) {
+                showToast(
+                    data.message || `No trial balance has been uploaded for ${reportDate} yet.`,
+                    'No Upload', 'info'
+                );
+            } else if (data.upload_exists === true) {
+                showToast(
+                    data.message || `A trial balance exists for ${reportDate}, but no entries match your assigned branches/departments.`,
+                    'No Matching Entries', 'info'
+                );
+            } else {
+                // Backwards-compat: fall back to day-lock check
+                fetch(`/adminboard/api/trial-balance/check-day/?date=${encodeURIComponent(reportDate)}`)
+                    .then(r => r.json())
+                    .then(lockData => {
+                        if (lockData.success && lockData.locked) {
+                            showToast(
+                                `A trial balance was uploaded by ${lockData.uploaded_by?.full_name || 'another user'} on this date, but no entries match your assigned branches/departments.`,
+                                'No Matching Entries', 'info'
+                            );
+                        } else {
+                            showToast(
+                                data.message || `No trial balance found for ${reportDate}.`,
+                                'Info', 'info'
+                            );
+                        }
+                    })
+                    .catch(() => {
+                        showToast(data.message || `No trial balance found for ${reportDate}.`, 'Info', 'info');
+                    });
             }
+            return;
+        }
 
-            if (!data.found) {
-                resetToEmpty(false);
-                showToast(data.message || `No trial balance found for ${reportDate}.`, 'Info', 'info');
-                return;
-            }
+        // Success — populate state and render
+        uploadedFileName = data.file_name || 'trial_balance.xlsx';
+        parsedHeaders = data.headers || [];
+        parsedDicts = data.rows || [];
+        parsedSummary = data.summary || {};
 
-            uploadedFileName = data.file_name || 'trial_balance.xlsx';
-            parsedHeaders = data.headers || [];
-            parsedDicts = data.rows || [];
-            parsedSummary = data.summary || {};
+        allowedBranchCodes = (Array.isArray(data.allowed_branches) && data.allowed_branches.length > 0)
+            ? data.allowed_branches.map(c => String(c).trim())
+            : null;
 
-            allowedBranchCodes = (Array.isArray(data.allowed_branches) && data.allowed_branches.length > 0)
-                ? data.allowed_branches.map(c => String(c).trim())
-                : null;
+        allowedDepartmentNames = (Array.isArray(data.allowed_departments) && data.allowed_departments.length > 0)
+            ? data.allowed_departments.map(d => String(d).trim().toUpperCase())
+            : null;
 
-            allowedDepartmentNames = (Array.isArray(data.allowed_departments) && data.allowed_departments.length > 0)
-                ? data.allowed_departments.map(d => String(d).trim().toUpperCase())
-                : null;
-
-            renderPreviewOnly(data);
-            showToast(`Loaded ${data.row_count} entries for ${reportDate}.`, 'Loaded', 'success');
-        })
-        .catch(err => {
-            hideLoading();
-            console.error(err);
-            showToast('Failed to load trial balance.', 'Error', 'error');
-        });
-    }
-
+        renderPreviewOnly(data);
+        showToast(`Loaded ${data.row_count} entries for ${reportDate}.`, 'Loaded', 'success');
+    })
+    .catch(err => {
+        hideLoading();
+        console.error(err);
+        showToast('Failed to load trial balance.', 'Error', 'error');
+        resetToEmpty(false);
+    });
+}
     // ============================================
     // FILTER HELPERS
     // ============================================
@@ -1962,10 +1990,11 @@
             if (body.success) {
                 showToast(body.message || 'Trial balance submitted.', 'Submitted', 'success');
                 setTimeout(() => {
-                    resetToEmpty(true);
+                    resetToEmpty(false);   // keep the date so we can reload it
                     checkDayLock();
+                    loadTrialBalanceByDate();
                 }, 1500);
-            } else {
+            }else {
                 showToast(body.error || 'Submission failed.', 'Error', 'error');
             }
         })
@@ -1980,25 +2009,34 @@
     // INIT
     // ============================================
     document.addEventListener('DOMContentLoaded', function() {
-        const dateInput = document.getElementById('tbReportDate');
-        if (dateInput) {
-            dateInput.value = new Date().toISOString().slice(0, 10);
-            dateInput.addEventListener('change', checkDayLock);
-        }
+    const dateInput = document.getElementById('tbReportDate');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().slice(0, 10);
 
-        const rangeStart = document.getElementById('tbRangeStart');
-        const rangeEnd = document.getElementById('tbRangeEnd');
-        if (rangeStart && !rangeStart.value) {
-            const d = new Date();
-            d.setDate(d.getDate() - 6);
-            rangeStart.value = d.toISOString().slice(0, 10);
-        }
-        if (rangeEnd && !rangeEnd.value) {
-            rangeEnd.value = new Date().toISOString().slice(0, 10);
-        }
+        // Auto-load when the date changes: check lock status first,
+        // then fetch the trial balance for that date.
+        dateInput.addEventListener('change', function() {
+            checkDayLock();
+            loadTrialBalanceByDate();
+        });
+    }
 
-        checkDayLock();
-        console.log('[TB] Daily Trial Balance page ready');
-    });
+    const rangeStart = document.getElementById('tbRangeStart');
+    const rangeEnd = document.getElementById('tbRangeEnd');
+    if (rangeStart && !rangeStart.value) {
+        const d = new Date();
+        d.setDate(d.getDate() - 6);
+        rangeStart.value = d.toISOString().slice(0, 10);
+    }
+    if (rangeEnd && !rangeEnd.value) {
+        rangeEnd.value = new Date().toISOString().slice(0, 10);
+    }
+
+    // Initial load for today
+    checkDayLock();
+    loadTrialBalanceByDate();
+
+    console.log('[TB] Daily Trial Balance page ready');
+});
 </script>
 {% endblock %}
