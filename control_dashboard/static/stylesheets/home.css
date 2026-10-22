@@ -1,327 +1,626 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+:root {
+    --navy-950: #071629;
+    --navy-900: #0a1e38;
+    --navy-800: #102b4c;
+    --blue-700: #075ca8;
+    --blue-600: #0875ca;
+    --blue-100: #e8f3ff;
+    --ink: #14243a;
+    --muted: #6c7b8e;
+    --border: #e2e9f1;
+    --white: #ffffff;
+    --success: #087647;
+    --success-bg: #ecfdf3;
+    --danger: #b42318;
+    --danger-bg: #fff1f0;
+    --shadow: 0 24px 70px rgba(0, 15, 35, 0.24);
+}
 
 * {
-    font-family: 'Poppins', sans-serif;
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
 
+html {
+    min-height: 100%;
+    scroll-behavior: smooth;
+}
+
 body {
-    background-image: url("../images/Gemini_Generated_Image_s4jeqfs4jeqfs4je.png");
+    min-height: 100vh;
+    font-family: "Inter", sans-serif;
+    color: var(--white);
+    background-color: var(--navy-950);
+    background-image:
+        linear-gradient(
+            110deg,
+            rgba(4, 19, 39, 0.96) 0%,
+            rgba(7, 30, 57, 0.90) 43%,
+            rgba(8, 35, 65, 0.70) 100%
+        ),
+        url("../images/Gemini_Generated_Image_s4jeqfs4jeqfs4je.png");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+    outline: 3px solid #61b7ff;
+    outline-offset: 4px;
+}
+
+a {
+    color: inherit;
+}
+
+button:disabled {
+    cursor: wait;
+    opacity: 0.72;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+/* =========================================
+   PAGE LAYOUT
+   ========================================= */
+
+.page-wrapper {
     min-height: 100vh;
-    margin: 0;
-    color: white;
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 30px clamp(24px, 5vw, 76px) 22px;
 }
 
-/* ============================================
-   WELCOME SECTION
-   ============================================ */
-
-.welcome {
-    position: absolute;
-    top: 28%;
-    left: 6%;
-    text-align: left;
-    max-width: 520px;
-    z-index: 2;
+.main-layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(380px, 490px);
+    align-items: center;
+    gap: clamp(45px, 7vw, 110px);
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
 }
 
-.welcome h1 {
-    font-size: 42px;
-    font-weight: 800;
+/* =========================================
+   BRAND
+   ========================================= */
+
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    width: fit-content;
+    text-decoration: none;
     color: #ffffff;
-    line-height: 1.15;
-    margin-bottom: 20px;
-    letter-spacing: -0.5px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-}
-
-.welcome h2 {
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 20px;
-    line-height: 1.3;
-}
-
-.welcome p {
-    font-size: 16px;
-    font-weight: 400;
-    color: #e2ecf9;
-    line-height: 1.6;
-    margin: 0;
-}
-
-/* ============================================
-   LOGIN PROFILE CARD
-   ============================================ */
-
-.login-profile {
-    background: white;
-    color: black;
-    border-radius: 25px;
-    position: absolute;
-    top: 10%;
-    right: 5%;
-    width: 500px;
-    min-height: 600px;
-    padding: 50px 40px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-
-#logo {
-    height: auto;
-    width: 240px;
-    margin-bottom: 50px;
-}
-
-.login {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-}
-
-.login h2 {
-    font-size: 32px;
+    font-size: 15px;
     font-weight: 800;
-    margin: 0 0 10px 0;
-    color: #1a2332;
+    letter-spacing: 1.5px;
 }
 
-.login > p {
-    font-size: 16px;
+.brand-light {
     font-weight: 400;
-    color: #6b7280;
-    margin-bottom: 30px;
+    opacity: 0.75;
 }
 
-/* ============================================
-   MESSAGES
-   ============================================ */
-
-.messages {
-    width: 100%;
-    margin-bottom: 15px;
-}
-
-.alert {
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.alert-success {
-    background: #d1fae5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
-}
-
-.alert-error {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
-}
-
-.alert-info {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #bfdbfe;
-}
-
-.alert-warning {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fde68a;
-}
-
-.error-message {
-    background: #fee2e2;
-    color: #991b1b;
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    font-size: 14px;
-    display: none;
-    border: 1px solid #fecaca;
-    width: 100%;
-    text-align: center;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.error-message.show {
-    display: flex;
-}
-
-.success-message {
-    background: #d1fae5;
-    color: #065f46;
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    font-size: 14px;
-    display: none;
-    border: 1px solid #a7f3d0;
-    width: 100%;
-    text-align: center;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-
-.success-message.show {
-    display: flex;
-}
-
-/* ============================================
-   MICROSOFT LOGIN BUTTON
-   ============================================ */
-
-.microsoft-login-container {
-    width: 100%;
-    position: relative;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-microsoft {
+.brand-mark-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    background: #2b2b2b;
-    color: white;
-    padding: 18px 40px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-family: 'Poppins', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 43px;
+    height: 43px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 13px;
+    color: #9ed3ff;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 20px;
+}
+
+/* =========================================
+   LEFT WELCOME SECTION
+   ========================================= */
+
+.welcome {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    justify-content: space-between;
+    min-width: 0;
+    padding: 18px 0 12px;
+}
+
+.welcome-content {
+    max-width: 610px;
+    padding: 55px 0;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 27px;
+    color: #b8d9fa;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    line-height: 1.7;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #63d9ac;
+    box-shadow: 0 0 0 5px rgba(99, 217, 172, 0.12);
+}
+
+.welcome h1 {
+    margin-bottom: 23px;
+    color: #ffffff;
+    font-size: clamp(38px, 4.1vw, 63px);
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -2.7px;
+}
+
+.welcome h1 span {
+    color: #8ecaff;
+}
+
+.welcome-description {
+    max-width: 510px;
+    color: #c1cfdf;
+    font-size: 15px;
+    line-height: 1.9;
+}
+
+.feature-list {
+    display: grid;
+    gap: 23px;
+    margin-top: 42px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.feature-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 47px;
+    height: 47px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.07);
+    color: #94ceff;
+    font-size: 18px;
+}
+
+.feature-item h3 {
+    margin-bottom: 5px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.feature-item p {
+    color: #aebfd2;
+    font-size: 12px;
+    line-height: 1.7;
+}
+
+.welcome-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #bdcada;
+    font-size: 12px;
+}
+
+.footer-shield {
+    color: #8ecaff;
+}
+
+/* =========================================
+   LOGIN CARD
+   ========================================= */
+
+.login-panel {
     width: 100%;
-    border: none;
+    min-width: 0;
+}
+
+.login-card {
+    width: 100%;
+    padding: clamp(30px, 4vw, 49px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 24px;
+    background: #ffffff;
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    animation: card-appear 0.55s ease-out both;
+}
+
+@keyframes card-appear {
+    from {
+        opacity: 0;
+        transform: translateY(13px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mobile-brand {
+    display: none;
+}
+
+.card-heading {
+    text-align: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 77px;
+    margin-bottom: 29px;
+}
+
+#logo {
+    display: block;
+    width: min(100%, 225px);
+    max-height: 88px;
+    object-fit: contain;
+}
+
+.welcome-label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--blue-700);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2.1px;
+}
+
+.login h2 {
+    color: var(--ink);
+    font-size: clamp(22px, 2vw, 27px);
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: -0.8px;
+}
+
+.card-heading > p {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+/* =========================================
+   DJANGO MESSAGES AND FEEDBACK
+   ========================================= */
+
+.messages {
+    display: grid;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.alert,
+.feedback {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 13px 14px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    font-size: 12px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.alert i,
+.feedback i {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.alert-success,
+.feedback-success {
+    border-color: #b8ebce;
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.alert-error,
+.alert-danger,
+.feedback-error {
+    border-color: #ffc9c4;
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.alert-info {
+    border-color: #c7e2ff;
+    background: #eff7ff;
+    color: #1757a6;
+}
+
+.alert-warning {
+    border-color: #f5dc9c;
+    background: #fff8e7;
+    color: #8b5b00;
+}
+
+.feedback {
+    margin-top: 19px;
+}
+
+/* =========================================
+   DIVIDER
+   ========================================= */
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin: 31px 0 17px;
+    color: #8290a1;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* =========================================
+   MICROSOFT BUTTON
+   ========================================= */
+
+.btn-microsoft {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 13px;
+    width: 100%;
+    min-height: 56px;
+    padding: 15px 18px;
+    border: 1px solid #d7e0ea;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #233248;
+    font-size: 13px;
+    font-weight: 700;
     cursor: pointer;
-    position: relative;
-    overflow: hidden;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
 }
 
 .btn-microsoft:hover {
-    background: #1a1a2e;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-    color: white;
+    border-color: #9dc9ef;
+    background: #f7fbff;
+    box-shadow: 0 5px 16px rgba(20, 68, 110, 0.08);
+    transform: translateY(-1px);
 }
 
-.btn-microsoft i {
-    font-size: 20px;
-    transition: all 0.3s ease;
+.microsoft-logo {
+    display: grid;
+    grid-template-columns: repeat(2, 8px);
+    grid-template-rows: repeat(2, 8px);
+    gap: 2px;
+    flex-shrink: 0;
 }
 
-.btn-microsoft .btn-text {
-    transition: all 0.3s ease;
+.microsoft-logo span:nth-child(1) {
+    background: #f25022;
 }
 
-/* Expanded state - button transforms into input */
-.btn-microsoft.expanded {
-    background: white;
-    color: #1b1b1b;
-    padding: 4px 16px 4px 16px;
-    border: 2px solid #0067b8;
-    box-shadow: 0 0 0 3px rgba(0, 103, 184, 0.15);
-    justify-content: flex-start;
-    cursor: default;
-    transform: none !important;
+.microsoft-logo span:nth-child(2) {
+    background: #7fba00;
 }
 
-.btn-microsoft.expanded:hover {
-    background: white;
-    transform: none !important;
-    box-shadow: 0 0 0 3px rgba(0, 103, 184, 0.2);
+.microsoft-logo span:nth-child(3) {
+    background: #00a4ef;
 }
 
-.btn-microsoft.expanded .btn-text {
-    display: none;
+.microsoft-logo span:nth-child(4) {
+    background: #ffb900;
 }
 
-.btn-microsoft.expanded i {
-    color: #0067b8;
-    font-size: 18px;
-    margin-right: 8px;
+.button-arrow {
+    margin-left: auto;
+    color: #5c7189;
+    transition: transform 0.2s ease;
 }
 
-.btn-microsoft .ms-input-wrapper {
-    display: none;
-    flex: 1;
-    align-items: center;
+.btn-microsoft:hover .button-arrow {
+    transform: translateX(3px);
 }
 
-.btn-microsoft.expanded .ms-input-wrapper {
+/* =========================================
+   USERNAME / EMAIL FORM
+   ========================================= */
+
+.login-form {
+    margin-top: 21px;
+    animation: form-appear 0.22s ease-out;
+}
+
+@keyframes form-appear {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-form label {
+    display: block;
+    margin-bottom: 9px;
+    color: #28394f;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.input-shell {
     display: flex;
+    align-items: center;
+    gap: 11px;
+    min-height: 54px;
+    padding: 0 14px;
+    border: 1px solid #d7e0ea;
+    border-radius: 11px;
+    background: #ffffff;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.btn-microsoft .ms-input-wrapper input {
-    flex: 1;
+.input-shell:focus-within {
+    border-color: var(--blue-600);
+    box-shadow: 0 0 0 4px rgba(8, 117, 202, 0.10);
+}
+
+.input-icon {
+    flex-shrink: 0;
+    color: #8292a6;
+    font-size: 15px;
+}
+
+.input-shell input {
+    width: 100%;
+    min-width: 0;
+    height: 50px;
     border: none;
     outline: none;
-    font-size: 15px;
-    font-family: 'Poppins', sans-serif;
     background: transparent;
-    color: #1b1b1b;
-    padding: 10px 0;
-    min-width: 0;
-    width: 100%;
+    color: var(--ink);
+    font-size: 13px;
 }
 
-.btn-microsoft .ms-input-wrapper input::placeholder {
-    color: #8b8b8b;
-    font-weight: 400;
+.input-shell input:focus-visible {
+    outline: none;
 }
 
-.btn-microsoft .ms-input-wrapper .ms-input-icon {
-    color: #0067b8;
-    font-size: 18px;
-    margin-right: 8px;
+.input-shell input::placeholder {
+    color: #9aa6b5;
 }
 
-/* Loading state for the button */
-.btn-microsoft.loading {
-    background: #0067b8;
-    color: white;
-    cursor: wait;
+.clear-input {
+    display: flex;
+    align-items: center;
     justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #8292a6;
+    cursor: pointer;
 }
 
-.btn-microsoft.loading .ms-input-wrapper input {
-    color: white;
+.clear-input:hover {
+    background: #f0f4f8;
+    color: var(--ink);
 }
 
-.btn-microsoft.loading .ms-input-wrapper .ms-input-icon {
-    color: white;
+.input-hint {
+    margin-top: 9px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.7;
 }
 
-.btn-microsoft .spinner-small {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+.btn-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 53px;
+    margin-top: 22px;
+    padding: 14px 18px;
+    border: none;
+    border-radius: 11px;
+    background: linear-gradient(135deg, #0875ca, #07569b);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 7px 17px rgba(7, 92, 168, 0.18);
+    transition:
+        background 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.btn-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0866b0, #064a87);
+    box-shadow: 0 9px 22px rgba(7, 92, 168, 0.24);
+    transform: translateY(-1px);
+}
+
+.btn-submit i {
+    transition: transform 0.2s ease;
+}
+
+.btn-submit:hover:not(:disabled) i {
+    transform: translateX(3px);
+}
+
+.btn-submit.is-loading i {
+    display: none;
+}
+
+.btn-submit.is-loading::before {
+    content: "";
+    width: 15px;
+    height: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #ffffff;
     border-radius: 50%;
-    border-top-color: #fff;
-    animation: spin 0.8s ease-in-out infinite;
-    margin-left: 8px;
+    animation: spin 0.7s linear infinite;
 }
 
 @keyframes spin {
@@ -330,152 +629,534 @@ body {
     }
 }
 
-/* ============================================
-   FOOTER
-   ============================================ */
-
-.footer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
+.cancel-login {
+    display: block;
     width: 100%;
-    height: 80px;
+    margin-top: 12px;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    color: #68798e;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cancel-login:hover {
+    color: var(--blue-700);
+}
+
+/* =========================================
+   SECURITY NOTE AND CARD FOOTER
+   ========================================= */
+
+.security-note {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 9px;
+    margin-top: 26px;
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+    color: #718197;
+    font-size: 11px;
+    line-height: 1.7;
+}
+
+.security-note i {
+    margin-top: 2px;
+    color: #13855b;
+}
+
+.card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 7px;
+    color: #9aa6b5;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-align: center;
+}
+
+.bottom-line {
+    width: 22px;
+    height: 1px;
+    background: #dfe6ed;
+}
+
+/* =========================================
+   PAGE FOOTER
+   ========================================= */
+
+.site-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 5%;
-    background: transparent;
+    gap: 20px;
+    width: 100%;
+    max-width: 1440px;
+    margin: 25px auto 0;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.13);
+    color: #b7c6d7;
+    font-size: 11px;
 }
 
-.footer-links a,
-.footer-support a {
-    font-size: 14px;
-    font-weight: 500;
-    color: #0066cc;
+.footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 24px;
+}
+
+.footer-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #c8d5e3;
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
-.footer-links a:hover,
-.footer-support a:hover {
-    color: #004499;
-    text-decoration: underline;
+.footer-links a:hover {
+    color: #ffffff;
 }
 
-.footer-links .divider {
-    color: #ccc;
-    margin: 0 10px;
-    font-size: 14px;
+/* =========================================
+   TABLETS AND SMALL LAPTOPS
+   ========================================= */
+
+@media (max-width: 1100px) {
+    .page-wrapper {
+        padding-right: 35px;
+        padding-left: 35px;
+    }
+
+    .main-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+        gap: 38px;
+    }
+
+    .welcome h1 {
+        font-size: clamp(35px, 4.2vw, 47px);
+        letter-spacing: -1.8px;
+    }
+
+    .welcome-content {
+        padding: 40px 0;
+    }
+
+    .feature-list {
+        gap: 19px;
+    }
+
+    .login-card {
+        padding: 35px 29px;
+    }
 }
 
-.footer-copyright p {
-    font-size: 14px;
-    font-weight: 500;
-    color: #666666;
+/* =========================================
+   MOBILE AND PORTRAIT TABLETS
+   ========================================= */
+
+@media (max-width: 820px) {
+    body {
+        background-attachment: scroll;
+    }
+
+    .page-wrapper {
+        padding: 25px 22px 18px;
+    }
+
+    .main-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 28px;
+        max-width: 540px;
+        margin: 0 auto;
+    }
+
+    .welcome {
+        padding: 0;
+    }
+
+    .welcome > .brand-mark,
+    .welcome-footer,
+    .feature-list {
+        display: none;
+    }
+
+    .welcome-content {
+        max-width: none;
+        padding: 12px 0 0;
+        text-align: center;
+    }
+
+    .eyebrow {
+        justify-content: center;
+        margin-bottom: 17px;
+        font-size: 9px;
+        letter-spacing: 1.3px;
+    }
+
+    .welcome h1 {
+        margin-bottom: 12px;
+        font-size: clamp(31px, 6vw, 42px);
+        line-height: 1.16;
+        letter-spacing: -1.6px;
+    }
+
+    .welcome-description {
+        max-width: 440px;
+        margin: 0 auto;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .login-panel {
+        max-width: 480px;
+        margin: 0 auto;
+    }
+
+    .login-card {
+        padding: 30px clamp(23px, 6vw, 39px);
+        border-radius: 21px;
+    }
+
+    .mobile-brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 25px;
+        color: var(--ink);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1px;
+    }
+
+    .mobile-brand .brand-mark-icon {
+        width: 35px;
+        height: 35px;
+        border-color: #d9e8f7;
+        background: var(--blue-100);
+        color: var(--blue-700);
+        font-size: 16px;
+    }
+
+    .logo-container {
+        min-height: 60px;
+        margin-bottom: 22px;
+    }
+
+    #logo {
+        width: min(100%, 190px);
+        max-height: 70px;
+    }
+
+    .login-divider {
+        margin-top: 25px;
+    }
+
+    .site-footer {
+        flex-direction: column;
+        gap: 13px;
+        margin-top: 25px;
+        text-align: center;
+    }
+
+    .footer-links {
+        justify-content: center;
+        gap: 17px;
+    }
+}
+
+/* =========================================
+   SMALL MOBILE
+   ========================================= */
+
+@media (max-width: 420px) {
+    .page-wrapper {
+        padding: 20px 15px 16px;
+    }
+
+    .main-layout {
+        gap: 22px;
+    }
+
+    .welcome h1 {
+        font-size: 30px;
+        letter-spacing: -1.2px;
+    }
+
+    .welcome-description {
+        font-size: 12px;
+    }
+
+    .login-card {
+        padding: 25px 20px;
+        border-radius: 17px;
+    }
+
+    .mobile-brand {
+        margin-bottom: 20px;
+    }
+
+    .login h2 {
+        font-size: 22px;
+    }
+
+    .card-heading > p {
+        font-size: 12px;
+    }
+
+    .btn-microsoft {
+        min-height: 53px;
+        gap: 10px;
+        padding: 13px;
+        font-size: 12px;
+    }
+
+    .site-footer {
+        font-size: 10px;
+    }
+
+    .footer-links {
+        gap: 12px;
+        font-size: 10px;
+    }
+}
+
+/* =========================================
+   ACCESSIBILITY: REDUCED MOTION
+   ========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* =========================================
+   LAYOUT REPAIR — ADD AT END OF home.css
+   ========================================= */
+
+html,
+body {
+    width: 100%;
+    min-height: 100%;
     margin: 0;
 }
 
-/* ============================================
-   RESPONSIVE
-   ============================================ */
-
-@media (max-width: 1200px) {
-    .login-profile {
-        width: 450px;
-        right: 4%;
-        top: 15%;
-    }
-    .welcome {
-        left: 4%;
-        max-width: 420px;
-    }
-    .welcome h1 {
-        font-size: 34px;
-    }
+body {
+    min-height: 100vh;
+    background-color: #071b35;
+    background-image:
+        linear-gradient(
+            90deg,
+            rgba(5, 23, 46, 0.88),
+            rgba(5, 28, 55, 0.56)
+        ),
+        url("../images/Gemini_Generated_Image_s4jeqfs4jeqfs4je.png");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
 }
 
-@media (max-width: 992px) {
-    .login-profile {
-        width: 400px;
-        right: 3%;
-        top: 15%;
-    }
-    .welcome {
-        left: 3%;
-        max-width: 350px;
-        top: 25%;
-    }
-    .welcome h1 {
-        font-size: 28px;
-    }
+.page-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    padding: 35px 5%;
+    display: flex;
+    flex-direction: column;
 }
 
-@media (max-width: 768px) {
+.main-layout {
+    width: 100%;
+    max-width: 1440px;
+    flex: 1;
+    margin: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+    align-items: center;
+    gap: clamp(40px, 6vw, 90px);
+}
+
+.welcome {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    max-width: 650px;
+    display: flex;
+    flex-direction: column;
+    align-self: center;
+    justify-content: center;
+    padding: 30px 0;
+}
+
+.welcome-content {
+    width: 100%;
+    max-width: 600px;
+    padding: 35px 0;
+}
+
+.welcome h1 {
+    font-size: clamp(36px, 3.5vw, 56px);
+    line-height: 1.15;
+    letter-spacing: -1.5px;
+}
+
+.welcome-description {
+    max-width: 490px;
+}
+
+.feature-list {
+    margin-top: 30px;
+    gap: 18px;
+}
+
+.login-panel {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    max-width: 460px;
+    margin: 0 auto;
+}
+
+.login-card {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 38px 34px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #ffffff;
+    color: #14243a;
+    box-shadow: 0 20px 65px rgba(0, 0, 0, 0.3);
+}
+
+.card-heading,
+.login-divider,
+.login-form,
+.security-note,
+.card-bottom {
+    width: 100%;
+}
+
+.logo-container {
+    width: 100%;
+}
+
+#logo {
+    width: min(100%, 205px);
+    max-width: 100%;
+    height: auto;
+    max-height: 85px;
+    object-fit: contain;
+}
+
+.btn-microsoft {
+    position: relative;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 54px;
+    justify-content: center;
+    align-items: center;
+    border-radius: 10px;
+    white-space: normal;
+}
+
+.btn-microsoft .button-arrow {
+    margin-left: auto;
+}
+
+.login-form .input-shell {
+    width: 100%;
+    min-width: 0;
+}
+
+.login-form input {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.site-footer {
+    position: static;
+    width: 100%;
+    max-width: 1440px;
+    height: auto;
+    min-height: 48px;
+    margin: 20px auto 0;
+    padding: 16px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+}
+
+@media (max-width: 820px) {
     .page-wrapper {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 20px;
-        min-height: 100vh;
-        position: relative;
+        padding: 25px 20px;
     }
+
+    .main-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 25px;
+        max-width: 540px;
+    }
+
     .welcome {
-        position: relative;
-        top: 0;
-        left: 0;
-        text-align: center;
         max-width: 100%;
-        margin-bottom: 30px;
-        padding: 20px;
+        padding: 0;
+        text-align: center;
     }
-    .welcome h1 {
-        font-size: 28px;
+
+    .welcome-content {
+        padding: 15px 0;
     }
-    .login-profile {
-        position: relative;
-        top: 0;
-        right: 0;
-        width: 100%;
-        max-width: 450px;
-        min-height: auto;
+
+    .login-panel {
+        max-width: 460px;
+    }
+
+    .login-card {
         padding: 30px 25px;
-        margin: 0 auto;
     }
-    .footer {
-        position: relative;
+
+    .site-footer {
         flex-direction: column;
-        gap: 10px;
-        height: auto;
-        padding: 20px 5%;
-    }
-    .footer-links {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    #logo {
-        width: 180px;
-    }
-    .btn-microsoft.expanded {
-        padding: 6px 12px 6px 12px;
-    }
-    .btn-microsoft .ms-input-wrapper input {
-        font-size: 14px;
-        padding: 8px 0;
+        text-align: center;
     }
 }
 
 @media (max-width: 480px) {
-    .login-profile {
-        padding: 25px 20px;
+    .page-wrapper {
+        padding: 20px 14px;
     }
-    .login h2 {
-        font-size: 24px;
+
+    .login-card {
+        padding: 26px 20px;
     }
-    #logo {
-        width: 150px;
+
+    .welcome h1 {
+        font-size: 32px;
     }
-    .btn-microsoft .ms-input-wrapper input {
-        font-size: 12px;
-        min-width: 60px;
+
+    .site-footer {
+        gap: 14px;
+    }
+
+    .footer-links {
+        justify-content: center;
+        gap: 12px;
     }
 }

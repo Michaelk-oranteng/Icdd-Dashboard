@@ -8,25 +8,47 @@
 
 <style>
     /* ============================================================
-       UPLOAD EXCEPTION REPORT — clean, uniform layout
+       UPLOAD EXCEPTION REPORT — OMNibsic BANK BLENDED
+       Navy woven into surfaces, gold as premium highlight
        ============================================================ */
 
     :root {
-        --up-bg:      #f7f8fc;
-        --up-surface: #ffffff;
-        --up-border:  #e5e7eb;
-        --up-border-2:#f1f5f9;
-        --up-text:    #0f1b33;
-        --up-text-2:  #6b7280;
-        --up-text-3:  #9ca3af;
-        --up-accent:  #4f6ef7;
-        --up-success: #17a673;
-        --up-warning: #e08a17;
-        --up-danger:  #e0456a;
-        --up-radius:  12px;
+        /* ---- OmniBSIC brand primitives ---- */
+        --ob-navy:        #003366;
+        --ob-navy-dark:   #001F3D;
+        --ob-navy-mid:    #1A4B7A;
+        --ob-navy-tint-1: rgba(0, 51, 102, 0.04);
+        --ob-navy-tint-2: rgba(0, 51, 102, 0.08);
+        --ob-navy-tint-3: rgba(0, 51, 102, 0.14);
+        --ob-gold:        #D4AF37;
+        --ob-gold-light:  #F5E6B8;
+        --ob-gold-dark:   #B8960F;
+        --ob-gold-soft:   rgba(212, 175, 55, 0.14);
+        --ob-gold-mid:    rgba(212, 175, 55, 0.28);
+
+        /* ---- Surfaces (blended with navy) ---- */
+        --up-surface:      #ffffff;
+        --up-surface-alt:  #f6f9fe;   /* light navy wash */
+        --up-surface-tint: #eef3fa;   /* deeper wash for headers */
+        --up-border:       #dbe3ef;   /* navy-tinted border */
+        --up-border-2:     #eaf0f8;
+        --up-text:         #0b1a33;   /* navy-tinted ink */
+        --up-text-2:       #4a5a75;
+        --up-text-3:       #8493ab;
+
+        --up-accent:       var(--ob-navy);
+        --up-accent-soft:  var(--ob-navy-tint-2);
+        --up-success:      #12a67a;
+        --up-success-soft: rgba(18, 166, 122, 0.10);
+        --up-warning:      #d4820f;
+        --up-warning-soft: rgba(212, 130, 15, 0.10);
+        --up-danger:       #c8395f;
+        --up-danger-soft:  rgba(200, 57, 95, 0.10);
+
+        --up-radius:    12px;
         --up-radius-sm: 10px;
-        --up-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04);
-        --up-shadow-md: 0 4px 14px rgba(15, 27, 51, 0.06);
+        --up-shadow-sm: 0 1px 2px rgba(0, 31, 61, 0.05);
+        --up-shadow-md: 0 4px 14px rgba(0, 31, 61, 0.08);
     }
 
     .up-wrap {
@@ -55,7 +77,7 @@
         font-size: 20px;
         font-weight: 700;
         letter-spacing: -0.3px;
-        color: var(--up-text);
+        color: var(--ob-navy);
     }
 
     .up-header-left p {
@@ -85,8 +107,25 @@
         align-items: center;
         gap: 12px;
         padding: 16px 20px;
-        border-bottom: 1px solid var(--up-border-2);
+        border-bottom: 1px solid var(--up-border);
         flex-wrap: wrap;
+        background: linear-gradient(180deg, #f8fafd 0%, #eef3fa 100%);
+        position: relative;
+    }
+
+    .up-card-head::after {
+        content: '';
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        bottom: -1px;
+        height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            var(--ob-gold) 30%,
+            var(--ob-gold) 70%,
+            transparent 100%);
+        opacity: 0.45;
     }
 
     .up-card-title {
@@ -95,7 +134,7 @@
         gap: 10px;
         font-size: 13px;
         font-weight: 700;
-        color: var(--up-text);
+        color: var(--ob-navy);
     }
 
     .up-card-title i {
@@ -104,13 +143,20 @@
         border-radius: 7px;
         display: grid;
         place-items: center;
-        background: #eef1ff;
-        color: var(--up-accent);
+        background: var(--ob-navy);
+        color: #ffffff;
         font-size: 11px;
+        box-shadow: 0 2px 6px rgba(0, 51, 102, 0.22);
     }
 
-    .up-card-title.danger i  { background: #fee2e2; color: var(--up-danger); }
-    .up-card-title.success i { background: #e2f7ef; color: var(--up-success); }
+    .up-card-title.danger i {
+        background: var(--up-danger);
+        box-shadow: 0 2px 6px rgba(200, 57, 95, 0.25);
+    }
+    .up-card-title.success i {
+        background: var(--up-success);
+        box-shadow: 0 2px 6px rgba(18, 166, 122, 0.25);
+    }
 
     /* ============================================================
        UPLOAD ZONE
@@ -126,11 +172,15 @@
         .up-zone { grid-template-columns: 1fr; min-height: 0; }
     }
 
-    /* Left column — report type */
+    /* Left column — report type (navy tinted) */
     .up-zone-config {
         padding: 28px 24px;
-        background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
-        border-right: 1px solid var(--up-border-2);
+        background:
+            radial-gradient(circle at 0% 0%,
+                rgba(0, 51, 102, 0.05) 0%,
+                transparent 50%),
+            linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
+        border-right: 1px solid var(--up-border);
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -140,7 +190,7 @@
     @media (max-width: 900px) {
         .up-zone-config {
             border-right: none;
-            border-bottom: 1px solid var(--up-border-2);
+            border-bottom: 1px solid var(--up-border);
             justify-content: flex-start;
             padding: 24px 20px;
         }
@@ -158,7 +208,7 @@
         gap: 8px;
         font-size: 11px;
         font-weight: 700;
-        color: var(--up-text-2);
+        color: var(--ob-navy);
         text-transform: uppercase;
         letter-spacing: 0.6px;
     }
@@ -169,10 +219,11 @@
         border-radius: 6px;
         display: grid;
         place-items: center;
-        background: #eef1ff;
-        color: var(--up-accent);
+        background: var(--ob-navy);
+        color: #ffffff;
         font-size: 10px;
         font-weight: 700;
+        box-shadow: 0 2px 4px rgba(0, 51, 102, 0.25);
     }
 
     .up-select {
@@ -181,7 +232,7 @@
         padding: 0 38px 0 14px;
         border: 1px solid var(--up-border);
         border-radius: var(--up-radius-sm);
-        background: var(--up-surface);
+        background: #ffffff;
         font-family: inherit;
         font-size: 13px;
         color: var(--up-text);
@@ -189,16 +240,20 @@
         cursor: pointer;
         appearance: none;
         -webkit-appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23003366' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
         background-repeat: no-repeat;
         background-position: right 12px center;
         background-size: 14px;
         transition: border-color 0.15s, box-shadow 0.15s;
     }
 
+    .up-select:hover {
+        border-color: var(--ob-navy-mid);
+    }
+
     .up-select:focus {
-        border-color: var(--up-accent);
-        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+        border-color: var(--ob-navy);
+        box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.14);
     }
 
     .up-hint {
@@ -207,14 +262,15 @@
         line-height: 1.55;
     }
 
-    /* Right column — drop target */
+    /* Right column — drop target (navy glow) */
     .up-zone-drop {
         padding: 36px 32px;
         display: flex;
         align-items: center;
         justify-content: center;
         background:
-            radial-gradient(circle at 50% 30%, rgba(79, 110, 247, 0.06) 0%, transparent 55%),
+            radial-gradient(circle at 50% 30%, rgba(0, 51, 102, 0.06) 0%, transparent 55%),
+            radial-gradient(circle at 100% 100%, rgba(212, 175, 55, 0.04) 0%, transparent 45%),
             var(--up-surface);
         transition: background 0.18s;
     }
@@ -226,26 +282,29 @@
     .up-drop-target {
         width: 100%;
         max-width: 480px;
-        border: 2px dashed #d1d5db;
+        border: 2px dashed #c9d3e3;
         border-radius: 14px;
         padding: 34px 28px 24px;
         text-align: center;
         transition: all 0.18s ease;
         cursor: pointer;
-        background: #fbfcff;
+        background:
+            linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
         display: flex;
         flex-direction: column;
         align-items: center;
     }
 
     .up-drop-target:hover {
-        border-color: var(--up-accent);
-        background: #f7f8ff;
+        border-color: var(--ob-navy);
+        background:
+            linear-gradient(180deg, #ffffff 0%, #eef3fa 100%);
+        box-shadow: 0 4px 16px rgba(0, 31, 61, 0.06);
     }
 
     .up-drop-target.dragover {
-        border-color: var(--up-accent);
-        background: #eef1ff;
+        border-color: var(--ob-navy);
+        background: var(--ob-navy-tint-2);
         transform: scale(1.01);
     }
 
@@ -256,20 +315,22 @@
         margin: 0 auto 18px;
         display: grid;
         place-items: center;
-        background: #eef1ff;
-        color: var(--up-accent);
+        background: var(--ob-navy);
+        color: #ffffff;
         font-size: 24px;
         transition: transform 0.2s;
+        box-shadow: 0 6px 18px rgba(0, 51, 102, 0.28);
     }
 
     .up-drop-target:hover .up-drop-icon {
         transform: translateY(-2px);
+        box-shadow: 0 8px 22px rgba(0, 51, 102, 0.35);
     }
 
     .up-drop-title {
         font-size: 15px;
         font-weight: 700;
-        color: var(--up-text);
+        color: var(--ob-navy);
         margin-bottom: 6px;
     }
 
@@ -281,7 +342,7 @@
         max-width: 380px;
     }
 
-    /* Upload button */
+    /* Upload button — navy gradient primary */
     .up-btn-upload {
         display: inline-flex;
         align-items: center;
@@ -291,20 +352,41 @@
         height: 44px;
         border: none;
         border-radius: var(--up-radius-sm);
-        background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+        background: linear-gradient(135deg, var(--ob-navy) 0%, var(--ob-navy-mid) 100%);
         color: #ffffff;
         font-family: inherit;
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+        box-shadow: 0 4px 14px rgba(0, 51, 102, 0.28);
         transition: transform 0.15s, box-shadow 0.15s;
         min-width: 210px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Gold shimmer accent on hover */
+    .up-btn-upload::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -40%;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(212, 175, 55, 0.25) 50%,
+            transparent 100%);
+        transition: left 0.5s ease;
+    }
+
+    .up-btn-upload:hover:not(:disabled)::after {
+        left: 100%;
     }
 
     .up-btn-upload:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 8px 20px rgba(79, 110, 247, 0.35);
+        box-shadow: 0 8px 22px rgba(0, 51, 102, 0.38);
     }
 
     .up-btn-upload:disabled {
@@ -316,7 +398,7 @@
     .up-btn-upload.loading .up-spinner { display: inline-block; }
     .up-btn-upload.loading .up-btn-text { display: none; }
 
-    /* Format pills strip — sits below the button inside the drop target */
+    /* Format pills strip */
     .up-drop-formats {
         display: flex;
         align-items: center;
@@ -338,9 +420,14 @@
         background: #ffffff;
         border: 1px solid var(--up-border);
         border-radius: 100px;
-        color: var(--up-text-2);
+        color: var(--ob-navy);
         font-weight: 700;
         letter-spacing: 0.4px;
+        transition: border-color 0.15s, color 0.15s;
+    }
+
+    .up-drop-target:hover .up-format-pill {
+        border-color: var(--ob-navy-tint-3);
     }
 
     /* ============================================================
@@ -373,13 +460,14 @@
         align-items: center;
         gap: 8px;
         padding: 7px 14px;
-        background: #eef1ff;
-        color: var(--up-accent);
+        background: var(--ob-navy);
+        color: #ffffff;
         border-radius: 100px;
         font-size: 12px;
         font-weight: 600;
         line-height: 1;
         white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0, 51, 102, 0.22);
     }
 
     .up-record-chip i { font-size: 11px; }
@@ -389,8 +477,9 @@
         align-items: center;
         gap: 8px;
         padding: 7px 14px;
-        background: #f3f4f6;
-        color: var(--up-text-2);
+        background: var(--ob-navy-tint-1);
+        color: var(--ob-navy);
+        border: 1px solid var(--ob-navy-tint-3);
         border-radius: 100px;
         font-size: 12px;
         font-weight: 600;
@@ -424,13 +513,13 @@
     }
 
     .up-btn-ghost:hover {
-        background: #fdeaf0;
+        background: var(--up-danger-soft);
         color: var(--up-danger);
-        border-color: rgba(224, 69, 106, 0.25);
+        border-color: rgba(200, 57, 95, 0.25);
     }
 
     /* ============================================================
-       PREVIEW TABLE — fixed layout for uniform alignment
+       PREVIEW TABLE — navy header band
        ============================================================ */
     .up-table-scroll {
         max-height: 620px;
@@ -450,16 +539,15 @@
         position: sticky;
         top: 0;
         z-index: 2;
-        background: #f8fafc;
+        background: linear-gradient(180deg, #eef3fa 0%, #e3ecf6 100%);
         text-align: left;
         padding: 12px 16px;
         font-size: 10.5px;
         font-weight: 700;
-        color: var(--up-text-2);
+        color: var(--ob-navy);
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        border-bottom: 1px solid var(--up-border);
-        box-shadow: 0 1px 0 rgba(15, 27, 51, 0.03);
+        border-bottom: 1px solid var(--ob-navy-tint-3);
         white-space: nowrap;
         vertical-align: middle;
     }
@@ -475,9 +563,8 @@
     }
 
     .up-table tbody tr:last-child td { border-bottom: none; }
-    .up-table tbody tr:hover { background: #fafbfd; }
+    .up-table tbody tr:hover { background: var(--ob-navy-tint-1); }
 
-    /* Column variants */
     .up-table td.wide-cell {
         max-width: 360px;
         white-space: normal;
@@ -485,7 +572,6 @@
         min-width: 220px;
     }
 
-    /* Exception column — 100% wider than a normal wide cell */
     .up-table td.wide-cell.cell-exception {
         min-width: 440px;
         max-width: 720px;
@@ -515,7 +601,7 @@
         padding: 32px 16px;
     }
 
-    /* Status badges */
+    /* Status badges — navy-tinted defaults */
     .up-status-badge {
         display: inline-flex;
         align-items: center;
@@ -532,9 +618,9 @@
         line-height: 1;
     }
 
-    .up-status-badge.open        { background: #fef3c7; color: #92400e; border-color: rgba(146, 64, 14, 0.2); }
-    .up-status-badge.closed      { background: #e2f7ef; color: #065f46; border-color: rgba(6, 95, 70, 0.2); }
-    .up-status-badge.in-progress { background: #dbeafe; color: #1e40af; border-color: rgba(30, 64, 175, 0.2); }
+    .up-status-badge.open        { background: var(--up-warning-soft); color: #92400e; border-color: rgba(146, 64, 14, 0.2); }
+    .up-status-badge.closed      { background: var(--up-success-soft); color: #065f46; border-color: rgba(6, 95, 70, 0.2); }
+    .up-status-badge.in-progress { background: var(--ob-navy-tint-2); color: var(--ob-navy); border-color: var(--ob-navy-tint-3); }
     .up-status-badge.default     { background: #f3f4f6; color: #6b7280; border-color: rgba(107, 114, 128, 0.2); }
 
     /* ============================================================
@@ -546,8 +632,10 @@
         align-items: center;
         gap: 16px;
         padding: 16px 20px;
-        background: #fbfcff;
-        border-top: 1px solid var(--up-border-2);
+        background:
+            radial-gradient(circle at 100% 50%, rgba(212, 175, 55, 0.04) 0%, transparent 40%),
+            linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
+        border-top: 1px solid var(--up-border);
         flex-wrap: wrap;
     }
 
@@ -567,10 +655,10 @@
         gap: 6px;
     }
 
-    .up-footer-summary i { color: var(--up-text-3); font-size: 11px; }
+    .up-footer-summary i { color: var(--ob-navy); opacity: 0.7; font-size: 11px; }
 
     .up-footer-summary strong {
-        color: var(--up-text);
+        color: var(--ob-navy);
         font-weight: 700;
         font-variant-numeric: tabular-nums;
     }
@@ -601,11 +689,12 @@
     }
 
     .up-btn-cancel:hover {
-        background: #f7f8fc;
-        color: var(--up-text);
-        border-color: #d1d5db;
+        background: var(--up-surface-alt);
+        color: var(--ob-navy);
+        border-color: var(--ob-navy-mid);
     }
 
+    /* Submit — navy primary with gold hover glow */
     .up-btn-submit {
         display: inline-flex;
         align-items: center;
@@ -615,20 +704,40 @@
         height: 44px;
         border-radius: var(--up-radius-sm);
         border: none;
-        background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+        background: linear-gradient(135deg, var(--ob-navy) 0%, var(--ob-navy-mid) 100%);
         color: #ffffff;
         font-family: inherit;
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        box-shadow: 0 4px 14px rgba(79, 110, 247, 0.28);
+        box-shadow: 0 4px 14px rgba(0, 51, 102, 0.28);
         transition: transform 0.15s, box-shadow 0.15s;
         line-height: 1;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .up-btn-submit::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -40%;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(212, 175, 55, 0.30) 50%,
+            transparent 100%);
+        transition: left 0.5s ease;
+    }
+
+    .up-btn-submit:hover:not(:disabled)::after {
+        left: 100%;
     }
 
     .up-btn-submit:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 8px 22px rgba(79, 110, 247, 0.4);
+        box-shadow: 0 8px 22px rgba(0, 51, 102, 0.4);
     }
 
     .up-btn-submit:disabled {
@@ -652,7 +761,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        box-shadow: 0 20px 48px rgba(15, 27, 51, 0.16);
+        box-shadow: 0 20px 48px rgba(0, 31, 61, 0.18);
         transform: translateX(130%);
         transition: transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
         z-index: 10000;
@@ -667,16 +776,19 @@
         border-radius: 10px;
         display: grid;
         place-items: center;
-        background: #e2f7ef;
+        background: var(--up-success-soft);
         color: var(--up-success);
         flex-shrink: 0;
         font-size: 14px;
     }
 
-    .up-toast.error .up-toast-icon { background: #fdeaf0; color: var(--up-danger); }
+    .up-toast.error .up-toast-icon {
+        background: var(--up-danger-soft);
+        color: var(--up-danger);
+    }
 
     .up-toast-body { flex: 1; min-width: 0; }
-    .up-toast-title { margin: 0; font-size: 13px; font-weight: 700; color: var(--up-text); }
+    .up-toast-title { margin: 0; font-size: 13px; font-weight: 700; color: var(--ob-navy); }
     .up-toast-msg   { margin: 2px 0 0 0; font-size: 12px; color: var(--up-text-2); line-height: 1.45; }
 
     .up-toast-close {
@@ -693,7 +805,10 @@
         transition: background 0.12s, color 0.12s;
     }
 
-    .up-toast-close:hover { background: #f3f4f6; color: var(--up-text); }
+    .up-toast-close:hover {
+        background: var(--ob-navy-tint-1);
+        color: var(--ob-navy);
+    }
 
     /* ============================================================
        RESPONSIVE
@@ -709,9 +824,7 @@
             align-items: stretch;
         }
 
-        .up-footer-actions {
-            width: 100%;
-        }
+        .up-footer-actions { width: 100%; }
 
         .up-footer-actions .up-btn-cancel,
         .up-footer-actions .up-btn-submit {
@@ -775,7 +888,7 @@
 </li>
 {% endblock %}
 
-{% block page_title %}Upload Exception Report{% endblock %}
+{% block page_title %}Upload Report{% endblock %}
 
 {% block content %}
 <div class="up-wrap">
@@ -783,7 +896,7 @@
     <!-- Page header -->
     <header class="up-header">
         <div class="up-header-left">
-            <p>Import an Excel file, preview the data, then submit it for exception processing.</p>
+            <p>Select a report type and upload your Excel file.</p>
         </div>
     </header>
 
@@ -806,9 +919,6 @@
                         <option value="{{ report_type }}">{{ report_type }}</option>
                         {% endfor %}
                     </select>
-                    <span class="up-hint">
-                        Choose the exception report category before uploading the file.
-                    </span>
                 </div>
             </div>
 
@@ -993,7 +1103,6 @@
     function classifyColumn(header) {
         const h = String(header || '').toUpperCase().replace(/\s+/g, ' ').trim();
 
-        // Exception column — wide + extra wide (cell-exception)
         if (h.includes('EXCEPTION') && !h.includes('CATEGORY')) return 'wide-cell cell-exception';
 
         if (h.includes('AUDITEE') || h.includes('RESPONSE')) return 'wide-cell';
@@ -1125,11 +1234,9 @@
 
                 renderPreview(headers, filteredRows);
 
-                // Swap views: hide upload zone, show preview
                 document.getElementById('uploadZoneCard').style.display = 'none';
                 document.getElementById('previewContainer').classList.add('show');
 
-                // Update chips + footer summary
                 document.getElementById('headerFileName').textContent = fileName;
                 document.getElementById('footerFileName').textContent = fileName;
                 document.getElementById('footerRecordCount').textContent = filteredRows.length;
@@ -1200,7 +1307,7 @@
             });
 
             if (data.length > MAX_ROWS) {
-                bodyHTML += `<tr><td colspan="${headers.length}" style="text-align:center; color: var(--up-text-3); font-style:italic; background:#f8fafc; padding:14px;">
+                bodyHTML += `<tr><td colspan="${headers.length}" style="text-align:center; color: var(--up-text-3); font-style:italic; background:#f6f9fe; padding:14px;">
                     <i class="fas fa-ellipsis-h"></i> ${data.length - MAX_ROWS} more rows not shown (preview limited to ${MAX_ROWS})
                 </td></tr>`;
             }

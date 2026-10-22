@@ -7,83 +7,99 @@
 <link rel="stylesheet" href="{% static 'stylesheets/submit.css' %}" type="text/css">
 <style>
 /* ============================================================
-   DAILY TRIAL BALANCE — Premium Light Theme
+   DAILY TRIAL BALANCE — OMNibsic BANK BLENDED
+   Matches the base shell's reading-column rhythm. Content
+   sits inside the chat-style content column with generous
+   whitespace, not stretched edge-to-edge.
    ============================================================ */
 
 :root {
-    --tb-bg-0: #eef1f8;
+    /* ---- OmniBSIC brand primitives ---- */
+    --ob-navy:        #003366;
+    --ob-navy-dark:   #001F3D;
+    --ob-navy-mid:    #1A4B7A;
+    --ob-navy-tint-1: rgba(0, 51, 102, 0.04);
+    --ob-navy-tint-2: rgba(0, 51, 102, 0.08);
+    --ob-navy-tint-3: rgba(0, 51, 102, 0.14);
+    --ob-gold:        #D4AF37;
+    --ob-gold-soft:   rgba(212, 175, 55, 0.14);
+    --ob-gold-mid:    rgba(212, 175, 55, 0.28);
+
+    /* ---- Surfaces (blended with navy) ---- */
     --tb-bg-1: #ffffff;
-    --tb-bg-2: #f7f8fc;
-    --tb-bg-3: #f1f3f9;
+    --tb-bg-2: #f6f9fe;
+    --tb-bg-3: #eef3fa;
 
-    --tb-border: rgba(15, 27, 51, 0.08);
-    --tb-border-strong: rgba(15, 27, 51, 0.16);
-    --tb-hairline: rgba(15, 27, 51, 0.06);
+    --tb-border: #dbe3ef;
+    --tb-border-strong: #c9d3e3;
+    --tb-hairline: #eaf0f8;
 
-    --tb-text-0: #0f1b33;
-    --tb-text-1: #46536b;
-    --tb-text-2: #8993a8;
+    --tb-text-0: #0b1a33;
+    --tb-text-1: #2c3e5c;
+    --tb-text-2: #8493ab;
 
-    --tb-accent: #4f6ef7;
-    --tb-accent-soft: #eef1ff;
-    --tb-cyan: #0ea5a4;
-    --tb-cyan-soft: #e0f7f6;
-    --tb-violet: #7c5cf0;
-    --tb-violet-soft: #f0ebff;
-    --tb-amber: #e08a17;
-    --tb-amber-soft: #fdf2e0;
-    --tb-rose: #e0456a;
-    --tb-rose-soft: #fdeaf0;
-    --tb-emerald: #17a673;
-    --tb-emerald-soft: #e2f7ef;
+    --tb-accent:       var(--ob-navy);
+    --tb-accent-soft:  var(--ob-navy-tint-2);
 
-    --tb-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
-                    0 1px 3px rgba(15, 27, 51, 0.03);
-    --tb-shadow-md: 0 4px 12px rgba(15, 27, 51, 0.06),
-                    0 2px 4px rgba(15, 27, 51, 0.03);
-    --tb-shadow-lg: 0 16px 40px rgba(15, 27, 51, 0.10),
-                    0 4px 12px rgba(15, 27, 51, 0.04);
+    --tb-amber:        #d4820f;
+    --tb-amber-soft:   rgba(212, 130, 15, 0.10);
+    --tb-rose:         #c8395f;
+    --tb-rose-soft:    rgba(200, 57, 95, 0.10);
+    --tb-emerald:      #12a67a;
+    --tb-emerald-soft: rgba(18, 166, 122, 0.10);
+
+    --tb-shadow-sm: 0 1px 2px rgba(0, 31, 61, 0.05),
+                    0 1px 3px rgba(0, 31, 61, 0.03);
+    --tb-shadow-md: 0 4px 12px rgba(0, 31, 61, 0.08),
+                    0 2px 4px rgba(0, 31, 61, 0.03);
 
     --tb-font: 'Poppins', system-ui, -apple-system, sans-serif;
     --tb-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
+/* ------------------------------------------------------------
+   Container — centered reading column, matches base shell
+   ------------------------------------------------------------ */
 .tb-container {
-    max-width: 1600px;
+    width: 100%;
+    max-width: 1180px;
     margin: 0 auto;
-    padding: 4px 0 40px;
+    padding: 0 0 48px;
     font-family: var(--tb-font);
     color: var(--tb-text-0);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
+    box-sizing: border-box;
 }
 
 /* ============================================================
-   HEADER ACTIONS
+   HEADER ACTIONS — sits left, not stretched
    ============================================================ */
 .tb-header-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
+    padding: 0;
 }
 
 .tb-date-wrapper {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 7px 14px;
-    background: var(--tb-bg-1);
+    gap: 10px;
+    padding: 10px 16px;
+    background: #ffffff;
     border: 1px solid var(--tb-border);
-    border-radius: 10px;
-    transition: all 0.25s ease;
+    border-radius: 11px;
+    transition: all 0.2s ease;
     box-shadow: var(--tb-shadow-sm);
+    min-height: 42px;
 }
 
 .tb-date-wrapper:focus-within {
-    border-color: var(--tb-accent);
-    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12), var(--tb-shadow-sm);
+    border-color: var(--ob-navy);
+    box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.14);
 }
 
 .tb-date-wrapper .tb-date-label {
@@ -91,15 +107,15 @@
     font-weight: 600;
     letter-spacing: 0.6px;
     text-transform: uppercase;
-    color: var(--tb-text-2);
+    color: var(--ob-navy);
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     margin: 0;
     white-space: nowrap;
 }
 
-.tb-date-wrapper .tb-date-label i { color: var(--tb-accent); }
+.tb-date-wrapper .tb-date-label i { color: var(--ob-navy); }
 
 .tb-date-wrapper .tb-date-input {
     border: none;
@@ -114,72 +130,61 @@
     color-scheme: light;
 }
 
+/* ---------- Buttons ---------- */
 .tb-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 9px 18px;
-    border-radius: 10px;
-    font-size: 12px;
+    padding: 10px 18px;
+    border-radius: 11px;
+    font-size: 12.5px;
     font-weight: 600;
     font-family: var(--tb-font);
     letter-spacing: 0.3px;
     cursor: pointer;
     border: 1px solid transparent;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
     white-space: nowrap;
     position: relative;
     overflow: hidden;
+    min-height: 42px;
 }
 
-.tb-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(255,255,255,0.18), transparent);
-    opacity: 0;
-    transition: opacity 0.25s ease;
-}
-
-.tb-btn:hover:not(:disabled)::before { opacity: 1; }
-.tb-btn i { font-size: 13px; }
+.tb-btn i { font-size: 12px; }
 
 .tb-btn-primary {
-    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
-    color: white;
-    border-color: rgba(79, 110, 247, 0.4);
-    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.28);
+    background: linear-gradient(135deg, var(--ob-navy) 0%, var(--ob-navy-mid) 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(0, 51, 102, 0.24);
 }
 
 .tb-btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+    box-shadow: 0 6px 18px rgba(0, 51, 102, 0.36);
 }
 
 .tb-btn-success {
-    background: linear-gradient(135deg, #17a673 0%, #0f8a5e 100%);
-    color: white;
-    border-color: rgba(23, 166, 115, 0.4);
-    box-shadow: 0 4px 14px rgba(23, 166, 115, 0.25);
+    background: linear-gradient(135deg, var(--tb-emerald) 0%, #0f8a5e 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(18, 166, 122, 0.24);
 }
 
 .tb-btn-success:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(23, 166, 115, 0.42);
+    box-shadow: 0 6px 18px rgba(18, 166, 122, 0.36);
 }
 
 .tb-btn-outline {
-    background: var(--tb-bg-1);
-    color: var(--tb-text-1);
+    background: #ffffff;
+    color: var(--ob-navy);
     border-color: var(--tb-border);
     box-shadow: var(--tb-shadow-sm);
 }
 
 .tb-btn-outline:hover:not(:disabled) {
-    background: var(--tb-bg-2);
-    color: var(--tb-text-0);
-    border-color: var(--tb-border-strong);
+    background: var(--ob-navy-tint-1);
+    border-color: var(--ob-navy-tint-3);
 }
 
 .tb-btn:disabled {
@@ -196,9 +201,11 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    background: linear-gradient(135deg, rgba(224, 138, 23, 0.06), rgba(224, 69, 106, 0.03)), var(--tb-bg-1);
-    border: 1px solid rgba(224, 138, 23, 0.28);
-    border-radius: 16px;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(212, 130, 15, 0.06) 0%, transparent 50%),
+        linear-gradient(180deg, #ffffff 0%, #fdf8ee 100%);
+    border: 1px solid rgba(212, 130, 15, 0.28);
+    border-radius: 14px;
     padding: 16px 20px;
     position: relative;
     overflow: hidden;
@@ -214,26 +221,27 @@
 }
 
 .tb-lock-banner .lock-icon {
-    width: 48px; height: 48px;
-    border-radius: 12px;
+    width: 44px; height: 44px;
+    border-radius: 11px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
     flex-shrink: 0;
     background: var(--tb-amber-soft);
     color: var(--tb-amber);
-    border: 1px solid rgba(224, 138, 23, 0.28);
+    border: 1px solid rgba(212, 130, 15, 0.28);
+    box-shadow: 0 2px 6px rgba(212, 130, 15, 0.18);
 }
 
 .tb-lock-banner .lock-content { flex: 1; min-width: 0; }
 .tb-lock-banner .lock-title {
     font-size: 13px; font-weight: 700;
-    color: #8a5209; margin: 0; letter-spacing: 0.2px;
+    color: #8a5209; margin: 0 0 3px 0; letter-spacing: 0.2px;
 }
 .tb-lock-banner .lock-subtitle {
     font-size: 12px; color: var(--tb-text-1);
-    margin: 3px 0 0 0; line-height: 1.5;
+    margin: 0; line-height: 1.55;
 }
 
 /* ============================================================
@@ -244,59 +252,80 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
-    background: var(--tb-bg-1);
+    background:
+        radial-gradient(circle at 100% 0%, rgba(0, 51, 102, 0.04) 0%, transparent 45%),
+        linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
     border: 1px solid var(--tb-border);
-    border-radius: 16px;
-    padding: 14px 20px;
+    border-radius: 14px;
+    padding: 14px 18px;
     box-shadow: var(--tb-shadow-sm);
+    position: relative;
+}
+
+.tb-control-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 18px;
+    right: 18px;
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--ob-gold) 50%,
+        transparent 100%);
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 .tb-filter-group {
-    display: inline-flex; align-items: center; gap: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .tb-filter-group label {
-    font-size: 10px; font-weight: 700;
-    color: var(--tb-text-2); text-transform: uppercase;
+    font-size: 10.5px; font-weight: 700;
+    color: var(--ob-navy); text-transform: uppercase;
     letter-spacing: 1px; white-space: nowrap;
     display: inline-flex; align-items: center; gap: 6px;
 }
 
-.tb-filter-group label i { color: var(--tb-accent); font-size: 11px; }
+.tb-filter-group label i { color: var(--ob-navy); font-size: 11px; opacity: 0.8; }
 
 .tb-filter-select {
-    padding: 8px 14px;
+    padding: 9px 14px;
     border: 1px solid var(--tb-border);
     border-radius: 10px;
-    font-size: 12px; font-weight: 500;
+    font-size: 12.5px; font-weight: 500;
     font-family: var(--tb-font);
     color: var(--tb-text-0);
-    background: var(--tb-bg-1);
+    background: #ffffff;
     cursor: pointer; outline: none;
     transition: all 0.2s ease;
-    min-width: 160px; max-width: 260px;
+    min-width: 150px; max-width: 220px;
     appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23003366' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 14px;
+    background-position: right 11px center;
+    background-size: 13px;
     padding-right: 34px;
     box-shadow: var(--tb-shadow-sm);
+    min-height: 38px;
 }
 
-.tb-filter-select:hover { border-color: var(--tb-border-strong); }
+.tb-filter-select:hover { border-color: var(--ob-navy-mid); }
 
 .tb-filter-select:focus {
-    border-color: var(--tb-accent);
-    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12), var(--tb-shadow-sm);
+    border-color: var(--ob-navy);
+    box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.14);
 }
 
 .tb-filter-select option {
-    background: var(--tb-bg-1);
+    background: #ffffff;
     color: var(--tb-text-0);
 }
 
-#tbGLFilter { min-width: 240px; max-width: 340px; }
+#tbGLFilter { min-width: 220px; max-width: 320px; }
 
 .tb-filter-divider {
     width: 1px; height: 24px;
@@ -304,81 +333,63 @@
     margin: 0 2px;
 }
 
-/* ============================================================
-   VIEW TOGGLE + TABS
-   ============================================================ */
-.tb-view-toggle {
-    display: inline-flex;
-    background: var(--tb-bg-2);
-    border: 1px solid var(--tb-border);
-    border-radius: 10px;
-    padding: 3px;
-    gap: 3px;
-    margin-left: auto;
-    box-shadow: var(--tb-shadow-sm);
-}
-
-.tb-view-toggle button {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 7px 14px;
-    border: none; border-radius: 7px;
-    font-size: 11px; font-weight: 600;
-    font-family: var(--tb-font);
-    letter-spacing: 0.3px;
-    color: var(--tb-text-2);
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.tb-view-toggle button:hover { color: var(--tb-text-0); }
-
-.tb-view-toggle button.active {
-    background: var(--tb-bg-1);
-    color: var(--tb-accent);
-    box-shadow: 0 2px 6px rgba(15, 27, 51, 0.08);
-}
-
-.tb-view-toggle button.active.warning {
-    color: var(--tb-amber);
-    box-shadow: 0 2px 6px rgba(224, 138, 23, 0.15);
-}
-
 .tb-filter-meta {
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--tb-text-2);
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 6px 12px;
-    background: var(--tb-bg-2);
-    border: 1px solid var(--tb-border);
-    border-radius: 10px;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 12px;
+    background: var(--ob-navy-tint-1);
+    border: 1px solid var(--ob-navy-tint-3);
+    border-radius: 9px;
     font-variant-numeric: tabular-nums;
     margin-left: auto;
 }
 
-.tb-filter-meta strong { color: var(--tb-text-0); font-weight: 700; }
+.tb-filter-meta i { color: var(--ob-navy); opacity: 0.7; }
+
+.tb-filter-meta strong {
+    color: var(--ob-navy);
+    font-weight: 700;
+}
 
 /* ============================================================
-   TAB BAR (Overview / Compare Previous / Date Range)
+   TAB BAR
    ============================================================ */
 .tb-tabbar {
     display: flex;
     gap: 4px;
-    background: var(--tb-bg-1);
+    background: #ffffff;
     border: 1px solid var(--tb-border);
-    border-radius: 14px;
+    border-radius: 13px;
     padding: 6px;
     box-shadow: var(--tb-shadow-sm);
     width: fit-content;
     margin: 0 auto;
+    position: relative;
+}
+
+.tb-tabbar::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 16px;
+    right: 16px;
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--ob-gold) 50%,
+        transparent 100%);
+    opacity: 0.55;
+    border-radius: 2px;
+    pointer-events: none;
 }
 
 .tb-tabbar button {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 20px;
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px;
     border: none;
     background: transparent;
-    border-radius: 10px;
+    border-radius: 9px;
     font-family: var(--tb-font);
     font-size: 12.5px;
     font-weight: 600;
@@ -386,27 +397,36 @@
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
+    min-height: 38px;
 }
 
-.tb-tabbar button:hover { color: var(--tb-text-0); background: var(--tb-bg-2); }
+.tb-tabbar button:hover {
+    color: var(--ob-navy);
+    background: var(--ob-navy-tint-1);
+}
 
 .tb-tabbar button.active {
-    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.28);
+    background: linear-gradient(135deg, var(--ob-navy) 0%, var(--ob-navy-mid) 100%);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(0, 51, 102, 0.24);
 }
 
-.tb-tabbar button i { font-size: 12px; }
+.tb-tabbar button i { font-size: 11px; }
 
 /* ============================================================
-   CARD
+   CARD — reading-surface card
    ============================================================ */
 .tb-card {
-    background: var(--tb-bg-1);
-    border-radius: 18px;
+    background: #ffffff;
+    border-radius: 16px;
     border: 1px solid var(--tb-border);
     overflow: hidden;
     box-shadow: var(--tb-shadow-sm);
+    transition: box-shadow 0.2s ease;
+}
+
+.tb-card:hover {
+    box-shadow: var(--tb-shadow-md);
 }
 
 .tb-card-header {
@@ -414,16 +434,33 @@
     justify-content: space-between;
     align-items: center;
     padding: 18px 22px 14px;
-    border-bottom: 1px solid var(--tb-hairline);
-    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    border-bottom: 1px solid var(--tb-border);
+    background: linear-gradient(180deg, #f8fafd 0%, #eef3fa 100%);
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
+    position: relative;
+}
+
+.tb-card-header::after {
+    content: '';
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--ob-gold) 30%,
+        var(--ob-gold) 70%,
+        transparent 100%);
+    opacity: 0.4;
+    pointer-events: none;
 }
 
 .tb-card-header h4 {
     font-size: 13px;
     font-weight: 700;
-    color: var(--tb-text-0);
+    color: var(--ob-navy);
     margin: 0;
     display: flex;
     align-items: center;
@@ -432,17 +469,17 @@
 }
 
 .tb-card-header h4 i {
-    font-size: 13px;
+    font-size: 12px;
     width: 28px; height: 28px;
     border-radius: 8px;
     display: grid; place-items: center;
-    background: var(--tb-accent-soft);
-    color: var(--tb-accent);
-    border: 1px solid rgba(79, 110, 247, 0.2);
+    background: var(--ob-navy);
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 51, 102, 0.20);
 }
 
 .tb-card-header .header-meta {
-    font-size: 11px;
+    font-size: 11.5px;
     color: var(--tb-text-2);
     font-weight: 500;
     letter-spacing: 0.3px;
@@ -453,59 +490,62 @@
    DATA TABLE
    ============================================================ */
 .tb-table-wrapper {
-    max-height: 600px;
+    max-height: 560px;
     overflow: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(15, 27, 51, 0.15) transparent;
+    scrollbar-color: rgba(0, 51, 102, 0.15) transparent;
 }
 
-.tb-table-wrapper::-webkit-scrollbar { width: 8px; height: 8px; }
+.tb-table-wrapper::-webkit-scrollbar { width: 9px; height: 9px; }
 .tb-table-wrapper::-webkit-scrollbar-track { background: transparent; }
 .tb-table-wrapper::-webkit-scrollbar-thumb {
-    background: rgba(15, 27, 51, 0.12);
-    border-radius: 4px;
+    background: rgba(0, 51, 102, 0.14);
+    border-radius: 5px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
 }
 .tb-table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: rgba(15, 27, 51, 0.24);
+    background: rgba(0, 51, 102, 0.28);
+    background-clip: padding-box;
+    border: 2px solid transparent;
 }
 
 .tb-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px;
+    font-size: 12.5px;
     font-family: var(--tb-font);
     font-variant-numeric: tabular-nums;
 }
 
 .tb-table thead {
-    background: var(--tb-bg-2);
+    background: linear-gradient(180deg, #eef3fa 0%, #e3ecf6 100%);
     position: sticky; top: 0;
     z-index: 2;
-    backdrop-filter: blur(8px);
 }
 
 .tb-table th {
-    padding: 12px 14px;
+    padding: 13px 16px;
     text-align: left;
     font-weight: 700;
     font-size: 10px;
-    color: var(--tb-text-2);
+    color: var(--ob-navy);
     text-transform: uppercase;
     letter-spacing: 1px;
     white-space: nowrap;
-    border-bottom: 1px solid var(--tb-border);
+    border-bottom: 1px solid var(--ob-navy-tint-3);
 }
 
 .tb-table td {
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--tb-hairline);
     color: var(--tb-text-1);
-    vertical-align: top;
+    vertical-align: middle;
     white-space: nowrap;
 }
 
-.tb-table tbody tr { transition: background 0.2s ease; }
-.tb-table tbody tr:hover { background: var(--tb-bg-2); }
+.tb-table tbody tr { transition: background 0.15s ease; }
+.tb-table tbody tr:hover { background: var(--ob-navy-tint-1); }
 .tb-table tbody tr:last-child td { border-bottom: none; }
 
 .tb-table .num {
@@ -519,11 +559,11 @@
 .tb-table.compare-table th.sticky-col,
 .tb-table.compare-table td.sticky-col {
     position: sticky;
-    background: var(--tb-bg-1);
+    background: #ffffff;
     z-index: 1;
 }
 .tb-table.compare-table thead th.sticky-col {
-    background: var(--tb-bg-2);
+    background: linear-gradient(180deg, #eef3fa 0%, #e3ecf6 100%);
     z-index: 3;
 }
 .tb-table.compare-table .sticky-col-1 { left: 0;    min-width: 90px;  }
@@ -537,113 +577,144 @@
     align-items: center;
     gap: 4px;
     padding: 2px 8px;
-    border-radius: 8px;
+    border-radius: 7px;
     font-size: 11px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
-.tb-delta.pos { background: var(--tb-rose-soft);   color: var(--tb-rose);   }
-.tb-delta.neg { background: var(--tb-emerald-soft); color: var(--tb-emerald); }
-.tb-delta.zero { background: var(--tb-bg-2);       color: var(--tb-text-2); }
+.tb-delta.pos  { background: var(--tb-rose-soft);    color: var(--tb-rose);    }
+.tb-delta.neg  { background: var(--tb-emerald-soft); color: var(--tb-emerald); }
+.tb-delta.zero { background: var(--tb-bg-2);         color: var(--tb-text-2);  }
 
 /* ============================================================
    EMPTY STATE
    ============================================================ */
 .tb-empty {
     text-align: center;
-    padding: 80px 20px;
-    background: var(--tb-bg-1);
+    padding: 72px 28px;
+    background:
+        radial-gradient(circle at 50% 30%,
+            rgba(0, 51, 102, 0.05) 0%,
+            transparent 55%),
+        #ffffff;
     border: 1px dashed var(--tb-border-strong);
-    border-radius: 18px;
+    border-radius: 16px;
 }
 
 .tb-empty-glyph {
-    width: 80px; height: 80px;
-    margin: 0 auto 20px;
+    width: 72px; height: 72px;
+    margin: 0 auto 18px;
     border-radius: 50%;
     display: grid; place-items: center;
     background: radial-gradient(circle,
-        rgba(79, 110, 247, 0.14) 0%,
-        rgba(79, 110, 247, 0.04) 60%,
+        rgba(0, 51, 102, 0.14) 0%,
+        rgba(0, 51, 102, 0.04) 60%,
         transparent 70%);
-    color: var(--tb-accent);
-    font-size: 32px;
-    animation: tb-float 3s ease-in-out infinite;
-}
-
-@keyframes tb-float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
+    color: var(--ob-navy);
+    font-size: 28px;
 }
 
 .tb-empty h3 {
     font-size: 16px; font-weight: 700;
-    color: var(--tb-text-0); margin-bottom: 6px;
+    color: var(--ob-navy); margin: 0 0 8px 0;
     letter-spacing: 0.2px;
 }
 
 .tb-empty p {
     font-size: 13px; color: var(--tb-text-2);
-    margin: 0 auto; max-width: 400px;
-    line-height: 1.5;
+    margin: 0 auto; max-width: 420px;
+    line-height: 1.6;
 }
 
 /* ============================================================
-   LOADING
+   PANEL GROUPING
+   ============================================================ */
+#panel-compare,
+#panel-range {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+#panel-range > .tb-control-bar {
+    margin: 0;
+}
+
+/* ============================================================
+   LOADING OVERLAY — hard-capped so it never becomes a
+   full-page sheet. Anchored to viewport, card hard-capped.
    ============================================================ */
 .tb-loading-overlay {
-    position: fixed; inset: 0;
-    background: rgba(15, 27, 51, 0.28);
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 31, 61, 0.28);
     backdrop-filter: blur(8px) saturate(140%);
     -webkit-backdrop-filter: blur(8px) saturate(140%);
-    display: flex; justify-content: center; align-items: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     z-index: 99999;
-    opacity: 0; visibility: hidden;
+    opacity: 0;
+    visibility: hidden;
     transition: opacity 0.28s ease, visibility 0.28s ease;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 .tb-loading-overlay.active { opacity: 1; visibility: visible; }
 
 .tb-loading-card {
     background: #ffffff;
-    border: 1px solid rgba(15, 27, 51, 0.06);
-    padding: 36px 44px 32px;
-    border-radius: 22px;
+    border: 1px solid var(--tb-border);
+    padding: 32px 40px 28px;
+    border-radius: 20px;
     text-align: center;
-    box-shadow: 0 1px 2px rgba(15, 27, 51, 0.06), 0 12px 32px rgba(15, 27, 51, 0.10), 0 32px 80px rgba(15, 27, 51, 0.12);
-    width: auto;
-    min-width: 280px;
-    max-width: 340px;
+    box-shadow: 0 1px 2px rgba(0, 31, 61, 0.06),
+                0 12px 32px rgba(0, 31, 61, 0.12),
+                0 32px 80px rgba(0, 31, 61, 0.14);
+
+    width: 100%;
+    max-width: 320px;
     height: auto;
+    max-height: 240px;
+    min-width: 0;
     min-height: 0;
-    max-height: 260px;
-    box-sizing: border-box;
     flex: 0 0 auto;
     align-self: center;
+
     transform: scale(0.92) translateY(12px);
     opacity: 0;
     transition: transform 0.4s cubic-bezier(0.34, 1.36, 0.64, 1), opacity 0.3s ease;
     position: relative;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
-.tb-loading-overlay.active .tb-loading-card { transform: scale(1) translateY(0); opacity: 1; }
+.tb-loading-overlay.active .tb-loading-card {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
 
-.tb-loading-card::before {
+.tb-loading-card::after {
     content: '';
     position: absolute;
-    top: -60px; left: 50%;
-    transform: translateX(-50%);
-    width: 240px; height: 240px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(79, 110, 247, 0.10) 0%, rgba(79, 110, 247, 0.03) 40%, transparent 70%);
-    pointer-events: none;
+    top: 0;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--ob-gold) 50%,
+        transparent 100%);
+    opacity: 0.85;
 }
 
 .tb-spinner {
-    width: 56px; height: 56px;
-    margin: 0 auto 22px;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 18px;
     position: relative;
+    flex-shrink: 0;
 }
 
 .tb-spinner::before,
@@ -655,83 +726,65 @@
 
 .tb-spinner::before {
     inset: 0;
-    border: 3px solid rgba(79, 110, 247, 0.14);
-    border-top-color: var(--tb-accent);
-    border-right-color: var(--tb-accent);
+    border: 3px solid rgba(0, 51, 102, 0.14);
+    border-top-color: var(--ob-navy);
+    border-right-color: var(--ob-navy);
     animation: tb-spin 0.9s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
-    filter: drop-shadow(0 2px 6px rgba(79, 110, 247, 0.32));
+    filter: drop-shadow(0 2px 6px rgba(0, 51, 102, 0.32));
 }
 
 .tb-spinner::after {
-    inset: 10px;
-    border: 2.5px solid rgba(14, 165, 164, 0.10);
-    border-top-color: var(--tb-cyan);
-    border-left-color: var(--tb-cyan);
+    inset: 8px;
+    border: 2.5px solid rgba(212, 175, 55, 0.16);
+    border-top-color: var(--ob-gold);
+    border-left-color: var(--ob-gold);
     animation: tb-spin 1.4s linear infinite reverse;
 }
 
 @keyframes tb-spin { to { transform: rotate(360deg); } }
 
 .tb-loading-text {
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--tb-text-0);
+    color: var(--ob-navy);
     margin: 0;
     letter-spacing: 0.2px;
-    animation: tb-loading-text-in 0.5s ease 0.15s both;
-}
-
-@keyframes tb-loading-text-in {
-    from { opacity: 0; transform: translateY(4px); }
-    to   { opacity: 1; transform: translateY(0);   }
-}
-
-.tb-loading-card::after {
-    content: '';
-    display: block;
-    width: 4px; height: 4px;
-    border-radius: 50%;
-    background: var(--tb-accent);
-    margin: 14px auto 0;
-    box-shadow: -12px 0 0 rgba(79, 110, 247, 0.4), 0 0 0 rgba(79, 110, 247, 0.8), 12px 0 0 rgba(79, 110, 247, 0.4);
-    animation: tb-dot-wave 1.4s ease-in-out infinite;
-}
-
-@keyframes tb-dot-wave {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
+    line-height: 1.4;
 }
 
 /* ============================================================
-   TOAST
+   TOAST — hard-capped so it never becomes a full-page sheet
    ============================================================ */
 .toast-notification {
     position: fixed;
-    bottom: 28px; right: 28px;
+    bottom: 24px;
+    right: 24px;
     z-index: 100000;
+
     width: auto;
-    min-width: 340px;
-    max-width: 440px;
+    min-width: 300px;
+    max-width: 400px;
     height: auto;
     min-height: 0;
-    max-height: 200px;
-    box-sizing: border-box;
+    max-height: 100px;
+
     background: #ffffff;
-    border-radius: 16px;
-    padding: 16px 18px 16px 16px;
+    border-radius: 14px;
+    padding: 14px 16px 14px 14px;
     display: flex;
-    flex-direction: row;
     align-items: flex-start;
-    align-self: flex-start;
-    flex: 0 0 auto;
-    gap: 13px;
-    box-shadow: 0 1px 2px rgba(15, 27, 51, 0.06), 0 8px 24px rgba(15, 27, 51, 0.10), 0 20px 48px rgba(15, 27, 51, 0.08);
-    border: 1px solid rgba(15, 27, 51, 0.06);
+    gap: 12px;
+    box-shadow: 0 1px 2px rgba(0, 31, 61, 0.06),
+                0 8px 24px rgba(0, 31, 61, 0.10),
+                0 20px 48px rgba(0, 31, 61, 0.08);
+    border: 1px solid var(--tb-border);
     opacity: 0;
     transform: translateY(20px) scale(0.96);
     pointer-events: none;
-    transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), transform 0.42s cubic-bezier(0.34, 1.36, 0.64, 1);
+    transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.42s cubic-bezier(0.34, 1.36, 0.64, 1);
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .toast-notification.show {
@@ -743,48 +796,37 @@
 .toast-notification::before {
     content: '';
     position: absolute;
-    left: 0; top: 0; bottom: 0;
+    left: 0;
+    top: 0;
+    bottom: 0;
     width: 4px;
     background: var(--toast-accent, var(--tb-emerald));
-    border-top-left-radius: 16px;
-    border-bottom-left-radius: 16px;
+    border-top-left-radius: 14px;
+    border-bottom-left-radius: 14px;
     transition: background 0.3s ease;
-}
-
-.toast-notification::after {
-    content: '';
-    position: absolute;
-    top: -40%; right: -10%;
-    width: 180px; height: 180px;
-    border-radius: 50%;
-    background: radial-gradient(circle, color-mix(in srgb, var(--toast-accent, var(--tb-emerald)) 18%, transparent) 0%, transparent 65%);
-    pointer-events: none;
-    opacity: 0.7;
 }
 
 .toast-notification.success { --toast-accent: var(--tb-emerald); }
 .toast-notification.error   { --toast-accent: var(--tb-rose);    }
 .toast-notification.warning { --toast-accent: var(--tb-amber);   }
-.toast-notification.info    { --toast-accent: var(--tb-accent);  }
+.toast-notification.info    { --toast-accent: var(--ob-navy);    }
 
 .toast-notification .toast-icon {
     position: relative;
     z-index: 1;
-    width: 38px; height: 38px;
-    border-radius: 11px;
-    display: grid; place-items: center;
-    font-size: 15px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
     flex-shrink: 0;
     color: #ffffff;
-    background: linear-gradient(135deg, var(--toast-accent, var(--tb-emerald)) 0%, color-mix(in srgb, var(--toast-accent, var(--tb-emerald)) 78%, black) 100%);
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--toast-accent, var(--tb-emerald)) 40%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    animation: toast-icon-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s both;
-}
-
-@keyframes toast-icon-in {
-    0%   { transform: scale(0.4) rotate(-12deg); opacity: 0; }
-    60%  { transform: scale(1.12) rotate(4deg);  opacity: 1; }
-    100% { transform: scale(1) rotate(0);        opacity: 1; }
+    background: linear-gradient(135deg,
+        var(--toast-accent, var(--tb-emerald)) 0%,
+        color-mix(in srgb, var(--toast-accent, var(--tb-emerald)) 78%, black) 100%);
+    box-shadow: 0 3px 10px color-mix(in srgb, var(--toast-accent, var(--tb-emerald)) 40%, transparent),
+                inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .toast-notification .toast-content {
@@ -795,20 +837,13 @@
     min-height: 0;
     padding-top: 1px;
     overflow: hidden;
-    animation: toast-content-in 0.4s ease 0.12s both;
-}
-
-@keyframes toast-content-in {
-    from { opacity: 0; transform: translateX(6px); }
-    to   { opacity: 1; transform: translateX(0);   }
 }
 
 .toast-notification .toast-title {
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
-    color: var(--tb-text-0);
+    color: var(--ob-navy);
     margin: 0 0 3px 0;
-    letter-spacing: 0.1px;
     line-height: 1.3;
 }
 
@@ -818,10 +853,9 @@
     margin: 0;
     line-height: 1.5;
     word-break: break-word;
-    font-weight: 400;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 4;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
 }
 
@@ -834,22 +868,26 @@
     color: var(--tb-text-2);
     cursor: pointer;
     padding: 4px;
-    width: 24px; height: 24px;
-    font-size: 11px;
-    border-radius: 7px;
-    display: grid; place-items: center;
-    transition: all 0.18s ease;
-    opacity: 0;
-    animation: toast-content-in 0.3s ease 0.24s forwards;
+    width: 22px;
+    height: 22px;
+    font-size: 10px;
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    transition: all 0.15s ease;
 }
 
-.toast-notification:hover .toast-close { opacity: 1; }
-.toast-notification .toast-close:hover { color: var(--tb-text-0); background: rgba(15, 27, 51, 0.06); }
+.toast-notification .toast-close:hover {
+    color: var(--ob-navy);
+    background: var(--ob-navy-tint-1);
+}
 
 .toast-notification .toast-progress {
     position: absolute;
-    bottom: 0; left: 0;
-    height: 2px; width: 100%;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 100%;
     background: var(--toast-accent, var(--tb-emerald));
     opacity: 0.35;
     transform-origin: left center;
@@ -865,37 +903,45 @@
    RESPONSIVE
    ============================================================ */
 @media (max-width: 1024px) {
-    .tb-control-bar { padding: 12px 16px; }
     .tb-view-toggle { margin-left: 0; }
     .tb-filter-meta { margin-left: 0; }
 }
 
 @media (max-width: 768px) {
+    .tb-container { padding: 0 0 40px; gap: 20px; }
     .tb-date-wrapper { width: 100%; justify-content: center; }
     .tb-header-actions { width: 100%; }
     .tb-header-actions .tb-btn { flex: 1; justify-content: center; }
-    .tb-control-bar { flex-direction: column; align-items: stretch; }
+    .tb-control-bar { flex-direction: column; align-items: stretch; padding: 14px; }
+    .tb-control-bar::before { left: 14px; right: 14px; }
     .tb-filter-group { width: 100%; }
-    .tb-filter-group label { width: 90px; }
+    .tb-filter-group label { width: 100px; }
     .tb-filter-select { flex: 1; max-width: none; }
     .tb-filter-divider { display: none; }
-    .tb-view-toggle { width: 100%; }
-    .tb-view-toggle button { flex: 1; justify-content: center; }
-    .tb-filter-meta { width: 100%; justify-content: center; }
-    .tb-tabbar { width: 100%; flex-wrap: wrap; }
-    .tb-tabbar button { flex: 1; justify-content: center; }
+    .tb-filter-meta { width: 100%; justify-content: center; margin-left: 0; }
+    .tb-tabbar { width: 100%; flex-wrap: wrap; padding: 5px; }
+    .tb-tabbar button { flex: 1; justify-content: center; padding: 8px 12px; font-size: 12px; }
+    .tb-card-header { padding: 16px 16px 12px; }
+    .tb-card-header::after { left: 16px; right: 16px; }
+    .tb-table th { padding: 12px 12px; font-size: 9.5px; }
+    .tb-table td { padding: 11px 12px; font-size: 12px; }
+    .tb-empty { padding: 56px 20px; }
 }
 
 @media (max-width: 640px) {
     .toast-notification {
-        left: 16px; right: 16px; bottom: 16px;
-        min-width: auto; max-width: none;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        min-width: auto;
+        max-width: none;
     }
 }
 
 @media (max-width: 480px) {
-    .tb-card-header { flex-direction: column; align-items: flex-start; gap: 6px; }
-    .tb-lock-banner { flex-direction: column; align-items: flex-start; }
+    .tb-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .tb-card-header::after { left: 14px; right: 14px; }
+    .tb-lock-banner { flex-direction: column; align-items: flex-start; padding: 14px; gap: 12px; }
 }
 </style>
 {% endblock %}
@@ -949,26 +995,24 @@
 
 {% block page_title %}Daily Trial Balance{% endblock %}
 
-{% block top_header_right %}
-
-{% endblock %}
+{% block top_header_right %}{% endblock %}
 
 {% block content %}
-    <div class="tb-container">
+<div class="tb-container">
     <div class="tb-header-actions">
-    <div class="tb-date-wrapper">
-        <label for="tbReportDate" class="tb-date-label">
-            <i class="fas fa-calendar-alt"></i> Report Date
-        </label>
-        <input type="date" id="tbReportDate" class="tb-date-input" required>
+        <div class="tb-date-wrapper">
+            <label for="tbReportDate" class="tb-date-label">
+                <i class="fas fa-calendar-alt"></i> Report Date
+            </label>
+            <input type="date" id="tbReportDate" class="tb-date-input" required>
+        </div>
+        <button class="tb-btn tb-btn-primary" onclick="openUploadDialog()" id="tb-upload-btn">
+            <i class="fas fa-cloud-upload-alt"></i> Upload Excel
+        </button>
+        <button class="tb-btn tb-btn-success" onclick="submitTrialBalance()" id="tb-submit-btn" disabled>
+            <i class="fas fa-paper-plane"></i> Submit
+        </button>
     </div>
-    <button class="tb-btn tb-btn-primary" onclick="openUploadDialog()" id="tb-upload-btn">
-        <i class="fas fa-cloud-upload-alt"></i> Upload Excel
-    </button>
-    <button class="tb-btn tb-btn-success" onclick="submitTrialBalance()" id="tb-submit-btn" disabled>
-        <i class="fas fa-paper-plane"></i> Submit
-    </button>
-</div>
     <input type="file" id="tbFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
 
     <!-- DAY LOCK BANNER -->
@@ -980,7 +1024,7 @@
         </div>
     </div>
 
-    <!-- CONTROL BAR (moved up from Overview panel) -->
+    <!-- CONTROL BAR -->
     <div class="tb-control-bar" id="tb-filter-bar" style="display:none;">
         <div class="tb-filter-group">
             <label for="tbBranchFilter"><i class="fas fa-building"></i> Branch</label>
@@ -1013,9 +1057,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-         TAB BAR — Overview / Compare Previous / Date Range
-         ============================================================ -->
+    <!-- TAB BAR -->
     <div class="tb-tabbar" id="tb-tabbar" style="display:none;">
         <button type="button" class="active" id="tab-overview" onclick="switchTab('overview')">
             <i class="fas fa-table"></i> Overview
@@ -1028,11 +1070,8 @@
         </button>
     </div>
 
-    <!-- ============================================================
-         TAB PANEL: OVERVIEW
-         ============================================================ -->
+    <!-- OVERVIEW PANEL -->
     <div id="panel-overview">
-        <!-- PREVIEW CARD -->
         <div class="tb-card" id="tb-preview-card" style="display:none;">
             <div class="tb-card-header">
                 <h4><i class="fas fa-table"></i> <span id="tb-preview-title">Trial Balance</span></h4>
@@ -1053,9 +1092,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-         TAB PANEL: COMPARE PREVIOUS
-         ============================================================ -->
+    <!-- COMPARE PANEL -->
     <div id="panel-compare" style="display:none;">
         <div class="tb-card" id="tb-compare-card" style="display:none;">
             <div class="tb-card-header">
@@ -1077,9 +1114,7 @@
         </div>
     </div>
 
-    <!-- ============================================================
-         TAB PANEL: DATE RANGE
-         ============================================================ -->
+    <!-- RANGE PANEL -->
     <div id="panel-range" style="display:none;">
         <div class="tb-control-bar">
             <div class="tb-filter-group">
@@ -1129,7 +1164,7 @@
     </div>
 </div>
 
-<!-- Toast Notification -->
+<!-- Toast -->
 <div id="toastNotification" class="toast-notification success">
     <div class="toast-icon"><i class="fas fa-check"></i></div>
     <div class="toast-content">
@@ -1199,8 +1234,6 @@
         iconEl.className = 'fas ' + (ICONS[variant] || ICONS.success);
 
         if (progEl) { progEl.style.animation='none'; void progEl.offsetWidth; progEl.style.animation=''; }
-        const iconBox = toast.querySelector('.toast-icon');
-        if (iconBox) { iconBox.style.animation='none'; void iconBox.offsetWidth; iconBox.style.animation=''; }
 
         toast.classList.add('show');
         if (window.toastTimeout) clearTimeout(window.toastTimeout);
@@ -1383,92 +1416,89 @@
     // ============================================
     // LOAD BY DATE
     // ============================================
-function loadTrialBalanceByDate() {
-    const reportDate = document.getElementById('tbReportDate')?.value || '';
-    if (!reportDate) {
-        resetToEmpty(false);
-        return;
+    function loadTrialBalanceByDate() {
+        const reportDate = document.getElementById('tbReportDate')?.value || '';
+        if (!reportDate) {
+            resetToEmpty(false);
+            return;
+        }
+
+        showLoading('Loading trial balance...');
+
+        fetch(`/adminboard/api/trial-balance/by-date/?date=${encodeURIComponent(reportDate)}`, {
+            method: 'GET',
+            headers: { 'X-CSRFToken': getCsrfToken() }
+        })
+        .then(r => r.json())
+        .then(data => {
+            hideLoading();
+
+            if (!data.success) {
+                showToast(data.error || 'Could not load trial balance.', 'Error', 'error');
+                resetToEmpty(false);
+                return;
+            }
+
+            if (!data.found) {
+                resetToEmpty(false);
+
+                if (data.upload_exists === false) {
+                    showToast(
+                        data.message || `No trial balance has been uploaded for ${reportDate} yet.`,
+                        'No Upload', 'info'
+                    );
+                } else if (data.upload_exists === true) {
+                    showToast(
+                        data.message || `A trial balance exists for ${reportDate}, but no entries match your assigned branches/departments.`,
+                        'No Matching Entries', 'info'
+                    );
+                } else {
+                    fetch(`/adminboard/api/trial-balance/check-day/?date=${encodeURIComponent(reportDate)}`)
+                        .then(r => r.json())
+                        .then(lockData => {
+                            if (lockData.success && lockData.locked) {
+                                showToast(
+                                    `A trial balance was uploaded by ${lockData.uploaded_by?.full_name || 'another user'} on this date, but no entries match your assigned branches/departments.`,
+                                    'No Matching Entries', 'info'
+                                );
+                            } else {
+                                showToast(
+                                    data.message || `No trial balance found for ${reportDate}.`,
+                                    'Info', 'info'
+                                );
+                            }
+                        })
+                        .catch(() => {
+                            showToast(data.message || `No trial balance found for ${reportDate}.`, 'Info', 'info');
+                        });
+                }
+                return;
+            }
+
+            uploadedFileName = data.file_name || 'trial_balance.xlsx';
+            parsedHeaders = data.headers || [];
+            parsedDicts = data.rows || [];
+            parsedSummary = data.summary || {};
+
+            allowedBranchCodes = (Array.isArray(data.allowed_branches) && data.allowed_branches.length > 0)
+                ? data.allowed_branches.map(c => String(c).trim())
+                : null;
+
+            allowedDepartmentNames = (Array.isArray(data.allowed_departments) && data.allowed_departments.length > 0)
+                ? data.allowed_departments.map(d => String(d).trim().toUpperCase())
+                : null;
+
+            renderPreviewOnly(data);
+            showToast(`Loaded ${data.row_count} entries for ${reportDate}.`, 'Loaded', 'success');
+        })
+        .catch(err => {
+            hideLoading();
+            console.error(err);
+            showToast('Failed to load trial balance.', 'Error', 'error');
+            resetToEmpty(false);
+        });
     }
 
-    showLoading('Loading trial balance...');
-
-    fetch(`/adminboard/api/trial-balance/by-date/?date=${encodeURIComponent(reportDate)}`, {
-        method: 'GET',
-        headers: { 'X-CSRFToken': getCsrfToken() }
-    })
-    .then(r => r.json())
-    .then(data => {
-        hideLoading();
-
-        if (!data.success) {
-            showToast(data.error || 'Could not load trial balance.', 'Error', 'error');
-            resetToEmpty(false);
-            return;
-        }
-
-        if (!data.found) {
-            resetToEmpty(false);
-
-            // Distinguish between "no upload at all" vs
-            // "upload exists but no rows match your assigned units"
-            if (data.upload_exists === false) {
-                showToast(
-                    data.message || `No trial balance has been uploaded for ${reportDate} yet.`,
-                    'No Upload', 'info'
-                );
-            } else if (data.upload_exists === true) {
-                showToast(
-                    data.message || `A trial balance exists for ${reportDate}, but no entries match your assigned branches/departments.`,
-                    'No Matching Entries', 'info'
-                );
-            } else {
-                // Backwards-compat: fall back to day-lock check
-                fetch(`/adminboard/api/trial-balance/check-day/?date=${encodeURIComponent(reportDate)}`)
-                    .then(r => r.json())
-                    .then(lockData => {
-                        if (lockData.success && lockData.locked) {
-                            showToast(
-                                `A trial balance was uploaded by ${lockData.uploaded_by?.full_name || 'another user'} on this date, but no entries match your assigned branches/departments.`,
-                                'No Matching Entries', 'info'
-                            );
-                        } else {
-                            showToast(
-                                data.message || `No trial balance found for ${reportDate}.`,
-                                'Info', 'info'
-                            );
-                        }
-                    })
-                    .catch(() => {
-                        showToast(data.message || `No trial balance found for ${reportDate}.`, 'Info', 'info');
-                    });
-            }
-            return;
-        }
-
-        // Success — populate state and render
-        uploadedFileName = data.file_name || 'trial_balance.xlsx';
-        parsedHeaders = data.headers || [];
-        parsedDicts = data.rows || [];
-        parsedSummary = data.summary || {};
-
-        allowedBranchCodes = (Array.isArray(data.allowed_branches) && data.allowed_branches.length > 0)
-            ? data.allowed_branches.map(c => String(c).trim())
-            : null;
-
-        allowedDepartmentNames = (Array.isArray(data.allowed_departments) && data.allowed_departments.length > 0)
-            ? data.allowed_departments.map(d => String(d).trim().toUpperCase())
-            : null;
-
-        renderPreviewOnly(data);
-        showToast(`Loaded ${data.row_count} entries for ${reportDate}.`, 'Loaded', 'success');
-    })
-    .catch(err => {
-        hideLoading();
-        console.error(err);
-        showToast('Failed to load trial balance.', 'Error', 'error');
-        resetToEmpty(false);
-    });
-}
     // ============================================
     // FILTER HELPERS
     // ============================================
@@ -1834,7 +1864,6 @@ function loadTrialBalanceByDate() {
         empty.style.display = 'none';
         metaEl.textContent = `${merged.length} GLs · ${dates.length} date${dates.length === 1 ? '' : 's'}`;
 
-        // Build header: sticky meta columns + one pair per date
         let headHtml =
             '<tr>' +
             '<th class="sticky-col sticky-col-1">Branch</th>' +
@@ -1929,7 +1958,6 @@ function loadTrialBalanceByDate() {
         document.getElementById('tb-submit-btn').disabled = true;
         document.getElementById('tb-tabbar').style.display = 'none';
 
-        // Reset tab panels
         switchTab('overview');
 
         document.getElementById('tb-compare-card').style.display = 'none';
@@ -1990,11 +2018,11 @@ function loadTrialBalanceByDate() {
             if (body.success) {
                 showToast(body.message || 'Trial balance submitted.', 'Submitted', 'success');
                 setTimeout(() => {
-                    resetToEmpty(false);   // keep the date so we can reload it
+                    resetToEmpty(false);
                     checkDayLock();
                     loadTrialBalanceByDate();
                 }, 1500);
-            }else {
+            } else {
                 showToast(body.error || 'Submission failed.', 'Error', 'error');
             }
         })
@@ -2009,34 +2037,31 @@ function loadTrialBalanceByDate() {
     // INIT
     // ============================================
     document.addEventListener('DOMContentLoaded', function() {
-    const dateInput = document.getElementById('tbReportDate');
-    if (dateInput) {
-        dateInput.value = new Date().toISOString().slice(0, 10);
+        const dateInput = document.getElementById('tbReportDate');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().slice(0, 10);
 
-        // Auto-load when the date changes: check lock status first,
-        // then fetch the trial balance for that date.
-        dateInput.addEventListener('change', function() {
-            checkDayLock();
-            loadTrialBalanceByDate();
-        });
-    }
+            dateInput.addEventListener('change', function() {
+                checkDayLock();
+                loadTrialBalanceByDate();
+            });
+        }
 
-    const rangeStart = document.getElementById('tbRangeStart');
-    const rangeEnd = document.getElementById('tbRangeEnd');
-    if (rangeStart && !rangeStart.value) {
-        const d = new Date();
-        d.setDate(d.getDate() - 6);
-        rangeStart.value = d.toISOString().slice(0, 10);
-    }
-    if (rangeEnd && !rangeEnd.value) {
-        rangeEnd.value = new Date().toISOString().slice(0, 10);
-    }
+        const rangeStart = document.getElementById('tbRangeStart');
+        const rangeEnd = document.getElementById('tbRangeEnd');
+        if (rangeStart && !rangeStart.value) {
+            const d = new Date();
+            d.setDate(d.getDate() - 6);
+            rangeStart.value = d.toISOString().slice(0, 10);
+        }
+        if (rangeEnd && !rangeEnd.value) {
+            rangeEnd.value = new Date().toISOString().slice(0, 10);
+        }
 
-    // Initial load for today
-    checkDayLock();
-    loadTrialBalanceByDate();
+        checkDayLock();
+        loadTrialBalanceByDate();
 
-    console.log('[TB] Daily Trial Balance page ready');
-});
+        console.log('[TB] Daily Trial Balance page ready');
+    });
 </script>
 {% endblock %}

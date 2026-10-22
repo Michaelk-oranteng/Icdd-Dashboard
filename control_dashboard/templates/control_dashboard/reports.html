@@ -9,25 +9,45 @@
 
 <style>
     /* ============================================================
-       MY REPORTS — uniform, aligned table headers
+       MY REPORTS — OMNibsic BANK BLENDED
+       Navy woven into surfaces, gold as premium highlight
        ============================================================ */
 
     :root {
+        /* ---- OmniBSIC brand primitives ---- */
+        --ob-navy:        #003366;
+        --ob-navy-dark:   #001F3D;
+        --ob-navy-mid:    #1A4B7A;
+        --ob-navy-tint-1: rgba(0, 51, 102, 0.04);
+        --ob-navy-tint-2: rgba(0, 51, 102, 0.08);
+        --ob-navy-tint-3: rgba(0, 51, 102, 0.14);
+        --ob-gold:        #D4AF37;
+        --ob-gold-light:  #F5E6B8;
+        --ob-gold-dark:   #B8960F;
+        --ob-gold-soft:   rgba(212, 175, 55, 0.14);
+        --ob-gold-mid:    rgba(212, 175, 55, 0.28);
+
+        /* ---- Surfaces (blended with navy) ---- */
         --rp-font:         'Poppins', system-ui, -apple-system, sans-serif;
         --rp-bg-1:         #ffffff;
-        --rp-bg-2:         #f7f8fc;
-        --rp-border:       #e5e7eb;
-        --rp-border-strong:#d1d5db;
-        --rp-text-0:       #0f1b33;
-        --rp-text-1:       #374151;
-        --rp-text-2:       #6b7280;
-        --rp-text-3:       #9ca3af;
-        --rp-accent:       #4f6ef7;
-        --rp-success:      #17a673;
-        --rp-warning:      #e08a17;
-        --rp-danger:       #e0456a;
-        --rp-shadow-sm:    0 1px 2px rgba(15, 27, 51, 0.04);
-        --rp-shadow-md:    0 4px 14px rgba(15, 27, 51, 0.06);
+        --rp-bg-2:         #f6f9fe;   /* light navy wash */
+        --rp-bg-3:         #eef3fa;   /* deeper wash for headers */
+        --rp-border:       #dbe3ef;   /* navy-tinted border */
+        --rp-border-strong:#c9d3e3;
+        --rp-text-0:       #0b1a33;   /* navy-tinted ink */
+        --rp-text-1:       #2c3e5c;
+        --rp-text-2:       #4a5a75;
+        --rp-text-3:       #8493ab;
+        --rp-accent:       var(--ob-navy);
+        --rp-accent-soft:  var(--ob-navy-tint-2);
+        --rp-success:      #12a67a;
+        --rp-success-soft: rgba(18, 166, 122, 0.10);
+        --rp-warning:      #d4820f;
+        --rp-warning-soft: rgba(212, 130, 15, 0.10);
+        --rp-danger:       #c8395f;
+        --rp-danger-soft:  rgba(200, 57, 95, 0.10);
+        --rp-shadow-sm:    0 1px 2px rgba(0, 31, 61, 0.05);
+        --rp-shadow-md:    0 4px 14px rgba(0, 31, 61, 0.08);
         --rp-radius:       14px;
         --rp-radius-sm:    10px;
     }
@@ -56,7 +76,7 @@
         font-size: 20px;
         font-weight: 700;
         letter-spacing: -0.3px;
-        color: var(--rp-text-0);
+        color: var(--ob-navy);
     }
 
     .rp-header-left p {
@@ -65,9 +85,13 @@
         color: var(--rp-text-2);
     }
 
-    /* ---------- Filter toolbar ---------- */
+    /* ---------- Filter toolbar (navy-washed) ---------- */
     .rp-toolbar {
-        background: var(--rp-bg-1);
+        background:
+            radial-gradient(circle at 100% 0%,
+                rgba(0, 51, 102, 0.05) 0%,
+                transparent 45%),
+            linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
         border: 1px solid var(--rp-border);
         border-radius: var(--rp-radius);
         box-shadow: var(--rp-shadow-sm);
@@ -78,6 +102,22 @@
         gap: 14px;
         flex-wrap: wrap;
         margin-bottom: 20px;
+        position: relative;
+    }
+
+    /* Gold hairline at top */
+    .rp-toolbar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 18px;
+        right: 18px;
+        height: 2px;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            var(--ob-gold) 50%,
+            transparent 100%);
+        opacity: 0.75;
     }
 
     .rp-toolbar-section {
@@ -91,7 +131,7 @@
     .rp-toolbar-label {
         font-size: 10.5px;
         font-weight: 700;
-        color: var(--rp-text-2);
+        color: var(--ob-navy);
         text-transform: uppercase;
         letter-spacing: 0.9px;
         white-space: nowrap;
@@ -105,24 +145,24 @@
         font-size: 12.5px;
         font-weight: 500;
         font-family: var(--rp-font);
-        background: var(--rp-bg-1);
+        background: #ffffff;
         color: var(--rp-text-0);
         cursor: pointer;
         outline: none;
         transition: border-color 0.15s, box-shadow 0.15s;
         appearance: none;
         -webkit-appearance: none;
-        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23003366' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
         background-repeat: no-repeat;
         background-position: right 11px center;
         background-size: 13px;
         min-width: 200px;
     }
 
-    .rp-select:hover { border-color: var(--rp-border-strong); }
+    .rp-select:hover { border-color: var(--ob-navy-mid); }
     .rp-select:focus {
-        border-color: var(--rp-accent);
-        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+        border-color: var(--ob-navy);
+        box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.14);
     }
 
     .rp-date-range {
@@ -130,15 +170,15 @@
         align-items: center;
         gap: 6px;
         padding: 4px 10px;
-        background: var(--rp-bg-1);
+        background: #ffffff;
         border: 1px solid var(--rp-border);
         border-radius: var(--rp-radius-sm);
         transition: border-color 0.15s, box-shadow 0.15s;
     }
 
     .rp-date-range:focus-within {
-        border-color: var(--rp-accent);
-        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+        border-color: var(--ob-navy);
+        box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.14);
     }
 
     .rp-date-range .rp-date-sep {
@@ -176,8 +216,8 @@
         padding: 9px 16px;
         border-radius: var(--rp-radius-sm);
         border: 1px solid var(--rp-border);
-        background: var(--rp-bg-1);
-        color: var(--rp-text-1);
+        background: #ffffff;
+        color: var(--ob-navy);
         font-family: var(--rp-font);
         font-size: 12px;
         font-weight: 600;
@@ -187,9 +227,9 @@
     }
 
     .rp-btn:hover {
-        background: var(--rp-bg-2);
-        color: var(--rp-text-0);
-        border-color: var(--rp-border-strong);
+        background: var(--ob-navy-tint-1);
+        color: var(--ob-navy);
+        border-color: var(--ob-navy-tint-3);
     }
 
     .rp-btn i { font-size: 11px; }
@@ -203,16 +243,16 @@
     }
 
     .rp-result-count strong {
-        color: var(--rp-text-0);
+        color: var(--ob-navy);
         font-weight: 700;
         font-variant-numeric: tabular-nums;
     }
 
     /* ============================================================
-       REPORT TYPE GROUPS
+       REPORT TYPE GROUPS — navy header band with gold rule
        ============================================================ */
     .report-type-group {
-        background: var(--rp-bg-1);
+        background: #ffffff;
         border: 1px solid var(--rp-border);
         border-radius: var(--rp-radius);
         box-shadow: var(--rp-shadow-sm);
@@ -223,7 +263,7 @@
 
     .report-type-group:hover {
         box-shadow: var(--rp-shadow-md);
-        border-color: var(--rp-border-strong);
+        border-color: var(--ob-navy-mid);
     }
 
     .report-type-header {
@@ -234,14 +274,32 @@
         padding: 16px 22px;
         cursor: pointer;
         user-select: none;
-        background: linear-gradient(180deg, #fbfcff 0%, #ffffff 100%);
+        background: linear-gradient(180deg, #f8fafd 0%, #eef3fa 100%);
         border-bottom: 1px solid var(--rp-border);
         transition: background 0.12s;
         min-height: 64px;
+        position: relative;
+    }
+
+    /* Gold hairline beneath header */
+    .report-type-header::after {
+        content: '';
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        bottom: -1px;
+        height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            var(--ob-gold) 30%,
+            var(--ob-gold) 70%,
+            transparent 100%);
+        opacity: 0.4;
+        pointer-events: none;
     }
 
     .report-type-header:hover {
-        background: linear-gradient(180deg, #f3f5ff 0%, #fbfcff 100%);
+        background: linear-gradient(180deg, #eef3fa 0%, #e3ecf6 100%);
     }
 
     .report-type-left {
@@ -258,17 +316,23 @@
         border-radius: 10px;
         display: grid;
         place-items: center;
-        background: #e2f7ef;
-        color: var(--rp-success);
+        background: var(--ob-navy);
+        color: #ffffff;
         font-size: 14px;
         flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(0, 51, 102, 0.25);
+        transition: transform 0.2s ease;
+    }
+
+    .report-type-header:hover .report-type-icon {
+        transform: scale(1.06);
     }
 
     .report-type-title {
         margin: 0;
         font-size: 14px;
         font-weight: 700;
-        color: var(--rp-text-0);
+        color: var(--ob-navy);
         letter-spacing: -0.1px;
         line-height: 1.35;
         min-width: 0;
@@ -282,16 +346,17 @@
         align-items: center;
         justify-content: center;
         padding: 4px 12px;
-        background: #eef1ff;
-        border: 1px solid rgba(79, 110, 247, 0.18);
+        background: var(--ob-navy);
+        border: 1px solid var(--ob-navy);
         border-radius: 100px;
         font-size: 11px;
         font-weight: 700;
-        color: var(--rp-accent);
+        color: #ffffff;
         font-variant-numeric: tabular-nums;
         flex-shrink: 0;
         white-space: nowrap;
         line-height: 1;
+        box-shadow: 0 2px 6px rgba(0, 51, 102, 0.22);
     }
 
     .report-type-toggle {
@@ -300,7 +365,7 @@
         border-radius: 9px;
         display: grid;
         place-items: center;
-        color: var(--rp-text-2);
+        color: var(--ob-navy);
         font-size: 12px;
         flex-shrink: 0;
         background: #ffffff;
@@ -309,9 +374,10 @@
     }
 
     .report-type-header:hover .report-type-toggle {
-        color: var(--rp-accent);
-        border-color: rgba(79, 110, 247, 0.3);
-        background: #eef1ff;
+        color: #ffffff;
+        background: var(--ob-navy);
+        border-color: var(--ob-navy);
+        box-shadow: 0 2px 8px rgba(0, 51, 102, 0.25);
     }
 
     .report-type-toggle:not(.open) {
@@ -333,30 +399,29 @@
     }
 
     /* ============================================================
-       REPORT DETAILS TABLE — uniform headers, aligned columns
+       REPORT DETAILS TABLE — navy header band
        ============================================================ */
     .report-details-table {
         width: 100%;
-        min-width: 1100px;      /* enough room for 13 columns */
+        min-width: 1100px;
         border-collapse: collapse;
         font-size: 12.5px;
         table-layout: auto;
     }
 
-    /* ---------- Header row — uniform across every column ---------- */
     .report-details-table thead th {
         text-align: center;
         vertical-align: middle;
         padding: 14px 12px;
-        background: #f8fafc;
+        background: linear-gradient(180deg, #eef3fa 0%, #e3ecf6 100%);
         font-size: 11px;
         font-weight: 700;
         font-family: var(--rp-font);
-        color: var(--rp-text-2);
+        color: var(--ob-navy);
         text-transform: uppercase;
         letter-spacing: 0.6px;
-        border-bottom: 1px solid var(--rp-border);
-        border-top: 3px solid #eef1ff;
+        border-bottom: 1px solid var(--ob-navy-tint-3);
+        border-top: 3px solid var(--ob-navy);
         white-space: normal;
         overflow-wrap: anywhere;
         word-break: break-word;
@@ -365,10 +430,9 @@
         box-sizing: border-box;
     }
 
-    /* ---------- Body cells ---------- */
     .report-details-table tbody td {
         padding: 14px 12px;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--rp-bg-3);
         color: var(--rp-text-0);
         text-align: center;
         vertical-align: middle;
@@ -379,11 +443,9 @@
     }
 
     .report-details-table tbody tr:last-child td { border-bottom: none; }
-    .report-details-table tbody tr:hover { background: #f5f7ff; }
+    .report-details-table tbody tr:hover { background: var(--ob-navy-tint-1); }
 
     /* ---------- Cell variants ---------- */
-
-    /* Narrow: S/N */
     .report-details-table td.narrow-cell,
     .report-details-table th.narrow-cell {
         white-space: nowrap;
@@ -391,7 +453,6 @@
         vertical-align: middle;
     }
 
-    /* Date cells */
     .report-details-table td.date-cell,
     .report-details-table th.date-cell {
         white-space: nowrap;
@@ -401,7 +462,6 @@
         vertical-align: middle;
     }
 
-    /* Numbers */
     .report-details-table td.num-cell,
     .report-details-table th.num-cell {
         text-align: center;
@@ -410,7 +470,6 @@
         vertical-align: middle;
     }
 
-    /* Wide text cells */
     .report-details-table td.wide-cell,
     .report-details-table th.wide-cell {
         white-space: normal;
@@ -425,9 +484,6 @@
         min-width: 180px;
     }
 
-    /* Exception column — body justified, header centered.
-       Relaxed min-width so the table doesn't blow past the viewport
-       and hide the rightmost date columns. */
     .report-details-table td.wide-cell.cell-exception {
         font-size: 12.5px;
         color: var(--rp-text-0);
@@ -437,12 +493,11 @@
     }
     .report-details-table th.wide-cell.cell-exception {
         font-size: 11px;
-        color: var(--rp-text-2);
+        color: var(--ob-navy);
         text-align: center;
         min-width: 220px;
     }
 
-    /* Actions column — always shrink-to-fit and centered */
     .report-details-table td.text-center,
     .report-details-table th.text-center {
         text-align: center;
@@ -456,14 +511,15 @@
         color: var(--rp-text-3);
         font-style: italic;
         padding: 32px 16px;
-        background: #fbfcff;
+        background: var(--rp-bg-2);
     }
 
-    /* Badges */
+    /* Badges — navy for "in progress" variant */
     .badge-success,
     .badge-warning,
     .badge-danger,
-    .badge-secondary {
+    .badge-secondary,
+    .badge-navy {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -478,12 +534,13 @@
         white-space: nowrap;
         line-height: 1;
     }
-    .badge-success   { background: #e2f7ef; color: #065f46; border-color: rgba(6, 95, 70, 0.2); }
-    .badge-warning   { background: #fef3c7; color: #92400e; border-color: rgba(146, 64, 14, 0.2); }
-    .badge-danger    { background: #fee2e2; color: #991b1b; border-color: rgba(153, 27, 27, 0.2); }
+    .badge-success   { background: var(--rp-success-soft); color: #065f46; border-color: rgba(6, 95, 70, 0.2); }
+    .badge-warning   { background: var(--rp-warning-soft); color: #92400e; border-color: rgba(146, 64, 14, 0.2); }
+    .badge-danger    { background: var(--rp-danger-soft); color: #991b1b; border-color: rgba(153, 27, 27, 0.2); }
     .badge-secondary { background: #f3f4f6; color: #6b7280; border-color: rgba(107, 114, 128, 0.2); }
+    .badge-navy      { background: var(--ob-navy-tint-2); color: var(--ob-navy); border-color: var(--ob-navy-tint-3); }
 
-    /* Action buttons */
+    /* Action buttons — navy hover for edit */
     .table-actions-cluster {
         display: inline-flex;
         gap: 8px;
@@ -497,7 +554,7 @@
         height: 34px;
         border-radius: 10px;
         border: 1px solid var(--rp-border);
-        background: var(--rp-bg-1);
+        background: #ffffff;
         color: var(--rp-text-2);
         cursor: pointer;
         display: grid;
@@ -507,16 +564,17 @@
     }
 
     .btn-edit-modal:hover {
-        background: #eef1ff;
-        color: var(--rp-accent);
-        border-color: rgba(79, 110, 247, 0.35);
+        background: var(--ob-navy-tint-2);
+        color: var(--ob-navy);
+        border-color: var(--ob-navy-tint-3);
         transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0, 51, 102, 0.15);
     }
 
     .btn-delete:hover {
-        background: #fdeaf0;
+        background: var(--rp-danger-soft);
         color: var(--rp-danger);
-        border-color: rgba(224, 69, 106, 0.35);
+        border-color: rgba(200, 57, 95, 0.35);
         transform: translateY(-1px);
     }
 
@@ -524,7 +582,11 @@
        EMPTY STATES
        ============================================================ */
     .rp-empty {
-        background: var(--rp-bg-1);
+        background:
+            radial-gradient(circle at 50% 30%,
+                rgba(0, 51, 102, 0.05) 0%,
+                transparent 55%),
+            #ffffff;
         border: 1px dashed var(--rp-border);
         border-radius: var(--rp-radius);
         padding: 64px 24px;
@@ -542,16 +604,17 @@
         margin: 0 auto 18px;
         display: grid;
         place-items: center;
-        background: #eef1ff;
-        color: var(--rp-accent);
+        background: var(--ob-navy);
+        color: #ffffff;
         font-size: 24px;
+        box-shadow: 0 6px 18px rgba(0, 51, 102, 0.25);
     }
 
     .rp-empty h3 {
         margin: 0 0 6px 0;
         font-size: 15px;
         font-weight: 700;
-        color: var(--rp-text-0);
+        color: var(--ob-navy);
         text-align: center;
     }
 
@@ -563,10 +626,14 @@
         text-align: center;
     }
 
-    .rp-empty p strong { color: var(--rp-text-0); font-weight: 700; }
+    .rp-empty p strong { color: var(--ob-navy); font-weight: 700; }
 
     .rp-filter-empty {
-        background: var(--rp-bg-1);
+        background:
+            radial-gradient(circle at 50% 30%,
+                rgba(0, 51, 102, 0.04) 0%,
+                transparent 55%),
+            #ffffff;
         border: 1px dashed var(--rp-border);
         border-radius: var(--rp-radius);
         padding: 52px 24px;
@@ -580,7 +647,8 @@
 
     .rp-filter-empty i {
         font-size: 28px;
-        color: var(--rp-text-3);
+        color: var(--ob-navy);
+        opacity: 0.4;
         margin-bottom: 12px;
         display: block;
     }
@@ -589,7 +657,7 @@
         margin: 0 0 6px 0;
         font-size: 14px;
         font-weight: 700;
-        color: var(--rp-text-0);
+        color: var(--ob-navy);
         text-align: center;
     }
 
@@ -601,12 +669,12 @@
     }
 
     /* ============================================================
-       MODALS
+       MODALS — navy header band
        ============================================================ */
     .modal-wrapper {
         position: fixed;
         inset: 0;
-        background: rgba(15, 27, 51, 0.55);
+        background: rgba(0, 31, 61, 0.55);
         backdrop-filter: blur(4px);
         z-index: 10000;
         display: flex;
@@ -622,7 +690,8 @@
         padding: 24px 26px;
         max-width: 480px;
         width: 100%;
-        box-shadow: 0 24px 64px rgba(15, 27, 51, 0.25);
+        box-shadow: 0 24px 64px rgba(0, 31, 61, 0.28);
+        border-top: 3px solid var(--ob-navy);
     }
 
     .modal-content-wide { max-width: 640px; }
@@ -640,7 +709,7 @@
         margin: 0;
         font-size: 15px;
         font-weight: 700;
-        color: var(--rp-text-0);
+        color: var(--ob-navy);
         text-align: center;
     }
 
@@ -658,7 +727,11 @@
         place-items: center;
     }
 
-    .modal-close:hover { background: #fdeaf0; color: var(--rp-danger); }
+    .modal-close:hover {
+        background: var(--rp-danger-soft);
+        color: var(--rp-danger);
+        border-color: rgba(200, 57, 95, 0.3);
+    }
 
     .modal-icon {
         width: 56px;
@@ -668,7 +741,7 @@
         display: grid;
         place-items: center;
         font-size: 22px;
-        background: #fee2e2;
+        background: var(--rp-danger-soft);
         color: var(--rp-danger);
     }
 
@@ -697,18 +770,54 @@
         line-height: 1;
     }
 
-    .btn-cancel { background: #f3f4f6; color: var(--rp-text-0); }
-    .btn-cancel:hover { background: #e5e7eb; }
-
-    .btn-create {
-        background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
-        color: #ffffff;
-        box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    .btn-cancel {
+        background: #f3f4f6;
+        color: var(--rp-text-0);
     }
-    .btn-create:hover { box-shadow: 0 6px 20px rgba(79, 110, 247, 0.4); }
+    .btn-cancel:hover {
+        background: var(--ob-navy-tint-1);
+        color: var(--ob-navy);
+    }
+
+    /* Primary — navy gradient with gold shimmer */
+    .btn-create {
+        background: linear-gradient(135deg, var(--ob-navy) 0%, var(--ob-navy-mid) 100%);
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(0, 51, 102, 0.28);
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-create::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -40%;
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(212, 175, 55, 0.28) 50%,
+            transparent 100%);
+        transition: left 0.5s ease;
+    }
+    .btn-create:hover::after { left: 100%; }
+    .btn-create:hover {
+        box-shadow: 0 8px 22px rgba(0, 51, 102, 0.4);
+        transform: translateY(-1px);
+    }
+
     .btn-create.btn-danger {
-        background: linear-gradient(135deg, #e0456a 0%, #c4365c 100%);
-        box-shadow: 0 4px 14px rgba(224, 69, 106, 0.25);
+        background: linear-gradient(135deg, var(--rp-danger) 0%, #a82c4c 100%);
+        box-shadow: 0 4px 14px rgba(200, 57, 95, 0.28);
+    }
+    .btn-create.btn-danger::after {
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.22) 50%,
+            transparent 100%);
+    }
+    .btn-create.btn-danger:hover {
+        box-shadow: 0 8px 22px rgba(200, 57, 95, 0.4);
     }
 
     /* Form fields inside modal */
@@ -717,7 +826,7 @@
         display: block;
         font-size: 11.5px;
         font-weight: 600;
-        color: var(--rp-text-1);
+        color: var(--ob-navy);
         margin-bottom: 6px;
     }
     .form-control {
@@ -732,9 +841,12 @@
         outline: none;
         transition: border-color 0.15s, box-shadow 0.15s;
     }
+    .form-control:hover {
+        border-color: var(--ob-navy-mid);
+    }
     .form-control:focus {
-        border-color: var(--rp-accent);
-        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+        border-color: var(--ob-navy);
+        box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.12);
     }
 
     /* ============================================================
@@ -753,7 +865,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        box-shadow: 0 20px 48px rgba(15, 27, 51, 0.16);
+        box-shadow: 0 20px 48px rgba(0, 31, 61, 0.18);
         transform: translateX(130%);
         transition: transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
         z-index: 10001;
@@ -767,15 +879,18 @@
         border-radius: 10px;
         display: grid;
         place-items: center;
-        background: #e2f7ef;
+        background: var(--rp-success-soft);
         color: var(--rp-success);
         flex-shrink: 0;
         font-size: 14px;
     }
-    .toast-notification.error .toast-icon { background: #fdeaf0; color: var(--rp-danger); }
+    .toast-notification.error .toast-icon {
+        background: var(--rp-danger-soft);
+        color: var(--rp-danger);
+    }
 
     .toast-content { flex: 1; min-width: 0; }
-    .toast-title { margin: 0; font-size: 13px; font-weight: 700; color: var(--rp-text-0); }
+    .toast-title { margin: 0; font-size: 13px; font-weight: 700; color: var(--ob-navy); }
     .toast-message { margin: 2px 0 0 0; font-size: 12px; color: var(--rp-text-2); }
 
     .toast-close {
@@ -790,35 +905,33 @@
         place-items: center;
         font-size: 12px;
     }
-    .toast-close:hover { background: #f3f4f6; color: var(--rp-text-0); }
+    .toast-close:hover {
+        background: var(--ob-navy-tint-1);
+        color: var(--ob-navy);
+    }
 
     /* ============================================================
        RESPONSIVE
        ============================================================ */
     @media (max-width: 1000px) {
-        .report-details-table {
-            min-width: 1000px;
-        }
+        .report-details-table { min-width: 1000px; }
         .report-details-table thead th {
             font-size: 10.5px;
             padding: 12px 10px;
             height: 56px;
         }
-        .report-details-table tbody td {
-            padding: 12px 10px;
-        }
+        .report-details-table tbody td { padding: 12px 10px; }
     }
 
     @media (max-width: 720px) {
         .rp-toolbar { flex-direction: column; align-items: stretch; }
+        .rp-toolbar::before { left: 12px; right: 12px; }
         .rp-toolbar-section { flex-direction: column; align-items: stretch; }
         .rp-select { min-width: 100%; }
         .toast-notification { left: 16px; right: 16px; min-width: 0; }
 
         .report-type-body { overflow-x: auto; }
-        .report-details-table {
-            min-width: 1000px;
-        }
+        .report-details-table { min-width: 1000px; }
         .report-details-table thead th {
             font-size: 10px;
             padding: 10px 8px;
@@ -830,6 +943,7 @@
         }
 
         .report-type-header { padding: 12px 14px; gap: 10px; }
+        .report-type-header::after { left: 14px; right: 14px; }
         .report-type-icon { width: 30px; height: 30px; font-size: 12px; }
         .report-type-title { font-size: 12.5px; }
         .report-type-count { padding: 3px 9px; font-size: 10.5px; }
@@ -970,7 +1084,6 @@
                                         <colgroup>
                                             {% for header in display.headers %}
                                                 {% with h=header|upper %}
-                                                    {# Specific-first ordering — long labels must not                                                       be swallowed by the generic "DATE" branch. #}
                                                     {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
                                                         <col style="width: 50px;">
                                                     {% elif "TARGET DATE" in h or "CLOSURE" in h %}
@@ -1017,7 +1130,6 @@
                                                 {% if display.is_excel %}
                                                     {% for header in display.headers %}
                                                         {% with h=header|upper %}
-                                                            {# Same specific-first ordering as colgroup. #}
                                                             {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
                                                                 <th class="narrow-cell">{{ header|default:"Column" }}</th>
                                                             {% elif "TARGET DATE" in h or "CLOSURE" in h %}
@@ -1059,7 +1171,6 @@
                                             class="report-row">
                                             {% for header in display.headers %}
                                                 {% with h=header|upper %}
-                                                    {# Same specific-first ordering as colgroup & thead. #}
                                                     {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
                                                         <td class="narrow-cell">{% with value=row|get_item:header %}{{ value|default:"-" }}{% endwith %}</td>
                                                     {% elif "TARGET DATE" in h or "CLOSURE" in h %}
@@ -1137,7 +1248,7 @@
                                                         {% elif status == 'Closed' or status == 'closed' or status == 'CLOSED' %}
                                                             <span class="badge-secondary">{{ status }}</span>
                                                         {% elif status == 'In Progress' or status == 'in progress' or status == 'IN PROGRESS' or status == 'In-Progress' %}
-                                                            <span class="badge-warning">{{ status }}</span>
+                                                            <span class="badge-navy">{{ status }}</span>
                                                         {% elif status == 'Resolved' or status == 'resolved' or status == 'RESOLVED' %}
                                                             <span class="badge-success">{{ status }}</span>
                                                         {% elif status == 'Pending' or status == 'pending' or status == 'PENDING' %}
@@ -1223,7 +1334,7 @@
         <div class="modal-icon danger">
             <i class="fas fa-exclamation-triangle"></i>
         </div>
-        <h3 style="text-align:center; margin: 0 0 8px 0; font-size: 16px;">Confirm Deletion</h3>
+        <h3 style="text-align:center; margin: 0 0 8px 0; font-size: 16px; color: var(--ob-navy);">Confirm Deletion</h3>
         <p id="deleteModalMessage" style="text-align:center; color: var(--rp-text-2); font-size: 13px; line-height: 1.5;">
             Are you sure you want to permanently delete this report? This action cannot be undone.
         </p>
@@ -1308,7 +1419,7 @@
     }
 
     /* ============================================
-       FILTERS — type + date, with URL persistence
+       FILTERS
        ============================================ */
     function updateVisibleCount() {
         const groups = document.querySelectorAll('.report-type-group');
@@ -1532,7 +1643,7 @@
         });
 
         let html = '<div class="form-group">';
-        html += '<p style="font-size:12px;color:#6b7280;margin-bottom:12px;text-align:center;">Editing a single row. Only this row will be updated.</p>';
+        html += '<p style="font-size:12px;color:var(--rp-text-2);margin-bottom:12px;text-align:center;">Editing a single row. Only this row will be updated.</p>';
         headers.forEach((h, i) => {
             const val = (cells[i] === '-' || cells[i] === undefined) ? '' : cells[i];
             html += '<label>' + escapeHtml(h) + '</label>';
@@ -1664,7 +1775,7 @@
         }
 
         if (!formData || Object.keys(formData).length === 0) {
-            return '<p style="color:#6b7280;text-align:center;padding:20px;">No editable fields found.</p>';
+            return '<p style="color:var(--rp-text-2);text-align:center;padding:20px;">No editable fields found.</p>';
         }
 
         const fields = [
