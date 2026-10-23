@@ -6,7 +6,7 @@
 {% block extra_css %}
 <style>
 /* ==========================================================================
-   ACTIVITY LOGS — Premium Light Theme (inline)
+   ACTIVITY LOGS — Premium Light Theme (fully inline)
    ========================================================================== */
 
 :root {
@@ -48,9 +48,13 @@
     --al-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-/* ============================================================
-   1. STATS GRID
-   ============================================================ */
+/* ----- Page Layout (prevents squeezing) ----- */
+.main-content {
+    align-items: stretch !important;
+    padding: 24px 32px !important;
+}
+
+/* ----- Stats Grid ----- */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -87,10 +91,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--stat-accent) 50%,
-        transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, var(--stat-accent) 50%, transparent 100%);
     opacity: 0.85;
 }
 
@@ -162,10 +163,7 @@
     border-color: rgba(124, 92, 240, 0.22);
 }
 
-.stat-info {
-    flex: 1;
-    min-width: 0;
-}
+.stat-info { flex: 1; min-width: 0; }
 
 .stat-value {
     display: block;
@@ -200,9 +198,7 @@
     text-overflow: ellipsis;
 }
 
-/* ============================================================
-   2. TABLE CONTAINER
-   ============================================================ */
+/* ----- Table Container ----- */
 .table-container {
     position: relative;
     background: var(--al-bg-1);
@@ -213,6 +209,7 @@
     transition: all 0.3s ease;
     padding: 0;
     margin-bottom: 20px;
+    flex-shrink: 0 !important;
 }
 
 .table-container:last-child { margin-bottom: 0; }
@@ -222,10 +219,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--al-accent) 50%,
-        transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, var(--al-accent) 50%, transparent 100%);
     opacity: 0.7;
     z-index: 2;
 }
@@ -271,9 +265,7 @@
     border: 1px solid rgba(79, 110, 247, 0.2);
 }
 
-/* ============================================================
-   3. TABLE
-   ============================================================ */
+/* ----- Table ----- */
 .table-responsive {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -333,9 +325,7 @@
     font-size: 13px;
 }
 
-/* ============================================================
-   4. TIME STAMP
-   ============================================================ */
+/* ----- Time Stamp ----- */
 .time-stamp {
     display: inline-flex;
     flex-direction: column;
@@ -353,9 +343,7 @@
     margin-right: 4px;
 }
 
-/* ============================================================
-   5. ACTIVITY TAGS
-   ============================================================ */
+/* ----- Activity Tags ----- */
 .activity-tag {
     display: inline-flex;
     align-items: center;
@@ -372,10 +360,7 @@
     color: var(--al-text-1);
 }
 
-.activity-tag i {
-    font-size: 10px;
-    opacity: 0.9;
-}
+.activity-tag i { font-size: 10px; opacity: 0.9; }
 
 .activity-tag.login,
 .activity-tag.report_submitted,
@@ -430,9 +415,7 @@
     border-color: var(--al-border);
 }
 
-/* ============================================================
-   6. ACTIVITY DETAILS
-   ============================================================ */
+/* ----- Activity Details ----- */
 .activity-details {
     display: flex;
     align-items: flex-start;
@@ -452,9 +435,7 @@
     margin-top: 3px;
 }
 
-/* ============================================================
-   7. IP ADDRESS
-   ============================================================ */
+/* ----- IP Address ----- */
 .ip-address {
     font-size: 11px;
     color: var(--al-text-1);
@@ -463,9 +444,7 @@
     letter-spacing: 0.3px;
 }
 
-/* ============================================================
-   8. EMPTY STATE
-   ============================================================ */
+/* ----- Empty State ----- */
 .empty-row {
     padding: 60px 20px !important;
     text-align: center !important;
@@ -498,9 +477,7 @@
     font-size: 13px;
 }
 
-/* ============================================================
-   9. HEADER FILTERS
-   ============================================================ */
+/* ----- Header Filters ----- */
 .header-filter-group {
     display: inline-flex;
     align-items: center;
@@ -614,9 +591,7 @@
     margin: 0 4px;
 }
 
-/* ============================================================
-   10. HEADER BUTTONS
-   ============================================================ */
+/* ----- Header Buttons ----- */
 .btn-export-header {
     display: inline-flex;
     align-items: center;
@@ -679,9 +654,7 @@
 .btn-reset-header i,
 .btn-refresh-header i { font-size: 12px; }
 
-/* ============================================================
-   11. TOAST
-   ============================================================ */
+/* ----- Toast ----- */
 .toast-notification {
     position: fixed;
     bottom: 24px;
@@ -762,9 +735,7 @@
     background: var(--al-bg-2);
 }
 
-/* ============================================================
-   12. TABLE HEADER BADGE
-   ============================================================ */
+/* ----- Header Badge ----- */
 .badge-count {
     display: inline-flex;
     align-items: center;
@@ -780,9 +751,7 @@
     white-space: nowrap;
 }
 
-/* ============================================================
-   13. BREAKDOWN PANELS
-   ============================================================ */
+/* ----- Breakdown Panels ----- */
 .breakdown-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -806,10 +775,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--al-accent) 50%,
-        transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, var(--al-accent) 50%, transparent 100%);
     opacity: 0.7;
 }
 
@@ -909,10 +875,9 @@
     margin: 0;
 }
 
-/* ============================================================
-   14. RESPONSIVE
-   ============================================================ */
+/* ----- Responsive ----- */
 @media (max-width: 1024px) {
+    .main-content { padding: 16px !important; }
     .header-select { min-width: 130px; font-size: 11px; }
     .header-date-input { min-width: 100px; font-size: 11px; }
 }
@@ -974,7 +939,6 @@
     .table-header h4 i { width: 24px; height: 24px; font-size: 11px; }
 
     .activity-table tbody td { padding: 8px 12px; font-size: 11px; }
-
     .time-stamp { font-size: 11px; }
     .activity-tag { font-size: 10px; padding: 3px 10px; }
     .activity-tag i { font-size: 9px; }
@@ -1016,9 +980,6 @@
     .breakdown-bar { max-width: 80px; }
 }
 
-/* ============================================================
-   15. PRINT
-   ============================================================ */
 @media print {
     .nav-bar,
     .top-header,
@@ -1110,7 +1071,6 @@
         <span class="nav-text">Activity Logs</span>
     </a>
 </li>
-
 {% endblock %}
 
 {% block page_title %}Activity Logs{% endblock %}
@@ -1165,9 +1125,6 @@
 
 {% block content %}
 
-<!-- ============================================================
-     STATS STRIP
-     ============================================================ -->
 <div class="stats-grid">
     <div class="stat-card primary">
         <div class="stat-icon primary"><i class="fas fa-list-ul"></i></div>
@@ -1202,9 +1159,6 @@
     </div>
 </div>
 
-<!-- ============================================================
-     BREAKDOWN: Activity types + Top users
-     ============================================================ -->
 <div class="breakdown-grid">
     <div class="breakdown-card">
         <h5><i class="fas fa-chart-bar"></i> Activity Breakdown</h5>
@@ -1235,9 +1189,6 @@
     </div>
 </div>
 
-<!-- ============================================================
-     ACTIVITY TABLE
-     ============================================================ -->
 <div class="table-container">
     <div class="table-header">
         <h4>
@@ -1306,7 +1257,6 @@
     </div>
 </div>
 
-<!-- Toast (kept in case other pages use it) -->
 <div id="toastNotification" class="toast-notification">
     <div class="toast-icon"><i class="fas fa-check"></i></div>
     <div class="toast-content">
@@ -1319,9 +1269,6 @@
 
 {% block extra_js %}
 <script>
-    /* ============================================================
-       CSRF helper
-       ============================================================ */
     function getCsrfToken() {
         const meta = document.querySelector('meta[name="csrf-token"]');
         if (meta) return meta.getAttribute('content');
@@ -1329,9 +1276,6 @@
         return m ? m[1] : '';
     }
 
-    /* ============================================================
-       FILTERS
-       ============================================================ */
     function applyFilters() {
         const user = document.getElementById('user-filter').value;
         const activity = document.getElementById('activity-filter').value;
@@ -1352,9 +1296,6 @@
         window.location.href = window.location.pathname;
     }
 
-    /* ============================================================
-       EXPORT CSV
-       ============================================================ */
     function exportLogs() {
         const user = document.getElementById('user-filter').value;
         const activity = document.getElementById('activity-filter').value;
@@ -1371,9 +1312,6 @@
         window.location.href = `/adminboard/api/export-logs/${qs ? '?' + qs : ''}`;
     }
 
-    /* ============================================================
-       TOAST
-       ============================================================ */
     function showToast(message, title = 'Success!') {
         const toast = document.getElementById('toastNotification');
         if (!toast) return;
@@ -1396,9 +1334,6 @@
         }
     }
 
-    /* ============================================================
-       AUTO REFRESH (every 30s, only when filters are active)
-       ============================================================ */
     let autoRefreshInterval = null;
 
     function startAutoRefresh() {

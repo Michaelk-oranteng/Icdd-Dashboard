@@ -4,144 +4,228 @@
 {% block title %}Admin Dashboard - Create User{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'stylesheets/admin.css' %}" type="text/css">
-
 <style>
-    /* ============================================
-       AVATAR MANAGER STYLES
-       ============================================ */
-    .avatar-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 16px;
-        margin-top: 16px;
+    /* ============================================================
+       CREATE-USER PAGE SPECIFIC STYLES (Inline, no admin.css needed)
+       ============================================================ */
+
+    /* ----- Page Layout & Spacing (Fixes squeezing) ----- */
+    .main-content {
+        align-items: stretch !important; 
+        padding: 24px 32px !important;
     }
 
-    .avatar-card {
+    .table-container {
+        width: 100% !important;
+        max-width: 960px !important;
+        margin: 0 auto 24px !important;
+        padding: 28px 32px !important;
         background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        padding: 16px;
-        display: flex;
-        gap: 14px;
-        align-items: center;
-        transition: box-shadow 0.15s, transform 0.15s;
-    }
-
-    .avatar-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-        transform: translateY(-1px);
-    }
-
-    .avatar-preview {
+        border-radius: 18px;
+        border: 1px solid rgba(15, 27, 51, 0.08);
+        box-shadow: 0 1px 2px rgba(15, 27, 51, 0.04);
         position: relative;
-        width: 64px;
-        height: 64px;
-        flex-shrink: 0;
-        border-radius: 50%;
-        overflow: hidden;
-        background: #f3f4f6;
+        overflow-x: auto;
+    }
+
+    /* Top accent line */
+    .table-container::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent 0%, #4f6ef7 50%, transparent 100%);
+        opacity: 0.7;
+        border-radius: 18px 18px 0 0;
+    }
+
+    .table-container h4 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f1b33;
+        margin: 0 0 20px 0;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(15, 27, 51, 0.06);
         display: flex;
         align-items: center;
-        justify-content: center;
+        gap: 10px;
+        letter-spacing: 0.2px;
     }
 
-    .avatar-preview img {
+    .table-container h4::before {
+        content: '';
+        width: 4px;
+        height: 16px;
+        border-radius: 2px;
+        background: #4f6ef7;
+    }
+
+    /* ----- Form Grid ----- */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px 20px;
+        margin-bottom: 22px;
         width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
     }
 
-    .avatar-preview .avatar-initials {
-        font-size: 22px;
-        font-weight: 600;
-        color: #0066cc;
-        user-select: none;
-    }
-
-    .avatar-meta {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .avatar-meta .name {
-        font-weight: 600;
-        color: #1a2332;
-        font-size: 14px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .avatar-meta .email {
-        font-size: 12px;
-        color: #6b7280;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-top: 2px;
-    }
-
-    .avatar-meta .role-tag {
-        display: inline-block;
-        margin-top: 6px;
-        padding: 1px 8px;
-        font-size: 10px;
-        font-weight: 600;
-        border-radius: 10px;
-        background: #eef2ff;
-        color: #3730a3;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-
-    .avatar-actions {
+    .form-field {
         display: flex;
         flex-direction: column;
         gap: 6px;
-        flex-shrink: 0;
+        min-width: 0;
     }
 
-    .avatar-actions button {
-        border: none;
-        padding: 5px 10px;
-        border-radius: 6px;
-        font-size: 12px;
-        cursor: pointer;
+    .form-field label {
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        transition: background 0.12s;
-    }
-
-    .btn-avatar-upload {
-        background: #0066cc;
-        color: #fff;
-    }
-
-    .btn-avatar-upload:hover { background: #0052a3; }
-
-    .btn-avatar-delete {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .btn-avatar-delete:hover { background: #fecaca; }
-
-    .btn-avatar-delete:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .hidden-file-input { display: none; }
-
-    /* Small hint under the username field */
-    .form-hint {
-        display: block;
-        margin-top: 4px;
         font-size: 11px;
-        color: #6b7280;
+        font-weight: 700;
+        color: #46536b;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        margin: 0;
+    }
+
+    .form-field label .required {
+        color: #e0456a;
+        font-weight: 700;
+        font-size: 13px;
+        line-height: 1;
+    }
+
+    /* ----- Inputs & Selects ----- */
+    .table-input, .table-select {
+        width: 100%;
+        padding: 9px 14px;
+        border: 1px solid rgba(15, 27, 51, 0.08);
+        border-radius: 10px;
+        font-size: 13px;
+        font-family: 'Poppins', sans-serif;
+        background: #ffffff;
+        color: #0f1b33;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+        outline: none;
+        height: 42px;
+    }
+
+    .table-select {
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        padding-right: 34px;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px;
+    }
+
+    .table-input:hover, .table-select:hover { border-color: rgba(15, 27, 51, 0.16); }
+    .table-input:focus, .table-select:focus {
+        border-color: #4f6ef7;
+        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+    }
+
+    .table-input::placeholder { color: #8993a8; font-size: 13px; }
+
+    .form-hint { font-size: 11px; color: #8993a8; line-height: 1.4; margin-top: 2px; }
+
+    /* ----- Intro Banner ----- */
+    .cu-intro {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px 16px;
+        background: #eef1ff;
+        border: 1px solid rgba(79, 110, 247, 0.22);
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-size: 12.5px;
+        color: #46536b;
+        line-height: 1.5;
+    }
+    .cu-intro i { color: #4f6ef7; font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+    .cu-intro strong { color: #0f1b33; }
+
+    /* ----- Field-level validation ----- */
+    .form-field .field-error {
+        display: none; align-items: center; gap: 5px; font-size: 11px;
+        color: #e0456a; margin-top: 4px; font-weight: 500;
+    }
+    .form-field .field-error.visible { display: flex; }
+    
+    .form-field.has-error .table-input,
+    .form-field.has-error .table-select {
+        border-color: #e0456a;
+        background: #fff8f9;
+    }
+    .form-field.has-error .table-input:focus,
+    .form-field.has-error .table-select:focus {
+        box-shadow: 0 0 0 3px rgba(224, 69, 106, 0.15);
+    }
+    .form-field.is-valid .table-input,
+    .form-field.is-valid .table-select { border-color: #17a673; }
+
+    .input-wrap { position: relative; }
+    .input-wrap .valid-icon {
+        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+        font-size: 13px; color: #17a673; display: none; pointer-events: none;
+    }
+    .form-field.is-valid .input-wrap .valid-icon { display: block; }
+
+    /* ----- Form Actions (Buttons) ----- */
+    .form-actions {
+        display: flex; justify-content: flex-end; gap: 10px;
+        padding-top: 18px; border-top: 1px solid rgba(15, 27, 51, 0.06);
+        flex-wrap: wrap;
+    }
+
+    .form-actions .btn-create, .form-actions .btn-reset {
+        height: 42px; padding: 0 22px; font-size: 13px;
+        display: inline-flex; align-items: center; justify-content: center;
+        gap: 6px; font-family: 'Poppins', sans-serif;
+        font-weight: 600; cursor: pointer; white-space: nowrap;
+        border-radius: 10px; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent; text-decoration: none;
+    }
+
+    .btn-create {
+        background: linear-gradient(135deg, #17a673 0%, #108a5e 100%);
+        color: #ffffff; border-color: rgba(23, 166, 115, 0.4);
+        box-shadow: 0 4px 12px rgba(23, 166, 115, 0.25);
+    }
+    .btn-create:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(23, 166, 115, 0.4); }
+    .btn-create:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-reset {
+        background: #ffffff; color: #46536b; border-color: rgba(15, 27, 51, 0.08);
+    }
+    .btn-reset:hover { background: #f7f8fc; border-color: rgba(15, 27, 51, 0.16); color: #0f1b33; }
+
+    /* ----- Toast ----- */
+    .cu-toast {
+        position: fixed; bottom: 24px; right: 24px; background: #ffffff;
+        border: 1px solid rgba(15, 27, 51, 0.08); border-left: 4px solid #17a673;
+        border-radius: 14px; padding: 12px 18px; display: flex; align-items: center;
+        gap: 12px; box-shadow: 0 16px 40px rgba(15, 27, 51, 0.10);
+        transform: translateY(120%); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 10001; max-width: 380px; font-family: 'Poppins', sans-serif; font-size: 13px;
+    }
+    .cu-toast.show { transform: translateY(0); }
+    .cu-toast.error { border-left-color: #e0456a; }
+    .cu-toast i { font-size: 16px; flex-shrink: 0; }
+    .cu-toast:not(.error) i { color: #17a673; }
+    .cu-toast.error i { color: #e0456a; }
+
+    @media (max-width: 640px) {
+        .main-content { padding: 16px !important; }
+        .table-container { padding: 20px 16px !important; }
+        .form-grid { grid-template-columns: 1fr; }
+        .form-actions { flex-direction: column-reverse; }
+        .form-actions .btn-create, .form-actions .btn-reset { width: 100%; }
     }
 </style>
 {% endblock %}
@@ -205,53 +289,48 @@
 <div class="table-container">
     <h4>Add New User</h4>
 
-    <form id="addUserForm" onsubmit="addUser(event)">
+    <form id="addUserForm" novalidate>
         {% csrf_token %}
 
         <div class="form-grid">
-            <div class="form-field">
+            <div class="form-field" id="field-firstName">
                 <label for="newFirstName">First Name <span class="required">*</span></label>
-                <input type="text"
-                       id="newFirstName"
-                       class="table-input"
-                       placeholder="Enter first name..."
-                       required>
+                <div class="input-wrap">
+                    <input type="text" id="newFirstName" class="table-input" placeholder="Enter first name..." autocomplete="given-name" required>
+                    <i class="fas fa-check valid-icon" aria-hidden="true"></i>
+                </div>
+                <small class="field-error" id="err-firstName"></small>
             </div>
 
-            <div class="form-field">
+            <div class="form-field" id="field-lastName">
                 <label for="newLastName">Last Name <span class="required">*</span></label>
-                <input type="text"
-                       id="newLastName"
-                       class="table-input"
-                       placeholder="Enter last name..."
-                       required>
+                <div class="input-wrap">
+                    <input type="text" id="newLastName" class="table-input" placeholder="Enter last name..." autocomplete="family-name" required>
+                    <i class="fas fa-check valid-icon" aria-hidden="true"></i>
+                </div>
+                <small class="field-error" id="err-lastName"></small>
             </div>
 
-            <div class="form-field">
+            <div class="form-field" id="field-username">
                 <label for="newUsername">Username <span class="required">*</span></label>
-                <input type="text"
-                       id="newUsername"
-                       class="table-input"
-                       placeholder="e.g. Emmanuel.Nyame"
-                       pattern="[a-zA-Z0-9._\-]{3,150}"
-                       title="3–150 characters: letters, digits, dot, underscore, hyphen"
-                       autocomplete="off"
-                       required>
-                <small class="form-hint">
-                    Letters, digits, dot, underscore, hyphen. Min 3 characters.
-                </small>
+                <div class="input-wrap">
+                    <input type="text" id="newUsername" class="table-input" placeholder="e.g. Emmanuel.Nyame" pattern="^[a-zA-Z0-9._-]{3,150}$" title="3–150 characters: letters, digits, dot, underscore, hyphen" autocomplete="username" spellcheck="false" required>
+                    <i class="fas fa-check valid-icon" aria-hidden="true"></i>
+                </div>
+                <small class="form-hint">Letters, digits, dot, underscore, hyphen. Min 3 characters.</small>
+                <small class="field-error" id="err-username"></small>
             </div>
 
-            <div class="form-field">
+            <div class="form-field" id="field-email">
                 <label for="newEmail">E-mail <span class="required">*</span></label>
-                <input type="email"
-                       id="newEmail"
-                       class="table-input"
-                       placeholder="Enter email..."
-                       required>
+                <div class="input-wrap">
+                    <input type="email" id="newEmail" class="table-input" placeholder="name@omnibsic.com" autocomplete="email" spellcheck="false" required>
+                    <i class="fas fa-check valid-icon" aria-hidden="true"></i>
+                </div>
+                <small class="field-error" id="err-email"></small>
             </div>
 
-            <div class="form-field">
+            <div class="form-field" id="field-position">
                 <label for="newPosition">Position <span class="required">*</span></label>
                 <select id="newPosition" class="table-select" required>
                     {% for value, label in positions %}
@@ -260,7 +339,7 @@
                 </select>
             </div>
 
-            <div class="form-field">
+            <div class="form-field" id="field-role">
                 <label for="newRole">Role <span class="required">*</span></label>
                 <select id="newRole" class="table-select" required>
                     {% for value, label in roles %}
@@ -269,7 +348,7 @@
                 </select>
             </div>
 
-            <div class="form-field">
+            <div class="form-field" id="field-status">
                 <label for="newStatus">Status <span class="required">*</span></label>
                 <select id="newStatus" class="table-select" required>
                     {% for value, label in statuses %}
@@ -280,6 +359,9 @@
         </div>
 
         <div class="form-actions">
+            <button type="button" class="btn-reset" id="resetFormBtn">
+                <i class="fas fa-rotate-left"></i> Reset
+            </button>
             <button type="submit" class="btn-create" id="addUserBtn">
                 <i class="fas fa-plus"></i> Add User
             </button>
@@ -287,271 +369,140 @@
     </form>
 </div>
 
-<!-- ============================================================
-     AVATAR MANAGER
-     Renders one card per user. Upload / delete wired to the
-     api_upload_avatar and api_delete_avatar endpoints.
-     ============================================================ -->
-<div class="table-container" style="margin-top: 24px;">
-    <h4>Profile Pictures</h4>
-    <p style="font-size: 13px; color: #6b7280; margin-bottom: 12px;">
-        Upload a photo (max 2 MB, image only). If no photo is uploaded,
-        a Gravatar identicon is used automatically.
-    </p>
-
-    {% if users %}
-    <div class="avatar-grid">
-        {% for u in users %}
-        <div class="avatar-card" id="avatar-card-{{ u.id }}">
-            <div class="avatar-preview">
-                <img id="avatar-img-{{ u.id }}"
-                     src="{{ u.avatar_url }}"
-                     alt="{{ u.initials }}"
-                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="avatar-initials"
-                     id="avatar-initials-{{ u.id }}"
-                     style="display: none;">{{ u.initials }}</div>
-            </div>
-
-            <div class="avatar-meta">
-                <div class="name">{{ u.full_name }}</div>
-                <div class="email">{{ u.email }}</div>
-                <span class="role-tag">{{ u.get_role_display }}</span>
-            </div>
-
-            <div class="avatar-actions">
-                <button type="button"
-                        class="btn-avatar-upload"
-                        onclick="document.getElementById('avatar-input-{{ u.id }}').click();">
-                    <i class="fas fa-upload"></i> Upload
-                </button>
-                <button type="button"
-                        class="btn-avatar-delete"
-                        id="avatar-del-{{ u.id }}"
-                        {% if not u.avatar %}disabled{% endif %}
-                        onclick="deleteAvatar({{ u.id }});">
-                    <i class="fas fa-trash"></i> Remove
-                </button>
-            </div>
-
-            <input type="file"
-                   class="hidden-file-input"
-                   id="avatar-input-{{ u.id }}"
-                   accept="image/*"
-                   onchange="uploadAvatar({{ u.id }}, this);">
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <p style="color: #6b7280; font-style: italic;">No users yet.</p>
-    {% endif %}
+<div class="cu-toast" id="cuToast" role="status" aria-live="polite">
+    <i class="fas fa-check-circle" id="cuToastIcon" aria-hidden="true"></i>
+    <span id="cuToastMsg"></span>
 </div>
 
 <script>
-    /* ============================================
-       CSRF HELPER
-       ============================================ */
-    function getCsrfToken() {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, 10) === 'csrftoken=') {
-                    cookieValue = decodeURIComponent(cookie.substring(10));
-                    break;
-                }
-            }
-        }
-        return cookieValue
-            || document.querySelector('[name=csrfmiddlewaretoken]')?.value
-            || '';
+function getCsrfToken() {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+        const c = cookies[i].trim();
+        if (c.startsWith('csrftoken=')) return decodeURIComponent(c.substring(10));
+    }
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+}
+
+let toastTimer = null;
+function showToast(message, isError = false) {
+    const toast = document.getElementById('cuToast');
+    const msg   = document.getElementById('cuToastMsg');
+    const icon  = document.getElementById('cuToastIcon');
+    msg.textContent = message;
+    toast.classList.toggle('error', isError);
+    icon.className = isError ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 4000);
+}
+
+const FIELD_RULES = {
+    firstName: { el: 'newFirstName', validate: v => { if (!v.trim()) return 'First name is required.'; if (v.trim().length < 2) return 'First name must be at least 2 characters.'; if (!/^[a-zA-Z\u00C0-\u024F' -]+$/.test(v.trim())) return 'Only letters, spaces, hyphens, and apostrophes allowed.'; return null; } },
+    lastName: { el: 'newLastName', validate: v => { if (!v.trim()) return 'Last name is required.'; if (v.trim().length < 2) return 'Last name must be at least 2 characters.'; if (!/^[a-zA-Z\u00C0-\u024F' -]+$/.test(v.trim())) return 'Only letters, spaces, hyphens, and apostrophes allowed.'; return null; } },
+    username: { el: 'newUsername', validate: v => { const t = v.trim(); if (!t) return 'Username is required.'; if (t.length < 3) return 'Username must be at least 3 characters.'; if (t.length > 150) return 'Username must be 150 characters or fewer.'; if (!/^[a-zA-Z0-9._-]+$/.test(t)) return 'Only letters, digits, dot, underscore, or hyphen allowed.'; if (/^[._-]/.test(t) || /[._-]$/.test(t)) return 'Username cannot start or end with a punctuation mark.'; return null; } },
+    email: { el: 'newEmail', validate: v => { const t = v.trim(); if (!t) return 'Email is required.'; if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(t)) return 'Please enter a valid email address.'; return null; } },
+};
+
+function setFieldState(fieldKey, errorMsg) {
+    const rule = FIELD_RULES[fieldKey];
+    if (!rule) return;
+    const input = document.getElementById(rule.el);
+    const wrapper = document.getElementById('field-' + fieldKey);
+    const errorEl = document.getElementById('err-' + fieldKey);
+    const hasError = Boolean(errorMsg);
+    wrapper.classList.toggle('has-error', hasError);
+    wrapper.classList.toggle('is-valid', !hasError && input.value.trim() !== '');
+    errorEl.classList.toggle('visible', hasError);
+    errorEl.textContent = errorMsg || '';
+    input.setAttribute('aria-invalid', hasError ? 'true' : 'false');
+}
+
+function validateField(fieldKey) {
+    const rule = FIELD_RULES[fieldKey];
+    if (!rule) return true;
+    const input = document.getElementById(rule.el);
+    const err = rule.validate(input.value);
+    setFieldState(fieldKey, err);
+    return !err;
+}
+
+function validateAll() {
+    let ok = true;
+    Object.keys(FIELD_RULES).forEach(k => { if (!validateField(k)) ok = false; });
+    return ok;
+}
+
+Object.entries(FIELD_RULES).forEach(([key, rule]) => {
+    const input = document.getElementById(rule.el);
+    if (!input) return;
+    input.addEventListener('blur', () => validateField(key));
+    input.addEventListener('input', () => {
+        const wrap = document.getElementById('field-' + key);
+        if (wrap.classList.contains('has-error')) validateField(key);
+    });
+});
+
+document.getElementById('resetFormBtn').addEventListener('click', function () {
+    if (!confirm('Clear all fields and start over?')) return;
+    document.getElementById('addUserForm').reset();
+    Object.keys(FIELD_RULES).forEach(k => {
+        const wrap = document.getElementById('field-' + k);
+        wrap.classList.remove('has-error', 'is-valid');
+        document.getElementById('err-' + k).classList.remove('visible');
+    });
+    document.getElementById('newFirstName').focus();
+});
+
+const addUserForm = document.getElementById('addUserForm');
+addUserForm.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    if (!validateAll()) {
+        const firstError = document.querySelector('.form-field.has-error input, .form-field.has-error select');
+        if (firstError) firstError.focus();
+        showToast('Please fix the highlighted fields.', true);
+        return;
     }
 
-    /* ============================================
-       ADD USER
-       ============================================ */
-    function addUser(event) {
-        event.preventDefault();
+    const firstName = document.getElementById('newFirstName').value.trim();
+    const lastName  = document.getElementById('newLastName').value.trim();
+    const username  = document.getElementById('newUsername').value.trim();
+    const email     = document.getElementById('newEmail').value.trim();
+    const position  = document.getElementById('newPosition').value;
+    const role      = document.getElementById('newRole').value;
+    const status    = document.getElementById('newStatus').value;
 
-        const firstName = document.getElementById('newFirstName').value.trim();
-        const lastName  = document.getElementById('newLastName').value.trim();
-        const username  = document.getElementById('newUsername').value.trim();
-        const email     = document.getElementById('newEmail').value.trim();
-        const position  = document.getElementById('newPosition').value;
-        const role      = document.getElementById('newRole').value;
-        const status    = document.getElementById('newStatus').value;
+    const btn = document.getElementById('addUserBtn');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
 
-        // ---- Client-side validation ----
-        if (!firstName) { alert('Please enter a first name.'); return; }
-        if (!lastName)  { alert('Please enter a last name.'); return; }
-
-        if (!username) {
-            alert('Please enter a username.');
-            return;
-        }
-        if (!/^[a-zA-Z0-9._-]{3,150}$/.test(username)) {
-            alert('Username must be 3–150 characters and may only contain letters, digits, dot, underscore, or hyphen.');
-            return;
-        }
-
-        if (!email) {
-            alert('Please enter an email.');
-            return;
-        }
-
-        // ---- Combine first + last name into the single full_name field ----
-        const fullName = `${firstName} ${lastName}`.trim();
-
-        const btn = document.getElementById('addUserBtn');
-        const originalHTML = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
-
-        fetch("{% url 'control_dashboard:api_create_user' %}", {
+    try {
+        const response = await fetch("{% url 'control_dashboard:api_create_user' %}", {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify({
-                email: email,
-                username: username,          // ← NEW: manual username
-                full_name: fullName,
-                position: position,
-                role: role,
-                status: status,
-                // Departments / branches are assigned on the Assignment page.
-                department_ids: [],
-                branch_ids: []
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            btn.disabled = false;
-            btn.innerHTML = originalHTML;
-
-            if (data.success) {
-                alert(`User created successfully.\nUsername: ${data.username}`);
-                // Reload so the new user appears in the avatar manager below.
-                window.location.reload();
-            } else {
-                alert('Error: ' + data.error);
-            }
-        })
-        .catch(error => {
-            btn.disabled = false;
-            btn.innerHTML = originalHTML;
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify({ email, username, full_name: `${firstName} ${lastName}`.trim(), position, role, status, department_ids: [], branch_ids: [] }),
         });
-    }
-
-    /* ============================================
-       AVATAR — UPLOAD
-       ============================================ */
-    function uploadAvatar(userId, fileInput) {
-        const file = fileInput.files && fileInput.files[0];
-        if (!file) return;
-
-        // Client-side sanity checks (server enforces too)
-        if (file.size > 2 * 1024 * 1024) {
-            alert('Image must be smaller than 2 MB.');
-            fileInput.value = '';
+        const data = await response.json();
+        if (data.success) {
+            showToast(`User "${data.username}" created successfully.`);
+            addUserForm.reset();
+            setTimeout(() => window.location.reload(), 900);
             return;
         }
-        if (!file.type.startsWith('image/')) {
-            alert('Please choose an image file.');
-            fileInput.value = '';
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('avatar', file);
-
-        // Optimistic UI: show spinner on the preview
-        const imgEl   = document.getElementById('avatar-img-' + userId);
-        const initEl  = document.getElementById('avatar-initials-' + userId);
-        const card    = document.getElementById('avatar-card-' + userId);
-        card.style.opacity = '0.6';
-
-        fetch(`/adminboard/api/users/${userId}/avatar/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: formData
-        })
-        .then(r => r.json())
-        .then(data => {
-            card.style.opacity = '1';
-            fileInput.value = '';
-
-            if (data.success) {
-                // Swap the image in place. Add a cache-buster so the browser
-                // doesn't reuse the old cached avatar.
-                const busted = data.avatar_url + (data.avatar_url.includes('?') ? '&' : '?') + 't=' + Date.now();
-                imgEl.src = busted;
-                imgEl.style.display = 'block';
-                initEl.style.display = 'none';
-
-                // Enable the delete button now that a custom avatar exists
-                const delBtn = document.getElementById('avatar-del-' + userId);
-                if (delBtn) delBtn.disabled = false;
-            } else {
-                alert('Error: ' + (data.error || 'Upload failed.'));
-            }
-        })
-        .catch(err => {
-            card.style.opacity = '1';
-            fileInput.value = '';
-            console.error('Avatar upload error:', err);
-            alert('An error occurred while uploading the image.');
-        });
+        const errText = data.error || 'Could not create user.';
+        if (/username/i.test(errText))  { setFieldState('username', errText); }
+        if (/email/i.test(errText))     { setFieldState('email', errText); }
+        showToast(errText, true);
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    } catch (err) {
+        console.error('Create user error:', err);
+        showToast('Network error — please try again.', true);
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
     }
-
-    /* ============================================
-       AVATAR — DELETE
-       ============================================ */
-    function deleteAvatar(userId) {
-        if (!confirm('Remove this user\'s profile picture? They will fall back to a Gravatar identicon.')) {
-            return;
-        }
-
-        const card   = document.getElementById('avatar-card-' + userId);
-        const imgEl  = document.getElementById('avatar-img-' + userId);
-        const initEl = document.getElementById('avatar-initials-' + userId);
-        card.style.opacity = '0.6';
-
-        fetch(`/adminboard/api/users/${userId}/avatar/delete/`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRFToken': getCsrfToken()
-            }
-        })
-        .then(r => r.json())
-        .then(data => {
-            card.style.opacity = '1';
-
-            if (data.success) {
-                // Reload the Gravatar image (with cache-buster)
-                const busted = data.avatar_url + (data.avatar_url.includes('?') ? '&' : '?') + 't=' + Date.now();
-                imgEl.src = busted;
-                imgEl.style.display = 'block';
-                initEl.style.display = 'none';
-
-                // Disable the delete button (nothing to delete anymore)
-                const delBtn = document.getElementById('avatar-del-' + userId);
-                if (delBtn) delBtn.disabled = true;
-            } else {
-                alert('Error: ' + (data.error || 'Delete failed.'));
-            }
-        })
-        .catch(err => {
-            card.style.opacity = '1';
-            console.error('Avatar delete error:', err);
-            alert('An error occurred while removing the image.');
-        });
-    }
+});
 </script>
 {% endblock %}

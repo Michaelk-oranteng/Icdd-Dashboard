@@ -4,10 +4,9 @@
 {% block title %}Activity Logs{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'stylesheets/activity-logs.css' %}" type="text/css">
 <style>
 /* ============================================================
-   ACTIVITY LOGS — Local template styles
+   ACTIVITY LOGS — Timeline view (fully inline & responsive)
    ============================================================ */
 
 :root {
@@ -28,11 +27,164 @@
     --al-rose: #e0456a;
     --al-violet: #8b5cf6;
     --al-cyan: #0ea5e9;
+    --al-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04);
+    --al-shadow-md: 0 4px 14px rgba(15, 27, 51, 0.06);
 }
 
-/* ---------- Filter toolbar summary ---------- */
+/* ----- Page Layout ----- */
+.main-content {
+    align-items: stretch !important;
+    padding: 24px 32px !important;
+}
+
+/* ============================================================
+   TOP HEADER CONTROLS (inline overrides so they don't depend
+   on base.html having the .header-* classes styled everywhere)
+   ============================================================ */
+.header-filter-group,
+.header-date-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.header-select {
+    padding: 8px 34px 8px 14px;
+    border: 1px solid var(--al-border);
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    background: #ffffff;
+    color: var(--al-text-0);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    background-size: 13px;
+    height: 38px;
+    box-sizing: border-box;
+    min-width: 160px;
+    box-shadow: var(--al-shadow-sm);
+}
+
+.header-select:hover { border-color: var(--al-border-strong); }
+
+.header-select:focus {
+    border-color: var(--al-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.header-date-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #ffffff;
+    border: 1px solid var(--al-border);
+    border-radius: 10px;
+    box-shadow: var(--al-shadow-sm);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.header-date-wrapper:focus-within {
+    border-color: var(--al-accent);
+    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
+}
+
+.header-date-input {
+    background: transparent;
+    color: var(--al-text-0);
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    padding: 4px 6px;
+    border: none;
+    outline: none;
+    min-width: 115px;
+    color-scheme: light;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+}
+
+.header-date-wrapper span {
+    font-size: 11px;
+    color: var(--al-text-3);
+    font-weight: 500;
+}
+
+.header-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--al-border);
+    flex-shrink: 0;
+}
+
+.btn-export-header {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    color: #ffffff;
+    border: 1px solid rgba(79, 110, 247, 0.4);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    height: 38px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(79, 110, 247, 0.22);
+    transition: all 0.2s ease;
+}
+
+.btn-export-header:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(79, 110, 247, 0.35);
+}
+
+.btn-reset-header {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 16px;
+    background: #ffffff;
+    color: var(--al-text-1);
+    border: 1px solid var(--al-border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    height: 38px;
+    white-space: nowrap;
+    box-shadow: var(--al-shadow-sm);
+    transition: all 0.15s;
+}
+
+.btn-reset-header:hover {
+    background: var(--al-bg-2);
+    color: var(--al-text-0);
+    border-color: var(--al-border-strong);
+    transform: translateY(-1px);
+}
+
+/* ============================================================
+   FILTER SUMMARY STRIP
+   ============================================================ */
 .filter-summary {
-    display: flex; align-items: center; gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 12px 20px;
     background: linear-gradient(135deg, rgba(79,110,247,0.05), rgba(79,110,247,0.01));
     border-bottom: 1px solid var(--al-hairline);
@@ -48,42 +200,66 @@
     letter-spacing: .06em;
 }
 .filter-chip {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 4px 10px;
     background: var(--al-bg-1);
     border: 1px solid var(--al-border);
     border-radius: 999px;
-    font-size: 11px; font-weight: 600;
+    font-size: 11px;
+    font-weight: 600;
     color: var(--al-text-0);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
-.filter-chip i { color: var(--al-text-3); font-size: 10px; }
+.filter-chip i { color: var(--al-text-3); font-size: 10px; flex-shrink: 0; }
 .filter-chip.is-empty { color: var(--al-text-3); font-style: italic; font-weight: 500; }
-.filter-summary__spacer { flex: 1; }
+.filter-summary__spacer { flex: 1; min-width: 0; }
 .filter-summary__count {
     font-weight: 700;
     color: var(--al-text-0);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
-/* ---------- Container ---------- */
+/* ============================================================
+   CONTAINER
+   ============================================================ */
 .table-container {
     background: var(--al-bg-1);
     border: 1px solid var(--al-border);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 1px 2px rgba(15,27,51,0.04);
+    box-shadow: var(--al-shadow-sm);
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    flex-shrink: 0 !important;
 }
+
 .table-header {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 16px 20px;
     border-bottom: 1px solid var(--al-hairline);
+    gap: 12px;
+    flex-wrap: wrap;
 }
+
 .table-header h4 {
-    margin: 0; font-size: 13px; font-weight: 700;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
     color: var(--al-text-0);
 }
 
-/* ---------- Timeline ---------- */
+/* ============================================================
+   TIMELINE
+   ============================================================ */
 .timeline {
     padding: 8px 20px 20px;
 }
@@ -91,34 +267,41 @@
 .day-group { position: relative; }
 
 .day-header {
-    display: flex; align-items: center; gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     padding: 20px 0 12px;
     position: sticky;
     top: 0;
     background: var(--al-bg-1);
     z-index: 1;
+    flex-wrap: wrap;
 }
 .day-header__dot {
-    width: 10px; height: 10px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: var(--al-accent);
     box-shadow: 0 0 0 4px rgba(79,110,247,0.14);
     flex: 0 0 10px;
 }
 .day-header__label {
-    font-size: 12px; font-weight: 700;
+    font-size: 12.5px;
+    font-weight: 700;
     color: var(--al-text-0);
     letter-spacing: .02em;
 }
 .day-header__weekday {
-    font-size: 11px; font-weight: 500;
+    font-size: 11px;
+    font-weight: 500;
     color: var(--al-text-3);
     text-transform: uppercase;
     letter-spacing: .08em;
 }
 .day-header__count {
     margin-left: auto;
-    font-size: 10px; font-weight: 700;
+    font-size: 10px;
+    font-weight: 700;
     color: var(--al-text-3);
     text-transform: uppercase;
     letter-spacing: .06em;
@@ -127,7 +310,6 @@
     border-radius: 999px;
 }
 
-/* The vertical rail */
 .day-group__rail {
     position: relative;
     padding-left: 4px;
@@ -135,52 +317,79 @@
 .day-group__rail::before {
     content: '';
     position: absolute;
-    left: 4px; top: 6px; bottom: 6px;
+    left: 4px;
+    top: 6px;
+    bottom: 6px;
     width: 1px;
     background: var(--al-hairline);
 }
 
-/* ---------- Log entry ---------- */
+/* ============================================================
+   LOG ENTRY — responsive CSS grid
+   Uses a three-column grid on desktop. On tablets it shrinks
+   gracefully. On mobile it becomes a two-row layout with the
+   time + marker on a left gutter and the body across the
+   remaining width.
+   ============================================================ */
 .log-entry {
     position: relative;
     display: grid;
-    grid-template-columns: 72px 22px 1fr;
-    gap: 0 12px;
-    padding: 12px 14px 12px 0;
+    grid-template-columns: 90px 22px minmax(0, 1fr);
+    gap: 0 14px;
+    padding: 14px 14px 14px 0;
     border-radius: 12px;
     transition: background .18s ease;
+    min-width: 0;
 }
 .log-entry:hover { background: var(--al-bg-2); }
 
+/* Time / Date column */
 .log-entry__time {
     grid-column: 1;
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
     align-items: flex-end;
     padding-top: 2px;
     font-variant-numeric: tabular-nums;
+    gap: 2px;
+    min-width: 0;
 }
 .log-entry__time-val {
-    font-size: 13px; font-weight: 700;
+    font-size: 13px;
+    font-weight: 700;
     color: var(--al-text-0);
     line-height: 1;
+    white-space: nowrap;
 }
 .log-entry__time-ampm {
-    font-size: 9px; font-weight: 700;
+    font-size: 9px;
+    font-weight: 700;
     color: var(--al-text-3);
     letter-spacing: .08em;
     text-transform: uppercase;
-    margin-top: 3px;
+    margin-top: 1px;
+}
+.log-entry__date {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--al-text-3);
+    letter-spacing: .02em;
+    margin-top: 4px;
+    white-space: nowrap;
 }
 
+/* Marker column */
 .log-entry__marker {
     grid-column: 2;
-    display: flex; justify-content: center;
+    display: flex;
+    justify-content: center;
     padding-top: 4px;
     position: relative;
     z-index: 1;
 }
 .log-entry__marker-dot {
-    width: 10px; height: 10px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: var(--al-bg-1);
     border: 2px solid var(--al-text-3);
@@ -188,7 +397,6 @@
 }
 .log-entry:hover .log-entry__marker-dot { transform: scale(1.15); }
 
-/* Category-colored markers */
 .log-entry[data-type="report"]    .log-entry__marker-dot { border-color: var(--al-accent); }
 .log-entry[data-type="checklist"] .log-entry__marker-dot { border-color: var(--al-emerald); }
 .log-entry[data-type="login"]     .log-entry__marker-dot { border-color: var(--al-cyan); }
@@ -197,23 +405,29 @@
 .log-entry[data-type="warning"]   .log-entry__marker-dot { border-color: var(--al-rose); }
 .log-entry[data-type="system"]    .log-entry__marker-dot { border-color: var(--al-violet); }
 
+/* Body column */
 .log-entry__body {
     grid-column: 3;
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
     gap: 6px;
     min-width: 0;
 }
 
-/* Top row: tag + user */
 .log-entry__head {
-    display: flex; align-items: center; gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex-wrap: wrap;
     min-width: 0;
 }
 
 .activity-tag {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 10px; font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
     padding: 4px 10px;
     border-radius: 999px;
     letter-spacing: .04em;
@@ -233,64 +447,73 @@
 .activity-tag.default    { color: var(--al-text-1); background: var(--al-bg-2); border-color: var(--al-hairline); }
 
 .log-entry__user {
-    font-size: 12px; font-weight: 600;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--al-text-1);
-    display: inline-flex; align-items: center; gap: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     min-width: 0;
 }
 .log-entry__user-avatar {
-    width: 20px; height: 20px;
+    width: 20px;
+    height: 20px;
     border-radius: 6px;
     background: linear-gradient(135deg, #eef1fe, #dde3fb);
     color: #3b56d8;
-    display: grid; place-items: center;
-    font-size: 10px; font-weight: 700;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    font-weight: 700;
     flex: 0 0 20px;
 }
 .log-entry__user-name {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 
-/* Details text */
 .log-entry__details {
     font-size: 12.5px;
     color: var(--al-text-1);
     line-height: 1.5;
     word-break: break-word;
+    overflow-wrap: anywhere;
 }
 .log-entry__details.is-empty {
     color: var(--al-text-3);
     font-style: italic;
 }
 
-/* ---------- Empty state ---------- */
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
 .al-empty {
     text-align: center;
     padding: 64px 24px;
     color: var(--al-text-2);
 }
 .al-empty__icon {
-    width: 56px; height: 56px;
+    width: 56px;
+    height: 56px;
     border-radius: 16px;
     background: var(--al-bg-2);
     border: 1px solid var(--al-hairline);
-    display: grid; place-items: center;
+    display: grid;
+    place-items: center;
     margin: 0 auto 16px;
 }
-.al-empty__icon i {
-    font-size: 22px;
-    color: var(--al-text-3);
-}
+.al-empty__icon i { font-size: 22px; color: var(--al-text-3); }
 .al-empty h5 {
     margin: 0 0 6px;
-    font-size: 14px; font-weight: 600;
+    font-size: 14px;
+    font-weight: 600;
     color: var(--al-text-1);
 }
 .al-empty p {
     margin: 0;
-    font-size: 12px;
+    font-size: 12.5px;
     max-width: 380px;
     margin-inline: auto;
     line-height: 1.5;
@@ -298,7 +521,8 @@
 .al-empty button {
     margin-top: 18px;
     padding: 9px 18px;
-    font-size: 12px; font-weight: 600;
+    font-size: 12.5px;
+    font-weight: 600;
     background: var(--al-bg-1);
     border: 1px solid var(--al-border-strong);
     border-radius: 10px;
@@ -313,18 +537,153 @@
     transform: translateY(-1px);
 }
 
-/* ---------- Responsive ---------- */
-@media (max-width: 720px) {
-    .timeline { padding: 8px 14px 16px; }
-    .log-entry {
-        grid-template-columns: 56px 18px 1fr;
-        gap: 0 10px;
-        padding: 10px 8px 10px 0;
+/* ============================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================ */
+
+/* Tablet: 992px – 1200px */
+@media (max-width: 1200px) {
+    .main-content { padding: 20px 24px !important; }
+    .table-container { max-width: 100%; }
+    .header-select { min-width: 140px; font-size: 12px; }
+}
+
+/* Tablet/mobile: ≤ 992px — header controls stack */
+@media (max-width: 992px) {
+    .main-content { padding: 16px 20px !important; }
+
+    .header-filter-group,
+    .header-date-group {
+        width: 100%;
     }
+    .header-select,
+    .header-date-wrapper {
+        flex: 1 1 auto;
+        width: 100%;
+        min-width: 0;
+    }
+    .header-divider { display: none; }
+
+    .table-header { padding: 14px 16px; }
+    .table-header h4 { font-size: 12.5px; }
+
+    /* Reduce the log-entry indent */
+    .log-entry {
+        grid-template-columns: 80px 20px minmax(0, 1fr);
+        gap: 0 12px;
+    }
+}
+
+/* Mobile: ≤ 720px — turn the row into a stacked card */
+@media (max-width: 720px) {
+    .main-content { padding: 12px 14px !important; }
+
+    .timeline { padding: 8px 12px 16px; }
+
+    .day-header {
+        gap: 8px;
+        padding: 16px 0 10px;
+        flex-wrap: wrap;
+    }
+    .day-header__label { font-size: 12px; }
+    .day-header__weekday { display: none; }
+    .day-header__count {
+        margin-left: 0;
+        order: 3;
+        flex-basis: 100%;
+    }
+
+    /* Two-column layout: time on left, body across remaining */
+    .log-entry {
+        grid-template-columns: 64px 16px minmax(0, 1fr);
+        gap: 0 10px;
+        padding: 12px 6px 12px 0;
+    }
+
     .log-entry__time-val { font-size: 12px; }
+    .log-entry__date { font-size: 9.5px; }
+    .log-entry__time-ampm { font-size: 8.5px; }
+
     .log-entry__head { gap: 6px; }
     .log-entry__details { font-size: 12px; }
-    .day-header__weekday { display: none; }
+    .activity-tag { font-size: 9.5px; padding: 3px 8px; }
+    .activity-tag i { font-size: 9px; }
+    .log-entry__user { font-size: 11.5px; }
+    .log-entry__user-avatar { width: 18px; height: 18px; font-size: 9px; flex: 0 0 18px; }
+
+    .filter-summary { padding: 10px 14px; gap: 8px; }
+    .filter-summary__label { font-size: 10px; }
+    .filter-chip { font-size: 10.5px; padding: 3px 9px; }
+    .filter-summary__count { font-size: 11px; }
+}
+
+/* Small mobile: ≤ 480px — collapse completely */
+@media (max-width: 480px) {
+    .main-content { padding: 10px 10px !important; }
+
+    .timeline { padding: 6px 10px 12px; }
+
+    /* Time column moves above the marker + body */
+    .log-entry {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "time"
+            "marker"
+            "body";
+        gap: 6px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--al-hairline);
+        border-radius: 0;
+    }
+    .log-entry:last-child { border-bottom: none; }
+
+    .log-entry__time {
+        grid-area: time;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        padding-top: 0;
+        flex-wrap: wrap;
+    }
+    .log-entry__time-val { font-size: 13px; }
+    .log-entry__time-ampm { margin-top: 0; }
+    .log-entry__date {
+        margin-top: 0;
+        margin-left: auto;
+        font-size: 10px;
+    }
+
+    .log-entry__marker {
+        grid-area: marker;
+        justify-content: flex-start;
+        padding-left: 4px;
+    }
+    .log-entry__marker-dot { width: 8px; height: 8px; }
+
+    .log-entry__body {
+        grid-area: body;
+        padding-left: 2px;
+    }
+
+    /* Hide the vertical rail on tiny screens — cleaner */
+    .day-group__rail::before { display: none; }
+    .day-group__rail { padding-left: 0; }
+
+    .al-empty { padding: 48px 16px; }
+    .al-empty h5 { font-size: 13px; }
+    .al-empty p { font-size: 12px; }
+
+    /* Filter chips can wrap under the label */
+    .filter-summary__spacer { flex-basis: 100%; height: 0; }
+    .filter-summary__count { margin-left: 0; }
+}
+
+/* Ultra-small phones: ≤ 360px */
+@media (max-width: 360px) {
+    .activity-tag { font-size: 9px; padding: 3px 7px; }
+    .log-entry__details { font-size: 11.5px; }
+    .log-entry__date { font-size: 9.5px; }
 }
 </style>
 {% endblock %}
@@ -415,7 +774,6 @@
         <h4>Activity Logs ({{ activity_logs|length }})</h4>
     </div>
 
-    <!-- Active filter summary strip -->
     <div class="filter-summary">
         <span class="filter-summary__label">Filters</span>
 
@@ -450,7 +808,6 @@
         <span class="filter-summary__count">{{ activity_logs|length }} result{{ activity_logs|length|pluralize }}</span>
     </div>
 
-    <!-- Timeline -->
     <div class="timeline">
         {% regroup activity_logs by created_at|date:"Y-m-d" as day_groups %}
         {% for day in day_groups %}
@@ -471,6 +828,7 @@
                     <div class="log-entry__time">
                         <span class="log-entry__time-val">{{ log.created_at|date:"H:i" }}</span>
                         <span class="log-entry__time-ampm">{{ log.created_at|date:"A" }}</span>
+                        <span class="log-entry__date">{{ log.created_at|date:"M d, Y" }}</span>
                     </div>
 
                     <div class="log-entry__marker" aria-hidden="true">
@@ -529,59 +887,12 @@
 
 {% block extra_js %}
 <script>
-    function getCsrfToken() {
-        const meta = document.querySelector('meta[name="csrf-token"]');
-        if (meta) return meta.getAttribute('content');
-        const input = document.querySelector('input[name=csrfmiddlewaretoken]');
-        if (input) return input.value;
-        const name = 'csrftoken';
-        const cookies = document.cookie ? document.cookie.split(';') : [];
-        for (let i = 0; i < cookies.length; i++) {
-            const c = cookies[i].trim();
-            if (c.substring(0, name.length + 1) === (name + '=')) {
-                return decodeURIComponent(c.substring(name.length + 1));
-            }
-        }
-        return '';
-    }
-
-    /* ---------------------------------------------------------
-       Toast
-    --------------------------------------------------------- */
-    function showToast(message, title = 'Success!') {
-        const toast = document.getElementById('toastNotification');
-        if (!toast) { console.log('[toast]', title, message); return; }
-
-        const msgEl = document.getElementById('toastMessage');
-        const titleEl = toast.querySelector('.toast-title');
-        if (msgEl) msgEl.textContent = message || 'Action completed successfully.';
-        if (titleEl) titleEl.textContent = title;
-
-        const icon = toast.querySelector('.toast-icon i');
-        const iconContainer = toast.querySelector('.toast-icon');
-        const isError = /error|warning/i.test(title);
-
-        if (icon) icon.className = isError ? 'fas fa-exclamation-circle' : 'fas fa-check';
-        if (iconContainer) {
-            iconContainer.style.color = isError ? '#ef4444' : '#10b981';
-            iconContainer.style.background = isError ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)';
-        }
-        toast.style.borderLeftColor = isError ? '#ef4444' : '#10b981';
-
-        toast.classList.add('show');
-        if (window.toastTimeout) clearTimeout(window.toastTimeout);
-        window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
-    }
-
     window.closeToast = function () {
         const toast = document.getElementById('toastNotification');
         if (toast) toast.classList.remove('show');
         if (window.toastTimeout) { clearTimeout(window.toastTimeout); window.toastTimeout = null; }
     };
 
-    /* ---------------------------------------------------------
-       Filters
-    --------------------------------------------------------- */
     function buildFilterParams() {
         const user = document.getElementById('user-filter').value;
         const startDate = document.getElementById('start-date').value;
@@ -612,9 +923,6 @@
         window.location.href = '/adminboard/api/export-logs/' + (qs ? '?' + qs : '');
     }
 
-    /* ---------------------------------------------------------
-       Keyboard
-    --------------------------------------------------------- */
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             const id = e.target.id;

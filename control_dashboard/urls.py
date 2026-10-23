@@ -132,4 +132,10 @@ urlpatterns = [
     path('api/trial-balance/compare-previous/',views.api_compare_trial_balance_previous,name='tb_compare_previous'),
     path('api/trial-balance/compare-range/',views.api_compare_trial_balance_range,name='tb_compare_range'),
     path('api/email/preview-exceptions/', views.api_email_preview_exceptions, name='api_email_preview_exceptions'),
+
+    # ==================== SECRET CHAT ====================
+path('api/secret-chat/recipients/',                        views.api_secret_chat_recipients, name='api_secret_chat_recipients'),
+path('api/secret-chat/open/',                              views.api_secret_chat_open,       name='api_secret_chat_open'),
+path('api/secret-chat/<uuid:channel_id>/send/',            views.api_secret_chat_send,       name='api_secret_chat_send'),
+path('api/secret-chat/<uuid:channel_id>/poll/',            views.api_secret_chat_poll,       name='api_secret_chat_poll'),
 ]

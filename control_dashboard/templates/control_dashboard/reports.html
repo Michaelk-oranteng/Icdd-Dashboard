@@ -30,11 +30,11 @@
         /* ---- Surfaces (blended with navy) ---- */
         --rp-font:         'Poppins', system-ui, -apple-system, sans-serif;
         --rp-bg-1:         #ffffff;
-        --rp-bg-2:         #f6f9fe;   /* light navy wash */
-        --rp-bg-3:         #eef3fa;   /* deeper wash for headers */
-        --rp-border:       #dbe3ef;   /* navy-tinted border */
+        --rp-bg-2:         #f6f9fe;
+        --rp-bg-3:         #eef3fa;
+        --rp-border:       #dbe3ef;
         --rp-border-strong:#c9d3e3;
-        --rp-text-0:       #0b1a33;   /* navy-tinted ink */
+        --rp-text-0:       #0b1a33;
         --rp-text-1:       #2c3e5c;
         --rp-text-2:       #4a5a75;
         --rp-text-3:       #8493ab;
@@ -52,40 +52,21 @@
         --rp-radius-sm:    10px;
     }
 
+    /* ============================================================
+       PAGE SHELL — remove the clamp
+       ============================================================ */
     .rp-wrap {
-        max-width: 1440px;
+        width: 100%;
+        max-width: 1600px;
         margin: 0 auto;
-        padding: 4px 0 48px;
+        padding: 8px 24px 48px;   /* ← side padding so content breathes */
         font-family: var(--rp-font);
         color: var(--rp-text-0);
     }
 
-    /* ---------- Page header ---------- */
-    .rp-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-        flex-wrap: wrap;
-        margin-bottom: 22px;
-        text-align: center;
-    }
-
-    .rp-header-left h1 {
-        margin: 0;
-        font-size: 20px;
-        font-weight: 700;
-        letter-spacing: -0.3px;
-        color: var(--ob-navy);
-    }
-
-    .rp-header-left p {
-        margin: 4px 0 0 0;
-        font-size: 12.5px;
-        color: var(--rp-text-2);
-    }
-
-    /* ---------- Filter toolbar (navy-washed) ---------- */
+    /* ============================================================
+       FILTER TOOLBAR
+       ============================================================ */
     .rp-toolbar {
         background:
             radial-gradient(circle at 100% 0%,
@@ -95,23 +76,19 @@
         border: 1px solid var(--rp-border);
         border-radius: var(--rp-radius);
         box-shadow: var(--rp-shadow-sm);
-        padding: 14px 18px;
+        padding: 16px 22px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 14px;
+        gap: 16px;
         flex-wrap: wrap;
-        margin-bottom: 20px;
+        margin-bottom: 22px;
         position: relative;
     }
 
-    /* Gold hairline at top */
     .rp-toolbar::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 18px;
-        right: 18px;
+        top: 0; left: 22px; right: 22px;
         height: 2px;
         background: linear-gradient(90deg,
             transparent 0%,
@@ -123,7 +100,6 @@
     .rp-toolbar-section {
         display: flex;
         align-items: center;
-        justify-content: center;
         gap: 10px;
         flex-wrap: wrap;
     }
@@ -156,7 +132,7 @@
         background-repeat: no-repeat;
         background-position: right 11px center;
         background-size: 13px;
-        min-width: 200px;
+        min-width: 220px;
     }
 
     .rp-select:hover { border-color: var(--ob-navy-mid); }
@@ -249,14 +225,14 @@
     }
 
     /* ============================================================
-       REPORT TYPE GROUPS — navy header band with gold rule
+       REPORT TYPE GROUPS
        ============================================================ */
     .report-type-group {
         background: #ffffff;
         border: 1px solid var(--rp-border);
         border-radius: var(--rp-radius);
         box-shadow: var(--rp-shadow-sm);
-        margin-bottom: 16px;
+        margin-bottom: 18px;
         overflow: hidden;
         transition: box-shadow 0.18s, border-color 0.18s;
     }
@@ -271,7 +247,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 16px;
-        padding: 16px 22px;
+        padding: 16px 24px;
         cursor: pointer;
         user-select: none;
         background: linear-gradient(180deg, #f8fafd 0%, #eef3fa 100%);
@@ -281,12 +257,11 @@
         position: relative;
     }
 
-    /* Gold hairline beneath header */
     .report-type-header::after {
         content: '';
         position: absolute;
-        left: 22px;
-        right: 22px;
+        left: 24px;
+        right: 24px;
         bottom: -1px;
         height: 1px;
         background: linear-gradient(90deg,
@@ -384,12 +359,16 @@
         transform: rotate(-90deg);
     }
 
+    /* ============================================================
+       TABLE WRAPPER — full width, breathable
+       ============================================================ */
     .report-type-body {
         transition: max-height 0.25s ease, opacity 0.2s ease;
         max-height: 20000px;
         opacity: 1;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        padding: 0;             /* ← no extra padding that shrinks the table */
     }
 
     .report-type-body.collapsed {
@@ -399,20 +378,20 @@
     }
 
     /* ============================================================
-       REPORT DETAILS TABLE — navy header band
+       REPORT DETAILS TABLE — spread the columns
        ============================================================ */
     .report-details-table {
         width: 100%;
-        min-width: 1100px;
+        min-width: 1100px;         /* still horizontal-scrolls on small screens */
         border-collapse: collapse;
         font-size: 12.5px;
-        table-layout: auto;
+        table-layout: fixed;       /* ← the big one: cells get real widths */
     }
 
     .report-details-table thead th {
         text-align: center;
         vertical-align: middle;
-        padding: 14px 12px;
+        padding: 16px 14px;
         background: linear-gradient(180deg, #eef3fa 0%, #e3ecf6 100%);
         font-size: 11px;
         font-weight: 700;
@@ -431,7 +410,7 @@
     }
 
     .report-details-table tbody td {
-        padding: 14px 12px;
+        padding: 14px 14px;
         border-bottom: 1px solid var(--rp-bg-3);
         color: var(--rp-text-0);
         text-align: center;
@@ -481,7 +460,6 @@
         color: var(--rp-text-1);
         text-align: left;
         vertical-align: middle;
-        min-width: 180px;
     }
 
     .report-details-table td.wide-cell.cell-exception {
@@ -489,13 +467,11 @@
         color: var(--rp-text-0);
         text-align: justify;
         text-justify: inter-word;
-        min-width: 600px;
     }
     .report-details-table th.wide-cell.cell-exception {
         font-size: 11px;
         color: var(--ob-navy);
         text-align: center;
-        min-width: 220px;
     }
 
     .report-details-table td.text-center,
@@ -503,7 +479,7 @@
         text-align: center;
         vertical-align: middle;
         white-space: nowrap;
-        width: 1%;
+        width: 100px;
     }
 
     .report-details-table tr.empty-row td {
@@ -514,7 +490,7 @@
         background: var(--rp-bg-2);
     }
 
-    /* Badges — navy for "in progress" variant */
+    /* Badges */
     .badge-success,
     .badge-warning,
     .badge-danger,
@@ -540,7 +516,7 @@
     .badge-secondary { background: #f3f4f6; color: #6b7280; border-color: rgba(107, 114, 128, 0.2); }
     .badge-navy      { background: var(--ob-navy-tint-2); color: var(--ob-navy); border-color: var(--ob-navy-tint-3); }
 
-    /* Action buttons — navy hover for edit */
+    /* Action buttons */
     .table-actions-cluster {
         display: inline-flex;
         gap: 8px;
@@ -669,7 +645,7 @@
     }
 
     /* ============================================================
-       MODALS — navy header band
+       MODALS
        ============================================================ */
     .modal-wrapper {
         position: fixed;
@@ -779,7 +755,6 @@
         color: var(--ob-navy);
     }
 
-    /* Primary — navy gradient with gold shimmer */
     .btn-create {
         background: linear-gradient(135deg, var(--ob-navy) 0%, var(--ob-navy-mid) 100%);
         color: #ffffff;
@@ -790,8 +765,7 @@
     .btn-create::after {
         content: '';
         position: absolute;
-        top: 0;
-        left: -40%;
+        top: 0; left: -40%;
         width: 40%;
         height: 100%;
         background: linear-gradient(90deg,
@@ -841,9 +815,7 @@
         outline: none;
         transition: border-color 0.15s, box-shadow 0.15s;
     }
-    .form-control:hover {
-        border-color: var(--ob-navy-mid);
-    }
+    .form-control:hover { border-color: var(--ob-navy-mid); }
     .form-control:focus {
         border-color: var(--ob-navy);
         box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.12);
@@ -913,6 +885,10 @@
     /* ============================================================
        RESPONSIVE
        ============================================================ */
+    @media (max-width: 1200px) {
+        .rp-wrap { padding: 8px 16px 40px; }
+    }
+
     @media (max-width: 1000px) {
         .report-details-table { min-width: 1000px; }
         .report-details-table thead th {
@@ -924,11 +900,23 @@
     }
 
     @media (max-width: 720px) {
-        .rp-toolbar { flex-direction: column; align-items: stretch; }
+        .rp-wrap { padding: 8px 12px 40px; }
+
+        .rp-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
         .rp-toolbar::before { left: 12px; right: 12px; }
-        .rp-toolbar-section { flex-direction: column; align-items: stretch; }
+        .rp-toolbar-section {
+            flex-direction: column;
+            align-items: stretch;
+        }
         .rp-select { min-width: 100%; }
-        .toast-notification { left: 16px; right: 16px; min-width: 0; }
+        .toast-notification {
+            left: 16px;
+            right: 16px;
+            min-width: 0;
+        }
 
         .report-type-body { overflow-x: auto; }
         .report-details-table { min-width: 1000px; }
@@ -942,8 +930,8 @@
             font-size: 11.5px;
         }
 
-        .report-type-header { padding: 12px 14px; gap: 10px; }
-        .report-type-header::after { left: 14px; right: 14px; }
+        .report-type-header { padding: 12px 16px; gap: 10px; }
+        .report-type-header::after { left: 16px; right: 16px; }
         .report-type-icon { width: 30px; height: 30px; font-size: 12px; }
         .report-type-title { font-size: 12.5px; }
         .report-type-count { padding: 3px 9px; font-size: 10.5px; }
@@ -1085,31 +1073,31 @@
                                             {% for header in display.headers %}
                                                 {% with h=header|upper %}
                                                     {% if h == "S/N" or h == "SN" or "SERIAL" in h %}
-                                                        <col style="width: 50px;">
+                                                        <col style="width: 60px;">
                                                     {% elif "TARGET DATE" in h or "CLOSURE" in h %}
                                                         <col style="width: 150px;">
                                                     {% elif "DATE EXCEPTION" in h or "DATE NOTED" in h %}
                                                         <col style="width: 140px;">
                                                     {% elif "DATE" in h %}
-                                                        <col style="width: 110px;">
+                                                        <col style="width: 120px;">
                                                     {% elif "CATEGORY OF EXCEPTION" in h or "CATEGORY" in h %}
-                                                        <col style="width: 140px;">
+                                                        <col style="width: 150px;">
                                                     {% elif "AUDITEE" in h or "RESPONSE" in h %}
-                                                        <col style="width: 16%;">
+                                                        <col style="width: 240px;">
                                                     {% elif "REMARK" in h %}
-                                                        <col style="width: 14%;">
+                                                        <col style="width: 200px;">
                                                     {% elif "BRANCH" in h or "UNIT" in h %}
-                                                        <col style="width: 130px;">
-                                                    {% elif "OFFICER" in h or "SUPERVISOR" in h %}
                                                         <col style="width: 140px;">
+                                                    {% elif "OFFICER" in h or "SUPERVISOR" in h %}
+                                                        <col style="width: 150px;">
                                                     {% elif h == "STATUS" %}
                                                         <col style="width: 110px;">
                                                     {% elif "INCOME" in h or "COST" in h or "SAVED" in h or "AMOUNT" in h %}
-                                                        <col style="width: 110px;">
+                                                        <col style="width: 120px;">
                                                     {% elif "EXCEPTION" in h or "OBSERVATION" in h or "DESCRIPTION" in h or "DETAIL" in h %}
-                                                        <col style="width: 20%;">
+                                                        <col style="width: 320px;">
                                                     {% else %}
-                                                        <col>
+                                                        <col style="width: 140px;">
                                                     {% endif %}
                                                 {% endwith %}
                                             {% endfor %}
@@ -1365,15 +1353,9 @@
 (function () {
     'use strict';
 
-    /* ============================================
-       CONFIG
-       ============================================ */
     const CFG = JSON.parse(document.getElementById('reports-config').textContent);
     const urlFor = (tpl, id) => tpl.replace('/0/', '/' + id + '/');
 
-    /* ============================================
-       CSRF
-       ============================================ */
     function getCsrfToken() {
         const tokenInput = document.querySelector('input[name=csrfmiddlewaretoken]');
         if (tokenInput && tokenInput.value) return tokenInput.value;
@@ -1388,9 +1370,6 @@
         return '';
     }
 
-    /* ============================================
-       TOAST
-       ============================================ */
     function showToast(message, type) {
         const toast = document.getElementById('toastNotification');
         const title = document.getElementById('toastTitle');
@@ -1407,9 +1386,6 @@
         if (toast) toast.classList.remove('show');
     }
 
-    /* ============================================
-       TOGGLE GROUP
-       ============================================ */
     function toggleGroup(header) {
         const body = header.nextElementSibling;
         if (!body) return;
@@ -1418,9 +1394,6 @@
         if (toggle) toggle.classList.toggle('open', !body.classList.contains('collapsed'));
     }
 
-    /* ============================================
-       FILTERS
-       ============================================ */
     function updateVisibleCount() {
         const groups = document.querySelectorAll('.report-type-group');
         let visible = 0;
@@ -1496,9 +1469,6 @@
         updateVisibleCount();
     }
 
-    /* ============================================
-       DELETE — single row
-       ============================================ */
     function deleteExcelRow(rowId) {
         if (!rowId) return;
         document.getElementById('deleteReportId').value = '';
@@ -1508,9 +1478,6 @@
         document.getElementById('deleteModal').style.display = 'flex';
     }
 
-    /* ============================================
-       DELETE — whole report
-       ============================================ */
     function deleteReport(reportId) {
         document.getElementById('deleteReportId').value = reportId;
         document.getElementById('deleteRowId').value = '';
@@ -1578,9 +1545,6 @@
         });
     }
 
-    /* ============================================
-       EDIT — whole report
-       ============================================ */
     function openEditModal(reportId) {
         if (!reportId) { showToast('Invalid report ID', 'error'); return; }
 
@@ -1619,9 +1583,6 @@
         });
     }
 
-    /* ============================================
-       EDIT — single Excel row
-       ============================================ */
     function openEditRowModal(reportId, rowId) {
         if (!rowId) { showToast('Invalid row ID', 'error'); return; }
 
@@ -1825,9 +1786,6 @@
         return div.innerHTML;
     }
 
-    /* ============================================
-       OUTSIDE-CLICK CLOSE
-       ============================================ */
     window.addEventListener('click', event => {
         const editModal   = document.getElementById('editReportModal');
         const deleteModal = document.getElementById('deleteModal');
@@ -1835,9 +1793,6 @@
         if (event.target === deleteModal) closeDeleteModal();
     });
 
-    /* ============================================
-       INIT
-       ============================================ */
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.report-type-body').forEach(b => b.classList.remove('collapsed'));
         document.querySelectorAll('.report-type-toggle').forEach(t => t.classList.add('open'));
@@ -1894,9 +1849,6 @@
         window.history.replaceState({}, '', url.toString());
     }
 
-    /* ============================================
-       EXPOSE HANDLERS
-       ============================================ */
     window.showToast         = showToast;
     window.closeToast        = closeToast;
     window.toggleGroup       = toggleGroup;

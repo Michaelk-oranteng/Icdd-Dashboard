@@ -97,6 +97,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    # ═══ 10-MINUTE INACTIVITY LOGOUT ═══
+    # Must be placed LAST so it runs after AuthenticationMiddleware
+    # has already populated request.user.
+    'control_dashboard.middleware.IdleTimeoutMiddleware',
 ]
 
 ROOT_URLCONF = 'ICDD.urls'
@@ -194,6 +199,40 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024   # 50 MB
 
 
 # ============================================================
+# SESSION / INACTIVITY
+# ============================================================
+# ═══ 10-MINUTE INACTIVITY POLICY ═══
+#
+# The three layers below cooperate to log the user out after
+# 10 minutes of idle time — regardless of tab state, JS tampering,
+# or direct cookie replay:
+#
+#   1. SESSION_COOKIE_AGE           → 10-minute cookie lifetime
+#   2. SESSION_SAVE_EVERY_REQUEST   → refresh the cookie on each hit
+#                                     (so "active" users stay logged in)
+#   3. IdleTimeoutMiddleware        → server-side check of a
+#                                     `_last_activity` timestamp
+#   4. base.html JS timer           → client-side countdown + banner
+#
+# All four must agree: 600 seconds = 10 minutes.
+
+INACTIVITY_TIMEOUT_SECONDS = int(os.environ.get('INACTIVITY_TIMEOUT_SECONDS', '600'))  # 10 min
+
+SESSION_COOKIE_AGE = INACTIVITY_TIMEOUT_SECONDS
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# In local dev over HTTP, cookies cannot be Secure.
+# In production over HTTPS, both of these become True automatically.
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+
+# ============================================================
 # SECURITY
 # ============================================================
 
@@ -206,19 +245,12 @@ SECURE_SSL_REDIRECT = (
     and os.environ.get('DISABLE_SSL_REDIRECT', 'False').lower() not in ('1', 'true', 'yes')
 )
 
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
 SECURE_HSTS_SECONDS = 0 if DEBUG else 60 * 60 * 24 * 30
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD = False
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'same-origin'
 X_FRAME_OPTIONS = 'DENY'
-
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = 'Lax'
 
 
 # ============================================================

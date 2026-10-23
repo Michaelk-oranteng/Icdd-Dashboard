@@ -523,3 +523,342 @@ body.sidebar-collapsed .main-content-wrapper {
         width: 100% !important;
     }
 }
+
+/* ==========================================================================
+   18. PAGE-SPECIFIC COMPONENTS — centralized
+   Applies everywhere responsive-core.css is loaded, so individual
+   pages no longer need their own @media blocks for these.
+   ========================================================================== */
+
+/* ---------- 18.1 CREATE USER (.cu-*) ---------- */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .form-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+    .form-actions .btn-create,
+    .form-actions .btn-reset {
+        width: 100% !important;
+        justify-content: center;
+    }
+}
+
+/* ---------- 18.2 BRANCH / DEPARTMENT (.unit-*) ---------- */
+@media (max-width: 992px) {
+    .unit-form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    .unit-form-grid .form-field-wide {
+        grid-column: 1 / -1 !important;
+    }
+}
+@media (max-width: 768px) {
+    .user-picker {
+        grid-template-columns: 1fr !important;
+        max-height: 220px !important;
+    }
+    .unit-table {
+        display: block;
+        overflow-x: auto;
+    }
+    .unit-table thead th,
+    .unit-table tbody td {
+        padding: 10px 12px !important;
+        font-size: 12px !important;
+    }
+}
+
+/* ---------- 18.3 SUPERVISOR CHECKLIST (.sc-* / .cl-*) ---------- */
+@media (max-width: 1100px) {
+    .checklist-row {
+        grid-template-columns: 1fr auto 28px !important;
+        grid-template-areas:
+            "identity status chevron"
+            "stats    stats  stats"
+            "progress progress progress"
+            "ytd      ytd    ytd" !important;
+        gap: 12px !important;
+    }
+    .cl-identity { grid-area: identity !important; }
+    .cl-stats    { grid-area: stats !important; justify-self: start !important; }
+    .cl-progress { grid-area: progress !important; }
+    .cl-ytd      { grid-area: ytd !important; }
+    .status-badge { grid-area: status !important; }
+    .cl-chevron  { grid-area: chevron !important; }
+}
+@media (max-width: 720px) {
+    .checklist-list { padding: 10px !important; }
+    .checklist-row {
+        grid-template-columns: 1fr 28px !important;
+        grid-template-areas:
+            "identity chevron"
+            "stats    stats"
+            "progress progress"
+            "ytd      ytd"
+            "status   status" !important;
+        padding: 12px 14px !important;
+        gap: 10px !important;
+    }
+    .cl-stats {
+        flex-wrap: wrap !important;
+        width: 100% !important;
+    }
+    .modal-summary { grid-template-columns: 1fr !important; }
+    .unit-row { flex-wrap: wrap !important; gap: 10px !important; }
+    .unit-row .mini-progress { flex: 1 0 100% !important; }
+}
+
+/* ---------- 18.4 MEMBER DASHBOARD (.dp-*) ---------- */
+@media (max-width: 1100px) {
+    .dp-main-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+@media (max-width: 900px) {
+    .dp-wrap { gap: 16px !important; padding: 0 0 40px !important; }
+    .dp-kpi { padding: 20px 16px 18px !important; min-height: 220px !important; }
+    .dp-kpi-ring { width: 110px !important; height: 110px !important; }
+    .dp-kpi-ring .ring-value { font-size: 28px !important; }
+    .dp-progress-value { font-size: 17px !important; }
+    .dp-kpi-icon { width: 24px !important; height: 24px !important; font-size: 10px !important; }
+    .dp-card-head::after { left: 18px !important; right: 18px !important; }
+    .dp-progress-panel::before { left: 18px !important; right: 18px !important; }
+
+    /* card-style table on mobile */
+    .dp-table thead { display: none !important; }
+    .dp-table tbody,
+    .dp-table tr,
+    .dp-table td { display: block !important; width: 100% !important; }
+    .dp-table tbody tr {
+        padding: 14px 18px !important;
+        border-bottom: 1px solid var(--dash-border-light, #eaf0f8) !important;
+    }
+    .dp-table tbody tr:nth-child(even) { background: #fafcff !important; }
+    .dp-table tbody td { border: none !important; padding: 3px 0 !important; text-align: left !important; }
+    .dp-table td.num { text-align: left !important; }
+    .dp-table td.descr-cell { max-width: none !important; white-space: normal !important; }
+}
+@media (max-width: 600px) {
+    .dp-kpi-row { gap: 12px !important; }
+    .dp-kpi { min-height: 200px !important; padding: 18px 14px 16px !important; }
+    .dp-kpi-ring { width: 100px !important; height: 100px !important; }
+    .dp-kpi-ring .ring-value { font-size: 26px !important; }
+    .dp-progress-grid { gap: 14px !important; }
+    .dp-progress-panel { padding: 18px !important; }
+}
+
+/* ---------- 18.5 MY REPORTS (.rp-*) ---------- */
+@media (max-width: 1200px) {
+    .rp-wrap { padding: 8px 16px 40px !important; }
+}
+@media (max-width: 1000px) {
+    .report-details-table { min-width: 1000px !important; }
+    .report-details-table thead th {
+        font-size: 10.5px !important;
+        padding: 12px 10px !important;
+        height: 56px !important;
+    }
+    .report-details-table tbody td { padding: 12px 10px !important; }
+}
+@media (max-width: 720px) {
+    .rp-wrap { padding: 8px 12px 40px !important; }
+    .rp-toolbar { flex-direction: column !important; align-items: stretch !important; }
+    .rp-toolbar::before { left: 12px !important; right: 12px !important; }
+    .rp-toolbar-section { flex-direction: column !important; align-items: stretch !important; }
+    .rp-select { min-width: 100% !important; }
+    .rp-date-range { width: 100% !important; }
+    .rp-date-input { flex: 1 !important; }
+    .report-details-table { min-width: 900px !important; }
+    .report-type-header { padding: 12px 16px !important; gap: 10px !important; }
+    .report-type-header::after { left: 16px !important; right: 16px !important; }
+    .report-type-icon { width: 30px !important; height: 30px !important; font-size: 12px !important; }
+    .report-type-title { font-size: 12.5px !important; }
+}
+
+/* ---------- 18.6 ACTIVITY LOGS (.al-*) ---------- */
+@media (max-width: 992px) {
+    .log-entry {
+        grid-template-columns: 80px 20px minmax(0, 1fr) !important;
+        gap: 0 12px !important;
+    }
+}
+@media (max-width: 720px) {
+    .timeline { padding: 8px 12px 16px !important; }
+    .day-header { gap: 8px !important; padding: 16px 0 10px !important; }
+    .day-header__label { font-size: 12px !important; }
+    .day-header__weekday { display: none !important; }
+    .day-header__count { margin-left: 0 !important; order: 3 !important; flex-basis: 100% !important; }
+
+    .log-entry {
+        grid-template-columns: 64px 16px minmax(0, 1fr) !important;
+        gap: 0 10px !important;
+        padding: 12px 6px 12px 0 !important;
+    }
+    .log-entry__time-val { font-size: 12px !important; }
+    .log-entry__date { font-size: 9.5px !important; }
+    .log-entry__time-ampm { font-size: 8.5px !important; }
+    .log-entry__head { gap: 6px !important; }
+    .log-entry__details { font-size: 12px !important; }
+    .activity-tag { font-size: 9.5px !important; padding: 3px 8px !important; }
+    .filter-summary { padding: 10px 14px !important; gap: 8px !important; }
+    .filter-chip { font-size: 10.5px !important; padding: 3px 9px !important; }
+}
+@media (max-width: 480px) {
+    .log-entry {
+        grid-template-columns: 1fr !important;
+        grid-template-areas: "time" "marker" "body" !important;
+        gap: 6px !important;
+        padding: 12px 0 !important;
+        border-bottom: 1px solid var(--al-hairline, rgba(15,27,51,0.06)) !important;
+        border-radius: 0 !important;
+    }
+    .log-entry__time {
+        grid-area: time !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        flex-wrap: wrap !important;
+    }
+    .log-entry__time-ampm { margin-top: 0 !important; }
+    .log-entry__date { margin-top: 0 !important; margin-left: auto !important; }
+    .log-entry__marker {
+        grid-area: marker !important;
+        justify-content: flex-start !important;
+        padding-left: 4px !important;
+    }
+    .log-entry__marker-dot { width: 8px !important; height: 8px !important; }
+    .log-entry__body { grid-area: body !important; padding-left: 2px !important; }
+    .day-group__rail::before { display: none !important; }
+    .day-group__rail { padding-left: 0 !important; }
+    .filter-summary__spacer { flex-basis: 100% !important; height: 0 !important; }
+    .filter-summary__count { margin-left: 0 !important; }
+}
+
+/* ---------- 18.7 ADMIN USER LIST (.js-*) — table breaks down ---------- */
+@media (max-width: 900px) {
+    .userlist-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .userlist-toolbar input[type="search"],
+    .userlist-toolbar select {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .userlist-count { margin-left: 0 !important; text-align: right !important; }
+}
+
+/* ---------- 18.8 CHECKLIST BUILDER / LIST (.clb-*) ---------- */
+@media (max-width: 900px) {
+    .cll-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .cll-toolbar-left { flex-direction: column !important; }
+    .cll-search { max-width: 100% !important; min-width: 0 !important; }
+    .cll-field-row,
+    .cll-multi { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 720px) {
+    .cll-table thead { display: none !important; }
+    .cll-table,
+    .cll-table tbody,
+    .cll-table tr,
+    .cll-table td { display: block !important; width: 100% !important; }
+    .cll-table tr {
+        padding: 12px 0 !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+    .cll-table td {
+        border: none !important;
+        padding: 6px 16px !important;
+        text-align: left !important;
+    }
+    .cll-modal { max-width: 100% !important; border-radius: 14px 14px 0 0 !important; }
+}
+
+/* ---------- 18.9 REPORT CENTER (.report-table / .report-list-container) ---------- */
+@media (max-width: 768px) {
+    .report-list-container { padding: 0 4px !important; }
+    .table-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .table-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+    }
+    .table-actions .table-input { width: 100% !important; }
+}
+
+/* ---------- 18.10 FORM UTILITIES (shared) ---------- */
+@media (max-width: 640px) {
+    .table-input,
+    .table-select {
+        font-size: 13px !important;
+        height: 40px !important;
+    }
+    .table-select[multiple] {
+        height: auto !important;
+        min-height: 100px !important;
+    }
+}
+
+/* ---------- 18.11 TYPOGRAPHY SCALING ---------- */
+@media (max-width: 992px) {
+    h1 { font-size: 22px !important; }
+    h2 { font-size: 18px !important; }
+    h3 { font-size: 16px !important; }
+    h4 { font-size: 14px !important; }
+}
+@media (max-width: 640px) {
+    h1 { font-size: 20px !important; }
+    h2 { font-size: 17px !important; }
+    h3 { font-size: 15px !important; }
+    h4 { font-size: 13px !important; }
+    body { font-size: 13px; }
+}
+
+/* ---------- 18.12 SPACING SCALING ---------- */
+@media (max-width: 768px) {
+    .main-content { gap: 14px !important; }
+    .table-container { border-radius: 12px !important; }
+    .stat-card,
+    .metric-card,
+    .kpi-card { border-radius: 10px !important; }
+}
+
+/* ---------- 18.13 VIEWPORT ORIENTATION ---------- */
+@media (orientation: landscape) and (max-height: 500px) {
+    .top-header { padding: 6px 16px !important; min-height: 44px !important; }
+    .main-content { padding: 8px 16px !important; }
+    .nav-links li a { padding: 6px 12px !important; font-size: 12px !important; }
+    .stats-grid,
+    .metrics-grid { gap: 8px !important; }
+}
+
+/* ---------- 18.14 SAFE AREA INSETS (notched phones) ---------- */
+@supports (padding: env(safe-area-inset-top)) {
+    .main-content {
+        padding-left: max(clamp(12px, 1.8vw, 30px), env(safe-area-inset-left)) !important;
+        padding-right: max(clamp(12px, 1.8vw, 30px), env(safe-area-inset-right)) !important;
+    }
+    .top-header {
+        padding-left: max(clamp(14px, 1.8vw, 30px), env(safe-area-inset-left)) !important;
+        padding-right: max(clamp(14px, 1.8vw, 30px), env(safe-area-inset-right)) !important;
+    }
+}
+
+/* append to responsive-core.css */
+@media (max-width: 1200px) {
+    .report-details-table { min-width: 1000px; }
+}
+@media (max-width: 900px) {
+    .report-details-table { min-width: 900px; }
+}

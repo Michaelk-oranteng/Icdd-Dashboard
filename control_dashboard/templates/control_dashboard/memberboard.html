@@ -29,9 +29,9 @@
         /* ---- Surfaces (blended with navy) ---- */
         --dash-bg:           #ffffff;
         --dash-surface:      #ffffff;
-        --dash-surface-alt:  #f6f9fe;   /* light navy wash */
-        --dash-surface-tint: #eef3fa;   /* deeper navy wash for headers */
-        --dash-border:       #dbe3ef;   /* navy-tinted border */
+        --dash-surface-alt:  #f6f9fe;
+        --dash-surface-tint: #eef3fa;
+        --dash-border:       #dbe3ef;
         --dash-border-light: #eaf0f8;
         --dash-text:         #0b1a33;
         --dash-text-2:       #4a5a75;
@@ -50,13 +50,13 @@
         --dash-cyan-soft:    rgba(11, 140, 155, 0.10);
 
         --dash-shadow-xs:  0 1px 2px rgba(0, 31, 61, 0.05);
-        --dash-shadow-sm:  var(--ds-shadow-sm);
-        --dash-shadow-md:  var(--ds-shadow-md);
+        --dash-shadow-sm:  0 3px 10px rgba(0, 31, 61, 0.06);
+        --dash-shadow-md:  0 10px 24px rgba(0, 31, 61, 0.10);
         --dash-shadow-lg:  0 16px 40px rgba(0, 31, 61, 0.12);
 
-        --dash-radius-sm: var(--ds-radius-sm);
-        --dash-radius-md: var(--ds-radius-md);
-        --dash-radius-lg: var(--ds-radius-lg);
+        --dash-radius-sm: 10px;
+        --dash-radius-md: 16px;
+        --dash-radius-lg: 22px;
     }
 
     /* ---------- Wrapper ---------- */
@@ -89,69 +89,57 @@
     }
 
     /* ============================================================
-       KPI ROW — navy-washed cards with gold top rule
+       KPI ROW — CIRCULAR / RING-BASED CARDS
        ============================================================ */
     .dp-kpi-row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 18px;
     }
 
     .dp-kpi {
         position: relative;
         background:
-            radial-gradient(circle at 100% 0%,
-                rgba(0, 51, 102, 0.06) 0%,
-                transparent 45%),
+            radial-gradient(circle at 50% 40%,
+                color-mix(in srgb, var(--kpi-accent, var(--ob-navy)) 6%, transparent) 0%,
+                transparent 65%),
             linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
         border: 1px solid var(--dash-border);
-        border-radius: var(--dash-radius-md);
-        padding: 20px 22px 18px;
+        border-radius: var(--dash-radius-lg);
+        padding: 24px 20px 22px;
         box-shadow: var(--dash-shadow-xs);
         transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
         overflow: hidden;
         display: flex;
         flex-direction: column;
-        min-height: 140px;
+        align-items: center;
+        text-align: center;
+        min-height: 240px;
     }
 
-    /* Gold hairline at top */
+    /* Soft gold top accent */
     .dp-kpi::before {
         content: '';
         position: absolute;
         top: 0;
-        left: 20px;
-        right: 20px;
+        left: 24px;
+        right: 24px;
         height: 2px;
         background: linear-gradient(90deg,
             transparent 0%,
-            var(--ob-gold) 50%,
+            var(--kpi-accent, var(--ob-gold)) 50%,
             transparent 100%);
-        opacity: 0.85;
+        opacity: 0.75;
         transition: opacity 0.25s ease;
     }
-
     .dp-kpi:hover::before { opacity: 1; }
 
-    /* Navy accent side bar (per-variant) */
-    .dp-kpi::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 24px;
-        bottom: 24px;
-        width: 3px;
-        border-radius: 0 4px 4px 0;
-        background: var(--kpi-accent, var(--ob-navy));
-        opacity: 0.9;
-    }
-
     .dp-kpi:hover {
-        border-color: var(--ob-navy-tint-3);
+        border-color: color-mix(in srgb, var(--kpi-accent, var(--ob-navy)) 30%, transparent);
         box-shadow:
-            0 6px 18px rgba(0, 31, 61, 0.10),
+            0 10px 24px rgba(0, 31, 61, 0.10),
             0 2px 4px rgba(0, 31, 61, 0.04);
-        transform: translateY(-2px);
+        transform: translateY(-3px);
     }
 
     .dp-kpi[data-accent="danger"]  { --kpi-accent: var(--dash-danger); }
@@ -165,25 +153,14 @@
     .dp-kpi[data-accent="score-warn"] { --kpi-accent: var(--dash-warning); }
     .dp-kpi[data-accent="score-bad"]  { --kpi-accent: var(--dash-danger); }
 
-    .dp-kpi[data-accent="score"],
-    .dp-kpi[data-accent="score-warn"],
-    .dp-kpi[data-accent="score-bad"] {
-        background:
-            radial-gradient(circle at 85% 18%,
-                color-mix(in srgb, var(--kpi-accent) 7%, transparent) 0%,
-                transparent 55%),
-            radial-gradient(circle at 0% 100%,
-                rgba(0, 51, 102, 0.05) 0%,
-                transparent 40%),
-            linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
-    }
-
+    /* Label row */
     .dp-kpi-head {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 14px;
-        gap: 12px;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 18px;
+        width: 100%;
     }
 
     .dp-kpi-label {
@@ -191,44 +168,119 @@
         font-weight: 700;
         color: var(--ob-navy);
         text-transform: uppercase;
-        letter-spacing: 0.8px;
+        letter-spacing: 0.85px;
         line-height: 1.3;
     }
 
     .dp-kpi-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: var(--dash-radius-sm);
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
         display: grid;
         place-items: center;
         background: color-mix(in srgb, var(--kpi-accent, var(--ob-navy)) 14%, transparent);
         color: var(--kpi-accent, var(--ob-navy));
-        font-size: 13px;
+        font-size: 11px;
         flex-shrink: 0;
-        transition: transform 0.2s ease;
-        border: 1px solid color-mix(in srgb, var(--kpi-accent, var(--ob-navy)) 22%, transparent);
+        transition: transform 0.25s ease;
+        border: 1px solid color-mix(in srgb, var(--kpi-accent, var(--ob-navy)) 25%, transparent);
     }
 
-    .dp-kpi:hover .dp-kpi-icon { transform: scale(1.06); }
+    .dp-kpi:hover .dp-kpi-icon { transform: scale(1.12) rotate(-4deg); }
 
-    .dp-kpi-value {
-        font-size: 34px;
-        font-weight: 700;
+    /* ---------- Circular ring wrapper ---------- */
+    .dp-kpi-ring {
+        position: relative;
+        width: 130px;
+        height: 130px;
+        margin: 0 auto 16px;
+        display: grid;
+        place-items: center;
+    }
+
+    .dp-kpi-ring svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+    }
+
+    .dp-kpi-ring .track {
+        fill: none;
+        stroke: #e8eef8;
+        stroke-width: 9;
+    }
+
+    .dp-kpi-ring .meter {
+        fill: none;
+        stroke: var(--kpi-accent, var(--ob-navy));
+        stroke-width: 9;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1.3s cubic-bezier(0.22, 1, 0.36, 1);
+        filter: drop-shadow(0 2px 10px color-mix(in srgb, var(--kpi-accent, var(--ob-navy)) 30%, transparent));
+    }
+
+    /* Inner glow disc */
+    .dp-kpi-ring::after {
+        content: '';
+        position: absolute;
+        inset: 20px;
+        border-radius: 50%;
+        background: radial-gradient(circle,
+            color-mix(in srgb, var(--kpi-accent, var(--ob-navy)) 10%, transparent) 0%,
+            transparent 72%);
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    /* Center value */
+    .dp-kpi-ring .ring-value {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         line-height: 1;
-        letter-spacing: -1.2px;
         color: var(--ob-navy);
         font-variant-numeric: tabular-nums;
-        margin-bottom: 12px;
+        letter-spacing: -1.4px;
+        font-weight: 700;
+        font-size: 34px;
     }
 
+    .dp-kpi-ring .ring-value small {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--dash-text-2);
+        letter-spacing: 0;
+        margin-top: 4px;
+        text-transform: uppercase;
+    }
+
+    /* Small circular KPI variant (for plain counters) */
+    .dp-kpi--counter .dp-kpi-ring .ring-value {
+        font-size: 40px;
+    }
+    .dp-kpi--counter .dp-kpi-ring .ring-value small {
+        font-size: 10.5px;
+        letter-spacing: 0.6px;
+    }
+
+    /* Meta row */
     .dp-kpi-meta {
         display: flex;
         align-items: center;
-        gap: 7px;
+        justify-content: center;
+        gap: 6px;
         font-size: 11.5px;
         color: var(--dash-text-2);
         line-height: 1.4;
         margin-top: auto;
+        padding-top: 8px;
+        width: 100%;
     }
 
     .dp-kpi-meta i {
@@ -239,85 +291,25 @@
 
     .dp-kpi-meta strong {
         color: var(--ob-navy);
-        font-weight: 600;
-    }
-
-    /* ============================================================
-       SCORECARD RING — navy ring, gold when healthy
-       ============================================================ */
-    .dp-score-ring {
-        position: relative;
-        width: 110px;
-        height: 110px;
-        margin: 2px auto 14px;
-    }
-
-    .dp-score-ring::after {
-        content: '';
-        position: absolute;
-        inset: 16px;
-        border-radius: 50%;
-        background: radial-gradient(circle,
-            color-mix(in srgb, var(--kpi-accent) 10%, transparent) 0%,
-            transparent 70%);
-        pointer-events: none;
-    }
-
-    .dp-score-ring svg {
-        transform: rotate(-90deg);
-        width: 100%;
-        height: 100%;
-        position: relative;
-        z-index: 1;
-    }
-
-    .dp-score-ring .track {
-        fill: none;
-        stroke: #e3eaf5;
-        stroke-width: 8;
-    }
-
-    .dp-score-ring .meter {
-        fill: none;
-        stroke: var(--kpi-accent, var(--ob-navy));
-        stroke-width: 8;
-        stroke-linecap: round;
-        transition: stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1);
-        filter: drop-shadow(0 2px 8px color-mix(in srgb, var(--kpi-accent) 30%, transparent));
-    }
-
-    /* Healthy performance — gold ring */
-    .dp-kpi[data-accent="score"] .dp-score-ring .meter {
-        stroke: var(--ob-gold);
-        filter: drop-shadow(0 2px 10px rgba(212, 175, 55, 0.4));
-    }
-
-    .dp-score-ring .pct {
-        position: absolute;
-        inset: 0;
-        display: grid;
-        place-items: center;
-        font-size: 25px;
         font-weight: 700;
-        color: var(--ob-navy);
-        font-variant-numeric: tabular-nums;
-        letter-spacing: -0.9px;
-        z-index: 2;
     }
 
-    .dp-score-ring .pct small {
-        font-size: 11px;
+    /* Optional caption below meta (for the scorecard card) */
+    .dp-kpi-caption {
+        font-size: 10.5px;
         font-weight: 600;
-        color: var(--dash-text-2);
-        margin-left: 1px;
+        color: var(--dash-text-3);
+        margin-top: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
+    /* Status pill under the scorecard ring */
     .dp-score-status {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
         gap: 6px;
-        padding: 6px 14px;
+        padding: 5px 14px;
         border-radius: 100px;
         font-size: 10.5px;
         font-weight: 700;
@@ -325,26 +317,28 @@
         letter-spacing: 0.5px;
         background: color-mix(in srgb, var(--kpi-accent, var(--ob-navy)) 12%, transparent);
         color: var(--kpi-accent, var(--ob-navy));
-        margin: 0 auto 14px;
-        width: fit-content;
+        margin: 0 auto 6px;
+        border: 1px solid color-mix(in srgb, var(--kpi-accent, var(--ob-navy)) 20%, transparent);
     }
 
+    /* Scorecard breakdown row */
     .dp-score-breakdown {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 6px 16px;
-        padding-top: 14px;
+        gap: 4px 12px;
+        padding-top: 12px;
+        margin-top: auto;
         border-top: 1px dashed var(--dash-border);
         font-size: 11px;
         color: var(--dash-text-2);
-        margin-top: auto;
+        width: 100%;
     }
 
     .dp-score-breakdown > span {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 4px;
     }
 
     .dp-score-breakdown > span i {
@@ -362,7 +356,7 @@
     .dp-score-breakdown .down { color: var(--dash-danger);  font-weight: 700; }
 
     /* ============================================================
-       PROGRESS PANEL — navy header band, tinted body
+       PROGRESS PANEL
        ============================================================ */
     .dp-progress-panel {
         background:
@@ -505,7 +499,7 @@
     }
 
     /* ============================================================
-       CARD PRIMITIVE — navy header band, gold rule
+       CARD PRIMITIVE
        ============================================================ */
     .dp-card {
         background: var(--dash-surface);
@@ -667,7 +661,6 @@
 
     .dp-mini-btn i { font-size: 11px; }
 
-    /* Filter chip */
     .dp-chip-row {
         display: flex;
         flex-wrap: wrap;
@@ -707,7 +700,7 @@
     }
 
     /* ============================================================
-       TABLE — navy header band
+       TABLE
        ============================================================ */
     .dp-table-scroll {
         max-height: 540px;
@@ -976,11 +969,11 @@
        ============================================================ */
     @media (max-width: 900px) {
         .dp-wrap { gap: 20px; padding: 0 0 48px; }
-        .dp-kpi-value { font-size: 30px; }
+        .dp-kpi { padding: 20px 16px 18px; min-height: 220px; }
+        .dp-kpi-ring { width: 110px; height: 110px; }
+        .dp-kpi-ring .ring-value { font-size: 28px; }
         .dp-progress-value { font-size: 17px; }
-        .dp-kpi { padding: 18px 18px 16px; min-height: 130px; }
-        .dp-kpi-icon { width: 30px; height: 30px; font-size: 12px; }
-        .dp-kpi::before { left: 18px; right: 18px; }
+        .dp-kpi-icon { width: 24px; height: 24px; font-size: 10px; }
         .dp-card-head::after { left: 18px; right: 18px; }
         .dp-progress-panel::before { left: 18px; right: 18px; }
 
@@ -1002,12 +995,11 @@
 
     @media (max-width: 600px) {
         .dp-kpi-row { gap: 12px; }
-        .dp-kpi { min-height: 120px; padding: 16px 16px 14px; }
-        .dp-kpi-value { font-size: 28px; }
+        .dp-kpi { min-height: 200px; padding: 18px 14px 16px; }
+        .dp-kpi-ring { width: 100px; height: 100px; }
+        .dp-kpi-ring .ring-value { font-size: 26px; }
         .dp-progress-grid { gap: 14px; }
         .dp-progress-panel { padding: 18px 18px; }
-        .dp-score-ring { width: 96px; height: 96px; }
-        .dp-score-ring .pct { font-size: 22px; }
     }
 </style>
 {% endblock %}
@@ -1065,12 +1057,29 @@
 <div class="dp-wrap">
 
     <section class="dp-kpi-row">
-        <article class="dp-kpi" data-accent="danger">
+
+        {# ---- 1. Exceptions captured — ring with total ---- #}
+        <article class="dp-kpi dp-kpi--counter" data-accent="danger">
             <div class="dp-kpi-head">
-                <span class="dp-kpi-label">Exceptions Captured</span>
                 <span class="dp-kpi-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                <span class="dp-kpi-label">Exceptions Captured</span>
             </div>
-            <div class="dp-kpi-value">{{ total_exceptions_captured|default:0 }}</div>
+
+            <div class="dp-kpi-ring">
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <circle class="track" cx="50" cy="50" r="42"></circle>
+                    <circle class="meter"
+                            cx="50" cy="50" r="42"
+                            stroke-dasharray="263.9"
+                            stroke-dashoffset="263.9"
+                            data-pct="{% if total_exceptions_captured > 0 %}100{% else %}0{% endif %}"></circle>
+                </svg>
+                <div class="ring-value">
+                    {{ total_exceptions_captured|default:0 }}
+                    <small>Total</small>
+                </div>
+            </div>
+
             <div class="dp-kpi-meta">
                 {% if exceptions_this_week > 0 %}
                     <i class="fas fa-arrow-up" style="color: var(--dash-danger);"></i>
@@ -1082,12 +1091,28 @@
             </div>
         </article>
 
-        <article class="dp-kpi" data-accent="warning">
+        {# ---- 2. Pending submissions — ring with total ---- #}
+        <article class="dp-kpi dp-kpi--counter" data-accent="warning">
             <div class="dp-kpi-head">
-                <span class="dp-kpi-label">Pending Submissions</span>
                 <span class="dp-kpi-icon"><i class="fas fa-hourglass-half"></i></span>
+                <span class="dp-kpi-label">Pending Submissions</span>
             </div>
-            <div class="dp-kpi-value">{{ pending_submissions|default:0 }}</div>
+
+            <div class="dp-kpi-ring">
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <circle class="track" cx="50" cy="50" r="42"></circle>
+                    <circle class="meter"
+                            cx="50" cy="50" r="42"
+                            stroke-dasharray="263.9"
+                            stroke-dashoffset="263.9"
+                            data-pct="{% if pending_submissions > 0 %}100{% else %}0{% endif %}"></circle>
+                </svg>
+                <div class="ring-value">
+                    {{ pending_submissions|default:0 }}
+                    <small>Pending</small>
+                </div>
+            </div>
+
             <div class="dp-kpi-meta">
                 {% if pending_submissions > 0 %}
                     <i class="fas fa-clock"></i>
@@ -1099,28 +1124,45 @@
             </div>
         </article>
 
-        <article class="dp-kpi" data-accent="success">
+        {# ---- 3. Tasks completed — ring with total ---- #}
+        <article class="dp-kpi dp-kpi--counter" data-accent="success">
             <div class="dp-kpi-head">
-                <span class="dp-kpi-label">Tasks Completed</span>
                 <span class="dp-kpi-icon"><i class="fas fa-check-double"></i></span>
+                <span class="dp-kpi-label">Tasks Completed</span>
             </div>
-            <div class="dp-kpi-value">{{ total_checklists_completed|default:0 }}</div>
+
+            <div class="dp-kpi-ring">
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <circle class="track" cx="50" cy="50" r="42"></circle>
+                    <circle class="meter"
+                            cx="50" cy="50" r="42"
+                            stroke-dasharray="263.9"
+                            stroke-dashoffset="263.9"
+                            data-pct="{% if total_checklists_completed > 0 %}100{% else %}0{% endif %}"></circle>
+                </svg>
+                <div class="ring-value">
+                    {{ total_checklists_completed|default:0 }}
+                    <small>Logged</small>
+                </div>
+            </div>
+
             <div class="dp-kpi-meta">
                 <i class="fas fa-list-check"></i>
                 <span>Total log entries recorded</span>
             </div>
         </article>
 
+        {# ---- 4. My Performance — score ring ---- #}
         {% with pct=scorecard_percentage|default:0 %}
         <article class="dp-kpi"
                  data-accent="{% if pct >= 70 %}score{% elif pct >= 40 %}score-warn{% else %}score-bad{% endif %}">
 
             <div class="dp-kpi-head">
-                <span class="dp-kpi-label">My Performance</span>
                 <span class="dp-kpi-icon"><i class="fas fa-star"></i></span>
+                <span class="dp-kpi-label">My Performance</span>
             </div>
 
-            <div class="dp-score-ring">
+            <div class="dp-kpi-ring">
                 <svg viewBox="0 0 100 100" aria-hidden="true">
                     <circle class="track" cx="50" cy="50" r="42"></circle>
                     <circle class="meter"
@@ -1129,7 +1171,9 @@
                             stroke-dashoffset="263.9"
                             data-pct="{{ pct }}"></circle>
                 </svg>
-                <div class="pct">{{ pct }}<small>%</small></div>
+                <div class="ring-value">
+                    {{ pct }}<small>Score</small>
+                </div>
             </div>
 
             <div class="dp-score-status">
@@ -1440,8 +1484,9 @@
             : window.location.pathname;
     };
 
-    function animateScoreRing() {
-        document.querySelectorAll('.dp-score-ring .meter').forEach(function (ring) {
+    /* Animate every ring (scorecard + counter KPIs) */
+    function animateRings() {
+        document.querySelectorAll('.dp-kpi-ring .meter').forEach(function (ring) {
             var pct = parseFloat(ring.getAttribute('data-pct')) || 0;
             var circumference = 2 * Math.PI * 42;
             pct = Math.max(0, Math.min(100, pct));
@@ -1467,7 +1512,7 @@
 
     function boot() {
         animateProgressBars();
-        animateScoreRing();
+        animateRings();
     }
 
     if (document.readyState === 'loading') {
@@ -1481,7 +1526,7 @@
         document.querySelectorAll('.dp-progress-fill').forEach(function (bar) {
             bar.style.width = bar.getAttribute('data-width') || '0%';
         });
-        document.querySelectorAll('.dp-score-ring .meter').forEach(function (ring) {
+        document.querySelectorAll('.dp-kpi-ring .meter').forEach(function (ring) {
             var pct = Math.max(0, Math.min(100, parseFloat(ring.getAttribute('data-pct')) || 0));
             ring.setAttribute('stroke-dashoffset', (2 * Math.PI * 42) * (1 - pct / 100));
         });

@@ -4,12 +4,22 @@
 {% block title %}Checklist List{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'stylesheets/admin.css' %}" type="text/css">
 <style>
+    /* ============================================================
+       CHECKLIST LIST — inline styles (no admin.css needed)
+       ============================================================ */
+
+    /* ----- Page Layout (prevents squeezing) ----- */
+    .main-content {
+        align-items: stretch !important;
+        padding: 24px 32px !important;
+    }
+
     .cll-wrap {
+        width: 100%;
         max-width: 1400px;
         margin: 0 auto;
-        padding: 8px 0 40px;
+        padding: 0 0 40px;
         font-family: 'Poppins', system-ui, -apple-system, sans-serif;
         color: #0f1b33;
     }
@@ -44,6 +54,12 @@
         min-width: 280px;
         flex: 1;
         max-width: 460px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .cll-search:focus-within {
+        border-color: #4f6ef7;
+        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.1);
     }
 
     .cll-search input {
@@ -122,6 +138,7 @@
         border: 1px solid #e5e7eb;
         border-radius: 14px;
         overflow: hidden;
+        box-shadow: 0 1px 3px rgba(15, 27, 51, 0.04);
     }
 
     .cll-table { width: 100%; border-collapse: collapse; }
@@ -165,7 +182,6 @@
         margin-bottom: 8px;
     }
 
-    /* Numbered task list under the checklist name */
     .cll-task-list {
         list-style: none;
         padding: 0;
@@ -251,14 +267,15 @@
         font-size: 11px;
         color: #46536b;
     }
-    .cll-unit.all {
-    background: #eef1ff;
-    border-color: rgba(79, 110, 247, 0.3);
-    color: #4f6ef7;
-    font-weight: 600;
-}
 
-.cll-unit.all i { color: #4f6ef7; }
+    .cll-unit.all {
+        background: #eef1ff;
+        border-color: rgba(79, 110, 247, 0.3);
+        color: #4f6ef7;
+        font-weight: 600;
+    }
+
+    .cll-unit.all i { color: #4f6ef7; }
 
     .cll-unit i { font-size: 9px; color: #9ca3af; }
 
@@ -409,6 +426,7 @@
         width: 100%;
         box-sizing: border-box;
         background: #ffffff;
+        transition: border-color 0.15s, box-shadow 0.15s;
     }
 
     .cll-field input:focus,
@@ -450,7 +468,10 @@
         color: #374151;
         cursor: pointer;
         font-weight: 500;
+        transition: border-color 0.15s;
     }
+
+    .cll-multi label:hover { border-color: rgba(79, 110, 247, 0.4); }
 
     .cll-multi input[type="checkbox"] { accent-color: #4f6ef7; }
 
@@ -468,6 +489,12 @@
         font-family: inherit;
         font-size: 13px;
         outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .cll-task-row input:focus {
+        border-color: #4f6ef7;
+        box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
     }
 
     .cll-task-row button {
@@ -477,7 +504,10 @@
         background: #fff5f8;
         color: #e0456a;
         cursor: pointer;
+        transition: background 0.15s;
     }
+
+    .cll-task-row button:hover { background: #fdeaf0; }
 
     .cll-modal-foot {
         padding: 14px 22px;
@@ -546,6 +576,7 @@
     .cll-toast .msg   { font-size: 12px; color: #46536b; margin: 2px 0 0 0; }
 
     @media (max-width: 768px) {
+        .main-content { padding: 16px !important; }
         .cll-toolbar { flex-direction: column; align-items: stretch; }
         .cll-search { max-width: 100%; min-width: 0; }
         .cll-field-row, .cll-multi { grid-template-columns: 1fr; }
@@ -630,7 +661,6 @@
 {% block content %}
 <div class="cll-wrap">
 
-    <!-- Toolbar -->
     <div class="cll-toolbar">
         <div class="cll-toolbar-left">
             <div class="cll-search">
@@ -676,7 +706,6 @@
         </div>
     </div>
 
-    <!-- Table -->
     {% if checklists %}
     <div class="cll-table-wrap">
         <table class="cll-table">
@@ -696,21 +725,17 @@
                     data-branches="{% for b in cl.assigned_branches.all %}branch_{{ b.id }}{% if not forloop.last %},{% endif %}{% endfor %}"
                     data-departments="{% for d in cl.assigned_departments.all %}dept_{{ d.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
 
-                    <!-- Frequency -->
                     <td>
                         <span class="cll-badge freq">
                             <i class="fas fa-clock"></i> {{ cl.get_frequency_display }}
                         </span>
                     </td>
 
-                    <!-- Checklist name + description + full numbered task list -->
                     <td>
                         <div class="cll-name">{{ cl.name }}</div>
-
                         {% if cl.description %}
                             <div class="cll-desc">{{ cl.description|truncatechars:140 }}</div>
                         {% endif %}
-
                         {% if cl.tasks.all %}
                             <ol class="cll-task-list">
                                 {% for task in cl.tasks.all %}
@@ -722,11 +747,8 @@
                         {% endif %}
                     </td>
 
-                    <!-- Assigned units -->
                     <td>
                         <div class="cll-units">
-
-                            {# ---- BRANCHES ---- #}
                             {% if cl.all_branches %}
                                 <span class="cll-unit all">
                                     <i class="fas fa-building"></i> All Branches
@@ -739,7 +761,6 @@
                                 {% endfor %}
                             {% endif %}
 
-                            {# ---- DEPARTMENTS ---- #}
                             {% if cl.all_departments %}
                                 <span class="cll-unit all">
                                     <i class="fas fa-sitemap"></i> All Departments
@@ -752,15 +773,12 @@
                                 {% endfor %}
                             {% endif %}
 
-                            {# ---- EMPTY STATE ---- #}
                             {% if not cl.all_branches and not cl.all_departments and not cl.assigned_branches.exists and not cl.assigned_departments.exists %}
                                 <span style="color:#9ca3af;font-size:11px;font-style:italic;">No units</span>
                             {% endif %}
-
                         </div>
                     </td>
 
-                    <!-- Status -->
                     <td>
                         {% if cl.is_active %}
                             <span class="cll-badge on">
@@ -773,7 +791,6 @@
                         {% endif %}
                     </td>
 
-                    <!-- Actions -->
                     <td>
                         <div class="cll-actions">
                             <button class="cll-icon-btn js-edit"
@@ -808,9 +825,6 @@
     {% endif %}
 </div>
 
-<!-- ============================================================
-     EDIT MODAL
-     ============================================================ -->
 <div class="cll-modal-backdrop" id="cllModal">
     <div class="cll-modal">
         <div class="cll-modal-head">
@@ -896,7 +910,6 @@
     </div>
 </div>
 
-<!-- Toast -->
 <div class="cll-toast" id="cllToast">
     <div class="icon"><i class="fas fa-check"></i></div>
     <div>
@@ -912,9 +925,7 @@
     const CLB_EDIT_URL   = "{% url 'control_dashboard:api_edit_checklist' 0 %}".replace('/0/', '/__ID__/');
     const CLB_DELETE_URL = "{% url 'control_dashboard:api_delete_checklist' 0 %}".replace('/0/', '/__ID__/');
 
-    function clbUrl(t, id) {
-        return t.replace('__ID__', String(id));
-    }
+    function clbUrl(t, id) { return t.replace('__ID__', String(id)); }
 
     function getCsrfToken() {
         const m = document.cookie.match(/csrftoken=([^;]+)/);
@@ -934,33 +945,23 @@
         window._cllToastT = setTimeout(() => t.classList.remove('show'), 3500);
     }
 
-    /* ---------- Filter: name + assigned unit ---------- */
     function cllFilter() {
-        const q      = document.getElementById('cllSearch').value.toLowerCase().trim();
-        const unit   = document.getElementById('cllUnitFilter').value;
-
-        let visibleCount = 0;
+        const q    = document.getElementById('cllSearch').value.toLowerCase().trim();
+        const unit = document.getElementById('cllUnitFilter').value;
 
         document.querySelectorAll('#cllBody .cll-row').forEach(row => {
-            const name      = row.dataset.name || '';
-            const branches  = (row.dataset.branches || '').split(',').filter(Boolean);
-            const depts     = (row.dataset.departments || '').split(',').filter(Boolean);
+            const name     = row.dataset.name || '';
+            const branches = (row.dataset.branches || '').split(',').filter(Boolean);
+            const depts    = (row.dataset.departments || '').split(',').filter(Boolean);
 
             const matchesSearch = !q || name.includes(q);
-            const matchesUnit   = !unit ||
-                                  branches.includes(unit) ||
-                                  depts.includes(unit);
+            const matchesUnit   = !unit || branches.includes(unit) || depts.includes(unit);
 
-            const show = matchesSearch && matchesUnit;
-            row.style.display = show ? '' : 'none';
-            if (show) visibleCount++;
+            row.style.display = (matchesSearch && matchesUnit) ? '' : 'none';
         });
 
-        // Toggle the Clear button
         const clearBtn = document.getElementById('cllClearFilters');
-        if (clearBtn) {
-            clearBtn.style.display = (q || unit) ? 'inline-flex' : 'none';
-        }
+        if (clearBtn) clearBtn.style.display = (q || unit) ? 'inline-flex' : 'none';
     }
 
     function cllClearFilters() {
@@ -969,7 +970,6 @@
         cllFilter();
     }
 
-    /* ---------- Task rows inside modal ---------- */
     function cllAddTaskRow(value) {
         const editor = document.getElementById('cllTasksEditor');
         const row = document.createElement('div');
@@ -987,7 +987,6 @@
         editor.appendChild(row);
     }
 
-    /* ---------- Open edit modal ---------- */
     async function cllOpenEdit(id) {
         try {
             const resp = await fetch(clbUrl(CLB_GET_URL, id), { credentials: 'same-origin' });
@@ -1029,7 +1028,6 @@
         document.getElementById('cllModal').classList.remove('show');
     }
 
-    /* ---------- Save from modal ---------- */
     async function cllSave() {
         const id     = document.getElementById('cllId').value;
         const name   = document.getElementById('cllNameEdit').value.trim();
@@ -1094,7 +1092,6 @@
         }
     }
 
-    /* ---------- Delete ---------- */
     async function cllDelete(id, name) {
         if (!confirm(`Delete checklist "${name}"?\nThis cannot be undone.`)) return;
 
@@ -1121,7 +1118,6 @@
         }
     }
 
-    /* ---------- Wire up buttons ---------- */
     document.querySelectorAll('.js-edit').forEach(btn =>
         btn.addEventListener('click', () => cllOpenEdit(btn.dataset.id))
     );
@@ -1129,12 +1125,10 @@
         btn.addEventListener('click', () => cllDelete(btn.dataset.id, btn.dataset.name))
     );
 
-    // Close modal on backdrop click
     document.getElementById('cllModal').addEventListener('click', function(e) {
         if (e.target.id === 'cllModal') cllCloseModal();
     });
 
-    // Close modal on ESC
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') cllCloseModal();
     });

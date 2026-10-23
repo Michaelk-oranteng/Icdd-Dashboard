@@ -5,22 +5,16 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods, require_POST
-from django.db import transaction
-from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.views.decorators.http import require_http_methods
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.db.models import Q, Count, Sum
-from django.db.models.functions import Coalesce
 from django.contrib.auth.decorators import login_required
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-from PIL import Image
 import json
 from datetime import datetime, timedelta, date
 import base64
 import io
-import os, logging
-import uuid
+import logging
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
@@ -39,32 +33,48 @@ from .models import (
     Branch,
     Department,
     ReportDataField,
-    ReportSubmissionField,
     ReportSchedule,
     ExceptionRecord,
     ExceptionUpload,
     TrialBalanceUpload,
     TrialBalanceEntry,
     SentEmail,
-    ChecklistChangeRequest,
-    snapshot_checklist,
 )
 from .forms import UserProfileForm
 
 logger = logging.getLogger(__name__)
 
-def _is_supervisor(user):
-    """Check UserProfile.role for the supervisor role."""
-    profile = getattr(user, 'profile', None)
-    return bool(profile and profile.role in ('supervisor', 'admin'))
+import uuid as _chat_uuid
+import threading as _chat_threading
+import time as _chat_time
+
+# channel_id (uuid str) -> {
+#     "members": set(user_email_lower),
+#     "messages": [ { id, sender, text, ts }, ... ],
+#     "lock": threading.RLock(),
+# }
+_SECRET_CHAT_BUS = {}
+_SECRET_CHAT_LOCK = _chat_threading.RLock()
 
 
-def _json_body(request):
-    try:
-        return json.loads(request.body or '{}')
-    except (json.JSONDecodeError, TypeError):
-        return {}
+def _secret_chat_channel(channel_id, create=False):
+    """
+    Look up a channel.
 
+    create=True  → create it if missing (used only by api_secret_chat_open)
+    create=False → return None if missing (used by send/poll so a
+                   dead channel returns 410, not a confusing 403)
+    """
+    with _SECRET_CHAT_LOCK:
+        ch = _SECRET_CHAT_BUS.get(channel_id)
+        if ch is None and create:
+            ch = {
+                "members": set(),
+                "messages": [],
+                "lock": _chat_threading.RLock(),
+            }
+            _SECRET_CHAT_BUS[channel_id] = ch
+        return ch
 
 # ==================== CONSTANTS ====================
 TRIAL_BALANCE_REPORT_TYPE = '__TRIAL_BALANCE__'
@@ -302,52 +312,6 @@ def _add_frequency(dt, frequency):
     target_day = min(dt.day, last_day_of_target)
 
     return dt.replace(year=target_year, month=target_month, day=target_day)
-
-def count_expected_report_occurrences(report, until=None):
-    """
-    Count how many recurrence periods a Report has produced from its
-    anchor (Report.deadline_date) up to `until`.
-
-    A period only counts once its deadline has passed. If the deadline
-    is still in the future (relative to `until`), that period does not
-    yet count — it hasn't been "expected" yet.
-
-    A missed period still counts in the denominator (team performance
-    penalises it by contributing 0 to the numerator). This function
-    simply counts periods; the caller is responsible for how a missed
-    period is weighted.
-    """
-    if until is None:
-        until = timezone.now()
-
-    if timezone.is_naive(until):
-        until = timezone.make_aware(until)
-
-    if not report.deadline_date:
-        return 0
-
-    anchor_time = report.deadline_time or datetime.strptime('23:59', '%H:%M').time()
-    anchor_dt = timezone.make_aware(datetime.combine(report.deadline_date, anchor_time))
-
-    frequency = report.frequency or 'one-off'
-
-    if frequency == 'one-off':
-        return 1 if anchor_dt <= until else 0
-
-    count = 0
-    period_deadline = anchor_dt
-    safety = 0
-    while safety < 10000:
-        if period_deadline > until:
-            break
-        count += 1
-        nxt = _add_frequency(period_deadline, frequency)
-        if nxt is None:
-            break
-        period_deadline = nxt
-        safety += 1
-
-    return count
 
 
 def _build_member_scorecard(member, today=None):
@@ -2431,21 +2395,6 @@ def drafts_page(request):
 # ============================================================
 # MY REPORTS — display builder for Excel uploads
 # ============================================================
-CANONICAL_EXCEPTION_HEADERS = [
-    'S/N',
-    'BRANCH/UNIT',
-    'EXCEPTION',
-    'DATE EXCEPTION WAS NOTED',
-    'TARGET DATE FOR CLOSURE',
-    'CATEGORY OF EXCEPTION',
-    'RESPONSIBLE OFFICER',
-    'SUPERVISOR',
-    "AUDITEE'S RESPONSE",
-    'REMARKS',
-    'STATUS',
-    'INCOME/COST SAVED',
-]
-
 
 def _build_exception_display(upload):
     """
@@ -2487,7 +2436,7 @@ def _build_exception_display(upload):
 
     return {
         'is_excel': True,
-        'headers': CANONICAL_EXCEPTION_HEADERS,
+        'headers': EXCEPTION_CANONICAL_HEADERS,
         'rows': rows,
     }
 
@@ -3446,60 +3395,6 @@ def api_get_checklist_logs(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-    try:
-        user_profile = UserProfile.objects.get(email=request.user.email)
-
-        user_checklists = Checklist.objects.filter(
-            is_active=True
-        ).filter(
-            Q(assigned_users=user_profile) |
-            Q(assignment_target='all') |
-            Q(assignment_target=user_profile.position)
-        ).distinct()
-
-        total_checklists = user_checklists.count()
-        logs = ChecklistLog.objects.filter(user=user_profile)
-        total_logs = logs.count()
-
-        today = timezone.now().date()
-        start_of_week = get_week_start(today)
-        end_of_week = start_of_week + timedelta(days=6)
-
-        weekly_logs = logs.filter(log_date__gte=start_of_week, log_date__lte=end_of_week).count()
-        last_7_days = today - timedelta(days=7)
-        recent_logs = logs.filter(log_date__gte=last_7_days).count()
-
-        daily_checklists = user_checklists.filter(frequency='daily')
-        daily_total = daily_checklists.count()
-
-        completion_rate = 0
-        if daily_total > 0:
-            completed_days = 0
-            for i in range(7):
-                day = start_of_week + timedelta(days=i)
-                if day > today:
-                    break
-                completed_for_day = logs.filter(log_date=day).count()
-                if completed_for_day >= daily_total:
-                    completed_days += 1
-            completion_rate = int((completed_days / 7) * 100)
-
-        return JsonResponse({
-            'success': True,
-            'stats': {
-                'total_checklists': total_checklists,
-                'total_logs': total_logs,
-                'weekly_logs': weekly_logs,
-                'recent_logs': recent_logs,
-                'completion_rate': completion_rate,
-                'daily_checklists': daily_total,
-            }
-        })
-
-    except UserProfile.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -3874,9 +3769,9 @@ def member_activity_logs(request):
     start_of_week = get_week_start(today)
     start_of_month = today.replace(day=1)
 
-    today_logs = ActivityLog.objects.filter(user=user_profile, created_at__date=today)
-    week_logs = ActivityLog.objects.filter(user=user_profile, created_at__date__gte=start_of_week, created_at__date__lte=today)
-    month_logs = ActivityLog.objects.filter(user=user_profile, created_at__date__gte=start_of_month, created_at__date__lte=today)
+    today_logs = ActivityLog.objects.filter(user=user_profile, created_at__date=today).count()
+    week_logs  = ActivityLog.objects.filter(user=user_profile, created_at__date__gte=start_of_week, created_at__date__lte=today).count()
+    month_logs = ActivityLog.objects.filter(user=user_profile, created_at__date__gte=start_of_month, created_at__date__lte=today).count()
 
     last_activity = ActivityLog.objects.filter(user=user_profile).order_by('-created_at').first()
     last_activity_display = last_activity.created_at.strftime('%b %d, %Y %H:%M') if last_activity else None
@@ -4509,7 +4404,7 @@ def supervisor_checklist(request):
 
     today = timezone.now().date()
     month_start = today.replace(day=1)
-    year_start = today.replace(month=1, day=1)
+    year_start  = today.replace(month=1, day=1)
 
     all_checklists = Checklist.objects.filter(is_active=True)
 
@@ -4521,38 +4416,37 @@ def supervisor_checklist(request):
     )
 
     user_completion_data = []
-    total_users = team_members.count()
+    total_users     = team_members.count()
     total_completed = 0
-    total_assigned = 0
-    sum_of_rates = 0
+    total_assigned  = 0
+    sum_of_rates    = 0
 
     for member in team_members:
         member_branch_ids = set(member.branches.values_list('id', flat=True))
-        member_dept_ids = set(member.departments.values_list('id', flat=True))
+        member_dept_ids   = set(member.departments.values_list('id', flat=True))
 
+        # ── Match checklists against the member's branches/departments ──
+        # NOTE: The Checklist model uses assigned_branches / assigned_departments.
+        # There is no `assigned_users` or `assignment_target` field on it —
+        # scoping is done purely by the member's branch + department membership.
         member_checklists = all_checklists.filter(
-            Q(assigned_users=member) |
-            Q(assignment_target='all') |
-            Q(assignment_target=member.position) |
-            Q(assigned_departments__in=member_dept_ids) |
-            Q(assigned_branches__in=member_branch_ids)
+            Q(assigned_branches__in=member_branch_ids) |
+            Q(assigned_departments__in=member_dept_ids)
         ).distinct()
 
-        member_branch_ids = set(member.branches.values_list('id', flat=True))
-        member_dept_ids = set(member.departments.values_list('id', flat=True))
-
-        member_expected_units = 0
+        member_expected_units  = 0
         member_completed_units = 0
-        member_ytd_expected = 0
-        member_ytd_completed = 0
+        member_ytd_expected    = 0
+        member_ytd_completed   = 0
 
-        per_branch = {}
+        per_branch     = {}
         per_department = {}
 
         for checklist in member_checklists:
-            ck_branches = checklist.assigned_branches.filter(id__in=member_branch_ids)
+            ck_branches    = checklist.assigned_branches.filter(id__in=member_branch_ids)
             ck_departments = checklist.assigned_departments.filter(id__in=member_dept_ids)
 
+            # ── Checklist assigned to nothing → count once per member ──
             if not checklist.assigned_branches.exists() and not checklist.assigned_departments.exists():
                 exp = count_expected_occurrences(checklist, month_start, today)
                 act = ChecklistLog.objects.filter(
@@ -4561,19 +4455,20 @@ def supervisor_checklist(request):
                     branch__isnull=True, department__isnull=True,
                 ).values('log_date').distinct().count()
 
-                member_expected_units += exp
+                member_expected_units  += exp
                 member_completed_units += min(act, exp) if exp else 0
-                member_ytd_expected += count_expected_occurrences(checklist, year_start, today)
-                member_ytd_completed += min(
-                    ChecklistLog.objects.filter(
-                        checklist=checklist, user=member,
-                        log_date__gte=year_start, log_date__lte=today,
-                        branch__isnull=True, department__isnull=True,
-                    ).values('log_date').distinct().count(),
-                    count_expected_occurrences(checklist, year_start, today) or 0,
-                )
+
+                y_exp = count_expected_occurrences(checklist, year_start, today)
+                y_act = ChecklistLog.objects.filter(
+                    checklist=checklist, user=member,
+                    log_date__gte=year_start, log_date__lte=today,
+                    branch__isnull=True, department__isnull=True,
+                ).values('log_date').distinct().count()
+                member_ytd_expected  += y_exp
+                member_ytd_completed += min(y_act, y_exp) if y_exp else 0
                 continue
 
+            # ── Per-branch ──
             for branch in ck_branches:
                 exp = count_expected_occurrences(checklist, month_start, today)
                 act = ChecklistLog.objects.filter(
@@ -4583,12 +4478,15 @@ def supervisor_checklist(request):
                 ).values('log_date').distinct().count()
 
                 act = min(act, exp) if exp else 0
-                member_expected_units += exp
+                member_expected_units  += exp
                 member_completed_units += act
 
-                row = per_branch.setdefault(branch.id, {'id': branch.id, 'name': branch.name, 'expected': 0, 'actual': 0})
+                row = per_branch.setdefault(
+                    branch.id,
+                    {'id': branch.id, 'name': branch.name, 'expected': 0, 'actual': 0},
+                )
                 row['expected'] += exp
-                row['actual'] += act
+                row['actual']   += act
 
                 y_exp = count_expected_occurrences(checklist, year_start, today)
                 y_act = ChecklistLog.objects.filter(
@@ -4596,9 +4494,10 @@ def supervisor_checklist(request):
                     log_date__gte=year_start, log_date__lte=today,
                     branch_id=branch.id, department__isnull=True,
                 ).values('log_date').distinct().count()
-                member_ytd_expected += y_exp
+                member_ytd_expected  += y_exp
                 member_ytd_completed += min(y_act, y_exp) if y_exp else 0
 
+            # ── Per-department ──
             for dept in ck_departments:
                 exp = count_expected_occurrences(checklist, month_start, today)
                 act = ChecklistLog.objects.filter(
@@ -4608,12 +4507,15 @@ def supervisor_checklist(request):
                 ).values('log_date').distinct().count()
 
                 act = min(act, exp) if exp else 0
-                member_expected_units += exp
+                member_expected_units  += exp
                 member_completed_units += act
 
-                row = per_department.setdefault(dept.id, {'id': dept.id, 'name': dept.name, 'expected': 0, 'actual': 0})
+                row = per_department.setdefault(
+                    dept.id,
+                    {'id': dept.id, 'name': dept.name, 'expected': 0, 'actual': 0},
+                )
                 row['expected'] += exp
-                row['actual'] += act
+                row['actual']   += act
 
                 y_exp = count_expected_occurrences(checklist, year_start, today)
                 y_act = ChecklistLog.objects.filter(
@@ -4621,53 +4523,59 @@ def supervisor_checklist(request):
                     log_date__gte=year_start, log_date__lte=today,
                     department_id=dept.id, branch__isnull=True,
                 ).values('log_date').distinct().count()
-                member_ytd_expected += y_exp
+                member_ytd_expected  += y_exp
                 member_ytd_completed += min(y_act, y_exp) if y_exp else 0
 
-        completion_rate = int(member_completed_units / member_expected_units * 100) if member_expected_units else 0
-        completion_rate = min(completion_rate, 100)
-        ytd_rate = int(member_ytd_completed / member_ytd_expected * 100) if member_ytd_expected else 0
-        ytd_rate = min(ytd_rate, 100)
+        # ── Rates ──
+        completion_rate = (
+            min(int(member_completed_units / member_expected_units * 100), 100)
+            if member_expected_units else 0
+        )
+        ytd_rate = (
+            min(int(member_ytd_completed / member_ytd_expected * 100), 100)
+            if member_ytd_expected else 0
+        )
 
         for row in per_branch.values():
-            row['progress'] = int(row['actual'] / row['expected'] * 100) if row['expected'] else 0
-            row['progress'] = min(row['progress'], 100)
+            row['progress'] = (
+                min(int(row['actual'] / row['expected'] * 100), 100)
+                if row['expected'] else 0
+            )
         for row in per_department.values():
-            row['progress'] = int(row['actual'] / row['expected'] * 100) if row['expected'] else 0
-            row['progress'] = min(row['progress'], 100)
+            row['progress'] = (
+                min(int(row['actual'] / row['expected'] * 100), 100)
+                if row['expected'] else 0
+            )
 
-        branch_rows = sorted(per_branch.values(), key=lambda r: r['name'].lower())
-        dept_rows = sorted(per_department.values(), key=lambda r: r['name'].lower())
+        branch_rows = sorted(per_branch.values(),     key=lambda r: r['name'].lower())
+        dept_rows   = sorted(per_department.values(), key=lambda r: r['name'].lower())
 
+        # ── Status label ──
         if completion_rate >= 90:
-            status = 'success'
-            status_text = 'Excellent'
+            status, status_text = 'success', 'Excellent'
         elif completion_rate >= 70:
-            status = 'warning'
-            status_text = 'Good'
+            status, status_text = 'warning', 'Good'
         elif completion_rate >= 40:
-            status = 'warning'
-            status_text = 'In Progress'
+            status, status_text = 'warning', 'In Progress'
         else:
-            status = 'danger'
-            status_text = 'Needs Improvement'
+            status, status_text = 'danger', 'Needs Improvement'
 
         total_completed += member_completed_units
-        total_assigned += member_expected_units
-        sum_of_rates += completion_rate
+        total_assigned  += member_expected_units
+        sum_of_rates    += completion_rate
 
         user_completion_data.append({
-            'user': member,
-            'total_checklists': member_expected_units,
+            'user':                 member,
+            'total_checklists':     member_expected_units,
             'completed_checklists': member_completed_units,
-            'completion_rate': completion_rate,
-            'ytd_completion_rate': ytd_rate,
-            'branch_count': len(branch_rows),
-            'department_count': len(dept_rows),
-            'branches': branch_rows,
-            'departments': dept_rows,
-            'status': status,
-            'status_text': status_text,
+            'completion_rate':      completion_rate,
+            'ytd_completion_rate':  ytd_rate,
+            'branch_count':         len(branch_rows),
+            'department_count':     len(dept_rows),
+            'branches':             branch_rows,
+            'departments':          dept_rows,
+            'status':               status,
+            'status_text':          status_text,
         })
 
     avg_completion = int(sum_of_rates / total_users) if total_users else 0
@@ -4675,13 +4583,13 @@ def supervisor_checklist(request):
     user_completion_data.sort(key=lambda x: x['completion_rate'], reverse=True)
 
     context = {
-        'user_profile': user_profile,
+        'user_profile':         user_profile,
         'user_completion_data': user_completion_data,
-        'total_users': total_users,
-        'avg_completion': avg_completion,
-        'total_checklists': all_checklists.count(),
-        'total_completed': total_completed,
-        'total_assigned': total_assigned,
+        'total_users':          total_users,
+        'avg_completion':       avg_completion,
+        'total_checklists':     all_checklists.count(),
+        'total_completed':      total_completed,
+        'total_assigned':       total_assigned,
     }
 
     return render(request, 'control_dashboard/checklist-sup.html', context)
@@ -4706,11 +4614,8 @@ def api_checklist_detail(request, user_id):
         member_checklists = Checklist.objects.filter(
             is_active=True
         ).filter(
-            Q(assigned_users=user) |
-            Q(assignment_target='all') |
-            Q(assignment_target=user.position) |
-            Q(assigned_departments__in=member_dept_ids) |
-            Q(assigned_branches__in=member_branch_ids)
+            Q(assigned_branches__in=member_branch_ids) |
+            Q(assigned_departments__in=member_dept_ids)
         ).distinct()
 
         overall_expected = 0
@@ -7337,6 +7242,7 @@ def api_create_unit(request):
         code        = (data.get('code') or '').strip()
         assignment  = (data.get('assignment') or 'cc').strip().lower()
         user_ids    = data.get('user_ids') or []
+        description = (data.get('description') or '').strip()
 
         # ---- Validation ----
         if unit_type not in ('branch', 'department'):
@@ -8092,3 +7998,268 @@ def api_email_preview_exceptions(request):
         logger.exception("Error in api_email_preview_exceptions")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+# ============================================================
+# ═══ SECRET CHAT ENDPOINTS ═══
+# ============================================================
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_secret_chat_recipients(request):
+    """
+    Return the list of users the current caller can DM.
+    Only exposes: id, full_name, email, position, initials.
+
+    NOTE: does NOT write anything to the session or DB.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
+
+    me = UserProfile.objects.filter(email__iexact=request.user.email).first()
+    qs = UserProfile.objects.filter(status='active').exclude(
+        email__iexact=request.user.email
+    ).order_by('full_name')
+
+    payload = []
+    for u in qs:
+        payload.append({
+            'id': u.id,
+            'email': u.email,
+            'full_name': u.full_name or u.email,
+            'position': u.get_position_display() if hasattr(u, 'get_position_display') else '',
+            'role': u.role,
+            'initials': _initials_from_name(u.full_name or u.email),
+        })
+
+    return JsonResponse({
+        'success': True,
+        'me': {
+            'email': request.user.email,
+            'full_name': (me.full_name if me else request.user.get_full_name() or request.user.username),
+        },
+        'recipients': payload,
+    })
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_secret_chat_open(request):
+    """
+    Open (or join) a chat channel.
+
+    Body:
+    {
+      "recipients": ["a@x.com", "b@x.com"]
+    }
+
+    The caller is included automatically. Returns a channel_id — a
+    random UUID. NO state is written to session, DB, or disk. If the
+    server restarts, all channel ids are gone (which is the point).
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
+
+    try:
+        data = json.loads(request.body or '{}')
+    except Exception:
+        data = {}
+
+    me = (request.user.email or '').strip().lower()
+    if not me:
+        return JsonResponse({'success': False, 'error': 'No email on account.'}, status=400)
+
+    recipients = data.get('recipients') or []
+    if not isinstance(recipients, list):
+        recipients = []
+
+    recipients = [
+        str(r or '').strip().lower()
+        for r in recipients
+        if str(r or '').strip()
+    ]
+    # De-dupe, drop self
+    recipients = [r for r in dict.fromkeys(recipients) if r and r != me]
+    if not recipients:
+        return JsonResponse(
+            {'success': False, 'error': 'Pick at least one recipient.'},
+            status=400,
+        )
+
+    channel_id = str(_chat_uuid.uuid4())
+    ch = _secret_chat_channel(channel_id, create=True)
+    with ch['lock']:
+        ch['members'].add(me)
+        for r in recipients:
+            ch['members'].add(r)
+
+    return JsonResponse({
+        'success': True,
+        'channel_id': channel_id,
+        'members': sorted(ch['members']),
+    })
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_secret_chat_send(request, channel_id):
+    """
+    Append a message to the in-memory bus.
+
+    Body:
+    { "text": "hello" }
+
+    No DB row, no log, no session write. Message lives ONLY in
+    `_SECRET_CHAT_BUS[channel_id]['messages']` while the server is alive.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
+
+    try:
+        data = json.loads(request.body or '{}')
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+
+    text = (data.get('text') or '').strip()
+    if not text:
+        return JsonResponse({'success': False, 'error': 'Empty message'}, status=400)
+    text = text[:2000]
+
+    me = (request.user.email or '').strip().lower()
+
+    # NEVER create — if the channel is gone, say so clearly.
+    ch = _secret_chat_channel(channel_id, create=False)
+    if ch is None:
+        return JsonResponse({
+            'success': False,
+            'error': 'This chat has expired. Please start a new one.',
+            'expired': True,
+        }, status=410)
+
+    with ch['lock']:
+        if me not in ch['members']:
+            return JsonResponse(
+                {'success': False, 'error': 'Not a member of this channel.'},
+                status=403,
+            )
+
+        msg = {
+            'id': str(_chat_uuid.uuid4()),
+            'sender': me,
+            'text': text,
+            'ts': timezone.now().isoformat(),
+        }
+        ch['messages'].append(msg)
+        if len(ch['messages']) > 500:
+            ch['messages'] = ch['messages'][-500:]
+
+    return JsonResponse({'success': True, 'message': msg})
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_secret_chat_poll(request, channel_id):
+    """
+    Long-ish poll: wait up to ~20 s for new messages, then return
+    whatever's there.
+
+    Query:
+      since=<last_message_id>   (optional)
+
+    No state persisted — the caller passes their own cursor.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
+
+    me = (request.user.email or '').strip().lower()
+
+    # NEVER create — a missing channel means it's gone (server restart,
+    # different gunicorn worker, etc.).
+    ch = _secret_chat_channel(channel_id, create=False)
+    if ch is None:
+        return JsonResponse({
+            'success': False,
+            'error': 'This chat has expired. Please start a new one.',
+            'expired': True,
+        }, status=410)
+
+    since = (request.GET.get('since') or '').strip()
+    deadline = _chat_time.time() + 20  # 20 s long-poll window
+
+    while True:
+        # ---- Read under the lock ----
+        with ch['lock']:
+            if me not in ch['members']:
+                return JsonResponse(
+                    {'success': False, 'error': 'Not a member of this channel.'},
+                    status=403,
+                )
+
+            new_msgs = []
+            seen = False if since else True
+            for m in ch['messages']:
+                if not seen:
+                    if m['id'] == since:
+                        seen = True
+                    continue
+                new_msgs.append(m)
+
+            members_snapshot = sorted(ch['members'])
+
+            if new_msgs:
+                return JsonResponse({
+                    'success': True,
+                    'messages': new_msgs,
+                    'members': members_snapshot,
+                })
+
+        # ---- Sleep OUTSIDE the lock ----
+        if _chat_time.time() >= deadline:
+            return JsonResponse({
+                'success': True,
+                'messages': [],
+                'members': members_snapshot,
+            })
+        _chat_time.sleep(0.75)
+    """
+    Long-ish poll: wait up to ~20 seconds for new messages,
+    then return whatever's there.
+
+    Query:
+      since=<last_message_id>   (optional)
+
+    No state persisted — the caller passes their own cursor.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
+
+    me = (request.user.email or '').lower()
+    ch = _secret_chat_channel(channel_id)
+
+    since = (request.GET.get('since') or '').strip()
+
+    # Wait up to 20 s for new messages past `since`
+    deadline = timezone.now().timestamp() + 20
+    while timezone.now().timestamp() < deadline:
+        with ch['lock']:
+            if me not in ch['members']:
+                return JsonResponse({'success': False, 'error': 'Not in this channel'}, status=403)
+
+            # Find index after `since`
+            new_msgs = []
+            seen = False if since else True
+            for m in ch['messages']:
+                if not seen:
+                    if m['id'] == since:
+                        seen = True
+                    continue
+                new_msgs.append(m)
+
+            if new_msgs:
+                return JsonResponse({
+                    'success': True,
+                    'messages': new_msgs,
+                    'members': sorted(ch['members']),
+                })
+
+        # Nothing yet — sleep briefly and retry
+        import time as _time
+        _time.sleep(0.75)
+
+    return JsonResponse({'success': True, 'messages': [], 'members': sorted(ch['members'])})

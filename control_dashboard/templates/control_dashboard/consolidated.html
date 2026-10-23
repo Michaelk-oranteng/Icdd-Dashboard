@@ -58,129 +58,16 @@
 .consolidated-container {
     max-width: 1500px;
     margin: 0 auto;
-    padding: 4px 0 40px;
+    padding: 8px 0 48px;
     font-family: var(--cr-font);
     color: var(--cr-text-0);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 22px;
 }
 
 /* ============================================================
-   KPI STRIP
-   ============================================================ */
-.cr-kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-}
-
-.cr-kpi {
-    position: relative;
-    background:
-        radial-gradient(circle at 100% 0%,
-            rgba(0, 51, 102, 0.05) 0%,
-            transparent 45%),
-        linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
-    border: 1px solid var(--cr-border);
-    border-radius: 16px;
-    padding: 18px 22px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    box-shadow: var(--cr-shadow-sm);
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-/* Gold hairline at top */
-.cr-kpi::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 18px;
-    right: 18px;
-    height: 2px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--ob-gold) 50%,
-        transparent 100%);
-    opacity: 0.85;
-}
-
-.cr-kpi:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--cr-shadow-md);
-    border-color: var(--ob-navy-mid);
-}
-
-.cr-kpi.primary { --kpi-accent: var(--ob-navy); }
-.cr-kpi.success { --kpi-accent: var(--cr-emerald); }
-.cr-kpi.warning { --kpi-accent: var(--cr-amber); }
-.cr-kpi.info    { --kpi-accent: var(--cr-violet); }
-
-/* Icon — solid fill with white glyph */
-.cr-kpi-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    display: grid;
-    place-items: center;
-    font-size: 16px;
-    flex-shrink: 0;
-    color: #ffffff;
-    transition: transform 0.2s ease;
-}
-
-.cr-kpi:hover .cr-kpi-icon {
-    transform: scale(1.05);
-}
-
-.cr-kpi.primary .cr-kpi-icon {
-    background: var(--ob-navy);
-    box-shadow: 0 3px 10px rgba(0, 51, 102, 0.28);
-}
-.cr-kpi.success .cr-kpi-icon {
-    background: var(--cr-emerald);
-    box-shadow: 0 3px 10px rgba(18, 166, 122, 0.28);
-}
-.cr-kpi.warning .cr-kpi-icon {
-    background: var(--cr-amber);
-    box-shadow: 0 3px 10px rgba(212, 130, 15, 0.28);
-}
-.cr-kpi.info .cr-kpi-icon {
-    background: var(--cr-violet);
-    box-shadow: 0 3px 10px rgba(106, 77, 220, 0.28);
-}
-
-.cr-kpi-info { flex: 1; min-width: 0; }
-
-.cr-kpi-value {
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.5px;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--ob-navy);
-}
-
-.cr-kpi-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--cr-text-2);
-    text-transform: uppercase;
-    letter-spacing: 0.9px;
-    margin-top: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* ============================================================
-   FILTER CARD
+   FILTER CARD — now the top of the page
    ============================================================ */
 .consolidated-filter-card {
     position: relative;
@@ -190,7 +77,7 @@
             transparent 45%),
         linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
     border-radius: 18px;
-    padding: 22px 26px;
+    padding: 24px 28px;
     border: 1px solid var(--cr-border);
     box-shadow: var(--cr-shadow-sm);
     overflow: hidden;
@@ -201,8 +88,8 @@
     content: '';
     position: absolute;
     top: 0;
-    left: 26px;
-    right: 26px;
+    left: 28px;
+    right: 28px;
     height: 2px;
     background: linear-gradient(90deg,
         transparent 0%,
@@ -214,14 +101,14 @@
 .filter-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) auto;
-    gap: 14px;
+    gap: 16px;
     align-items: end;
 }
 
 .filter-field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
 }
 
@@ -280,8 +167,9 @@
 
 .filter-actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 /* Primary export button — navy gradient + gold shimmer */
@@ -290,12 +178,12 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 0 20px;
+    padding: 0 22px;
     background: linear-gradient(135deg, var(--ob-navy) 0%, var(--ob-navy-mid) 100%);
     color: #ffffff;
     border: none;
     border-radius: 10px;
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 600;
     font-family: var(--cr-font);
     cursor: pointer;
@@ -346,7 +234,7 @@
     color: var(--ob-navy);
     border: 1px solid var(--cr-border);
     border-radius: 10px;
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 600;
     font-family: var(--cr-font);
     cursor: pointer;
@@ -368,18 +256,20 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 700;
     color: var(--cr-rose);
     text-decoration: none;
-    padding: 2px 6px;
-    border-radius: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
     border: 1px solid rgba(200, 57, 95, 0.22);
     background: var(--cr-rose-soft);
     transition: all 0.2s ease;
     cursor: pointer;
     font-family: var(--cr-font);
     white-space: nowrap;
+    height: 42px;
+    box-sizing: border-box;
 }
 
 .clear-dates-link:hover {
@@ -418,7 +308,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 22px 14px;
+    padding: 18px 24px 16px;
     border-bottom: 1px solid var(--cr-border);
     background: linear-gradient(180deg, #f8fafd 0%, #eef3fa 100%);
     flex-wrap: wrap;
@@ -429,7 +319,7 @@
 
 .table-header h4 {
     margin: 0;
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 700;
     color: var(--ob-navy);
     display: flex;
@@ -439,8 +329,8 @@
 }
 
 .table-header h4 i {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 8px;
     display: grid;
     place-items: center;
@@ -500,7 +390,7 @@
 
 .table-responsive {
     overflow-x: auto;
-    max-height: 620px;
+    max-height: 680px;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 51, 102, 0.15) transparent;
@@ -540,13 +430,13 @@
     letter-spacing: 1px;
     text-transform: uppercase;
     text-align: left;
-    padding: 14px 14px;
+    padding: 15px 16px;
     border-bottom: 1px solid var(--ob-navy-tint-3);
     white-space: nowrap;
 }
 
 .cr-table tbody td {
-    padding: 13px 14px;
+    padding: 14px 16px;
     border-bottom: 1px solid var(--cr-hairline);
     color: var(--cr-text-1);
     vertical-align: top;
@@ -729,11 +619,36 @@
     }
 }
 
+@media (max-width: 720px) {
+    .consolidated-container {
+        padding: 4px 0 32px;
+        gap: 16px;
+    }
+    .consolidated-filter-card {
+        padding: 20px 20px;
+    }
+    .consolidated-filter-card::before {
+        left: 20px;
+        right: 20px;
+    }
+    .table-header {
+        padding: 16px 18px 14px;
+    }
+    .cr-table thead th,
+    .cr-table tbody td {
+        padding: 12px 12px;
+    }
+}
+
 @media (max-width: 600px) {
     .filter-grid { grid-template-columns: 1fr; }
-    .filter-actions { flex-direction: column; }
+    .filter-actions { flex-direction: column; align-items: stretch; }
     .btn-generate,
-    .btn-reset-filters { width: 100%; }
+    .btn-reset-filters,
+    .clear-dates-link {
+        width: 100%;
+        justify-content: center;
+    }
     .empty-state-card { padding: 56px 20px; }
     .empty-state-card i { width: 72px; height: 72px; font-size: 34px; }
     .empty-state-card h3 { font-size: 15px; }
@@ -820,43 +735,6 @@
         </div>
 
     {% else %}
-
-        {# -------------------------------------------------------- #}
-        {# KPI STRIP #}
-        {# -------------------------------------------------------- #}
-        <div class="cr-kpi-grid">
-            <div class="cr-kpi primary">
-                <div class="cr-kpi-icon"><i class="fas fa-list-ul"></i></div>
-                <div class="cr-kpi-info">
-                    <div class="cr-kpi-value">{{ total_count }}</div>
-                    <div class="cr-kpi-label">Exceptions in this report</div>
-                </div>
-            </div>
-
-            <div class="cr-kpi success">
-                <div class="cr-kpi-icon"><i class="fas fa-coins"></i></div>
-                <div class="cr-kpi-info">
-                    <div class="cr-kpi-value">{{ total_cost|floatformat:2 }}</div>
-                    <div class="cr-kpi-label">Income / Cost Saved</div>
-                </div>
-            </div>
-
-            <div class="cr-kpi info">
-                <div class="cr-kpi-icon"><i class="fas fa-users"></i></div>
-                <div class="cr-kpi-info">
-                    <div class="cr-kpi-value">{{ distinct_uploaders }}</div>
-                    <div class="cr-kpi-label">Contributing Users</div>
-                </div>
-            </div>
-
-            <div class="cr-kpi warning">
-                <div class="cr-kpi-icon"><i class="fas fa-file-lines"></i></div>
-                <div class="cr-kpi-info">
-                    <div class="cr-kpi-value">{{ available_report_types|length }}</div>
-                    <div class="cr-kpi-label">Consolidated Reports</div>
-                </div>
-            </div>
-        </div>
 
         {# -------------------------------------------------------- #}
         {# FILTER / BUILD FORM #}
