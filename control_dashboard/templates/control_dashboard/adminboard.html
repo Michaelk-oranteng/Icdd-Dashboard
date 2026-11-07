@@ -70,6 +70,11 @@
         width: 100%;
     }
 
+    /* Full-width row inside the grid */
+    .form-grid .form-field-wide {
+        grid-column: 1 / -1;
+    }
+
     .form-field {
         display: flex;
         flex-direction: column;
@@ -123,6 +128,34 @@
         background-size: 14px;
     }
 
+    /* ----- Multi-select styling ----- */
+    .table-select[multiple] {
+        height: auto;
+        min-height: 140px;
+        padding: 8px 10px;
+        background-image: none;
+        cursor: default;
+        line-height: 1.6;
+        overflow-y: auto;
+    }
+
+    .table-select[multiple] option {
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #0f1b33;
+    }
+
+    .table-select[multiple] option:checked {
+        background: linear-gradient(0deg, #4f6ef7 0%, #4f6ef7 100%);
+        color: #ffffff;
+    }
+
+    .table-select[multiple] option:hover {
+        background: #eef2ff;
+        color: #0f1b33;
+    }
+
     .table-input:hover, .table-select:hover { border-color: rgba(15, 27, 51, 0.16); }
     .table-input:focus, .table-select:focus {
         border-color: #4f6ef7;
@@ -132,6 +165,25 @@
     .table-input::placeholder { color: #8993a8; font-size: 13px; }
 
     .form-hint { font-size: 11px; color: #8993a8; line-height: 1.4; margin-top: 2px; }
+
+    /* ----- Selection counter under multi-selects ----- */
+    .multiselect-counter {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #4f6ef7;
+        background: #eef2ff;
+        padding: 3px 10px;
+        border-radius: 12px;
+        width: fit-content;
+    }
+    .multiselect-counter.empty {
+        color: #8993a8;
+        background: #f3f4f6;
+    }
 
     /* ----- Intro Banner ----- */
     .cu-intro {
@@ -356,6 +408,40 @@
                     {% endfor %}
                 </select>
             </div>
+
+            <!-- Branches — multi-select -->
+            <div class="form-field form-field-wide" id="field-branches">
+                <label for="newBranches">
+                    Branches
+                    <small style="color:#8993a8;font-weight:400;text-transform:none;letter-spacing:0;">(optional, select any)</small>
+                </label>
+                <select id="newBranches" class="table-select" multiple size="6">
+                    {% for b in branches %}
+                    <option value="{{ b.id }}">{{ b.name }}{% if b.code %} — {{ b.code }}{% endif %}</option>
+                    {% empty %}
+                    <option value="" disabled>No active branches yet — add one from Branch / Department.</option>
+                    {% endfor %}
+                </select>
+                <small class="form-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
+                <span class="multiselect-counter empty" id="branchesCounter">0 selected</span>
+            </div>
+
+            <!-- Departments — multi-select -->
+            <div class="form-field form-field-wide" id="field-departments">
+                <label for="newDepartments">
+                    Departments
+                    <small style="color:#8993a8;font-weight:400;text-transform:none;letter-spacing:0;">(optional, select any)</small>
+                </label>
+                <select id="newDepartments" class="table-select" multiple size="6">
+                    {% for d in departments %}
+                    <option value="{{ d.id }}">{{ d.name }}{% if d.code %} — {{ d.code }}{% endif %}</option>
+                    {% empty %}
+                    <option value="" disabled>No active departments yet — add one from Branch / Department.</option>
+                    {% endfor %}
+                </select>
+                <small class="form-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
+                <span class="multiselect-counter empty" id="departmentsCounter">0 selected</span>
+            </div>
         </div>
 
         <div class="form-actions">
@@ -444,6 +530,34 @@ Object.entries(FIELD_RULES).forEach(([key, rule]) => {
     });
 });
 
+/* ---------- Multi-select helpers ---------- */
+function updateCounter(selectId, counterId) {
+    const select  = document.getElementById(selectId);
+    const counter = document.getElementById(counterId);
+    if (!select || !counter) return;
+    const n = select.selectedOptions.length;
+    counter.textContent = n === 1 ? '1 selected' : `${n} selected`;
+    counter.classList.toggle('empty', n === 0);
+}
+
+function getSelectedIds(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return [];
+    return Array.from(select.selectedOptions)
+        .map(o => parseInt(o.value, 10))
+        .filter(n => !isNaN(n) && n > 0);
+}
+
+['newBranches', 'newDepartments'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        el.addEventListener('change', () => {
+            updateCounter(id, id === 'newBranches' ? 'branchesCounter' : 'departmentsCounter');
+        });
+    }
+});
+
+/* ---------- Reset ---------- */
 document.getElementById('resetFormBtn').addEventListener('click', function () {
     if (!confirm('Clear all fields and start over?')) return;
     document.getElementById('addUserForm').reset();
@@ -452,9 +566,15 @@ document.getElementById('resetFormBtn').addEventListener('click', function () {
         wrap.classList.remove('has-error', 'is-valid');
         document.getElementById('err-' + k).classList.remove('visible');
     });
+    // Explicitly clear multi-selects (form.reset sometimes misses them in some browsers)
+    document.getElementById('newBranches').selectedIndex = -1;
+    document.getElementById('newDepartments').selectedIndex = -1;
+    updateCounter('newBranches', 'branchesCounter');
+    updateCounter('newDepartments', 'departmentsCounter');
     document.getElementById('newFirstName').focus();
 });
 
+/* ---------- Submit ---------- */
 const addUserForm = document.getElementById('addUserForm');
 addUserForm.addEventListener('submit', async function (event) {
     event.preventDefault();
@@ -473,6 +593,10 @@ addUserForm.addEventListener('submit', async function (event) {
     const role      = document.getElementById('newRole').value;
     const status    = document.getElementById('newStatus').value;
 
+    // Multi-select values
+    const branchIds     = getSelectedIds('newBranches');
+    const departmentIds = getSelectedIds('newDepartments');
+
     const btn = document.getElementById('addUserBtn');
     const originalHTML = btn.innerHTML;
     btn.disabled = true;
@@ -482,7 +606,16 @@ addUserForm.addEventListener('submit', async function (event) {
         const response = await fetch("{% url 'control_dashboard:api_create_user' %}", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
-            body: JSON.stringify({ email, username, full_name: `${firstName} ${lastName}`.trim(), position, role, status, department_ids: [], branch_ids: [] }),
+            body: JSON.stringify({
+                email,
+                username,
+                full_name: `${firstName} ${lastName}`.trim(),
+                position,
+                role,
+                status,
+                branch_ids: branchIds,
+                department_ids: departmentIds,
+            }),
         });
         const data = await response.json();
         if (data.success) {
@@ -503,6 +636,12 @@ addUserForm.addEventListener('submit', async function (event) {
         btn.disabled = false;
         btn.innerHTML = originalHTML;
     }
+});
+
+/* ---------- Init counters ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+    updateCounter('newBranches', 'branchesCounter');
+    updateCounter('newDepartments', 'departmentsCounter');
 });
 </script>
 {% endblock %}

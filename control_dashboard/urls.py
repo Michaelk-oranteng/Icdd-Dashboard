@@ -14,7 +14,7 @@ urlpatterns = [
     # ==================== ADMIN URLS ====================
     path('admin/', views.admin_page, name='admin_page'),
 
-    # ═══ NEW ═══ Admin sub-pages
+    # ═══ Admin sub-pages
     path('admin/users/',       views.admin_user_list,   name='admin_user_list'),
     path('admin/units/',       views.admin_units,       name='admin_units'),
 
@@ -60,26 +60,26 @@ urlpatterns = [
     path('api/users/<int:user_id>/status/',   views.api_update_status, name='api_update_status'),
     path('api/users/<int:user_id>/delete/',   views.api_delete_user,   name='api_delete_user'),
 
-    # ═══ NEW ═══ Avatar upload / delete
-    path('api/users/<int:user_id>/avatar/',views.api_upload_avatar, name='api_upload_avatar'),
-    path('api/users/<int:user_id>/avatar/delete/',views.api_delete_avatar, name='api_delete_avatar'),
+    # ═══ Avatar upload / delete
+    path('api/users/<int:user_id>/avatar/',        views.api_upload_avatar, name='api_upload_avatar'),
+    path('api/users/<int:user_id>/avatar/delete/', views.api_delete_avatar, name='api_delete_avatar'),
 
     # ==================== API - REPORT MANAGEMENT ====================
-    path('api/reports/create/',                views.api_create_report, name='api_create_report'),
-    path('api/reports/<int:report_id>/',       views.api_get_report,    name='api_get_report'),
-    path('api/reports/<int:report_id>/edit/',  views.api_edit_report,   name='api_edit_report'),
-    path('api/reports/<int:report_id>/delete/',views.api_delete_report, name='api_delete_report'),
+    path('api/reports/create/',                 views.api_create_report, name='api_create_report'),
+    path('api/reports/<int:report_id>/',        views.api_get_report,    name='api_get_report'),
+    path('api/reports/<int:report_id>/edit/',   views.api_edit_report,   name='api_edit_report'),
+    path('api/reports/<int:report_id>/delete/', views.api_delete_report, name='api_delete_report'),
 
     # ==================== API - MEMBER DRAFTS ====================
-    path('api/drafts/<str:report_id>/',         views.api_get_draft,    name='draft_detail'),
-    path('api/drafts/<str:report_id>/edit/',    views.api_edit_draft,   name='draft_edit'),
-    path('api/drafts/<str:report_id>/delete/',  views.api_delete_draft, name='draft_delete'),
+    path('api/drafts/<str:report_id>/',        views.api_get_draft,    name='draft_detail'),
+    path('api/drafts/<str:report_id>/edit/',   views.api_edit_draft,   name='draft_edit'),
+    path('api/drafts/<str:report_id>/delete/', views.api_delete_draft, name='draft_delete'),
 
     # ==================== API - CHECKLISTS ====================
-    path('api/checklists/create/',                     views.api_create_checklist, name='api_create_checklist'),
-    path('api/checklists/<int:checklist_id>/',         views.api_get_checklist,    name='api_get_checklist'),
-    path('api/checklists/<int:checklist_id>/edit/',    views.api_edit_checklist,   name='api_edit_checklist'),
-    path('api/checklists/<int:checklist_id>/delete/',  views.api_delete_checklist, name='api_delete_checklist'),
+    path('api/checklists/create/',                    views.api_create_checklist, name='api_create_checklist'),
+    path('api/checklists/<int:checklist_id>/',        views.api_get_checklist,    name='api_get_checklist'),
+    path('api/checklists/<int:checklist_id>/edit/',   views.api_edit_checklist,   name='api_edit_checklist'),
+    path('api/checklists/<int:checklist_id>/delete/', views.api_delete_checklist, name='api_delete_checklist'),
 
     # ==================== API - CHECKLIST LOGS ====================
     path('api/checklist-log/',                  views.api_log_checklist,          name='api_log_checklist'),
@@ -88,9 +88,9 @@ urlpatterns = [
     path('api/checklist/detail/<int:user_id>/', views.api_checklist_detail,       name='api_checklist_detail'),
 
     # ==================== API - SUBMIT REPORTS ====================
-    path('api/save-draft/',    views.api_save_draft,      name='api_save_draft'),
-    path('api/report-data/',   views.api_get_report_data, name='api_get_report_data'),
-    path('api/submit/selected/', views.submit_selected_reports, name='submit_selected'),
+    path('api/save-draft/',       views.api_save_draft,          name='api_save_draft'),
+    path('api/report-data/',      views.api_get_report_data,     name='api_get_report_data'),
+    path('api/submit/selected/',  views.submit_selected_reports, name='submit_selected'),
 
     # ==================== API - EXPORT LOGS ====================
     path('api/export-logs/', views.api_export_logs, name='export_logs'),
@@ -103,83 +103,68 @@ urlpatterns = [
     path('analytics/', views.analytics_dashboard, name='analytics_dashboard'),
 
     # ==================== DAILY TRIAL BALANCE ====================
-    path('member/daily-trial-balance/',     views.daily_trial_balance,                    name='daily_trial_balance'),
-    path('api/trial-balance/parse/',        views.api_parse_trial_balance,                name='api_parse_trial_balance'),
-    path('api/trial-balance/submit/',       views.api_submit_trial_balance,               name='api_submit_trial_balance'),
-    path('api/trial-balance/template/',     views.api_download_trial_balance_template,    name='api_download_trial_balance_template'),
-    path('api/trial-balance/by-date/',      views.api_get_trial_balance_by_date,          name='api_get_trial_balance_by_date'),
-    path('api/trial-balance/check-day/',    views.api_check_trial_balance_day,            name='api_check_trial_balance_day'),
+    path('member/daily-trial-balance/', views.daily_trial_balance,                 name='daily_trial_balance'),
+    path('api/trial-balance/parse/',    views.api_parse_trial_balance,             name='api_parse_trial_balance'),
+    path('api/trial-balance/submit/',   views.api_submit_trial_balance,            name='api_submit_trial_balance'),
+    path('api/trial-balance/template/', views.api_download_trial_balance_template, name='api_download_trial_balance_template'),
+    path('api/trial-balance/by-date/',  views.api_get_trial_balance_by_date,       name='api_get_trial_balance_by_date'),
+    path('api/trial-balance/check-day/',views.api_check_trial_balance_day,         name='api_check_trial_balance_day'),
 
     # ==================== CONSOLIDATED REPORTS ====================
-    path('member/consolidated-reports/',                 views.consolidated_reports,             name='consolidated_reports'),
-   path('member/consolidated-reports/export-workbook/', views.export_consolidated_workbook,     name='export_consolidated_workbook'),
-    path('api/consolidated/filter-options/',             views.api_consolidated_filter_options,  name='api_consolidated_filter_options'),
+    path('member/consolidated-reports/',                 views.consolidated_reports,            name='consolidated_reports'),
+    path('member/consolidated-reports/export-workbook/', views.export_consolidated_workbook,    name='export_consolidated_workbook'),
+    path('api/consolidated/filter-options/',             views.api_consolidated_filter_options, name='api_consolidated_filter_options'),
 
     # ==================== API - EXCEL ROWS ====================
     path('api/excel-rows/<int:row_id>/delete/', views.api_delete_excel_row, name='excel_row_delete'),
     path('api/excel-rows/<int:row_id>/edit/',   views.api_edit_excel_row,   name='excel_row_edit'),
 
     # ==================== API - SUPERVISOR AD-HOC SCORING ====================
-    path('api/ad-hoc/create/',                     views.api_create_ad_hoc_deduction, name='api_create_ad_hoc_deduction'),
-    path('api/ad-hoc/<int:deduction_id>/update/',  views.api_update_ad_hoc_deduction, name='api_update_ad_hoc_deduction'),
-    path('api/ad-hoc/<int:deduction_id>/delete/',  views.api_delete_ad_hoc_deduction, name='api_delete_ad_hoc_deduction'),
+    path('api/ad-hoc/create/',                    views.api_create_ad_hoc_deduction, name='api_create_ad_hoc_deduction'),
+    path('api/ad-hoc/<int:deduction_id>/update/', views.api_update_ad_hoc_deduction, name='api_update_ad_hoc_deduction'),
+    path('api/ad-hoc/<int:deduction_id>/delete/', views.api_delete_ad_hoc_deduction, name='api_delete_ad_hoc_deduction'),
 
     # ==================== API - SUPERVISOR LIVE UPDATES ====================
-    path('api/team-performance-live/',views.api_team_performance_live,name='api_team_performance_live'),
-    path('api/supervisor-top-performers-live/',views.api_supervisor_top_performers_live,name='api_supervisor_top_performers_live'),
-    path('email/', views.email_page, name='email_page'),
-    path('api/send-email/', views.api_send_email, name='api_send_email'),
-    path('api/trial-balance/compare-previous/',views.api_compare_trial_balance_previous,name='tb_compare_previous'),
-    path('api/trial-balance/compare-range/',views.api_compare_trial_balance_range,name='tb_compare_range'),
+    path('api/team-performance-live/',          views.api_team_performance_live,          name='api_team_performance_live'),
+    path('api/supervisor-top-performers-live/', views.api_supervisor_top_performers_live, name='api_supervisor_top_performers_live'),
+    
+    # ==================== EMAIL ====================
+    path('email/',           views.email_page,     name='email_page'),
+    path('api/send-email/',  views.api_send_email, name='api_send_email'),
     path('api/email/preview-exceptions/', views.api_email_preview_exceptions, name='api_email_preview_exceptions'),
-    path('adminboard/consolidated/export/',views.export_consolidated_workbook,name='export_consolidated_workbook',),
-    path('api/exceptions/<int:record_id>/comments/',
-     views.api_list_supervisor_comments,
-     name='api_list_supervisor_comments'),
 
-path('api/exceptions/<int:record_id>/comments/add/',
-     views.api_add_supervisor_comment,
-     name='api_add_supervisor_comment'),
+    # ==================== TRIAL BALANCE COMPARISONS ====================
+    path('api/trial-balance/compare-previous/', views.api_compare_trial_balance_previous, name='tb_compare_previous'),
+    path('api/trial-balance/compare-range/',    views.api_compare_trial_balance_range,    name='tb_compare_range'),
+    
+    # ==================== CONSOLIDATED EXPORT ====================
+    path('adminboard/consolidated/export/', views.export_consolidated_workbook, name='export_consolidated_workbook_admin'),
 
-path('api/comments/<int:comment_id>/resolve/',
-     views.api_resolve_supervisor_comment,
-     name='api_resolve_supervisor_comment'),
-# ═══ Member comment inbox + reply ═══
-path('api/member/comments/inbox/',
-     views.api_member_comment_inbox,
-     name='api_member_comment_inbox'),
-
-path('api/member/comments/<int:comment_id>/reply/',
-     views.api_member_reply_to_comment,
-     name='api_member_reply_to_comment'),
+    # ==================== SUPERVISOR COMMENTS ====================
+    path('api/exceptions/<int:record_id>/comments/',     views.api_list_supervisor_comments, name='api_list_supervisor_comments'),
+    path('api/exceptions/<int:record_id>/comments/add/', views.api_add_supervisor_comment,   name='api_add_supervisor_comment'),
+    path('api/comments/<int:comment_id>/resolve/',       views.api_resolve_supervisor_comment, name='api_resolve_supervisor_comment'),
+    
+    # ═══ Member comment inbox + reply ═══
+    path('api/member/comments/inbox/',                views.api_member_comment_inbox,         name='api_member_comment_inbox'),
+    path('api/member/comments/<int:comment_id>/reply/', views.api_member_reply_to_comment,      name='api_member_reply_to_comment'),
 
     # ═══ MEMBER — checklist change requests ═══
-    path('member/checklist-requests/',
-         views.member_checklist_requests,
-         name='member_checklist_requests'),
-
-    path('api/member/checklist-requests/create/',
-         views.api_member_create_checklist_request,
-         name='api_member_create_checklist_request'),
+    path('member/checklist-requests/',      views.member_checklist_requests,               name='member_checklist_requests'),
+    path('api/member/checklist-requests/create/', views.api_member_create_checklist_request, name='api_member_create_checklist_request'),
+    
+    # ═══ NEW ═══ MEMBER — edit & cancel pending requests
+    path('api/member/checklist-requests/<int:request_id>/update/', views.api_member_update_checklist_request, name='api_member_update_checklist_request'),
+    path('api/member/checklist-requests/<int:request_id>/cancel/', views.api_member_cancel_checklist_request, name='api_member_cancel_checklist_request'),
 
     # ═══ SUPERVISOR — checklist change requests ═══
-    path('supervisor/checklist-requests/',
-         views.supervisor_checklist_requests,
-         name='supervisor_checklist_requests'),
+    path('supervisor/checklist-requests/', views.supervisor_checklist_requests, name='supervisor_checklist_requests'),
+    path('api/checklist-requests/<int:request_id>/',       views.api_checklist_request_detail,      name='api_checklist_request_detail'),
+    path('api/checklist-requests/pending-count/',          views.api_pending_checklist_requests_count, name='api_pending_checklist_requests_count'),
+    path('api/checklist-requests/<int:request_id>/approve/', views.api_approve_checklist_request,     name='api_approve_checklist_request'),
+    path('api/checklist-requests/<int:request_id>/reject/',  views.api_reject_checklist_request,      name='api_reject_checklist_request'),
 
-    path('api/checklist-requests/<int:request_id>/',
-         views.api_checklist_request_detail,
-         name='api_checklist_request_detail'),
-
-    path('api/checklist-requests/pending-count/',
-         views.api_pending_checklist_requests_count,
-         name='api_pending_checklist_requests_count'),
-
-    path('api/checklist-requests/<int:request_id>/approve/',
-         views.api_approve_checklist_request,
-         name='api_approve_checklist_request'),
-
-    path('api/checklist-requests/<int:request_id>/reject/',
-         views.api_reject_checklist_request,
-         name='api_reject_checklist_request'),
+    # ═══ NEW ═══ NOTIFICATIONS
+    path('api/notifications/',                            views.api_get_notifications,          name='api_get_notifications'),
+    path('api/notifications/<int:notification_id>/read/', views.api_mark_notification_read,     name='api_mark_notification_read'),
 ]

@@ -127,7 +127,7 @@
     }
     .modal-backdrop.open { display: flex; }
     .modal-card {
-        background: #fff; border-radius: 12px; width: 100%; max-width: 560px;
+        background: #fff; border-radius: 12px; width: 100%; max-width: 620px;
         max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
         animation: modalIn 0.15s ease-out;
     }
@@ -154,6 +154,28 @@
     .modal-body input:focus, .modal-body select:focus {
         border-color: #0066cc; box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
     }
+
+    /* ----- Multi-select styling (branch / department) ----- */
+    .modal-body select[multiple] {
+        height: auto; min-height: 130px; padding: 8px 10px;
+        cursor: default; line-height: 1.6; overflow-y: auto;
+    }
+    .modal-body select[multiple] option {
+        padding: 5px 8px; border-radius: 6px; font-size: 13px;
+    }
+    .modal-body select[multiple] option:checked {
+        background: linear-gradient(0deg, #0066cc 0%, #0066cc 100%);
+        color: #ffffff;
+    }
+    .modal-body .form-hint {
+        font-size: 11px; color: #8993a8; margin-top: 3px; display: block;
+    }
+    .modal-body .multiselect-counter {
+        display: inline-flex; align-items: center; gap: 6px; margin-top: 4px;
+        font-size: 11px; font-weight: 600; color: #0066cc;
+        background: #eef4ff; padding: 3px 10px; border-radius: 12px; width: fit-content;
+    }
+    .modal-body .multiselect-counter.empty { color: #8993a8; background: #f3f4f6; }
 
     .modal-footer {
         padding: 16px 22px; border-top: 1px solid #e5e7eb;
@@ -309,7 +331,16 @@
                             <i class="fas fa-user-check"></i> Activate
                         </button>
                         {% endif %}
-                        <button type="button" class="btn-edit js-edit-btn" data-user-id="{{ u.id }}" data-email="{{ u.email }}" data-full-name="{{ u.full_name }}" data-username="{{ u.username|default:'' }}" data-position="{{ u.position }}" data-role="{{ u.role }}" data-status="{{ u.status }}">
+                        <button type="button" class="btn-edit js-edit-btn"
+                                data-user-id="{{ u.id }}"
+                                data-email="{{ u.email }}"
+                                data-full-name="{{ u.full_name }}"
+                                data-username="{{ u.username|default:'' }}"
+                                data-position="{{ u.position }}"
+                                data-role="{{ u.role }}"
+                                data-status="{{ u.status }}"
+                                data-branch-ids="{% for b in u.branches.all %}{{ b.id }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                data-department-ids="{% for d in u.departments.all %}{{ d.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
                             <i class="fas fa-pen"></i> Edit
                         </button>
                         <button type="button" class="btn-avatar-remove js-avatar-remove-btn" id="avatar-remove-btn-{{ u.id }}" data-user-id="{{ u.id }}" {% if not u.avatar %}disabled title="Remove uploaded picture (revert to Gravatar)"{% endif %}>
@@ -376,6 +407,36 @@
                     {% endfor %}
                 </select>
             </div>
+
+            <!-- Branches — multi-select -->
+            <div class="form-field form-field-wide">
+                <label for="editBranches">
+                    Branches
+                    <small style="color:#8993a8;font-weight:400;">(optional, select any)</small>
+                </label>
+                <select id="editBranches" multiple size="6">
+                    {% for b in branches %}
+                    <option value="{{ b.id }}">{{ b.name }}{% if b.code %} — {{ b.code }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
+                <span class="multiselect-counter empty" id="editBranchesCounter">0 selected</span>
+            </div>
+
+            <!-- Departments — multi-select -->
+            <div class="form-field form-field-wide">
+                <label for="editDepartments">
+                    Departments
+                    <small style="color:#8993a8;font-weight:400;">(optional, select any)</small>
+                </label>
+                <select id="editDepartments" multiple size="6">
+                    {% for d in departments %}
+                    <option value="{{ d.id }}">{{ d.name }}{% if d.code %} — {{ d.code }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-hint">Hold Ctrl (Windows) or Cmd (Mac) to select multiple.</small>
+                <span class="multiselect-counter empty" id="editDepartmentsCounter">0 selected</span>
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn-modal-cancel" onclick="closeEditModal();">Cancel</button>
@@ -385,7 +446,6 @@
 </div>
 
 <script>
-    /* JS remains completely unchanged from your working version */
     function getCsrfToken() {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -425,7 +485,17 @@
         if (toggleBtn) { toggleStatus(toggleBtn.dataset.userId, toggleBtn.dataset.nextStatus); return; }
         const editBtn = e.target.closest('.js-edit-btn');
         if (editBtn) {
-            openEditModal(editBtn.dataset.userId, editBtn.dataset.email, editBtn.dataset.fullName, editBtn.dataset.username, editBtn.dataset.position, editBtn.dataset.role, editBtn.dataset.status);
+            openEditModal(
+                editBtn.dataset.userId,
+                editBtn.dataset.email,
+                editBtn.dataset.fullName,
+                editBtn.dataset.username,
+                editBtn.dataset.position,
+                editBtn.dataset.role,
+                editBtn.dataset.status,
+                editBtn.dataset.branchIds || '',
+                editBtn.dataset.departmentIds || ''
+            );
             return;
         }
         const removeBtn = e.target.closest('.js-avatar-remove-btn');
@@ -532,7 +602,53 @@
 
     let _editingUserId = null;
 
-    function openEditModal(userId, email, fullName, username, position, role, status) {
+    /* ---------- Multi-select helpers for the modal ---------- */
+    function setMultiSelectValues(selectId, counterId, csvIds) {
+        const select = document.getElementById(selectId);
+        const counter = document.getElementById(counterId);
+        if (!select) return;
+        const wanted = new Set(
+            String(csvIds || '')
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean)
+                .map(String)
+        );
+        Array.from(select.options).forEach(opt => {
+            opt.selected = wanted.has(String(opt.value));
+        });
+        updateModalCounter(selectId, counterId);
+    }
+
+    function updateModalCounter(selectId, counterId) {
+        const select = document.getElementById(selectId);
+        const counter = document.getElementById(counterId);
+        if (!select || !counter) return;
+        const n = select.selectedOptions.length;
+        counter.textContent = n === 1 ? '1 selected' : `${n} selected`;
+        counter.classList.toggle('empty', n === 0);
+    }
+
+    function getModalSelectedIds(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select) return [];
+        return Array.from(select.selectedOptions)
+            .map(o => parseInt(o.value, 10))
+            .filter(n => !isNaN(n) && n > 0);
+    }
+
+    // Live-update counters as the user clicks options
+    ['editBranches', 'editDepartments'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', () => {
+                updateModalCounter(id, id === 'editBranches' ? 'editBranchesCounter' : 'editDepartmentsCounter');
+            });
+        }
+    });
+
+    /* ---------- Open / close modal ---------- */
+    function openEditModal(userId, email, fullName, username, position, role, status, branchIdsCsv, departmentIdsCsv) {
         _editingUserId = userId;
         document.getElementById('editUserId').value   = userId;
         document.getElementById('editEmail').value    = email || '';
@@ -543,6 +659,11 @@
         document.getElementById('editPosition').value = position || 'cc';
         document.getElementById('editRole').value     = role || 'member';
         document.getElementById('editStatus').value   = status || 'active';
+
+        // Preselect current branch / department assignments
+        setMultiSelectValues('editBranches', 'editBranchesCounter', branchIdsCsv);
+        setMultiSelectValues('editDepartments', 'editDepartmentsCounter', departmentIdsCsv);
+
         document.getElementById('editModal').classList.add('open');
     }
 
@@ -559,6 +680,7 @@
         if (e.key === 'Escape' && document.getElementById('editModal').classList.contains('open')) closeEditModal();
     });
 
+    /* ---------- Save ---------- */
     function saveEdit() {
         const userId = _editingUserId;
         if (!userId) return;
@@ -574,14 +696,30 @@
         if (!email)     { alert('Email is required.'); return; }
         if (username && !/^[a-zA-Z0-9._-]{3,150}$/.test(username)) { alert('Username must be 3–150 chars, letters/digits/._- only.'); return; }
 
-        const fullName = `${firstName} ${lastName}`.trim();
+        const fullName      = `${firstName} ${lastName}`.trim();
+        const branchIds     = getModalSelectedIds('editBranches');
+        const departmentIds = getModalSelectedIds('editDepartments');
+
         const btn = document.getElementById('editSaveBtn');
         const originalHTML = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         const url = `${API_USERS_BASE}${userId}/edit/`;
 
-        fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() }, body: JSON.stringify({ email, full_name: fullName, username, position, role, status }) })
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify({
+                email,
+                full_name: fullName,
+                username,
+                position,
+                role,
+                status,
+                branch_ids: branchIds,
+                department_ids: departmentIds,
+            }),
+        })
         .then(r => r.json()).then(data => {
             btn.disabled = false;
             btn.innerHTML = originalHTML;

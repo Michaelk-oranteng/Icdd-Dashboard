@@ -5,12 +5,11 @@
 
 {% block extra_css %}
 <style>
-    /* Updated to stretch to the full width of the dashboard */
     .req-wrap {
         width: 100%;
         max-width: 100%;
         margin: 0 auto;
-        padding: 8px 0 40px; /* Removed side padding to rely on parent container padding */
+        padding: 8px 0 40px;
         font-family: 'Poppins', sans-serif;
         color: #0f1b33;
         display: flex;
@@ -144,6 +143,21 @@
     .req-multi label:hover { background: #f0f4fb; }
     .req-multi input { accent-color: #214EBA; }
 
+    /* Warning when member has no assigned branches/departments */
+    .req-multi-empty {
+        font-size: 11px;
+        color: #c8395f;
+        padding: 8px 10px;
+        background: #fdeaf0;
+        border: 1px dashed rgba(200, 57, 95, 0.35);
+        border-radius: 7px;
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        line-height: 1.4;
+    }
+    .req-multi-empty i { margin-top: 2px; flex-shrink: 0; }
+
     .req-actions {
         grid-column: 1 / -1;
         display: flex; justify-content: flex-end; gap: 10px;
@@ -255,6 +269,7 @@
         </div>
         <div class="req-body">
             {% csrf_token %}
+            <input type="hidden" id="reqEditId" value="">
 
             <div class="req-field" id="reqTypeWrap">
                 <label for="reqType">Request Type <span class="req">*</span></label>
@@ -316,7 +331,16 @@
                         <div class="req-multi" id="reqBranchList">
                             {% for b in branches %}
                             <label><input type="checkbox" class="req-branch-check" value="{{ b.id }}"> {{ b.name }}</label>
-                            {% empty %}<span style="font-size:11px;color:#8493ab;">No branches.</span>{% endfor %}
+                            {% empty %}
+                            <div class="req-multi-empty">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>
+                                    You are not assigned to any branch.
+                                    Contact your admin to get a branch assignment before
+                                    submitting this request.
+                                </span>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                     <div class="req-field" style="grid-column:auto;">
@@ -324,7 +348,16 @@
                         <div class="req-multi" id="reqDeptList">
                             {% for d in departments %}
                             <label><input type="checkbox" class="req-dept-check" value="{{ d.id }}"> {{ d.name }}</label>
-                            {% empty %}<span style="font-size:11px;color:#8493ab;">No departments.</span>{% endfor %}
+                            {% empty %}
+                            <div class="req-multi-empty">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>
+                                    You are not assigned to any department.
+                                    Contact your admin to get a department assignment before
+                                    submitting this request.
+                                </span>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>
@@ -341,7 +374,7 @@
             </div>
 
             <div class="req-actions">
-                <button type="button" class="req-btn req-btn-cancel" onclick="window.location.reload()">Reset</button>
+                <button type="button" class="req-btn req-btn-cancel" onclick="resetForm()">Reset</button>
                 <button type="button" class="req-btn req-btn-submit" id="reqSubmitBtn" onclick="submitChecklistRequest()">
                     <i class="fas fa-paper-plane"></i> Submit Request
                 </button>
@@ -375,8 +408,20 @@
                     <div class="req-note"><strong>Supervisor note:</strong> {{ r.review_note }}</div>
                     {% endif %}
                 </div>
-                <div style="display:flex; align-items:flex-start;">
+
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
                     <span class="req-status {{ r.status }}">{{ r.get_status_display }}</span>
+
+                    {% if r.status == 'pending' %}
+                    <div style="display:flex; gap:6px;">
+                        <button class="req-btn req-btn-cancel" style="padding: 4px 8px; font-size: 10px;" onclick="cancelRequest({{ r.id }})">
+                            Cancel
+                        </button>
+                        <button class="req-btn" style="padding: 4px 8px; font-size: 10px; background:#eef1ff; color:#214EBA;" onclick='editRequest({{ r.id }}, {{ r.request_type|safe|default:"\"create\""|safe }}, {{ r.payload|safe|default:"{}"|safe }}, {{ r.justification|safe|default:"\"\""|safe }})'>
+                            Edit
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% empty %}
@@ -390,6 +435,10 @@
 {% block extra_js %}
 <script>
 const REQ_CREATE_URL = "{% url 'control_dashboard:api_member_create_checklist_request' %}";
+const REQ_UPDATE_URL = "{% url 'control_dashboard:api_member_update_checklist_request' 0 %}";
+const REQ_CANCEL_URL = "{% url 'control_dashboard:api_member_cancel_checklist_request' 0 %}";
+
+function urlFor(tpl, id) { return tpl.replace('/0/', '/' + id + '/'); }
 
 function getCsrfToken() {
     const m = document.cookie.match(/csrftoken=([^;]+)/);
@@ -417,7 +466,93 @@ function removeReqTask(btn) {
     else row.querySelector('.req-task-input').value = '';
 }
 
+function resetForm() {
+    document.getElementById('reqEditId').value = '';
+    document.getElementById('reqType').value = 'create';
+    document.getElementById('reqTarget').value = '';
+    document.getElementById('reqName').value = '';
+    document.getElementById('reqDescription').value = '';
+    document.getElementById('reqNewTask').value = '';
+    document.getElementById('reqJustification').value = '';
+
+    document.querySelectorAll('.req-branch-check').forEach(c => c.checked = false);
+    document.querySelectorAll('.req-dept-check').forEach(c => c.checked = false);
+
+    const editor = document.getElementById('reqTasksEditor');
+    editor.innerHTML = '<div class="req-task-row"><input type="text" class="req-task-input" placeholder="Task description"><button type="button" onclick="removeReqTask(this)"><i class="fas fa-times"></i></button></div>';
+
+    document.getElementById('reqSubmitBtn').innerHTML = '<i class="fas fa-paper-plane"></i> Submit Request';
+    onReqTypeChange();
+}
+
+function cancelRequest(id) {
+    if (!confirm("Are you sure you want to cancel this pending request?")) return;
+
+    fetch(urlFor(REQ_CANCEL_URL, id), {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() },
+        credentials: 'same-origin'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) window.location.reload();
+        else alert(data.error || 'Failed to cancel');
+    })
+    .catch(() => alert('Network error.'));
+}
+
+// Edit Request Functionality
+function editRequest(id, type, payload, justification) {
+    resetForm();
+
+    document.getElementById('reqEditId').value = id;
+    document.getElementById('reqType').value = type;
+    document.getElementById('reqJustification').value = justification;
+
+    if (type !== 'create') {
+        document.getElementById('reqTarget').value = payload.target_id || '';
+    }
+
+    if (type === 'create' || type === 'modify') {
+        if (payload.name) document.getElementById('reqName').value = payload.name;
+        if (payload.frequency) document.getElementById('reqFrequency').value = payload.frequency;
+        if (payload.description) document.getElementById('reqDescription').value = payload.description;
+
+        if (payload.tasks && payload.tasks.length > 0) {
+            const editor = document.getElementById('reqTasksEditor');
+            editor.innerHTML = '';
+            payload.tasks.forEach(t => {
+                const row = document.createElement('div');
+                row.className = 'req-task-row';
+                row.innerHTML = `<input type="text" class="req-task-input" placeholder="Task description" value="${t.description || ''}"><button type="button" onclick="removeReqTask(this)"><i class="fas fa-times"></i></button>`;
+                editor.appendChild(row);
+            });
+        }
+
+        if (payload.assigned_branches) {
+            payload.assigned_branches.forEach(id => {
+                const check = document.querySelector(`.req-branch-check[value="${id}"]`);
+                if (check) check.checked = true;
+            });
+        }
+        if (payload.assigned_departments) {
+            payload.assigned_departments.forEach(id => {
+                const check = document.querySelector(`.req-dept-check[value="${id}"]`);
+                if (check) check.checked = true;
+            });
+        }
+    } else if (type === 'add_task') {
+        if (payload.description) document.getElementById('reqNewTask').value = payload.description;
+    }
+
+    document.getElementById('reqSubmitBtn').innerHTML = '<i class="fas fa-save"></i> Update Request';
+    onReqTypeChange();
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 async function submitChecklistRequest() {
+    const editId        = document.getElementById('reqEditId').value;
     const type          = document.getElementById('reqType').value;
     const justification = document.getElementById('reqJustification').value.trim();
     const targetId      = document.getElementById('reqTarget').value;
@@ -432,48 +567,77 @@ async function submitChecklistRequest() {
         const tasks = Array.from(document.querySelectorAll('#reqTasksEditor .req-task-input'))
             .map(i => ({ description: i.value.trim() }))
             .filter(t => t.description);
-        const branches = Array.from(document.querySelectorAll('.req-branch-check:checked')).map(c => parseInt(c.value, 10));
-        const departments = Array.from(document.querySelectorAll('.req-dept-check:checked')).map(c => parseInt(c.value, 10));
 
-        if (!name || !freq || tasks.length === 0) { alert('Fill in name, frequency, and at least one task.'); return; }
-        if (branches.length === 0 && departments.length === 0) { alert('Assign to at least one branch or department.'); return; }
+        const branches = Array.from(document.querySelectorAll('.req-branch-check:checked'))
+            .map(c => parseInt(c.value, 10))
+            .filter(n => !isNaN(n));
+        const departments = Array.from(document.querySelectorAll('.req-dept-check:checked'))
+            .map(c => parseInt(c.value, 10))
+            .filter(n => !isNaN(n));
 
-        payload = { name, description: desc, frequency: freq, tasks, assigned_branches: branches, assigned_departments: departments };
+        if (!name || !freq || tasks.length === 0) {
+            alert('Fill in name, frequency, and at least one task.');
+            return;
+        }
+        if (branches.length === 0 && departments.length === 0) {
+            alert(
+                'Assign to at least one branch or department.\n\n' +
+                'The list only shows units you are already assigned to. ' +
+                'If it is empty, ask your admin to assign you to a branch or ' +
+                'department first.'
+            );
+            return;
+        }
+
+        payload = {
+            name,
+            description: desc,
+            frequency: freq,
+            tasks,
+            assigned_branches: branches,
+            assigned_departments: departments,
+        };
     } else if (type === 'add_task') {
         const desc = document.getElementById('reqNewTask').value.trim();
         if (!desc) { alert('Enter the task description.'); return; }
         payload = { description: desc };
     }
 
-    if (type !== 'create' && !targetId) { alert('Select a target checklist.'); return; }
+    if (type !== 'create' && !targetId) {
+        alert('Select a target checklist.');
+        return;
+    }
 
     const btn = document.getElementById('reqSubmitBtn');
     const orig = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
     try {
-        const resp = await fetch(REQ_CREATE_URL, {
-            method: 'POST',
+        const url = editId ? urlFor(REQ_UPDATE_URL, editId) : REQ_CREATE_URL;
+        const method = editId ? 'PUT' : 'POST';
+
+        const resp = await fetch(url, {
+            method,
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCsrfToken(),
-                'Accept': 'application/json'
+                'Accept': 'application/json',
             },
             credentials: 'same-origin',
             body: JSON.stringify({
                 request_type: type,
                 target_id: targetId || null,
-                justification: justification,
-                payload: payload,
-            })
+                justification,
+                payload,
+            }),
         });
         const data = await resp.json();
         if (data.success) {
-            alert('Request submitted — waiting for supervisor review.');
+            alert(editId ? 'Request updated.' : 'Request submitted — waiting for supervisor review.');
             window.location.reload();
         } else {
-            alert('Error: ' + (data.error || 'Could not submit.'));
+            alert('Error: ' + (data.error || 'Could not process.'));
             btn.disabled = false;
             btn.innerHTML = orig;
         }
@@ -485,6 +649,11 @@ async function submitChecklistRequest() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', onReqTypeChange);
+document.addEventListener('DOMContentLoaded', () => {
+    onReqTypeChange();
+    if (document.getElementById('reqEditId').value) {
+        document.getElementById('reqSubmitBtn').innerHTML = '<i class="fas fa-save"></i> Update Request';
+    }
+});
 </script>
 {% endblock %}

@@ -1412,7 +1412,7 @@
             });
 
             // ═══════════════════════════════════════════════
-            // COMMENT NOTIFICATION BELL + DRAWER
+            // NOTIFICATION BELL + INBOX DRAWER
             // ═══════════════════════════════════════════════
             (function () {
                 'use strict';
@@ -1431,7 +1431,9 @@
                 const URLS = {
                     inbox:   "{% url 'control_dashboard:api_member_comment_inbox' %}",
                     reply:   "{% url 'control_dashboard:api_member_reply_to_comment' 0 %}",
-                    resolve: "{% url 'control_dashboard:api_resolve_supervisor_comment' 0 %}"
+                    resolve: "{% url 'control_dashboard:api_resolve_supervisor_comment' 0 %}",
+                    notifications: "{% url 'control_dashboard:api_get_notifications' %}",
+                    markRead: "{% url 'control_dashboard:api_mark_notification_read' 0 %}"
                 };
 
                 function urlFor(tpl, id) {
@@ -1447,17 +1449,15 @@
                 // ── Badge refresh ───────────────────────────────
                 async function refreshBadge() {
                     try {
-                        const r = await fetch(URLS.inbox + '?unresolved_only=1', {
+                        const r = await fetch(URLS.notifications, {
                             headers: { 'Accept': 'application/json' },
                             credentials: 'same-origin'
                         });
                         const data = await r.json();
                         if (!data.success) return;
 
-                        if (data.unresolved_count > 0) {
-                            badge.textContent = data.unresolved_count > 99
-                                ? '99+'
-                                : data.unresolved_count;
+                        if (data.unread_count > 0) {
+                            badge.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
                             badge.hidden = false;
                             bell.classList.add('has-unread');
                         } else {
@@ -1477,11 +1477,11 @@
 
                     body.innerHTML =
                         '<div class="comment-drawer-loading">' +
-                        '<i class="fas fa-spinner fa-spin"></i> Loading comments…' +
+                        '<i class="fas fa-spinner fa-spin"></i> Loading alerts…' +
                         '</div>';
 
                     try {
-                        const r = await fetch(URLS.inbox, {
+                        const r = await fetch(URLS.notifications, {
                             headers: { 'Accept': 'application/json' },
                             credentials: 'same-origin'
                         });
@@ -1491,7 +1491,7 @@
                     } catch (err) {
                         body.innerHTML =
                             '<p style="text-align:center;color:#c8395f;padding:30px 20px;font-size:13px;">' +
-                            escapeHtml(err.message || 'Could not load comments.') +
+                            escapeHtml(err.message || 'Could not load alerts.') +
                             '</p>';
                     }
                 }
@@ -1516,136 +1516,49 @@
 
                 // ── Render inbox ────────────────────────────────
                 function renderInbox(data) {
-                    const list = data.comments || [];
-                    const unresolved = data.unresolved_count || 0;
+                    const list = data.notifications || [];
+                    const unread = data.unread_count || 0;
 
-                    sub.textContent = unresolved > 0
-                        ? unresolved + ' awaiting your reply · ' + data.total_count + ' total'
-                        : data.total_count + ' total · all caught up';
+                    sub.textContent = unread > 0
+                        ? unread + ' unread · ' + list.length + ' total'
+                        : list.length + ' total · all caught up';
 
                     if (!list.length) {
                         body.innerHTML = ''
                             + '<div style="text-align:center;padding:60px 20px;color:#8493ab;font-size:13px;">'
                             +   '<i class="fas fa-check-circle" style="font-size:36px;color:#17a673;display:block;margin-bottom:12px;"></i>'
-                            +   'No comments yet. Supervisors will show up here when they leave feedback.'
+                            +   'No notifications yet.'
                             + '</div>';
                         return;
                     }
 
-                    body.innerHTML = list.map(function (entry) {
-                        const c = entry.comment;
-                        const r = entry.record;
-                        const resolved = c.is_resolved;
-
+                    body.innerHTML = list.map(function (n) {
                         return ''
-                            + '<div class="comment-card ' + (resolved ? 'is-resolved' : '') + '" data-comment-id="' + c.id + '">'
+                            + '<div class="comment-card ' + (n.is_read ? 'is-resolved' : '') + '" data-id="' + n.id + '">'
                             +   '<div class="comment-card-meta">'
-                            +     '<span><strong>' + escapeHtml(c.author.name) + '</strong> · Supervisor</span>'
-                            +     '<span>' + escapeHtml(c.created_at_human) + '</span>'
+                            +     '<span>' + escapeHtml(n.created_at) + '</span>'
+                            +     (n.is_read ? '<span style="color:#17a673;">✓ Read</span>' : '')
                             +   '</div>'
-                            +   '<div class="comment-card-record">'
-                            +     '<span class="label">Exception</span>'
-                            +     escapeHtml(r.branch_unit || '—') + ' · #' + escapeHtml(String(r.serial_number || r.id))
-                            +     '<br>'
-                            +     '<span style="color:#8493ab;font-size:11px;">'
-                            +       escapeHtml((r.exception || '').slice(0, 140))
-                            +       ((r.exception || '').length > 140 ? '…' : '')
-                            +     '</span>'
-                            +   '</div>'
-                            +   '<div class="comment-card-body">' + escapeHtml(c.body) + '</div>'
-                            +   (resolved
-                                ? '<div class="comment-card-resolved"><i class="fas fa-check-circle"></i> Resolved</div>'
-                                : '<textarea class="comment-card-textarea" placeholder="Write your response…" data-reply-input></textarea>'
-                                + '<div class="comment-card-actions">'
-                                +   '<button type="button" class="btn-resolve" data-action="resolve" data-id="' + c.id + '">'
-                                +     '<i class="fas fa-check"></i> Mark resolved'
-                                +   '</button>'
-                                +   '<button type="button" class="btn-reply" data-action="reply" data-id="' + c.id + '">'
-                                +     '<i class="fas fa-paper-plane"></i> Send reply'
-                                +   '</button>'
-                                + '</div>')
+                            +   '<div class="comment-card-body">' + escapeHtml(n.message) + '</div>'
+                            +   (n.link_url 
+                                ? `<div class="comment-card-actions" style="margin-top:10px;">
+                                    <a href="${n.link_url}" onclick="markNotificationRead(${n.id})" class="btn-reply" style="text-decoration:none; padding:7px 12px; border-radius:8px; font-size:11.5px; font-weight:700; display:inline-flex; align-items:center; gap:5px;">
+                                        <i class="fas fa-arrow-right"></i> View
+                                    </a>
+                                   </div>` 
+                                : '')
                             + '</div>';
                     }).join('');
-
-                    body.querySelectorAll('[data-action="reply"]').forEach(function (btn) {
-                        btn.addEventListener('click', function () { sendReply(btn); });
-                    });
-                    body.querySelectorAll('[data-action="resolve"]').forEach(function (btn) {
-                        btn.addEventListener('click', function () { markResolved(btn); });
-                    });
                 }
 
-                // ── Send reply ──────────────────────────────────
-                async function sendReply(btn) {
-                    const card = btn.closest('.comment-card');
-                    const id   = btn.getAttribute('data-id');
-                    const text = card.querySelector('[data-reply-input]').value.trim();
-
-                    if (!text) {
-                        card.querySelector('[data-reply-input]').focus();
-                        return;
-                    }
-
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
-
+                window.markNotificationRead = async function(id) {
                     try {
-                        const r = await fetch(urlFor(URLS.reply, id), {
+                        await fetch(urlFor(URLS.markRead, id), {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': getCsrfToken(),
-                                'Accept': 'application/json'
-                            },
-                            credentials: 'same-origin',
-                            body: JSON.stringify({ body: text, resolve_parent: true })
+                            headers: { 'X-CSRFToken': getCsrfToken() }
                         });
-                        const data = await r.json();
-                        if (!data.success) throw new Error(data.error || 'Failed to send');
-
-                        card.classList.add('is-resolved');
-                        card.querySelector('.comment-card-actions').outerHTML =
-                            '<div class="comment-card-resolved">' +
-                            '<i class="fas fa-check-circle"></i> Replied & resolved</div>';
-                        refreshBadge();
-                    } catch (err) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send reply';
-                        alert(err.message || 'Could not send reply.');
-                    }
-                }
-
-                // ── Mark resolved ───────────────────────────────
-                async function markResolved(btn) {
-                    const card = btn.closest('.comment-card');
-                    const id   = btn.getAttribute('data-id');
-
-                    btn.disabled = true;
-                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-                    try {
-                        const r = await fetch(urlFor(URLS.resolve, id), {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRFToken': getCsrfToken(),
-                                'Accept': 'application/json'
-                            },
-                            credentials: 'same-origin'
-                        });
-                        const data = await r.json();
-                        if (!data.success) throw new Error(data.error || 'Failed to resolve');
-
-                        card.classList.add('is-resolved');
-                        card.querySelector('.comment-card-actions').outerHTML =
-                            '<div class="comment-card-resolved">' +
-                            '<i class="fas fa-check-circle"></i> Marked resolved</div>';
-                        refreshBadge();
-                    } catch (err) {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-check"></i> Mark resolved';
-                        alert(err.message || 'Could not resolve.');
-                    }
-                }
+                    } catch(_) {}
+                };
 
                 // ── Boot ────────────────────────────────────────
                 document.addEventListener('DOMContentLoaded', function () {

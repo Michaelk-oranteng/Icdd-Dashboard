@@ -1524,26 +1524,6 @@ class SentEmail(models.Model):
     def recipient_count(self):
         return len(self.to_list) + len(self.cc_list)
 
-    # ---------- Scoring helpers ----------
-    @property
-    def final_score(self):
-        """
-        Auto score is 100 minus the manual deduction.
-        Floored at 0, capped at 100.
-        """
-        return max(0, min(100, 100 - (self.manual_deduction or 0)))
-
-    @property
-    def badge_class(self):
-        s = self.final_score
-        if s >= 80: return 'success'
-        if s >= 50: return 'warning'
-        return 'danger'
-
-    @property
-    def is_overridden(self):
-        return (self.manual_deduction or 0) > 0
-
 # ============================================
 # CHECKLIST CHANGE REQUESTS
 # ============================================
@@ -1698,17 +1678,20 @@ class ChecklistChangeRequest(models.Model):
                 'review_note', 'created_checklist', 'updated_at',
             ])
 
-        # Log to ActivityLog — fires after transaction commits
-        ActivityLog.objects.create(
-            user=supervisor,
-            activity_type='score_updated',   # reuse existing choice
-            details=(
-                f'Approved {self.get_request_type_display()} request '
-                f'#{self.id} from {self.requester.full_name}.'
-                + (f' Note: {note}' if note else '')
-            ),
+        # --- NOTIFY MEMBER ---
+        Notification.objects.create(
+            recipient=self.requester,
+            notification_type='request_decision',
+            message=f"Your checklist request '{self.get_request_type_display()}' was APPROVED." + (f" Note: {note}" if note else ""),
+            link_url=f"/adminboard/member/checklist-requests/", # Adjust to your actual member URL
+            related_request=self
         )
 
+        ActivityLog.objects.create(
+            user=supervisor,
+            activity_type='score_updated',
+            details=f'Approved request #{self.id} from {self.requester.full_name}.'
+        )
         return self
 
     def reject(self, supervisor, note=''):
@@ -1723,16 +1706,20 @@ class ChecklistChangeRequest(models.Model):
             'status', 'reviewed_by', 'reviewed_at', 'review_note', 'updated_at',
         ])
 
+        # --- NOTIFY MEMBER ---
+        Notification.objects.create(
+            recipient=self.requester,
+            notification_type='request_decision',
+            message=f"Your checklist request '{self.get_request_type_display()}' was REJECTED. Reason: {note or 'No reason provided.'}",
+            link_url=f"/adminboard/member/checklist-requests/",
+            related_request=self
+        )
+
         ActivityLog.objects.create(
             user=supervisor,
             activity_type='score_updated',
-            details=(
-                f'Rejected {self.get_request_type_display()} request '
-                f'#{self.id} from {self.requester.full_name}.'
-                + (f' Reason: {note}' if note else '')
-            ),
+            details=f'Rejected request #{self.id} from {self.requester.full_name}.'
         )
-
         return self
 
     def cancel(self):
@@ -1758,27 +1745,45 @@ class ChecklistChangeRequest(models.Model):
         return handler()
 
     def _apply_create(self):
-        from django.db import transaction
+        """
+        Create the checklist by routing through the SAME helper that the
+        admin's manual builder uses — guaranteeing identical behaviour.
+        """
+        from control_dashboard.views import _create_checklist_core
 
         p = self.payload
-        with transaction.atomic():
-            checklist = Checklist.objects.create(
+
+        # ── Resolve branch / department IDs ──
+        def _ids(raw):
+            out = []
+            for x in (raw or []):
+                if isinstance(x, dict):
+                    x = x.get('id')
+                try:
+                    i = int(x)
+                    if i > 0:
+                        out.append(i)
+                except (TypeError, ValueError):
+                    continue
+            return list(dict.fromkeys(out))
+
+        branch_ids = _ids(p.get('assigned_branches'))
+        dept_ids   = _ids(p.get('assigned_departments'))
+
+        # ── Delegate to the shared helper ──
+        try:
+            checklist = _create_checklist_core(
                 name=p['name'],
                 description=p.get('description', ''),
                 frequency=p['frequency'],
-                assignment_target='specific',
+                tasks_data=p.get('tasks') or [],
+                branch_ids=branch_ids,
+                department_ids=dept_ids,
                 created_by=self.requester,
             )
-            for i, t in enumerate(p.get('tasks', [])):
-                ChecklistTask.objects.create(
-                    checklist=checklist,
-                    description=t['description'][:500],
-                    order=i,
-                )
-            if p.get('assigned_branches'):
-                checklist.assigned_branches.set(p['assigned_branches'])
-            if p.get('assigned_departments'):
-                checklist.assigned_departments.set(p['assigned_departments'])
+        except ValueError as exc:
+            raise ValueError(f"Could not create checklist: {exc}")
+
         return checklist
 
     def _apply_modify(self):
@@ -1931,3 +1936,37 @@ class SupervisorComment(models.Model):
             'created_at': self.created_at.isoformat(),
             'created_at_human': self.created_at.strftime('%b %d, %Y %H:%M'),
         }
+
+# ============================================
+# NOTIFICATIONS
+# ============================================
+
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('checklist_request', 'Checklist Request'),
+        ('request_decision', 'Request Decision'),
+    ]
+
+    recipient = models.ForeignKey(
+        'UserProfile',
+        on_delete=models.CASCADE,
+        related_name='notifications',
+    )
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
+    message = models.TextField()
+    link_url = models.CharField(max_length=255, blank=True, default='')
+    is_read = models.BooleanField(default=False)
+    related_request = models.ForeignKey(
+        'ChecklistChangeRequest',   # Now safely defined above
+        on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='notifications',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'notifications'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.recipient.full_name} - {self.notification_type} - {self.is_read}"

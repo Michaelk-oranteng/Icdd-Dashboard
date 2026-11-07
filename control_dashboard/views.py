@@ -40,7 +40,8 @@ from .models import (
     TrialBalanceEntry,
     SentEmail,
     SupervisorComment,
-    ChecklistChangeRequest
+    ChecklistChangeRequest,
+    Notification,
 )
 from .forms import UserProfileForm
 
@@ -50,6 +51,77 @@ logger = logging.getLogger(__name__)
 # ==================== CONSTANTS ====================
 TRIAL_BALANCE_REPORT_TYPE = '__TRIAL_BALANCE__'
 UPLOADED_STATUS = 'uploaded'
+
+# ==================== SHARED CHECKLIST CREATION ====================
+
+def _create_checklist_core(*, name, description, frequency,
+                            tasks_data, branch_ids, department_ids,
+                            created_by):
+    """
+    The single source of truth for creating a Checklist.
+
+    Called by BOTH:
+      • api_create_checklist (admin builder)
+      • ChecklistChangeRequest._apply_create (supervisor approval)
+
+    Returns the created Checklist instance.
+    """
+    from django.db import transaction
+
+    branch_ids     = [int(x) for x in (branch_ids or [])     if str(x).isdigit()]
+    department_ids = [int(x) for x in (department_ids or []) if str(x).isdigit()]
+
+    # Guarantee at least one assignment so the checklist is visible.
+    if not branch_ids and not department_ids:
+        if created_by:
+            branch_ids     = list(created_by.branches.values_list('id', flat=True))
+            department_ids = list(created_by.departments.values_list('id', flat=True))
+
+    if not branch_ids and not department_ids:
+        raise ValueError(
+            "Cannot create checklist: no branches/departments supplied "
+            "and the creator is not assigned to any."
+        )
+
+    with transaction.atomic():
+        checklist = Checklist.objects.create(
+            name=name,
+            description=description or '',
+            frequency=frequency,
+            created_by=created_by,
+            is_active=True,
+        )
+
+        for index, task_item in enumerate(tasks_data or []):
+            if isinstance(task_item, dict):
+                desc = (task_item.get('description') or '').strip()
+            else:
+                desc = str(task_item or '').strip()
+
+            if desc:
+                ChecklistTask.objects.create(
+                    checklist=checklist,
+                    description=desc[:500],
+                    order=index,
+                )
+
+        if branch_ids:
+            checklist.assigned_branches.set(
+                Branch.objects.filter(id__in=branch_ids, is_active=True)
+            )
+        if department_ids:
+            checklist.assigned_departments.set(
+                Department.objects.filter(id__in=department_ids, is_active=True)
+            )
+
+        # Sanity guard
+        if not checklist.assigned_branches.exists() and not checklist.assigned_departments.exists():
+            raise ValueError(
+                "Checklist creation failed: none of the selected "
+                "branches/departments are active."
+            )
+
+    return checklist
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -718,7 +790,6 @@ def admin_page(request):
 
     return render(request, 'control_dashboard/adminboard.html', context)
 
-
 # ==================== API - ADMIN USER MANAGEMENT ====================
 
 @csrf_exempt
@@ -741,8 +812,6 @@ def api_create_user(request):
         position = data.get('position', 'member')
         role = data.get('role', 'member')
         status = data.get('status', 'active')
-        department_id = data.get('department_id')
-        branch_id = data.get('branch_id')
 
         # ---- Required field validation ----
         if not email:
@@ -774,24 +843,30 @@ def api_create_user(request):
             status=status,
         )
 
-        # ---------- Assign departments ----------
+        # ---------- Assign departments (multi) ----------
         dept_ids = []
         if isinstance(data.get('department_ids'), list):
             dept_ids = [int(x) for x in data['department_ids'] if str(x).strip().isdigit()]
-        elif department_id:
-            dept_ids = [int(department_id)]
+        elif data.get('department_id'):
+            try:
+                dept_ids = [int(data['department_id'])]
+            except (ValueError, TypeError):
+                dept_ids = []
 
         if dept_ids:
             depts = Department.objects.filter(id__in=dept_ids, is_active=True)
             if depts.exists():
                 user.departments.set(depts)
 
-        # ---------- Assign branches ----------
+        # ---------- Assign branches (multi) ----------
         br_ids = []
         if isinstance(data.get('branch_ids'), list):
             br_ids = [int(x) for x in data['branch_ids'] if str(x).strip().isdigit()]
-        elif branch_id:
-            br_ids = [int(branch_id)]
+        elif data.get('branch_id'):
+            try:
+                br_ids = [int(data['branch_id'])]
+            except (ValueError, TypeError):
+                br_ids = []
 
         if br_ids:
             branches_qs = Branch.objects.filter(id__in=br_ids, is_active=True)
@@ -1528,17 +1603,8 @@ def checklist_list(request):
 @require_http_methods(["POST"])
 def api_create_checklist(request):
     """
-    Create a checklist.
-
-    Payload:
-    {
-        "name":                 "...",
-        "description":          "..." (optional),
-        "frequency":            "daily" | "weekly" | ...,
-        "tasks":                [{"description": "..."}, ...],
-        "assigned_branches":    [1, 2, 3],
-        "assigned_departments": [4, 5]
-    }
+    Create a checklist manually via the Admin dashboard.
+    Uses the SAME code path as supervisor approval — see _create_checklist_core.
     """
     try:
         if not request.body:
@@ -1580,32 +1646,19 @@ def api_create_checklist(request):
         if created_by.role != 'admin':
             return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
-        # ── Create ──
-        checklist = Checklist.objects.create(
-                name=p['name'],
-                description=p.get('description', ''),
-                frequency=p['frequency'],
-                created_by=self.requester,
+        # ── Create via shared helper ──
+        try:
+            checklist = _create_checklist_core(
+                name=name,
+                description=description,
+                frequency=frequency,
+                tasks_data=tasks_data,
+                branch_ids=assigned_branches_ids,
+                department_ids=assigned_departments_ids,
+                created_by=created_by,
             )
-
-        if assigned_branches_ids:
-            checklist.assigned_branches.set(
-                Branch.objects.filter(id__in=assigned_branches_ids, is_active=True)
-            )
-
-        if assigned_departments_ids:
-            checklist.assigned_departments.set(
-                Department.objects.filter(id__in=assigned_departments_ids, is_active=True)
-            )
-
-        for index, task_item in enumerate(tasks_data):
-            task_desc = (task_item.get('description') or '').strip()
-            if task_desc:
-                ChecklistTask.objects.create(
-                    checklist=checklist,
-                    description=task_desc,
-                    order=index,
-                )
+        except ValueError as exc:
+            return JsonResponse({'success': False, 'error': str(exc)}, status=400)
 
         log_activity(
             user=created_by,
@@ -1622,9 +1675,9 @@ def api_create_checklist(request):
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON payload.'}, status=400)
-    except Exception:
+    except Exception as e:
         logger.exception("Error in api_create_checklist")
-        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -2777,30 +2830,29 @@ def member_checklist(request):
 
     today = timezone.now().date()
 
-    # -----------------------------------------------------------------
-    # Filter params
-    # -----------------------------------------------------------------
+    # ---- Filters ----
     branch_filter     = request.GET.get('branch', 'all')
     department_filter = request.GET.get('department', 'all')
-    month_filter      = request.GET.get('month', 'all')       # 0-based index
+    month_filter      = request.GET.get('month', 'all')
     year_filter       = request.GET.get('year', 'all')
     frequency_filter  = request.GET.get('frequency', 'all')
     quarter_filter    = request.GET.get('quarter', 'all')
 
-    user_branches     = user_profile.branches.all().order_by('name')
-    user_departments  = user_profile.departments.all().order_by('name')
-
-    user_branch_ids    = set(user_branches.values_list('id', flat=True))
+    user_branches       = user_profile.branches.all().order_by('name')
+    user_departments    = user_profile.departments.all().order_by('name')
+    user_branch_ids     = set(user_branches.values_list('id', flat=True))
     user_department_ids = set(user_departments.values_list('id', flat=True))
 
-    # -----------------------------------------------------------------
-    # Base checklist queryset
-    # -----------------------------------------------------------------
-    user_checklists = Checklist.objects.filter(
-        is_active=True
-    ).filter(
+    # ─────────────────────────────────────────────────────────────
+    # GUARANTEED VISIBILITY:
+    # Show every active checklist whose branches/departments match
+    # the member — OR any checklist the member created themselves
+    # (i.e., one they requested and a supervisor approved).
+    # ─────────────────────────────────────────────────────────────
+    user_checklists = Checklist.objects.filter(is_active=True).filter(
         Q(assigned_branches__in=user_branch_ids) |
-        Q(assigned_departments__in=user_department_ids)
+        Q(assigned_departments__in=user_department_ids) |
+        Q(created_by=user_profile)   # ← catch approved-from-request
     ).distinct()
 
     if branch_filter != 'all':
@@ -2822,23 +2874,16 @@ def member_checklist(request):
     if frequency_filter != 'all':
         user_checklists = user_checklists.filter(frequency=frequency_filter)
 
-    # =================================================================
-    # Resolve the "active period"
-    # Priority: explicit month → quarter (first month of quarter) → today
-    # =================================================================
+    # ---- Period resolution ----
     display_year = today.year
     if year_filter != 'all':
-        try:
-            display_year = int(year_filter)
-        except (ValueError, TypeError):
-            display_year = today.year
+        try: display_year = int(year_filter)
+        except (ValueError, TypeError): display_year = today.year
 
     display_month = today.month
     if month_filter != 'all':
-        try:
-            display_month = int(month_filter) + 1   # UI sends 0-based
-        except (ValueError, TypeError):
-            display_month = today.month
+        try: display_month = int(month_filter) + 1
+        except (ValueError, TypeError): display_month = today.month
     elif quarter_filter != 'all':
         try:
             q = int(quarter_filter)
@@ -2849,15 +2894,9 @@ def member_checklist(request):
 
     display_month = max(1, min(12, display_month))
     display_year  = max(2000, min(2100, display_year))
-
     current_quarter = (display_month - 1) // 3 + 1
-
-    # Selected label used in the KPI subtitle
     selected_month_label = date(display_year, display_month, 1).strftime('%B')
 
-    # -----------------------------------------------------------------
-    # Period windows derived from the active month
-    # -----------------------------------------------------------------
     month_start = date(display_year, display_month, 1)
     if display_month == 12:
         month_end = date(display_year + 1, 1, 1) - timedelta(days=1)
@@ -2866,7 +2905,6 @@ def member_checklist(request):
 
     quarter_start_month = (current_quarter - 1) * 3 + 1
     quarter_end_month   = current_quarter * 3
-
     quarter_start = date(display_year, quarter_start_month, 1)
     if quarter_end_month == 12:
         quarter_end = date(display_year + 1, 1, 1) - timedelta(days=1)
@@ -2878,23 +2916,16 @@ def member_checklist(request):
 
     def count_actual(checklist, unit_filter, period_start, period_end):
         return ChecklistLog.objects.filter(
-            checklist=checklist,
-            user=user_profile,
-            log_date__gte=period_start,
-            log_date__lte=period_end,
+            checklist=checklist, user=user_profile,
+            log_date__gte=period_start, log_date__lte=period_end,
             **unit_filter
         ).values('log_date').distinct().count()
 
-    # -----------------------------------------------------------------
-    # Build the row data
-    # -----------------------------------------------------------------
+    # ---- Build rows ----
     checklist_data = []
-    total_month_expected = 0
-    total_month_actual = 0
-    total_quarter_expected = 0
-    total_quarter_actual = 0
-    total_year_expected = 0
-    total_year_actual = 0
+    total_month_expected = total_month_actual = 0
+    total_quarter_expected = total_quarter_actual = 0
+    total_year_expected = total_year_actual = 0
 
     for checklist in user_checklists:
         tasks = list(checklist.tasks.all().order_by('order'))
@@ -2907,8 +2938,7 @@ def member_checklist(request):
                 aid = int(branch_filter)
                 checklist_branches = (
                     checklist_branches.filter(id=aid)
-                    if aid in user_branch_ids
-                    else checklist_branches.none()
+                    if aid in user_branch_ids else checklist_branches.none()
                 )
             except (ValueError, TypeError):
                 checklist_branches = checklist_branches.none()
@@ -2920,8 +2950,7 @@ def member_checklist(request):
                 aid = int(department_filter)
                 checklist_departments = (
                     checklist_departments.filter(id=aid)
-                    if aid in user_department_ids
-                    else checklist_departments.none()
+                    if aid in user_department_ids else checklist_departments.none()
                 )
             except (ValueError, TypeError):
                 checklist_departments = checklist_departments.none()
@@ -2933,10 +2962,19 @@ def member_checklist(request):
             [('department', d.id, d.name, d) for d in checklist_departments]
         )
 
+        # ── FALLBACK: if the checklist was created by this member and
+        # has no matching units, synthesize ONE unit so it still renders.
         if not assign_units:
-            if checklist.assigned_branches.exists() or checklist.assigned_departments.exists():
+            if branch_filter != 'all' or department_filter != 'all':
                 continue
-            assign_units.append(('general', 0, 'General', None))
+            fb = user_branches.first()
+            fd = user_departments.first()
+            if fb:
+                assign_units.append(('branch', fb.id, fb.name, fb))
+            elif fd:
+                assign_units.append(('department', fd.id, fd.name, fd))
+            else:
+                assign_units.append(('general', 0, 'General', None))
 
         next_due = (
             checklist.get_next_due_date(user_profile)
@@ -2953,10 +2991,8 @@ def member_checklist(request):
 
             month_log_dates = list(
                 ChecklistLog.objects.filter(
-                    checklist=checklist,
-                    user=user_profile,
-                    log_date__gte=month_start,
-                    log_date__lte=month_end,
+                    checklist=checklist, user=user_profile,
+                    log_date__gte=month_start, log_date__lte=month_end,
                     **unit_filter
                 ).values_list('log_date', flat=True)
             )
@@ -2964,10 +3000,8 @@ def member_checklist(request):
 
             month_expected = count_expected_occurrences(checklist, month_start, month_end)
             month_actual   = count_actual(checklist, unit_filter, month_start, month_end)
-
             quarter_expected = count_expected_occurrences(checklist, quarter_start, quarter_end)
             quarter_actual   = count_actual(checklist, unit_filter, quarter_start, quarter_end)
-
             year_expected = count_expected_occurrences(checklist, year_start, year_end)
             year_actual   = count_actual(checklist, unit_filter, year_start, year_end)
 
@@ -2975,14 +3009,10 @@ def member_checklist(request):
             quarter_progress = min(int(quarter_actual / quarter_expected * 100), 100) if quarter_expected > 0 else 0
             year_progress    = min(int(year_actual / year_expected * 100), 100) if year_expected > 0 else 0
 
-            if month_progress >= 100:
-                status = 'completed'
-            elif month_progress >= 70:
-                status = 'on_track'
-            elif month_progress >= 40:
-                status = 'in_progress'
-            else:
-                status = 'at_risk'
+            if month_progress >= 100:  status = 'completed'
+            elif month_progress >= 70: status = 'on_track'
+            elif month_progress >= 40: status = 'in_progress'
+            else:                      status = 'at_risk'
 
             unit_display = (
                 f"🏢 {unit_name}" if unit_type == 'branch' else
@@ -3031,18 +3061,12 @@ def member_checklist(request):
     overall_quarter_progress = min(int(total_quarter_actual / total_quarter_expected * 100), 100) if total_quarter_expected > 0 else 0
     overall_year_progress    = min(int(total_year_actual / total_year_expected * 100), 100) if total_year_expected > 0 else 0
 
-    # -----------------------------------------------------------------
-    # Filter dropdown options
-    # -----------------------------------------------------------------
+    # ---- Filters dropdown ----
     available_branches = (
-        user_branches
-        .filter(checklist_assignments__in=user_checklists)
-        .distinct().order_by('name')
+        user_branches.filter(checklist_assignments__in=user_checklists).distinct().order_by('name')
     )
     available_departments = (
-        user_departments
-        .filter(checklist_assignments__in=user_checklists)
-        .distinct().order_by('name')
+        user_departments.filter(checklist_assignments__in=user_checklists).distinct().order_by('name')
     )
 
     combined_filter_options = [
@@ -3072,7 +3096,6 @@ def member_checklist(request):
             break
 
     available_frequencies = Checklist.FREQUENCY_CHOICES
-
     selected_frequency_display = 'All Frequencies'
     if frequency_filter != 'all':
         for fv, fl in Checklist.FREQUENCY_CHOICES:
@@ -3109,8 +3132,6 @@ def member_checklist(request):
         'checklists': user_checklists,
         'checklist_data': checklist_data,
         'years': list(range(timezone.now().year - 2, timezone.now().year + 1)),
-
-        # KPI values, precomputed server-side
         'overall_month_progress':   overall_month_progress,
         'overall_quarter_progress': overall_quarter_progress,
         'overall_year_progress':    overall_year_progress,
@@ -3120,38 +3141,30 @@ def member_checklist(request):
         'total_quarter_expected':   total_quarter_expected,
         'total_year_actual':        total_year_actual,
         'total_year_expected':      total_year_expected,
-
-        # Active period
         'display_month':         display_month,
         'display_year':          display_year,
         'current_quarter':       current_quarter,
         'selected_month_label':  selected_month_label,
-
-        # Filters and labels
         'branch_filter':      branch_filter,
         'department_filter':  department_filter,
         'month_filter':       month_filter,
         'year_filter':        year_filter,
         'frequency_filter':   frequency_filter,
         'quarter_filter':     quarter_filter,
-
         'available_frequencies':       available_frequencies,
         'month_names':                 month_names,
         'quarter_options':             quarter_options,
         'selected_frequency_display':  selected_frequency_display,
         'selected_quarter_display':    selected_quarter_display,
-
         'today':      today,
         'month_name': selected_month_label,
         'year':       display_year,
-
         'combined_filter_options': combined_filter_options,
         'active_combined_filter':  active_combined_filter,
         'selected_combined_display': selected_combined_display,
     }
 
     return render(request, 'control_dashboard/checklist-mem.html', context)
-
 # ==================== API - CHECKLIST LOG ====================
 
 @csrf_exempt
@@ -7727,22 +7740,37 @@ def api_create_unit(request):
                 'error': f'A {unit_type} named "{name}" already exists.'
             }, status=400)
 
-        # ---- Create ----
+        # ---- Create (with assignment_scope persisted) ----
         create_kwargs = {
             'name': name,
             'description': description,
             'is_active': True,
+            'assignment_scope': assignment,   # ← THE FIX: was never passed before
         }
         if unit_type == 'branch' and code:
             create_kwargs['code'] = code
 
         unit = Model.objects.create(**create_kwargs)
 
-        # ---- Attach users for "specific" assignment ----
+        # ---- Sync the M2M assignment ----
         if assignment == 'specific':
             users_qs = UserProfile.objects.filter(id__in=user_ids, status='active')
-            if hasattr(unit, 'assigned_users'):
-                unit.assigned_users.set(users_qs)
+
+            # Audit trail on the unit side
+            unit.assigned_users.set(users_qs)
+
+            # Actual visibility on the user side — every member-facing
+            # view (dashboard, checklists, GL, consolidated) reads from
+            # UserProfile.branches / .departments, so we must write there.
+            if unit_type == 'branch':
+                for u in users_qs:
+                    u.branches.add(unit)
+            else:
+                for u in users_qs:
+                    u.departments.add(unit)
+        else:
+            # cc / hc: no user-level assignment, just clear the audit list
+            unit.assigned_users.clear()
 
         log_activity(
             user=caller,
@@ -7756,6 +7784,12 @@ def api_create_unit(request):
             'message': f'{unit_type.capitalize()} created successfully.',
             'unit_id': unit.id,
             'unit_type': unit_type,
+            'unit': {
+                'id': unit.id,
+                'name': unit.name,
+                'assignment_scope': unit.assignment_scope,
+                'assigned_user_ids': list(unit.assigned_users.values_list('id', flat=True)),
+            },
         }, status=201)
 
     except json.JSONDecodeError:
@@ -7763,7 +7797,6 @@ def api_create_unit(request):
     except Exception:
         logger.exception("Error in api_create_unit")
         return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
-
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -7792,6 +7825,7 @@ def api_edit_unit(request, unit_type, unit_id):
 
         changes = []
 
+        # ---- Scalar field updates ----
         if 'name' in data:
             new_name = (data['name'] or '').strip()
             if not new_name:
@@ -7811,15 +7845,75 @@ def api_edit_unit(request, unit_type, unit_id):
         if 'is_active' in data:
             unit.is_active = bool(data['is_active'])
 
+        # ---- assignment_scope update (THE FIX) ----
+        new_assignment = (data.get('assignment') or '').strip().lower()
+        if new_assignment in ('cc', 'hc', 'specific'):
+            if new_assignment != unit.assignment_scope:
+                changes.append(f'Scope: {unit.assignment_scope} → {new_assignment}')
+                unit.assignment_scope = new_assignment
+        else:
+            # Not provided — fall back to whatever's already on the model
+            new_assignment = unit.assignment_scope
+
         unit.save()
 
-        # ---- Update specific-user assignment ----
-        assignment = (data.get('assignment') or '').strip().lower()
-        if assignment == 'specific' and 'user_ids' in data:
-            users_qs = UserProfile.objects.filter(id__in=data['user_ids'], status='active')
-            if hasattr(unit, 'assigned_users'):
-                unit.assigned_users.set(users_qs)
-                changes.append(f'Users assigned: {users_qs.count()}')
+        # ---- Sync the M2M for "specific" assignments ----
+        #
+        # Two layers:
+        #   • unit.assigned_users  (audit trail / "who this unit was
+        #                            assigned to from the admin page")
+        #   • user.branches / user.departments (what every member-facing
+        #                                       view actually reads)
+        #
+        # On every edit we compute the delta so dropped users lose
+        # access, not just new users gain it.
+        #
+        if new_assignment == 'specific':
+            incoming_ids = data.get('user_ids')
+            if incoming_ids is None:
+                # Field not sent — leave assignment list as-is
+                pass
+            else:
+                new_users = UserProfile.objects.filter(
+                    id__in=incoming_ids, status='active'
+                )
+                old_user_ids = set(unit.assigned_users.values_list('id', flat=True))
+                new_user_ids = set(new_users.values_list('id', flat=True))
+
+                # Persist the audit list
+                unit.assigned_users.set(new_users)
+
+                # Sync user-level membership
+                removed_ids = old_user_ids - new_user_ids
+                if unit_type == 'branch':
+                    for u in UserProfile.objects.filter(id__in=new_user_ids):
+                        u.branches.add(unit)
+                    for u in UserProfile.objects.filter(id__in=removed_ids):
+                        u.branches.remove(unit)
+                else:
+                    for u in UserProfile.objects.filter(id__in=new_user_ids):
+                        u.departments.add(unit)
+                    for u in UserProfile.objects.filter(id__in=removed_ids):
+                        u.departments.remove(unit)
+
+                changes.append(
+                    f'Users assigned: {len(new_user_ids)} '
+                    f'(added: {len(new_user_ids - old_user_ids)}, '
+                    f'removed: {len(removed_ids)})'
+                )
+        else:
+            # Scope moved away from "specific" — pull the unit from
+            # every user that previously had it via this page.
+            old_user_ids = set(unit.assigned_users.values_list('id', flat=True))
+            if old_user_ids:
+                if unit_type == 'branch':
+                    for u in UserProfile.objects.filter(id__in=old_user_ids):
+                        u.branches.remove(unit)
+                else:
+                    for u in UserProfile.objects.filter(id__in=old_user_ids):
+                        u.departments.remove(unit)
+                unit.assigned_users.clear()
+                changes.append(f'Cleared {len(old_user_ids)} specific-user assignment(s)')
 
         if changes:
             log_activity(
@@ -7829,14 +7923,22 @@ def api_edit_unit(request, unit_type, unit_id):
                 request=request,
             )
 
-        return JsonResponse({'success': True, 'message': f'{unit_type.capitalize()} updated successfully.'})
+        return JsonResponse({
+            'success': True,
+            'message': f'{unit_type.capitalize()} updated successfully.',
+            'unit': {
+                'id': unit.id,
+                'name': unit.name,
+                'assignment_scope': unit.assignment_scope,
+                'assigned_user_ids': list(unit.assigned_users.values_list('id', flat=True)),
+            },
+        })
 
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
     except Exception:
         logger.exception("Error in api_edit_unit")
         return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
-
 
 @csrf_exempt
 @require_http_methods(["DELETE"])
@@ -8601,7 +8703,7 @@ def api_member_reply_to_comment(request, comment_id):
         logger.exception("Error in api_member_reply_to_comment")
         return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
 
-    # ============================================================
+# ============================================================
 # MEMBER — CHECKLIST CHANGE REQUESTS
 # ============================================================
 
@@ -8626,10 +8728,7 @@ def _snapshot_checklist_for_request(checklist):
 
 @login_required
 def member_checklist_requests(request):
-    """
-    Member-facing page to raise a new checklist request and see
-    the status of requests they've already submitted.
-    """
+    """Member-facing page: raise new requests + view history."""
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
     except UserProfile.DoesNotExist:
@@ -8656,13 +8755,18 @@ def member_checklist_requests(request):
         .order_by('name')
     )
 
+    # Only show branches/departments this member is ASSIGNED to.
+    member_branches    = user_profile.branches.filter(is_active=True).order_by('name')
+    member_departments = user_profile.departments.filter(is_active=True).order_by('name')
+
     context = {
         'user_profile':           user_profile,
         'my_requests':            my_requests,
         'modifiable_checklists':  modifiable_checklists,
         'frequencies':            Checklist.FREQUENCY_CHOICES,
-        'branches':               Branch.objects.filter(is_active=True).order_by('name'),
-        'departments':            Department.objects.filter(is_active=True).order_by('name'),
+        'branches':               member_branches,
+        'departments':            member_departments,
+        'has_assignable_units':   member_branches.exists() or member_departments.exists(),
     }
     return render(request, 'control_dashboard/checklist-request.html', context)
 
@@ -8670,9 +8774,7 @@ def member_checklist_requests(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_member_create_checklist_request(request):
-    """
-    Member submits a ChecklistChangeRequest.
-    """
+    """Member submits a ChecklistChangeRequest and notifies supervisors."""
     try:
         try:
             user_profile = UserProfile.objects.get(email=request.user.email)
@@ -8680,10 +8782,10 @@ def api_member_create_checklist_request(request):
             return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
 
         data = json.loads(request.body or '{}')
-        request_type = (data.get('request_type') or '').strip().lower()
+        request_type  = (data.get('request_type') or '').strip().lower()
         justification = (data.get('justification') or '').strip()
-        payload = data.get('payload') or {}
-        target_id = data.get('target_id')
+        payload       = data.get('payload') or {}
+        target_id     = data.get('target_id')
 
         valid_types = {
             ChecklistChangeRequest.RequestType.CREATE,
@@ -8707,6 +8809,43 @@ def api_member_create_checklist_request(request):
                 return JsonResponse({'success': False, 'error': 'Frequency is required.'}, status=400)
             if not payload.get('tasks'):
                 return JsonResponse({'success': False, 'error': 'At least one task is required.'}, status=400)
+
+            def _ids(raw):
+                out = []
+                for x in (raw or []):
+                    if isinstance(x, dict):
+                        x = x.get('id')
+                    try:
+                        i = int(x)
+                        if i > 0:
+                            out.append(i)
+                    except (TypeError, ValueError):
+                        continue
+                return out
+
+            req_branch_ids = _ids(payload.get('assigned_branches'))
+            req_dept_ids   = _ids(payload.get('assigned_departments'))
+
+            if not req_branch_ids and not req_dept_ids:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Assign at least one branch or department.',
+                }, status=400)
+
+            member_branch_ids = set(user_profile.branches.values_list('id', flat=True))
+            member_dept_ids   = set(user_profile.departments.values_list('id', flat=True))
+
+            if not (set(req_branch_ids) & member_branch_ids) and not (set(req_dept_ids) & member_dept_ids):
+                return JsonResponse({
+                    'success': False,
+                    'error': (
+                        'You can only request checklists for branches/departments '
+                        'you are assigned to.'
+                    ),
+                }, status=400)
+
+            payload['assigned_branches']    = req_branch_ids
+            payload['assigned_departments'] = req_dept_ids
         else:
             if not target_id:
                 return JsonResponse({'success': False, 'error': 'target_id is required.'}, status=400)
@@ -8742,6 +8881,22 @@ def api_member_create_checklist_request(request):
             justification=justification,
         )
 
+        # Notify every active supervisor / admin.
+        supervisors = UserProfile.objects.filter(
+            role__in=['supervisor', 'admin'], status='active'
+        )
+        for sup in supervisors:
+            Notification.objects.create(
+                recipient=sup,
+                notification_type='checklist_request',
+                message=(
+                    f"New checklist request from {user_profile.full_name}: "
+                    f"{req.get_request_type_display()}"
+                ),
+                link_url='/adminboard/supervisor/checklist-requests/',
+                related_request=req,
+            )
+
         log_activity(
             user=user_profile,
             activity_type='report_updated',
@@ -8762,15 +8917,167 @@ def api_member_create_checklist_request(request):
         return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
 
 
+@csrf_exempt
+@require_http_methods(["PUT", "POST"])
+def api_member_update_checklist_request(request, request_id):
+    """Member edits their PENDING request."""
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+        req = get_object_or_404(
+            ChecklistChangeRequest, id=request_id, requester=user_profile
+        )
+
+        if req.status != ChecklistChangeRequest.Status.PENDING:
+            return JsonResponse(
+                {'success': False, 'error': 'Only pending requests can be edited.'},
+                status=400,
+            )
+
+        data = json.loads(request.body or '{}')
+        justification = (data.get('justification') or '').strip()
+        payload       = data.get('payload') or {}
+
+        if justification:
+            req.justification = justification
+        if payload:
+            req.payload = payload
+
+        if req.target_checklist:
+            req.current_snapshot = _snapshot_checklist_for_request(req.target_checklist)
+
+        req.save()
+        return JsonResponse({'success': True, 'message': 'Request updated successfully.'})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
+    except Exception:
+        logger.exception("Error in api_member_update_checklist_request")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST", "DELETE"])
+def api_member_cancel_checklist_request(request, request_id):
+    """Member cancels a PENDING request; notifies supervisors."""
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+        req = get_object_or_404(
+            ChecklistChangeRequest, id=request_id, requester=user_profile
+        )
+
+        if req.status != ChecklistChangeRequest.Status.PENDING:
+            return JsonResponse(
+                {'success': False, 'error': 'Only pending requests can be cancelled.'},
+                status=400,
+            )
+
+        req.cancel()
+
+        supervisors = UserProfile.objects.filter(
+            role__in=['supervisor', 'admin'], status='active'
+        )
+        for sup in supervisors:
+            Notification.objects.create(
+                recipient=sup,
+                notification_type='checklist_request',
+                message=f"Request #{req.id} was CANCELLED by {user_profile.full_name}.",
+                link_url='/adminboard/supervisor/checklist-requests/',
+                related_request=req,
+            )
+
+        return JsonResponse({'success': True, 'message': 'Request cancelled successfully.'})
+
+    except Exception:
+        logger.exception("Error in api_member_cancel_checklist_request")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+
+# ============================================================
+# NOTIFICATIONS
+# ============================================================
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_get_notifications(request):
+    """Fetch notifications for the bell icon (supervisors + members)."""
+    try:
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        unread_only = (request.GET.get('unread_only') or '').strip() == '1'
+
+        qs = Notification.objects.filter(recipient=user_profile).order_by('-created_at')
+        if unread_only:
+            qs = qs.filter(is_read=False)
+
+        notifications = list(qs[:50])
+
+        payload = [
+            {
+                'id': n.id,
+                'message': n.message,
+                'link_url': n.link_url,
+                'is_read': n.is_read,
+                'notification_type': n.notification_type,
+                'created_at': n.created_at.strftime('%b %d, %H:%M'),
+            }
+            for n in notifications
+        ]
+
+        unread_count = Notification.objects.filter(
+            recipient=user_profile, is_read=False
+        ).count()
+
+        return JsonResponse({
+            'success': True,
+            'notifications': payload,
+            'unread_count': unread_count,
+        })
+
+    except Exception:
+        logger.exception("Error in api_get_notifications")
+        return JsonResponse(
+            {'success': False, 'error': 'An internal error occurred.'},
+            status=500,
+        )
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_mark_notification_read(request, notification_id):
+    """Mark a single notification as read."""
+    try:
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        notification = get_object_or_404(
+            Notification, id=notification_id, recipient=user_profile
+        )
+        if not notification.is_read:
+            notification.is_read = True
+            notification.save(update_fields=['is_read'])
+
+        return JsonResponse({'success': True})
+
+    except Exception:
+        logger.exception("Error in api_mark_notification_read")
+        return JsonResponse(
+            {'success': False, 'error': 'An internal error occurred.'},
+            status=500,
+        )
+
+
 # ============================================================
 # SUPERVISOR — CHECKLIST CHANGE REQUESTS
 # ============================================================
 
 @login_required
 def supervisor_checklist_requests(request):
-    """
-    Supervisor inbox of checklist change requests.
-    """
+    """Supervisor inbox of checklist change requests."""
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
         if user_profile.role not in ('supervisor', 'admin'):
@@ -8855,7 +9162,7 @@ def api_pending_checklist_requests_count(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_approve_checklist_request(request, request_id):
-    """Supervisor approves — payload is applied to the real Checklist."""
+    """Supervisor approves — payload is applied, member is notified."""
     try:
         try:
             user_profile = UserProfile.objects.get(email=request.user.email)
@@ -8868,7 +9175,10 @@ def api_approve_checklist_request(request, request_id):
         req = get_object_or_404(ChecklistChangeRequest, id=request_id)
 
         if req.status != ChecklistChangeRequest.Status.PENDING:
-            return JsonResponse({'success': False, 'error': 'This request is no longer pending.'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'This request is no longer pending.'},
+                status=400,
+            )
 
         try:
             body = json.loads(request.body or '{}')
@@ -8883,10 +9193,31 @@ def api_approve_checklist_request(request, request_id):
             return JsonResponse({'success': False, 'error': str(exc)}, status=400)
         except Exception as exc:
             logger.exception("Error applying checklist change request")
-            return JsonResponse({
-                'success': False,
-                'error': f'Could not apply request: {exc}',
-            }, status=500)
+            return JsonResponse(
+                {'success': False, 'error': f'Could not apply request: {exc}'},
+                status=500,
+            )
+
+        if req.created_checklist_id:
+            c = req.created_checklist
+            logger.info(
+                "[CHECKLIST-CREATED] req=%s checklist=%s name=%r branches=%s departments=%s tasks=%s",
+                req.id, c.id, c.name,
+                list(c.assigned_branches.values_list('id', flat=True)),
+                list(c.assigned_departments.values_list('id', flat=True)),
+                c.tasks.count(),
+            )
+
+        Notification.objects.create(
+            recipient=req.requester,
+            notification_type='request_decision',
+            message=(
+                f"Your checklist request '{req.get_request_type_display()}' was APPROVED."
+                + (f" Note: {note}" if note else "")
+            ),
+            link_url='/adminboard/member/checklist-requests/',
+            related_request=req,
+        )
 
         return JsonResponse({
             'success': True,
@@ -8894,18 +9225,18 @@ def api_approve_checklist_request(request, request_id):
             'request': req.to_dict(),
         })
 
-    except Exception as exc:
+    except Exception:
         logger.exception("Error in api_approve_checklist_request")
-        return JsonResponse({
-            'success': False,
-            'error': f'An internal error occurred: {exc}',
-        }, status=500)
+        return JsonResponse(
+            {'success': False, 'error': 'An internal error occurred.'},
+            status=500,
+        )
 
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_reject_checklist_request(request, request_id):
-    """Supervisor rejects — payload is not applied."""
+    """Supervisor rejects — member is notified."""
     try:
         try:
             user_profile = UserProfile.objects.get(email=request.user.email)
@@ -8918,18 +9249,35 @@ def api_reject_checklist_request(request, request_id):
         req = get_object_or_404(ChecklistChangeRequest, id=request_id)
 
         if req.status != ChecklistChangeRequest.Status.PENDING:
-            return JsonResponse({'success': False, 'error': 'This request is no longer pending.'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'This request is no longer pending.'},
+                status=400,
+            )
 
         data = json.loads(request.body or '{}')
         note = (data.get('note') or '').strip()
 
         if not note:
-            return JsonResponse({'success': False, 'error': 'A rejection reason is required.'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'A rejection reason is required.'},
+                status=400,
+            )
 
         try:
             req.reject(supervisor=user_profile, note=note)
         except ValueError as exc:
             return JsonResponse({'success': False, 'error': str(exc)}, status=400)
+
+        Notification.objects.create(
+            recipient=req.requester,
+            notification_type='request_decision',
+            message=(
+                f"Your checklist request '{req.get_request_type_display()}' was REJECTED. "
+                f"Reason: {note}"
+            ),
+            link_url='/adminboard/member/checklist-requests/',
+            related_request=req,
+        )
 
         return JsonResponse({
             'success': True,
@@ -8941,4 +9289,7 @@ def api_reject_checklist_request(request, request_id):
         return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
     except Exception:
         logger.exception("Error in api_reject_checklist_request")
-        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+        return JsonResponse(
+            {'success': False, 'error': 'An internal error occurred.'},
+            status=500,
+        )
