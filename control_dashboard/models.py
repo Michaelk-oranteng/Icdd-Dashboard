@@ -1862,3 +1862,72 @@ def snapshot_checklist(checklist):
             for t in checklist.tasks.all()
         ],
     }
+
+# ============================================
+# SUPERVISOR COMMENTS on exception rows
+# ============================================
+
+class SupervisorComment(models.Model):
+    """
+    A note on a single ExceptionRecord, written by a supervisor or
+    by the member (as a reply).
+
+    `is_resolved` flips to True when the member has acknowledged /
+    acted on the supervisor note.
+    """
+
+    class AuthorRole(models.TextChoices):
+        SUPERVISOR = 'supervisor', 'Supervisor'
+        MEMBER     = 'member',     'Member'
+
+    record = models.ForeignKey(
+        ExceptionRecord,
+        on_delete=models.CASCADE,
+        related_name='supervisor_comments',
+    )
+    author = models.ForeignKey(
+        UserProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='supervisor_comments_written',
+    )
+    author_role = models.CharField(
+        max_length=12,
+        choices=AuthorRole.choices,
+        default=AuthorRole.SUPERVISOR,
+        db_index=True,
+    )
+    body = models.TextField()
+    is_resolved = models.BooleanField(default=False)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'supervisor_comments'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['record', '-created_at']),
+            models.Index(fields=['author', '-created_at']),
+            models.Index(fields=['author_role', 'is_resolved']),
+        ]
+
+    def __str__(self):
+        who = self.author.full_name if self.author else 'Unknown'
+        return f'[{self.author_role}] {who} — {self.body[:40]}'
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'author': {
+                'id': self.author_id,
+                'name': (self.author.full_name or self.author.email) if self.author else 'System',
+                'avatar_url': self.author.avatar_url if self.author else '',
+            },
+            'author_role': self.author_role,
+            'body': self.body,
+            'is_resolved': self.is_resolved,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'created_at': self.created_at.isoformat(),
+            'created_at_human': self.created_at.strftime('%b %d, %Y %H:%M'),
+        }

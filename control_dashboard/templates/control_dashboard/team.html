@@ -8,22 +8,24 @@
 <style>
 /* ============================================================
    TEAM PERFORMANCE — Local template styles
+   Blue + white palette
    ============================================================ */
 
 :root {
     --tp-bg-1: #ffffff;
-    --tp-bg-2: #f7f8fc;
-    --tp-bg-3: #f1f3f9;
+    --tp-bg-2: #f7f9ff;
+    --tp-bg-3: #eef3fb;
 
-    --tp-border: rgba(15, 27, 51, 0.08);
-    --tp-border-strong: rgba(15, 27, 51, 0.16);
-    --tp-hairline: rgba(15, 27, 51, 0.06);
+    --tp-border: rgba(33, 78, 186, 0.10);
+    --tp-border-strong: rgba(33, 78, 186, 0.22);
+    --tp-hairline: rgba(33, 78, 186, 0.08);
 
     --tp-text-0: #0f1b33;
     --tp-text-1: #46536b;
     --tp-text-2: #8993a8;
 
-    --tp-accent: #4f6ef7;
+    --tp-accent: #214EBA;
+    --tp-accent-soft: #eef1ff;
     --tp-emerald: #17a673;
     --tp-emerald-soft: #e2f7ef;
     --tp-amber: #e08a17;
@@ -38,6 +40,9 @@
     --tp-font: 'Poppins', system-ui, -apple-system, sans-serif;
 }
 
+/* ============================================================
+   TABLE CONTAINER (blue hero accent)
+   ============================================================ */
 .table-container {
     background: var(--tp-bg-1);
     border: 1px solid var(--tp-border);
@@ -51,7 +56,10 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: linear-gradient(90deg, transparent 0%, var(--tp-accent) 50%, transparent 100%);
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--tp-accent) 50%,
+        transparent 100%);
     opacity: 0.85;
     z-index: 2;
 }
@@ -112,7 +120,9 @@
     50%      { transform: scale(1.3); opacity: 0.7; }
 }
 
-/* ---------- Leaderboard ---------- */
+/* ============================================================
+   LEADERBOARD ROWS
+   ============================================================ */
 .leaderboard {
     display: flex;
     flex-direction: column;
@@ -123,11 +133,11 @@
 .member-row {
     display: grid;
     grid-template-columns:
-        40px                                /* rank */
-        minmax(180px, 1.4fr)                /* identity */
-        minmax(220px, 1.3fr)                /* score (bar + breakdown) */
-        minmax(140px, 0.9fr)                /* net/tasks */
-        auto;                               /* status */
+        40px
+        minmax(180px, 1.4fr)
+        minmax(260px, 1.5fr)
+        minmax(180px, 1fr)
+        auto;
     align-items: center;
     gap: 18px;
     padding: 14px 18px;
@@ -137,13 +147,13 @@
     transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 .member-row:hover {
-    border-color: rgba(79, 110, 247, 0.28);
-    box-shadow: 0 6px 20px rgba(15, 27, 51, 0.06);
+    border-color: rgba(33, 78, 186, 0.28);
+    box-shadow: 0 6px 20px rgba(33, 78, 186, 0.08);
     transform: translateY(-1px);
 }
 .member-row.is-top {
-    background: linear-gradient(180deg, #fffef9 0%, #ffffff 100%);
-    border-color: rgba(224, 138, 23, 0.22);
+    background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+    border-color: rgba(33, 78, 186, 0.22);
 }
 
 .member-rank {
@@ -165,10 +175,10 @@
     margin-right: 1px;
 }
 .member-row.is-top .member-rank {
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
-    color: #92400e;
-    border-color: rgba(224, 138, 23, 0.32);
-    box-shadow: 0 2px 8px rgba(224, 138, 23, 0.18);
+    background: linear-gradient(135deg, #eef1ff, #dde3fb);
+    color: var(--tp-accent);
+    border-color: rgba(33, 78, 186, 0.28);
+    box-shadow: 0 2px 8px rgba(33, 78, 186, 0.12);
 }
 
 .member-identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -177,7 +187,7 @@
     border-radius: 10px;
     display: grid; place-items: center;
     background: linear-gradient(135deg, #eef1fe, #dde3fb);
-    color: #3b56d8;
+    color: #214EBA;
     font-weight: 700; font-size: 14px;
 }
 .member-who { display: flex; flex-direction: column; min-width: 0; }
@@ -191,9 +201,11 @@
     margin-top: 1px;
 }
 
-/* ---------- Score block ---------- */
+/* ============================================================
+   SCORE BLOCK
+   ============================================================ */
 .member-score {
-    display: flex; flex-direction: column; gap: 6px;
+    display: flex; flex-direction: column; gap: 8px;
     min-width: 0;
 }
 .member-score__head {
@@ -201,10 +213,10 @@
     gap: 10px;
 }
 .score-text {
-    font-size: 17px;
+    font-size: 20px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.4px;
+    letter-spacing: -0.5px;
     line-height: 1;
     transition: color 0.5s ease;
 }
@@ -236,38 +248,60 @@
 .progress-bar.bar-warning { background: linear-gradient(90deg, #e08a17 0%, #f59e0b 100%); }
 .progress-bar.bar-danger  { background: linear-gradient(90deg, #e0456a 0%, #f43f5e 100%); }
 
-.score-breakdown {
+/* Score summary chips */
+.score-summary {
+    font-size: 11px;
+    color: var(--tp-text-1);
+    font-variant-numeric: tabular-nums;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 10.5px;
-    color: var(--tp-text-2);
-    font-variant-numeric: tabular-nums;
+    gap: 6px;
     flex-wrap: wrap;
 }
-.score-breakdown__item {
+.score-summary__chip {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
-    white-space: nowrap;
-}
-.score-breakdown__item b {
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
     font-weight: 700;
-    color: var(--tp-text-1);
+    font-size: 10.5px;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    border: 1px solid;
 }
-.score-breakdown__item.is-plus b { color: var(--tp-emerald); }
-.score-breakdown__item.is-minus b { color: var(--tp-rose); }
-.score-breakdown__divider {
-    width: 1px; height: 10px;
-    background: var(--tp-hairline);
+.score-summary__chip.is-credit {
+    background: var(--tp-emerald-soft);
+    color: #047857;
+    border-color: rgba(4, 120, 87, 0.20);
+}
+.score-summary__chip.is-debit {
+    background: var(--tp-rose-soft);
+    color: #b91c1c;
+    border-color: rgba(185, 28, 28, 0.20);
+}
+.score-summary__chip.is-neutral {
+    background: var(--tp-accent-soft);
+    color: var(--tp-accent);
+    border-color: rgba(33, 78, 186, 0.22);
+}
+.score-summary__label {
+    color: var(--tp-text-2);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-size: 9.5px;
+    margin-right: 2px;
 }
 
-/* ---------- Stats cluster ---------- */
+/* ============================================================
+   RIGHT COLUMN — Total Score / Tasks
+   ============================================================ */
 .member-stats {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 6px 14px;
+    padding: 8px 14px;
     background: var(--tp-bg-2);
     border: 1px solid var(--tp-hairline);
     border-radius: 10px;
@@ -275,10 +309,10 @@
 }
 .member-stat {
     display: flex; flex-direction: column; align-items: center;
-    min-width: 38px;
+    min-width: 48px;
 }
 .member-stat__val {
-    font-size: 12.5px; font-weight: 700;
+    font-size: 15px; font-weight: 700;
     color: var(--tp-text-0);
     font-variant-numeric: tabular-nums;
     line-height: 1;
@@ -291,14 +325,17 @@
     color: var(--tp-text-2);
     text-transform: uppercase;
     letter-spacing: .06em;
-    margin-top: 3px;
+    margin-top: 4px;
+    white-space: nowrap;
 }
 .member-stat__divider {
-    width: 1px; height: 22px;
+    width: 1px; height: 24px;
     background: var(--tp-hairline);
 }
 
-/* ---------- Status badge ---------- */
+/* ============================================================
+   STATUS BADGE
+   ============================================================ */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -323,7 +360,9 @@
 .status-badge.pending  { background: var(--tp-amber-soft);   color: var(--tp-amber);   border-color: rgba(224, 138, 23, 0.22); }
 .status-badge.inactive { background: var(--tp-rose-soft);    color: var(--tp-rose);    border-color: rgba(224, 69, 106, 0.22); }
 
-/* ---------- Empty ---------- */
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
 .tp-empty {
     text-align: center;
     padding: 64px 24px;
@@ -332,17 +371,18 @@
 .tp-empty__icon {
     width: 56px; height: 56px;
     border-radius: 16px;
-    background: var(--tp-bg-2);
+    background: var(--tp-accent-soft);
     border: 1px solid var(--tp-hairline);
     display: grid; place-items: center;
     margin: 0 auto 16px;
 }
-.tp-empty__icon i { font-size: 22px; color: var(--tp-text-2); opacity: 0.6; }
+.tp-empty__icon i { font-size: 22px; color: var(--tp-accent); opacity: 0.7; }
 .tp-empty h5 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--tp-text-1); }
 .tp-empty p { margin: 0; font-size: 12px; max-width: 380px; margin-inline: auto; line-height: 1.5; }
 
+/* Cell update flash */
 @keyframes fx-cell-update {
-    0%   { background: rgba(79, 110, 247, 0.16); }
+    0%   { background: rgba(33, 78, 186, 0.16); }
     100% { background: transparent; }
 }
 .cell-updated {
@@ -350,9 +390,12 @@
     border-radius: 6px;
 }
 
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 1100px) {
     .member-row {
-        grid-template-columns: 40px minmax(180px, 1fr) minmax(200px, 1fr) auto;
+        grid-template-columns: 40px minmax(180px, 1fr) minmax(240px, 1fr) auto;
         grid-template-areas:
             "rank identity score status"
             "rank stats    stats stats";
@@ -379,7 +422,7 @@
     .member-rank    { width: 34px; height: 34px; font-size: 12px; border-radius: 10px; }
     .member-avatar  { width: 32px; height: 32px; flex: 0 0 32px; font-size: 12px; }
     .member-name    { font-size: 13px; }
-    .score-text     { font-size: 15px; }
+    .score-text     { font-size: 17px; }
     .member-stats   { width: 100%; justify-content: space-between; }
     .table-header h4 { font-size: 13px; }
     .live-indicator  { font-size: 9px; padding: 3px 8px; }
@@ -414,6 +457,12 @@
     <span class="nav-icon"><i class="fas fa-tasks"></i></span>
     <span class="nav-text">Activity Checklist</span>
 </a></li>
+<li>
+    <a href="{% url 'control_dashboard:supervisor_checklist_requests' %}">
+        <span class="nav-icon"><i class="fas fa-inbox"></i></span>
+        <span class="nav-text">Checklist Requests</span>
+    </a>
+</li>
 <li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
     <span class="nav-icon"><i class="fas fa-search"></i></span>
     <span class="nav-text">Activity Logs</span>
@@ -453,9 +502,9 @@
         <article class="member-row {% if forloop.counter == 1 %}is-top{% endif %}"
                  data-name="{{ member.user.full_name|lower }}"
                  data-member-id="{{ member.user.id }}"
-                 data-net="{{ member.net_vs_target }}"
                  data-tasks="{{ member.total_tasks }}"
                  data-score="{{ member.percentage }}"
+                 data-final-score="{{ member.final_score }}"
                  data-status="{{ member.status_text }}"
                  data-position="{{ member.user.get_position_display|default:'-' }}"
                  data-email-score="{{ member.email_score }}"
@@ -472,6 +521,7 @@
                 </div>
             </div>
 
+            {# ── SCORE BLOCK ───────────────────────────────────── #}
             <div class="member-score">
                 <div class="member-score__head">
                     <span class="score-text
@@ -483,6 +533,7 @@
                     </span>
                     <span class="score-label">Performance</span>
                 </div>
+
                 <div class="progress-track">
                     <div class="progress-bar
                         {% if member.percentage >= 90 %}bar-success
@@ -491,31 +542,32 @@
                         data-field="percentage-bar"
                         style="width: {{ member.percentage_bar }}%;"></div>
                 </div>
-                <div class="score-breakdown" aria-label="Score breakdown">
-                    <span class="score-breakdown__item">
-                        Email <b data-field="email-score">{{ member.email_score }}</b>
-                        <span>/ {{ member.total_tasks }}×100</span>
-                    </span>
-                    <span class="score-breakdown__divider"></span>
-                    <span class="score-breakdown__item is-plus">
+
+                {# ── Score chips: credits, debits, final score ── #}
+                <div class="score-summary" aria-label="Score breakdown">
+                    <span class="score-summary__label">Net</span>
+                    <span class="score-summary__chip is-credit">
                         <i class="fas fa-plus" style="font-size:8px;"></i>
                         <b data-field="adhoc-credits">{{ member.adhoc_credits }}</b>
                     </span>
-                    <span class="score-breakdown__item is-minus">
+                    <span class="score-summary__chip is-debit">
                         <i class="fas fa-minus" style="font-size:8px;"></i>
                         <b data-field="adhoc-debits">{{ member.adhoc_debits }}</b>
+                    </span>
+                    <span class="score-summary__chip is-neutral">
+                        Final <b data-field="final-score">{{ member.final_score }}</b>
                     </span>
                 </div>
             </div>
 
+            {# ── TOTAL SCORE + TASKS ───────────────────────────── #}
             <div class="member-stats">
                 <div class="member-stat">
-                    <span class="member-stat__val
-                        {% if member.net_vs_target > 0 %}positive{% elif member.net_vs_target < 0 %}negative{% else %}zero{% endif %}"
-                        data-field="net">
-                        {% if member.net_vs_target > 0 %}+{% endif %}{{ member.net_vs_target }}
+                    <span class="member-stat__val positive"
+                          data-field="final-score-col">
+                        {{ member.final_score }}
                     </span>
-                    <span class="member-stat__lbl">Net</span>
+                    <span class="member-stat__lbl">Total Score</span>
                 </div>
                 <div class="member-stat__divider"></div>
                 <div class="member-stat">
@@ -644,22 +696,29 @@
                 const row = document.querySelector(`.member-row[data-member-id="${m.id}"]`);
                 if (!row) return;
 
-                const netEl = row.querySelector('[data-field="net"]');
-                if (netEl) {
-                    const signed = (m.net_vs_target > 0 ? '+' : '') + m.net_vs_target;
-                    if (netEl.textContent.trim() !== signed) {
-                        netEl.textContent = signed;
-                        netEl.classList.remove('positive', 'negative', 'zero');
-                        netEl.classList.add(
-                            m.net_vs_target > 0 ? 'positive'
-                            : m.net_vs_target < 0 ? 'negative'
-                            : 'zero'
-                        );
-                        netEl.classList.add('cell-updated');
-                        setTimeout(() => netEl.classList.remove('cell-updated'), 1400);
+                // ── Right column: Total Score (final_score) ──
+                const totalColEl = row.querySelector('[data-field="final-score-col"]');
+                if (totalColEl) {
+                    const newVal = String(m.final_score ?? 0);
+                    if (totalColEl.textContent.trim() !== newVal) {
+                        totalColEl.textContent = newVal;
+                        totalColEl.classList.add('cell-updated');
+                        setTimeout(() => totalColEl.classList.remove('cell-updated'), 1400);
                     }
                 }
 
+                // ── Chip: Final score (final_score) ────────────
+                const chipFinalEl = row.querySelector('[data-field="final-score"]');
+                if (chipFinalEl) {
+                    const newVal = String(m.final_score ?? 0);
+                    if (chipFinalEl.textContent.trim() !== newVal) {
+                        chipFinalEl.textContent = newVal;
+                        chipFinalEl.classList.add('cell-updated');
+                        setTimeout(() => chipFinalEl.classList.remove('cell-updated'), 1400);
+                    }
+                }
+
+                // ── Tasks ────────────────────────────────────────
                 const tasksEl = row.querySelector('[data-field="tasks"]');
                 if (tasksEl && tasksEl.textContent.trim() !== String(m.total_tasks)) {
                     tasksEl.textContent = m.total_tasks;
@@ -667,6 +726,7 @@
                     setTimeout(() => tasksEl.classList.remove('cell-updated'), 1400);
                 }
 
+                // ── Performance % + bar ──────────────────────────
                 const scoreEl = row.querySelector('[data-field="percentage"]');
                 const barEl   = row.querySelector('[data-field="percentage-bar"]');
                 if (scoreEl && barEl) {
@@ -685,6 +745,7 @@
                     else                         barEl.classList.add('bar-danger');
                 }
 
+                // ── Ad-hoc chips ─────────────────────────────────
                 const setVal = (field, val) => {
                     const el = row.querySelector(`[data-field="${field}"]`);
                     if (el && String(el.textContent).trim() !== String(val)) {
@@ -693,10 +754,10 @@
                         setTimeout(() => el.classList.remove('cell-updated'), 1400);
                     }
                 };
-                setVal('email-score',    m.email_score ?? 0);
-                setVal('adhoc-credits',  m.adhoc_credits ?? 0);
-                setVal('adhoc-debits',   m.adhoc_debits ?? 0);
+                setVal('adhoc-credits', m.adhoc_credits ?? 0);
+                setVal('adhoc-debits',  m.adhoc_debits ?? 0);
 
+                // ── Status badge ────────────────────────────────
                 const statusEl = row.querySelector('[data-field="status"]');
                 if (statusEl && statusEl.textContent.trim() !== m.status_text) {
                     statusEl.textContent = m.status_text;
@@ -729,8 +790,9 @@
 
         const headers = [
             'Rank', 'Full Name', 'Position',
-            'Performance %', 'Email Score', 'AdHoc +', 'AdHoc −',
-            'Net vs Target', 'Total Tasks', 'Status'
+            'Performance %',
+            'Email Score', 'AdHoc Credits', 'AdHoc Debits',
+            'Total Score', 'Tasks', 'Status'
         ];
         const lines = [headers.map(csvCell).join(',')];
 
@@ -744,7 +806,7 @@
                 rank, name, d.position,
                 d.score + '%',
                 d.emailScore, d.adhocCredits, d.adhocDebits,
-                d.net, d.tasks, d.status
+                d.finalScore, d.tasks, d.status
             ].map(csvCell).join(','));
         });
 

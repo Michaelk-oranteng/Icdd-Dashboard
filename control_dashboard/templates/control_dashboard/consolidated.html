@@ -1,424 +1,223 @@
 {% extends 'control_dashboard/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Consolidated Reports{% endblock %}
 
 {% block extra_css %}
 <style>
 /* ============================================================
-   CONSOLIDATED REPORTS — OMNibsic BANK BLENDED
-   Navy woven into surfaces, gold as premium highlight
+   CONSOLIDATED REPORTS — BLUE HERO TABS + WHITE GLASS TABLES
    ============================================================ */
-
 :root {
-    /* ---- OmniBSIC brand primitives ---- */
     --ob-navy:        #003366;
-    --ob-navy-dark:   #001F3D;
-    --ob-navy-mid:    #1A4B7A;
-    --ob-navy-tint-1: rgba(0, 51, 102, 0.04);
-    --ob-navy-tint-2: rgba(0, 51, 102, 0.08);
-    --ob-navy-tint-3: rgba(0, 51, 102, 0.14);
     --ob-gold:        #D4AF37;
-    --ob-gold-soft:   rgba(212, 175, 55, 0.14);
-    --ob-gold-mid:    rgba(212, 175, 55, 0.28);
+    --ob-gold-dark:   #B8960F;
+    --header-gradient: linear-gradient(135deg, #214EBA 0%, #3785DF 100%);
 
-    /* ---- Surfaces (blended with navy) ---- */
-    --cr-bg-1: #ffffff;
-    --cr-bg-2: #f6f9fe;
-    --cr-bg-3: #eef3fa;
+    --glass-white-strong: rgba(255, 255, 255, 0.94);
+    --glass-border:       rgba(33, 78, 186, 0.14);
+    --glass-shadow:       0 8px 28px rgba(33, 78, 186, 0.10);
+    --glass-shadow-lg:    0 16px 44px rgba(33, 78, 186, 0.14);
+    --glass-blur:         saturate(160%) blur(14px);
 
-    --cr-border: #dbe3ef;
-    --cr-border-strong: #c9d3e3;
-    --cr-hairline: #eaf0f8;
+    --cr-text:      #0b1a33;
+    --cr-text-2:    #4a5a75;
+    --cr-text-3:    #8493ab;
+    --cr-border:    #dbe3ef;
+    --cr-hairline:  #eaf0f8;
 
-    --cr-text-0: #0b1a33;
-    --cr-text-1: #2c3e5c;
-    --cr-text-2: #8493ab;
-
-    --cr-accent:       var(--ob-navy);
-    --cr-accent-soft:  var(--ob-navy-tint-2);
-    --cr-emerald:      #12a67a;
+    --cr-emerald:   #12a67a;
     --cr-emerald-soft: rgba(18, 166, 122, 0.10);
-    --cr-amber:        #d4820f;
-    --cr-amber-soft:   rgba(212, 130, 15, 0.10);
-    --cr-rose:         #c8395f;
-    --cr-rose-soft:    rgba(200, 57, 95, 0.10);
-    --cr-violet:       #6a4ddc;
-    --cr-violet-soft:  rgba(106, 77, 220, 0.10);
-
-    --cr-shadow-sm: 0 1px 2px rgba(0, 31, 61, 0.05),
-                    0 1px 3px rgba(0, 31, 61, 0.03);
-    --cr-shadow-md: 0 4px 12px rgba(0, 31, 61, 0.08),
-                    0 2px 4px rgba(0, 31, 61, 0.03);
+    --cr-amber:     #d4820f;
+    --cr-amber-soft: rgba(212, 130, 15, 0.10);
+    --cr-rose:      #c8395f;
+    --cr-rose-soft: rgba(200, 57, 95, 0.10);
+    --cr-violet:    #6a4ddc;
+    --cr-violet-soft: rgba(106, 77, 220, 0.10);
 
     --cr-font: 'Poppins', system-ui, -apple-system, sans-serif;
-    --cr-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --cr-mono: 'JetBrains Mono', Consolas, monospace;
 }
 
+.consolidated-container,
+.consolidated-container * { font-family: var(--cr-font); }
+
 .consolidated-container {
-    max-width: 1500px;
+    width: 100%;
+    max-width: 1600px;
     margin: 0 auto;
     padding: 8px 0 48px;
-    font-family: var(--cr-font);
-    color: var(--cr-text-0);
+    color: var(--cr-text);
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 18px;
 }
 
 /* ============================================================
-   FILTER CARD — now the top of the page
+   SHEET TABS — BLUE HERO ACTIVE + WHITE IDLE
    ============================================================ */
-.consolidated-filter-card {
-    position: relative;
-    background:
-        radial-gradient(circle at 100% 0%,
-            rgba(0, 51, 102, 0.04) 0%,
-            transparent 45%),
-        linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
-    border-radius: 18px;
-    padding: 24px 28px;
-    border: 1px solid var(--cr-border);
-    box-shadow: var(--cr-shadow-sm);
-    overflow: hidden;
-}
-
-/* Gold hairline at top */
-.consolidated-filter-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 28px;
-    right: 28px;
-    height: 2px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--ob-gold) 50%,
-        transparent 100%);
-    opacity: 0.85;
-}
-
-.filter-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) auto;
-    gap: 16px;
-    align-items: end;
-}
-
-.filter-field {
+.sheet-bar {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 0;
-}
-
-.filter-field label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--ob-navy);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.filter-field select,
-.filter-field input {
-    padding: 10px 14px;
-    border: 1px solid var(--cr-border);
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 500;
-    font-family: var(--cr-font);
-    color: var(--cr-text-0);
-    background: #ffffff;
-    transition: all 0.2s ease;
-    outline: none;
-    width: 100%;
-    box-sizing: border-box;
-    height: 42px;
-}
-
-.filter-field select:hover,
-.filter-field input:hover {
-    border-color: var(--ob-navy-mid);
-}
-
-.filter-field select {
-    appearance: none;
-    -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23003366' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 14px;
-    padding-right: 36px;
-    cursor: pointer;
-}
-
-.filter-field select:focus,
-.filter-field input:focus {
-    border-color: var(--ob-navy);
-    box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.14);
-}
-
-.filter-field input[type="date"] {
-    color-scheme: light;
-    font-variant-numeric: tabular-nums;
-    cursor: pointer;
-}
-
-.filter-actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
-/* Primary export button — navy gradient + gold shimmer */
-.btn-generate {
+.sheet-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 6px 6px 0;
+    background: #ffffff;
+    border: 1px solid var(--cr-border);
+    border-radius: 14px 14px 0 0;
+    box-shadow: var(--glass-shadow);
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 1 1 auto;
+    min-width: 0;
+    position: relative;
+}
+.sheet-tabs::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 16px; right: 16px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--ob-gold) 50%, transparent 100%);
+    opacity: 0.75;
+}
+.sheet-tabs::-webkit-scrollbar { display: none; }
+
+.sheet-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 20px 14px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    background: transparent;
+    color: var(--cr-text-3);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+}
+.sheet-tab i { font-size: 12px; opacity: 0.75; }
+.sheet-tab:hover { color: #214EBA; background: rgba(33, 78, 186, 0.06); }
+
+.sheet-tab.is-active {
+    background: var(--header-gradient);
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 -2px 8px rgba(33, 78, 186, 0.20);
+}
+.sheet-tab.is-active i { opacity: 1; }
+
+.sheet-tab .sheet-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 10px;
+    background: rgba(33, 78, 186, 0.12);
+    color: #214EBA;
+    font-size: 10.5px;
+    font-weight: 700;
+}
+.sheet-tab.is-active .sheet-tab-badge {
+    background: rgba(255, 255, 255, 0.24);
+    color: #ffffff;
+}
+
+.btn-export {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 0 22px;
-    background: linear-gradient(135deg, var(--ob-navy) 0%, var(--ob-navy-mid) 100%);
-    color: #ffffff;
-    border: none;
-    border-radius: 10px;
+    height: 42px;
+    padding: 0 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.65);
     font-size: 12.5px;
     font-weight: 600;
-    font-family: var(--cr-font);
+    color: #214EBA;
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(33, 78, 186, 0.18);
     cursor: pointer;
-    height: 42px;
     white-space: nowrap;
-    box-shadow: 0 4px 14px rgba(0, 51, 102, 0.28);
-    transition: all 0.25s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    flex-shrink: 0;
     position: relative;
     overflow: hidden;
 }
-
-.btn-generate::after {
+.btn-export::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: -40%;
-    width: 40%;
-    height: 100%;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        rgba(212, 175, 55, 0.30) 50%,
-        transparent 100%);
+    top: 0; left: -40%;
+    width: 40%; height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.35) 50%, transparent 100%);
     transition: left 0.5s ease;
 }
-
-.btn-generate:hover:not(:disabled)::after {
-    left: 100%;
-}
-
-.btn-generate:hover:not(:disabled) {
+.btn-export:hover::after { left: 100%; }
+.btn-export:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(0, 51, 102, 0.42);
+    box-shadow: 0 8px 24px rgba(33, 78, 186, 0.32);
 }
-
-.btn-generate:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
-/* Reset button — navy hover */
-.btn-reset-filters {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 0 18px;
-    background: #ffffff;
-    color: var(--ob-navy);
-    border: 1px solid var(--cr-border);
-    border-radius: 10px;
-    font-size: 12.5px;
-    font-weight: 600;
-    font-family: var(--cr-font);
-    cursor: pointer;
-    height: 42px;
-    white-space: nowrap;
-    box-shadow: var(--cr-shadow-sm);
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-
-.btn-reset-filters:hover {
-    background: var(--ob-navy-tint-1);
-    color: var(--ob-navy);
-    border-color: var(--ob-navy-tint-3);
-}
-
-/* Clear-dates inline link */
-.clear-dates-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 10.5px;
-    font-weight: 700;
-    color: var(--cr-rose);
-    text-decoration: none;
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(200, 57, 95, 0.22);
-    background: var(--cr-rose-soft);
-    transition: all 0.2s ease;
-    cursor: pointer;
-    font-family: var(--cr-font);
-    white-space: nowrap;
-    height: 42px;
-    box-sizing: border-box;
-}
-
-.clear-dates-link:hover {
-    background: rgba(200, 57, 95, 0.16);
-}
+.btn-export:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
 
 /* ============================================================
-   DATA TABLE
+   TABLE CONTAINER — WHITE GLASS
    ============================================================ */
 .table-container {
     position: relative;
+    width: 100%;
     background: #ffffff;
-    border-radius: 18px;
-    border: 1px solid var(--cr-border);
-    box-shadow: var(--cr-shadow-sm);
+    border-radius: 0 18px 18px 18px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
     overflow: hidden;
 }
-
-/* Gold hairline at top */
 .table-container::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 22px;
-    right: 22px;
+    top: 0; left: 22px; right: 22px;
     height: 2px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--ob-gold) 50%,
-        transparent 100%);
-    opacity: 0.7;
+    background: linear-gradient(90deg, transparent 0%, var(--ob-gold) 50%, transparent 100%);
+    opacity: 0.85;
     z-index: 2;
-}
-
-.table-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 24px 16px;
-    border-bottom: 1px solid var(--cr-border);
-    background: linear-gradient(180deg, #f8fafd 0%, #eef3fa 100%);
-    flex-wrap: wrap;
-    gap: 12px;
-    position: relative;
-    z-index: 1;
-}
-
-.table-header h4 {
-    margin: 0;
-    font-size: 13.5px;
-    font-weight: 700;
-    color: var(--ob-navy);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.table-header h4 i {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    display: grid;
-    place-items: center;
-    background: var(--ob-navy);
-    color: #ffffff;
-    font-size: 13px;
-    box-shadow: 0 2px 6px rgba(0, 51, 102, 0.22);
-}
-
-.scope-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    background: var(--cr-violet-soft);
-    color: var(--cr-violet);
-    border: 1px solid rgba(106, 77, 220, 0.25);
-    margin-left: 4px;
-    vertical-align: middle;
-}
-
-.date-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    background: var(--ob-gold-soft);
-    color: var(--ob-gold-dark, #B8960F);
-    border: 1px solid var(--ob-gold-mid);
-    margin-left: 4px;
-    vertical-align: middle;
-}
-
-.badge-count {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 700;
-    background: var(--ob-navy-tint-2);
-    color: var(--ob-navy);
-    border: 1px solid var(--ob-navy-tint-3);
-    font-variant-numeric: tabular-nums;
 }
 
 .table-responsive {
     overflow-x: auto;
-    max-height: 680px;
+    max-height: 720px;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 51, 102, 0.15) transparent;
+    scrollbar-color: rgba(33, 78, 186, 0.20) transparent;
+    background: #ffffff;
 }
-
 .table-responsive::-webkit-scrollbar { width: 10px; height: 10px; }
-.table-responsive::-webkit-scrollbar-track { background: transparent; }
 .table-responsive::-webkit-scrollbar-thumb {
-    background: rgba(0, 51, 102, 0.14);
+    background: rgba(33, 78, 186, 0.20);
     border-radius: 5px;
     border: 2px solid transparent;
     background-clip: padding-box;
 }
-.table-responsive::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 51, 102, 0.28);
-    background-clip: padding-box;
-    border: 2px solid transparent;
-}
 
 .cr-table {
     width: 100%;
+    min-width: 1300px;
     border-collapse: collapse;
     font-size: 12px;
-    font-family: var(--cr-font);
     font-variant-numeric: tabular-nums;
+    background: #ffffff;
 }
-
-/* Navy header band */
 .cr-table thead th {
     position: sticky;
     top: 0;
@@ -430,232 +229,239 @@
     letter-spacing: 1px;
     text-transform: uppercase;
     text-align: left;
-    padding: 15px 16px;
-    border-bottom: 1px solid var(--ob-navy-tint-3);
+    padding: 15px 14px;
+    border-bottom: 1px solid rgba(33, 78, 186, 0.18);
     white-space: nowrap;
 }
-
 .cr-table tbody td {
-    padding: 14px 16px;
+    padding: 14px;
     border-bottom: 1px solid var(--cr-hairline);
-    color: var(--cr-text-1);
+    color: var(--cr-text);
     vertical-align: top;
     line-height: 1.5;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    background: #ffffff;
 }
-
-.cr-table tbody tr:hover { background: var(--ob-navy-tint-1); }
+.cr-table tbody tr:nth-child(even) td { background: #fbfcff; }
+.cr-table tbody tr:hover td { background: rgba(33, 78, 186, 0.05); }
 .cr-table tbody tr:last-child td { border-bottom: none; }
 
 .cr-table .cell-mono {
     font-family: var(--cr-mono);
     font-size: 11px;
-    color: var(--ob-navy);
+    color: #214EBA;
     font-weight: 600;
+    white-space: nowrap;
+    width: 60px;
 }
-
-.cr-table .cell-wide {
-    min-width: 320px;
-    max-width: 620px;
-    white-space: normal;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    color: var(--cr-text-0);
-}
-
-/* Money column — gold */
+.cr-table .cell-wide { min-width: 300px; max-width: 620px; white-space: normal; color: var(--cr-text); }
 .cr-table .cell-num {
     text-align: right;
     font-weight: 700;
-    color: #B8960F;
+    color: var(--ob-gold-dark);
     font-family: var(--cr-mono);
     font-size: 11px;
     white-space: nowrap;
 }
 
-/* Uploader cell */
-.cr-table .cell-uploader {
-    white-space: nowrap;
-}
-
-.uploader-chip {
+.status-badge {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 10px 4px 4px;
-    border-radius: 999px;
-    background: var(--ob-navy-tint-1);
-    border: 1px solid var(--ob-navy-tint-3);
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ob-navy);
-    max-width: 220px;
-    overflow: hidden;
-}
-
-.uploader-avatar {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: var(--ob-navy);
-    color: #ffffff;
-    font-size: 9px;
-    font-weight: 800;
-    flex-shrink: 0;
+    gap: 4px;
+    padding: 4px 11px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
-    box-shadow: 0 1px 4px rgba(0, 51, 102, 0.22);
-}
-
-.uploader-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    letter-spacing: 0.3px;
+    border: 1px solid;
     white-space: nowrap;
-    min-width: 0;
+    line-height: 1;
+}
+.status-badge.status-open          { background: var(--cr-amber-soft);   color: #92400e; border-color: rgba(146,64,14,0.22); }
+.status-badge.status-in_progress   { background: var(--cr-violet-soft);  color: #5b3dd4; border-color: rgba(91,61,212,0.22); }
+.status-badge.status-pending       { background: var(--cr-amber-soft);   color: #92400e; border-color: rgba(146,64,14,0.22); }
+.status-badge.status-overdue       { background: var(--cr-rose-soft);    color: #991b1b; border-color: rgba(153,27,27,0.22); }
+.status-badge.status-closed        { background: var(--cr-emerald-soft); color: #065f46; border-color: rgba(6,95,70,0.22); }
+.status-badge.status-resolved      { background: var(--cr-emerald-soft); color: #065f46; border-color: rgba(6,95,70,0.22); }
+.status-badge.status-rejected      { background: var(--cr-rose-soft);    color: #991b1b; border-color: rgba(153,27,27,0.22); }
+
+/* ============================================================
+   PIVOT TABLE — BLUE HEADERS ON WHITE BODY
+   ============================================================ */
+.pivot-table { min-width: 900px; }
+
+.pivot-table thead th.pivot-branch-head {
+    vertical-align: middle;
+    background: var(--header-gradient);
+    color: #ffffff;
+    min-width: 220px;
+}
+.pivot-table thead th.pivot-group-head {
+    text-align: center;
+    background: linear-gradient(180deg, #1A4B7A 0%, #214EBA 100%);
+    color: #ffffff;
+    border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
+.pivot-table thead th.pivot-summary-head {
+    background: linear-gradient(180deg, #1B47B3 0%, #2F76D4 100%);
+    color: #ffffff;
+    border-left: 1px solid rgba(255, 255, 255, 0.22);
+    text-align: center;
+}
+.pivot-table thead th.pivot-cat-head {
+    background: linear-gradient(180deg, #eef3fa 0%, #e3ecf6 100%);
     color: var(--ob-navy);
+    text-align: center;
+    border-left: 1px solid rgba(33, 78, 186, 0.10);
+    font-size: 9.5px;
+    max-width: 140px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+    vertical-align: middle;
+}
+.pivot-table tbody td.pivot-branch-cell {
+    font-weight: 700;
+    color: var(--ob-navy);
+    white-space: nowrap;
+    background: #ffffff;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    border-right: 1px solid var(--cr-hairline);
+    font-size: 12.5px;
+    vertical-align: middle;
+}
+.pivot-table tbody tr:hover td.pivot-branch-cell { background: #f2f6fd; }
+
+.pivot-table tbody td.pivot-num-cell {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--cr-mono);
+    font-size: 11.5px;
+    white-space: nowrap;
+    border-left: 1px solid rgba(33, 78, 186, 0.06);
+    vertical-align: middle;
+}
+.pivot-table tbody td.pivot-summary-cell {
+    background: rgba(33, 78, 186, 0.04);
+    border-left: 1px solid rgba(33, 78, 186, 0.10);
+}
+.pivot-table tfoot td {
+    font-weight: 700;
+    color: #ffffff;
+    background: var(--header-gradient);
+    border-top: 2px solid var(--ob-gold);
+    padding: 12px 14px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.pivot-table tfoot td.pivot-total-cell {
+    border-left: 1px solid rgba(255, 255, 255, 0.18);
+    text-align: center;
+    font-family: var(--cr-mono);
+    font-size: 11.5px;
+}
+.pivot-table tfoot td.pivot-branch-cell {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--header-gradient);
+    text-align: left;
+    font-family: var(--cr-font);
+    font-size: 12.5px;
+    color: #ffffff;
+}
+.pivot-table tbody td.pivot-num-cell.is-zero {
+    color: rgba(30, 32, 56, 0.32);
 }
 
-.uploader-empty {
-    color: var(--cr-text-2);
-    font-size: 12px;
+.resolution-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.3;
+    min-width: 46px;
+    font-family: var(--cr-mono);
 }
+.resolution-pill.is-good { background: var(--cr-emerald-soft); color: #065f46; }
+.resolution-pill.is-warn { background: var(--cr-amber-soft);   color: #92400e; }
+.resolution-pill.is-bad  { background: var(--cr-rose-soft);    color: #991b1b; }
 
 /* ============================================================
    EMPTY STATES
    ============================================================ */
 .empty-state-card {
     position: relative;
-    background:
-        radial-gradient(circle at 50% 30%,
-            rgba(0, 51, 102, 0.05) 0%,
-            transparent 55%),
-        #ffffff;
+    background: var(--header-gradient);
     border-radius: 20px;
-    padding: 80px 32px;
+    padding: 70px 32px;
     text-align: center;
-    border: 1px dashed var(--cr-border-strong);
-    box-shadow: var(--cr-shadow-sm);
+    border: 1px dashed rgba(255, 255, 255, 0.35);
+    box-shadow: 0 6px 20px rgba(33, 78, 186, 0.22);
     overflow: hidden;
+    color: #ffffff;
 }
-
 .empty-state-card::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 32px;
-    right: 32px;
+    top: 0; left: 32px; right: 32px;
     height: 2px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--ob-gold) 50%,
-        transparent 100%);
-    opacity: 0.55;
+    background: linear-gradient(90deg, transparent 0%, var(--ob-gold) 50%, transparent 100%);
+    opacity: 0.9;
 }
-
 .empty-state-card i {
-    font-size: 44px;
-    width: 88px;
-    height: 88px;
-    display: grid;
-    place-items: center;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    background: radial-gradient(circle,
-        rgba(0, 51, 102, 0.14) 0%,
-        rgba(0, 51, 102, 0.04) 60%,
-        transparent 70%);
-    color: var(--ob-navy);
-    animation: cr-float 3s ease-in-out infinite;
+    font-size: 32px;
+    width: 84px; height: 84px;
+    display: grid; place-items: center;
+    margin: 0 auto 18px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.28);
 }
-
 .empty-state-card.denied i {
-    background: radial-gradient(circle,
-        rgba(200, 57, 95, 0.14) 0%,
-        rgba(200, 57, 95, 0.04) 60%,
-        transparent 70%);
-    color: var(--cr-rose);
+    background: rgba(255, 143, 168, 0.24);
+    color: #FFD9E2;
+    border-color: rgba(255, 143, 168, 0.4);
 }
-
-@keyframes cr-float {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-6px); }
-}
-
-.empty-state-card h3 {
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--ob-navy);
-    margin: 0 0 8px 0;
-    letter-spacing: 0.2px;
-}
-
+.empty-state-card h3 { font-size: 16px; font-weight: 700; color: #ffffff; margin: 0 0 8px; }
 .empty-state-card p {
     font-size: 13px;
-    color: var(--cr-text-2);
+    color: rgba(255, 255, 255, 0.9);
     margin: 0 auto;
     max-width: 480px;
     line-height: 1.55;
 }
+.empty-state-card p strong { color: #ffffff; font-weight: 700; }
 
-.empty-state-card p strong {
-    color: var(--ob-navy);
-    font-weight: 700;
+.row-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--cr-text-3);
+    font-style: italic;
+    font-size: 12.5px;
+    background: #fbfcff;
 }
 
 /* ============================================================
    RESPONSIVE
    ============================================================ */
-@media (max-width: 1100px) {
-    .filter-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-    .filter-field:first-child {
-        grid-column: 1 / -1;
-    }
-    .filter-actions {
-        grid-column: 1 / -1;
-        justify-content: flex-end;
-    }
-}
-
+@media (max-width: 1100px) { .consolidated-container { padding: 8px 0 40px; } }
 @media (max-width: 720px) {
-    .consolidated-container {
-        padding: 4px 0 32px;
-        gap: 16px;
-    }
-    .consolidated-filter-card {
-        padding: 20px 20px;
-    }
-    .consolidated-filter-card::before {
-        left: 20px;
-        right: 20px;
-    }
-    .table-header {
-        padding: 16px 18px 14px;
-    }
-    .cr-table thead th,
-    .cr-table tbody td {
-        padding: 12px 12px;
-    }
+    .consolidated-container { padding: 4px 0 32px; gap: 14px; }
+    .cr-table thead th, .cr-table tbody td { padding: 12px; }
+    .sheet-tab { padding: 10px 14px 12px; font-size: 11.5px; }
+    .sheet-tab i { display: none; }
+    .btn-export { width: 100%; justify-content: center; }
 }
-
 @media (max-width: 600px) {
-    .filter-grid { grid-template-columns: 1fr; }
-    .filter-actions { flex-direction: column; align-items: stretch; }
-    .btn-generate,
-    .btn-reset-filters,
-    .clear-dates-link {
-        width: 100%;
-        justify-content: center;
-    }
     .empty-state-card { padding: 56px 20px; }
-    .empty-state-card i { width: 72px; height: 72px; font-size: 34px; }
-    .empty-state-card h3 { font-size: 15px; }
-    .empty-state-card p { font-size: 12px; }
-    .consolidated-filter-card::before { left: 16px; right: 16px; }
-    .table-container::before { left: 16px; right: 16px; }
-    .table-header { padding: 14px 16px 12px; }
+    .empty-state-card i { width: 72px; height: 72px; font-size: 28px; }
 }
 </style>
 {% endblock %}
@@ -694,6 +500,12 @@
     </a>
 </li>
 <li>
+    <a href="{% url 'control_dashboard:member_checklist_requests' %}">
+        <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
+        <span class="nav-text">Checklist Change</span>
+    </a>
+</li>
+<li>
     <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
         <span class="nav-icon"><i class="fas fa-cash-register"></i></span>
         <span class="nav-text">Daily Trial Balance</span>
@@ -713,21 +525,13 @@
 <div class="consolidated-container">
 
     {% if not has_access %}
-        {# -------------------------------------------------------- #}
-        {# ACCESS DENIED #}
-        {# -------------------------------------------------------- #}
         <div class="empty-state-card denied">
             <i class="fas fa-lock"></i>
             <h3>Consolidated Access Required</h3>
-            <p>
-                <strong>Please contact your administrator to request access</strong>
-            </p>
+            <p><strong>Please contact your administrator to request access</strong></p>
         </div>
 
     {% elif not available_report_types %}
-        {# -------------------------------------------------------- #}
-        {# EMPTY STATE (shouldn't normally hit if has_access is true) #}
-        {# -------------------------------------------------------- #}
         <div class="empty-state-card">
             <i class="fas fa-layer-group"></i>
             <h3>No Consolidated Reports Yet</h3>
@@ -736,136 +540,230 @@
 
     {% else %}
 
-        {# -------------------------------------------------------- #}
-        {# FILTER / BUILD FORM #}
-        {# -------------------------------------------------------- #}
-        <form class="consolidated-filter-card" method="get" id="consolidatedFilterForm">
-            <div class="filter-grid">
-                <div class="filter-field">
-                    <label for="reportTypeFilter">Report Type</label>
-                    <select name="report_type" id="reportTypeFilter" onchange="submitFilters()">
-                        {% for rt in available_report_types %}
-                            <option value="{{ rt }}" {% if rt == selected_report_type %}selected{% endif %}>
-                                {{ rt }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+        <div class="sheet-bar">
+            <nav class="sheet-tabs" role="tablist" aria-label="Consolidated Report sheets">
+                <a href="?tab=dashboard" role="tab"
+                   class="sheet-tab {% if active_tab == 'dashboard' %}is-active{% endif %}">
+                    <i class="fas fa-gauge-high" aria-hidden="true"></i>
+                    Dashboard
+                </a>
+                <a href="?tab=current_week" role="tab"
+                   class="sheet-tab {% if active_tab == 'current_week' %}is-active{% endif %}">
+                    <i class="fas fa-calendar-week" aria-hidden="true"></i>
+                    Current Week
+                    <span class="sheet-tab-badge">{{ current_week_count }}</span>
+                </a>
+                <a href="?tab=open_issues" role="tab"
+                   class="sheet-tab {% if active_tab == 'open_issues' %}is-active{% endif %}">
+                    <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+                    Open Issues
+                    <span class="sheet-tab-badge">{{ open_count }}</span>
+                </a>
+                <a href="?tab=closed_issues" role="tab"
+                   class="sheet-tab {% if active_tab == 'closed_issues' %}is-active{% endif %}">
+                    <i class="fas fa-circle-check" aria-hidden="true"></i>
+                    Closed Issues
+                    <span class="sheet-tab-badge">{{ closed_count }}</span>
+                </a>
+            </nav>
 
-                <div class="filter-field">
-                    <label for="startDate">Start Date</label>
-                    <input type="date" name="start_date" id="startDate"
-                           value="{{ request.GET.start_date|default:'' }}"
-                           onchange="syncDateBounds(); submitFilters();">
-                </div>
-
-                <div class="filter-field">
-                    <label for="endDate">End Date</label>
-                    <input type="date" name="end_date" id="endDate"
-                           value="{{ request.GET.end_date|default:'' }}"
-                           onchange="syncDateBounds(); submitFilters();">
-                </div>
-
-                <div class="filter-actions">
-                    {% if request.GET.start_date or request.GET.end_date %}
-                        <button type="button" class="clear-dates-link" onclick="clearDates()" title="Clear date range">
-                            <i class="fas fa-times-circle"></i> Clear dates
-                        </button>
-                    {% endif %}
-                    <a href="{% url 'control_dashboard:consolidated_reports' %}" class="btn-reset-filters">
-                        <i class="fas fa-undo"></i> Reset
-                    </a>
-                    <button type="button" class="btn-generate" id="generateBtn" onclick="generateConsolidatedExcel()">
-                        <i class="fas fa-file-excel"></i> Export to Excel
-                    </button>
-                </div>
-            </div>
-        </form>
-
-        {# -------------------------------------------------------- #}
-        {# DATA PREVIEW #}
-        {# -------------------------------------------------------- #}
-        <div class="table-container">
-            <div class="table-header">
-                <h4>
-                    <i class="fas fa-clipboard-list"></i>
-                    Preview — {{ selected_report_type }}
-                    {% if uploader_scope == 'hc' %}
-                        <span class="scope-pill">Head Office only</span>
-                    {% elif uploader_scope == 'cc' %}
-                        <span class="scope-pill">Cluster Control only</span>
-                    {% endif %}
-                    {% if request.GET.start_date or request.GET.end_date %}
-                        <span class="date-pill">
-                            <i class="fas fa-calendar-alt"></i>
-                            {% if request.GET.start_date %}{{ request.GET.start_date }}{% else %}…{% endif %}
-                            →
-                            {% if request.GET.end_date %}{{ request.GET.end_date }}{% else %}…{% endif %}
-                        </span>
-                    {% endif %}
-                </h4>
-                <span class="badge-count">
-                    {{ total_count }} record{{ total_count|pluralize }}
-                    {% if total_count > 100 %} · showing first 100{% endif %}
-                </span>
-            </div>
-
-            <div class="table-responsive">
-                <table class="cr-table">
-                    <thead>
-                        <tr>
-                            <th>S/N</th>
-                            <th>Branch / Unit</th>
-                            <th>Exception</th>
-                            <th>Date Noted</th>
-                            <th>Target Closure</th>
-                            <th>Category</th>
-                            <th>Responsible Officer</th>
-                            <th>Supervisor</th>
-                            <th>Status</th>
-                            <th style="text-align:right;">Income / Cost Saved</th>
-                            <th>Uploaded By</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in exception_rows %}
-                        <tr>
-                            <td class="cell-mono">{{ row.serial_number }}</td>
-                            <td>{{ row.branch_unit }}</td>
-                            <td class="cell-wide">{{ row.exception }}</td>
-                            <td>{{ row.date_noted|date:"M d, Y"|default:"—" }}</td>
-                            <td>{{ row.target_closure_date|date:"M d, Y"|default:"—" }}</td>
-                            <td>{{ row.category }}</td>
-                            <td>{{ row.responsible_officer }}</td>
-                            <td>{{ row.supervisor }}</td>
-                            <td>{{ row.status }}</td>
-                            <td class="cell-num">{{ row.income_cost_saved }}</td>
-                            <td class="cell-uploader">
-                                {% if row.uploaded_by_name %}
-                                    <span class="uploader-chip" title="{{ row.uploaded_by_name }}{% if row.uploaded_at %} · {{ row.uploaded_at|date:'M d, Y H:i' }}{% endif %}">
-                                        <span class="uploader-avatar">{{ row.uploaded_by_initials|default:row.uploaded_by_name|slice:":2" }}</span>
-                                        <span class="uploader-name">{{ row.uploaded_by_name }}</span>
-                                    </span>
-                                {% else %}
-                                    <span class="uploader-empty">—</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="11">
-                                <div class="empty-state-card" style="box-shadow:none;border:none;padding:56px 24px;background:transparent;">
-                                    <i class="fas fa-inbox"></i>
-                                    <h3>No records found</h3>
-                                    <p>There are no exceptions for "<strong>{{ selected_report_type }}</strong>" with the current filters.</p>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            <button type="button" class="btn-export" id="exportWorkbookBtn" onclick="exportWorkbook()">
+                <i class="fas fa-file-excel" aria-hidden="true"></i>
+                Export to Excel
+            </button>
         </div>
+
+        {% if active_tab == 'dashboard' %}
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="cr-table pivot-table">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="pivot-branch-head">Department / Branch</th>
+                                {% if pivot_categories %}
+                                    <th colspan="{{ pivot_categories|length }}" class="pivot-group-head">Category of Exception</th>
+                                {% endif %}
+                                <th colspan="4" class="pivot-group-head pivot-summary-head">Summary</th>
+                            </tr>
+                            <tr>
+                                {% for cat in pivot_categories %}
+                                    <th class="pivot-cat-head">{{ cat }}</th>
+                                {% endfor %}
+                                <th class="pivot-summary-head">Total</th>
+                                <th class="pivot-summary-head">Open</th>
+                                <th class="pivot-summary-head">Closed</th>
+                                <th class="pivot-summary-head">Resolution Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in pivot_rows %}
+                            <tr>
+                                <td class="pivot-branch-cell">{{ row.branch_unit }}</td>
+                                {% for cat in pivot_categories %}
+                                    {% with c=row.counts|get_item:cat %}
+                                        <td class="pivot-num-cell {% if not c %}is-zero{% endif %}">
+                                            {{ c|default:"0" }}
+                                        </td>
+                                    {% endwith %}
+                                {% endfor %}
+                                <td class="pivot-num-cell pivot-summary-cell"><strong>{{ row.total }}</strong></td>
+                                <td class="pivot-num-cell pivot-summary-cell">{{ row.open }}</td>
+                                <td class="pivot-num-cell pivot-summary-cell">{{ row.closed }}</td>
+                                <td class="pivot-num-cell pivot-summary-cell">
+                                    <span class="resolution-pill {% if row.resolution_rate >= 70 %}is-good{% elif row.resolution_rate >= 40 %}is-warn{% else %}is-bad{% endif %}">
+                                        {{ row.resolution_rate }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{{ pivot_categories|length|add:5 }}" class="row-empty">
+                                    No records found for "<strong>{{ selected_report_type }}</strong>".
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% if pivot_rows %}
+                        <tfoot>
+                            <tr>
+                                <td class="pivot-branch-cell pivot-total-cell">Total</td>
+                                {% for cat in pivot_categories %}
+                                    <td class="pivot-num-cell pivot-total-cell">
+                                        {{ pivot_totals.counts|get_item:cat|default:"0" }}
+                                    </td>
+                                {% endfor %}
+                                <td class="pivot-num-cell pivot-total-cell"><strong>{{ pivot_totals.total }}</strong></td>
+                                <td class="pivot-num-cell pivot-total-cell">{{ pivot_totals.open }}</td>
+                                <td class="pivot-num-cell pivot-total-cell">{{ pivot_totals.closed }}</td>
+                                <td class="pivot-num-cell pivot-total-cell">
+                                    <span class="resolution-pill {% if pivot_totals.resolution_rate >= 70 %}is-good{% elif pivot_totals.resolution_rate >= 40 %}is-warn{% else %}is-bad{% endif %}">
+                                        {{ pivot_totals.resolution_rate }}%
+                                    </span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+        {% elif active_tab == 'current_week' %}
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="cr-table">
+                        <thead>
+                            <tr>
+                                <th>S/N</th><th>Branch / Unit</th><th>Exception</th>
+                                <th>Date Noted</th><th>Target Closure</th><th>Category</th>
+                                <th>Responsible Officer</th><th>Supervisor</th>
+                                <th>Auditee's Response</th><th>Remarks</th><th>Status</th>
+                                <th style="text-align:right;">Income / Cost Saved</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for group in current_week_groups %}
+                                {% for row in group.rows %}
+                                <tr>
+                                    <td class="cell-mono">{{ row.serial_number }}</td>
+                                    <td>{{ row.branch_unit }}</td>
+                                    <td class="cell-wide">{{ row.exception }}</td>
+                                    <td>{{ row.date_noted|date:"M d, Y"|default:row.date_noted_raw|default:"—" }}</td>
+                                    <td>{{ row.target_closure_date|date:"M d, Y"|default:row.target_closure_date_raw|default:"—" }}</td>
+                                    <td>{{ row.category }}</td>
+                                    <td>{{ row.responsible_officer }}</td>
+                                    <td>{{ row.supervisor }}</td>
+                                    <td class="cell-wide">{{ row.auditee_response }}</td>
+                                    <td class="cell-wide">{{ row.remarks }}</td>
+                                    <td><span class="status-badge status-{{ row.status_raw|lower|cut:' ' }}">{{ row.status }}</span></td>
+                                    <td class="cell-num">{{ row.income_cost_saved }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% empty %}
+                            <tr><td colspan="12" class="row-empty">No exception records were captured this week.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        {% elif active_tab == 'open_issues' %}
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="cr-table">
+                        <thead>
+                            <tr>
+                                <th>S/N</th><th>Branch / Unit</th><th>Exception</th>
+                                <th>Date Noted</th><th>Target Closure</th><th>Category</th>
+                                <th>Responsible Officer</th><th>Supervisor</th>
+                                <th>Auditee's Response</th><th>Remarks</th><th>Status</th>
+                                <th style="text-align:right;">Income / Cost Saved</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for group in open_groups %}
+                                {% for row in group.rows %}
+                                <tr>
+                                    <td class="cell-mono">{{ row.serial_number }}</td>
+                                    <td>{{ row.branch_unit }}</td>
+                                    <td class="cell-wide">{{ row.exception }}</td>
+                                    <td>{{ row.date_noted|date:"M d, Y"|default:row.date_noted_raw|default:"—" }}</td>
+                                    <td>{{ row.target_closure_date|date:"M d, Y"|default:row.target_closure_date_raw|default:"—" }}</td>
+                                    <td>{{ row.category }}</td>
+                                    <td>{{ row.responsible_officer }}</td>
+                                    <td>{{ row.supervisor }}</td>
+                                    <td class="cell-wide">{{ row.auditee_response }}</td>
+                                    <td class="cell-wide">{{ row.remarks }}</td>
+                                    <td><span class="status-badge status-{{ row.status_raw|lower|cut:' ' }}">{{ row.status }}</span></td>
+                                    <td class="cell-num">{{ row.income_cost_saved }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% empty %}
+                            <tr><td colspan="12" class="row-empty">No open issues were captured before this week.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        {% elif active_tab == 'closed_issues' %}
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="cr-table">
+                        <thead>
+                            <tr>
+                                <th>S/N</th><th>Branch / Unit</th><th>Exception</th>
+                                <th>Date Noted</th><th>Target Closure</th><th>Category</th>
+                                <th>Responsible Officer</th><th>Supervisor</th>
+                                <th>Auditee's Response</th><th>Remarks</th><th>Status</th>
+                                <th style="text-align:right;">Income / Cost Saved</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for group in closed_groups %}
+                                {% for row in group.rows %}
+                                <tr>
+                                    <td class="cell-mono">{{ row.serial_number }}</td>
+                                    <td>{{ row.branch_unit }}</td>
+                                    <td class="cell-wide">{{ row.exception }}</td>
+                                    <td>{{ row.date_noted|date:"M d, Y"|default:row.date_noted_raw|default:"—" }}</td>
+                                    <td>{{ row.target_closure_date|date:"M d, Y"|default:row.target_closure_date_raw|default:"—" }}</td>
+                                    <td>{{ row.category }}</td>
+                                    <td>{{ row.responsible_officer }}</td>
+                                    <td>{{ row.supervisor }}</td>
+                                    <td class="cell-wide">{{ row.auditee_response }}</td>
+                                    <td class="cell-wide">{{ row.remarks }}</td>
+                                    <td><span class="status-badge status-{{ row.status_raw|lower|cut:' ' }}">{{ row.status }}</span></td>
+                                    <td class="cell-num">{{ row.income_cost_saved }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% empty %}
+                            <tr><td colspan="12" class="row-empty">No closed issues were captured before this week.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
 
     {% endif %}
 </div>
@@ -873,68 +771,14 @@
 
 {% block extra_js %}
 <script>
-    /* ============================================================
-       FORM SUBMIT
-       ============================================================ */
-    function submitFilters() {
-        const form = document.getElementById('consolidatedFilterForm');
-        if (form) form.submit();
-    }
-
-    /* ============================================================
-       DATE BOUNDS — keep Start ≤ End
-       ============================================================ */
-    function syncDateBounds() {
-        const startEl = document.getElementById('startDate');
-        const endEl   = document.getElementById('endDate');
-        if (!startEl || !endEl) return;
-
-        if (endEl.value) {
-            startEl.max = endEl.value;
-        } else {
-            startEl.removeAttribute('max');
-        }
-
-        if (startEl.value) {
-            endEl.min = startEl.value;
-        } else {
-            endEl.removeAttribute('min');
-        }
-    }
-
-    /* ============================================================
-       CLEAR DATES ONLY (keep report type)
-       ============================================================ */
-    function clearDates() {
-        const params = new URLSearchParams(window.location.search);
-        params.delete('start_date');
-        params.delete('end_date');
-        const qs = params.toString();
-        window.location.href = qs
-            ? `${window.location.pathname}?${qs}`
-            : window.location.pathname;
-    }
-
-    /* ============================================================
-       EXPORT EXCEL
-       ============================================================ */
-    function generateConsolidatedExcel() {
-        const rt        = document.getElementById('reportTypeFilter');
-        const startDate = document.getElementById('startDate');
-        const endDate   = document.getElementById('endDate');
-        const btn       = document.getElementById('generateBtn');
-
-        const params = new URLSearchParams();
-        if (rt && rt.value)               params.set('report_type', rt.value);
-        if (startDate && startDate.value) params.set('start_date', startDate.value);
-        if (endDate && endDate.value)     params.set('end_date', endDate.value);
-
-        const url = "{% url 'control_dashboard:generate_consolidated_excel' %}?" + params.toString();
-
+    function exportWorkbook() {
+        const btn = document.getElementById('exportWorkbookBtn');
+        if (!btn) return;
         const originalHTML = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
 
+        const url = "{% url 'control_dashboard:export_consolidated_workbook' %}";
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         iframe.src = url;
@@ -946,14 +790,7 @@
             setTimeout(() => {
                 if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
             }, 30000);
-        }, 1400);
+        }, 1500);
     }
-
-    /* ============================================================
-       INIT — apply date bounds on load
-       ============================================================ */
-    document.addEventListener('DOMContentLoaded', function() {
-        syncDateBounds();
-    });
 </script>
 {% endblock %}

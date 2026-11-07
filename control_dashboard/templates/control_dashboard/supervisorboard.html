@@ -7,15 +7,30 @@
 <link rel="stylesheet" href="{% static 'stylesheets/supervisor.css' %}" type="text/css">
 <style>
 /* ============================================================
-   SUPERVISOR DASHBOARD — Premium Light Theme
+   SUPERVISOR DASHBOARD — BLUE HERO + WHITE GLASS
+   KPI cards are static (non-clickable) — pure read-only stats
    ============================================================ */
 
 :root {
+    /* Blue gradient hero (matches other dashboards) */
+    --header-gradient: linear-gradient(135deg, #214EBA 0%, #3785DF 100%);
+    --header-gradient-soft: linear-gradient(135deg, #2A5FC9 0%, #4A93E8 100%);
+
+    --ob-navy:        #003366;
+    --ob-gold:        #D4AF37;
+    --ob-gold-dark:   #B8960F;
+
     /* Surfaces */
     --sv-bg-0: #eef1f8;
     --sv-bg-1: #ffffff;
     --sv-bg-2: #f7f8fc;
     --sv-bg-3: #f1f3f9;
+
+    /* White-glass data surfaces */
+    --glass-white-strong: rgba(255, 255, 255, 0.94);
+    --glass-border:       rgba(33, 78, 186, 0.14);
+    --glass-shadow:       0 8px 28px rgba(33, 78, 186, 0.10);
+    --glass-shadow-lg:    0 16px 44px rgba(33, 78, 186, 0.14);
 
     /* Borders */
     --sv-border: rgba(15, 27, 51, 0.08);
@@ -28,7 +43,7 @@
     --sv-text-2: #8993a8;
 
     /* Accents */
-    --sv-accent: #4f6ef7;
+    --sv-accent: #214EBA;
     --sv-accent-soft: #eef1ff;
     --sv-emerald: #17a673;
     --sv-emerald-soft: #e2f7ef;
@@ -52,7 +67,8 @@
 }
 
 /* ============================================================
-   METRIC CARDS — bento grid + premium styling
+   METRIC CARDS — STATIC STATS (NOT clickable)
+   Blue gradient top hairline, white body, no hover lift
    ============================================================ */
 .analytics-metrics-grid {
     display: grid;
@@ -63,7 +79,7 @@
 
 .metric-card {
     position: relative;
-    background: var(--sv-bg-1);
+    background: #ffffff;
     border-radius: 18px;
     padding: 22px 24px;
     border: 1px solid var(--sv-border);
@@ -71,11 +87,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
     isolation: isolate;
-    cursor: pointer;
     min-height: 120px;
+    cursor: default;                 /* NOT clickable */
+    transition: box-shadow 0.25s ease;   /* subtle, non-clickable hover */
 }
 
 .metric-card::before {
@@ -87,7 +103,7 @@
         transparent 0%,
         var(--metric-accent, var(--sv-accent)) 50%,
         transparent 100%);
-    opacity: 0.85;
+    opacity: 0.9;
 }
 
 .metric-card::after {
@@ -97,60 +113,22 @@
     width: 200px; height: 200px;
     border-radius: 50%;
     background: radial-gradient(circle,
-        color-mix(in srgb, var(--metric-accent, var(--sv-accent)) 22%, transparent) 0%,
+        color-mix(in srgb, var(--metric-accent, var(--sv-accent)) 18%, transparent) 0%,
         transparent 70%);
-    opacity: 0.55;
+    opacity: 0.45;
     z-index: -1;
-    transition: opacity 0.4s ease, transform 0.6s ease;
+    pointer-events: none;
 }
 
+/* Very subtle shadow-only hover (no lift — cards aren't clickable) */
 .metric-card:hover {
-    transform: translateY(-3px);
-    border-color: color-mix(in srgb, var(--metric-accent, var(--sv-accent)) 30%, var(--sv-border));
-    box-shadow:
-        0 12px 28px rgba(15, 27, 51, 0.10),
-        0 2px 6px rgba(15, 27, 51, 0.04);
-}
-
-.metric-card:hover::after {
-    opacity: 0.9;
-    transform: scale(1.15);
-}
-
-.metric-card:active {
-    transform: translateY(-1px) scale(0.99);
+    box-shadow: 0 4px 14px rgba(15, 27, 51, 0.06);
 }
 
 .metric-card.border-left-danger  { --metric-accent: var(--sv-rose); }
 .metric-card.border-left-warning { --metric-accent: var(--sv-amber); }
 .metric-card.border-left-purple  { --metric-accent: var(--sv-violet); }
 .metric-card.border-left-success { --metric-accent: var(--sv-emerald); }
-
-.metric-card-hover {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: var(--metric-accent, var(--sv-accent));
-    background: linear-gradient(180deg,
-        transparent 0%,
-        color-mix(in srgb, var(--metric-accent, var(--sv-accent)) 10%, var(--sv-bg-1)) 100%);
-    padding: 10px 0;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: all 0.3s ease;
-    pointer-events: none;
-}
-
-.metric-card:hover .metric-card-hover {
-    opacity: 1;
-    transform: translateY(0);
-}
 
 .metric-card-content {
     flex: 1;
@@ -197,14 +175,8 @@
     opacity: 0.18;
     margin-left: 12px;
     flex-shrink: 0;
-    transition: all 0.4s ease;
     position: relative;
     z-index: 1;
-}
-
-.metric-card:hover .metric-card-icon {
-    opacity: 0.35;
-    transform: scale(1.08);
 }
 
 .metric-card-icon.text-danger-dim  { color: var(--sv-rose); }
@@ -232,19 +204,16 @@
     color: var(--sv-rose);
     border-color: rgba(224, 69, 106, 0.22);
 }
-
 .badge-warning-dim {
     background: var(--sv-amber-soft);
     color: var(--sv-amber);
     border-color: rgba(224, 138, 23, 0.22);
 }
-
 .badge-success-dim {
     background: var(--sv-emerald-soft);
     color: var(--sv-emerald);
     border-color: rgba(23, 166, 115, 0.22);
 }
-
 .badge-purple-dim {
     background: var(--sv-violet-soft);
     color: var(--sv-violet);
@@ -261,17 +230,20 @@
     margin-bottom: 24px;
 }
 
+/* ============================================================
+   PANEL CARDS — WHITE BODY, BLUE GRADIENT HEADER
+   ============================================================ */
 .dashboard-panel-card {
-    background: var(--sv-bg-1);
+    background: #ffffff;
     border-radius: 18px;
-    border: 1px solid var(--sv-border);
-    box-shadow: var(--sv-shadow-sm);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
     padding: 0;
     overflow: hidden;
-    transition: all 0.3s ease;
     position: relative;
 }
 
+/* Gold hairline across the top of the panel (matches brand) */
 .dashboard-panel-card::before {
     content: '';
     position: absolute;
@@ -279,14 +251,11 @@
     height: 3px;
     background: linear-gradient(90deg,
         transparent 0%,
-        var(--sv-accent) 50%,
+        var(--ob-gold) 50%,
         transparent 100%);
-    opacity: 0.7;
-}
-
-.dashboard-panel-card:hover {
-    box-shadow: var(--sv-shadow-md);
-    border-color: var(--sv-border-strong);
+    opacity: 0.9;
+    z-index: 2;
+    pointer-events: none;
 }
 
 .panel-card-header {
@@ -294,17 +263,19 @@
     justify-content: space-between;
     align-items: center;
     padding: 18px 22px 14px;
-    border-bottom: 1px solid var(--sv-hairline);
-    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    border-bottom: 1px solid var(--glass-border);
+    background: var(--header-gradient);
     flex-wrap: wrap;
     gap: 8px;
+    color: #ffffff;
+    position: relative;
 }
 
 .panel-card-header h4 {
     margin: 0;
     font-size: 13px;
     font-weight: 700;
-    color: var(--sv-text-0);
+    color: #ffffff;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -318,19 +289,19 @@
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.3px;
-    color: var(--sv-accent);
+    color: #ffffff;
     text-decoration: none;
     padding: 5px 10px;
     border-radius: 8px;
-    background: var(--sv-accent-soft);
-    border: 1px solid rgba(79, 110, 247, 0.2);
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.32);
     transition: all 0.2s ease;
 }
 
 .panel-header-link:hover {
-    background: var(--sv-accent);
+    background: rgba(255, 255, 255, 0.28);
+    border-color: rgba(255, 255, 255, 0.55);
     color: #ffffff;
-    border-color: var(--sv-accent);
     transform: translateY(-1px);
     gap: 8px;
 }
@@ -340,12 +311,10 @@
     transition: transform 0.2s ease;
 }
 
-.panel-header-link:hover i {
-    transform: translateX(2px);
-}
+.panel-header-link:hover i { transform: translateX(2px); }
 
 /* ============================================================
-   LIVE pill (Top Performers header)
+   LIVE pill
    ============================================================ */
 .sv-live-pill {
     display: inline-flex;
@@ -355,9 +324,9 @@
     font-weight: 700;
     letter-spacing: 0.6px;
     text-transform: uppercase;
-    color: #059669;
-    background: rgba(16, 185, 129, 0.10);
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #ffffff;
+    background: rgba(56, 211, 159, 0.22);
+    border: 1px solid rgba(56, 211, 159, 0.4);
     padding: 3px 9px;
     border-radius: 999px;
     margin-left: 10px;
@@ -368,8 +337,8 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #10b981;
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+    background: #38d39f;
+    box-shadow: 0 0 8px rgba(56, 211, 159, 0.8);
     animation: sv-live-pulse 2s ease-in-out infinite;
 }
 
@@ -378,9 +347,8 @@
     50%      { transform: scale(1.3); opacity: 0.7; }
 }
 
-/* Flash animation when a live cell updates */
 @keyframes sv-cell-flash {
-    0%   { background: rgba(79, 110, 247, 0.16); }
+    0%   { background: rgba(33, 78, 186, 0.16); }
     100% { background: transparent; }
 }
 .sv-cell-updated {
@@ -389,23 +357,23 @@
 }
 
 /* ============================================================
-   USERS TABLE (Top Performers)
+   USERS TABLE (Top Performers) — WHITE BODY
    ============================================================ */
 .users-table {
     width: 100%;
     border-collapse: collapse;
-    background: transparent;
+    background: #ffffff;
     font-family: var(--sv-font);
     font-variant-numeric: tabular-nums;
 }
 
 .users-table thead {
-    background: var(--sv-bg-2);
+    background: #f6f9fe;
 }
 
 .users-table thead th {
     background: transparent;
-    color: var(--sv-text-2);
+    color: var(--ob-navy);
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
@@ -423,24 +391,14 @@
     border-bottom: 1px solid var(--sv-hairline);
     vertical-align: middle;
     line-height: 1.5;
+    background: #ffffff;
 }
 
-.users-table tbody tr {
-    transition: background 0.2s ease;
-}
+.users-table tbody tr { transition: background 0.2s ease; }
+.users-table tbody tr:hover td { background: #f6f9fe; }
+.users-table tbody tr:last-child td { border-bottom: none; }
 
-.users-table tbody tr:hover {
-    background: var(--sv-bg-2);
-}
-
-.users-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.users-table .text-center {
-    text-align: center;
-}
-
+.users-table .text-center { text-align: center; }
 .users-table .font-bold {
     font-weight: 600;
     color: var(--sv-text-0);
@@ -465,19 +423,16 @@
     color: #4a2d00;
     box-shadow: 0 4px 10px rgba(212, 160, 23, 0.35);
 }
-
 .rank-2 {
     background: linear-gradient(135deg, #e0e6ef 0%, #a8b3c2 100%);
     color: #2d3748;
     box-shadow: 0 4px 10px rgba(120, 130, 145, 0.28);
 }
-
 .rank-3 {
     background: linear-gradient(135deg, #e6a878 0%, #b5651d 100%);
     color: #ffffff;
     box-shadow: 0 4px 10px rgba(181, 101, 29, 0.3);
 }
-
 .rank-4,
 .rank-5 {
     background: var(--sv-bg-2);
@@ -491,7 +446,6 @@
     font-variant-numeric: tabular-nums;
     transition: color 0.5s ease;
 }
-
 .simple-percentage.text-success { color: var(--sv-emerald); }
 .simple-percentage.text-warning { color: var(--sv-amber); }
 .simple-percentage.text-danger  { color: var(--sv-rose); }
@@ -508,19 +462,16 @@
     border: 1px solid;
     white-space: nowrap;
 }
-
 .status-badge.active {
     background: var(--sv-emerald-soft);
     color: var(--sv-emerald);
     border-color: rgba(23, 166, 115, 0.22);
 }
-
 .status-badge.pending {
     background: var(--sv-amber-soft);
     color: var(--sv-amber);
     border-color: rgba(224, 138, 23, 0.22);
 }
-
 .status-badge.inactive {
     background: var(--sv-rose-soft);
     color: var(--sv-rose);
@@ -528,13 +479,15 @@
 }
 
 /* ============================================================
-   QUICK ACTIONS
+   QUICK ACTIONS — WHITE BODY, BLUE HERO HEADER
+   Only 3 items now: Reports, Ad-hoc Scorecard, Activity Checklist
    ============================================================ */
 .quick-actions-list-stack {
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding: 14px;
+    background: #ffffff;
 }
 
 .action-shortcut-item {
@@ -544,7 +497,7 @@
     gap: 14px;
     padding: 14px 16px;
     border-radius: 14px;
-    background: var(--sv-bg-1);
+    background: #ffffff;
     border: 1px solid var(--sv-border);
     text-decoration: none;
     color: inherit;
@@ -579,14 +532,12 @@
 }
 
 .action-shortcut-item:hover {
-    background: var(--sv-bg-1);
     border-color: color-mix(in srgb, var(--action-accent, var(--sv-accent)) 35%, var(--sv-border));
     transform: translateX(4px);
     box-shadow:
-        0 8px 24px rgba(15, 27, 51, 0.08),
+        0 8px 24px rgba(33, 78, 186, 0.10),
         0 2px 6px rgba(15, 27, 51, 0.04);
 }
-
 .action-shortcut-item:hover::before { opacity: 1; }
 .action-shortcut-item:hover::after  { opacity: 0.9; }
 
@@ -608,7 +559,6 @@
     z-index: 1;
     border: 1px solid;
 }
-
 .action-shortcut-item:hover .shortcut-icon-box {
     transform: scale(1.06) rotate(-3deg);
 }
@@ -618,19 +568,16 @@
     color: var(--sv-rose);
     border-color: rgba(224, 69, 106, 0.22);
 }
-
 .shortcut-icon-box.primary-box {
     background: var(--sv-accent-soft);
     color: var(--sv-accent);
-    border-color: rgba(79, 110, 247, 0.22);
+    border-color: rgba(33, 78, 186, 0.22);
 }
-
 .shortcut-icon-box.warning-box {
     background: var(--sv-amber-soft);
     color: var(--sv-amber);
     border-color: rgba(224, 138, 23, 0.22);
 }
-
 .shortcut-icon-box.success-box {
     background: var(--sv-emerald-soft);
     color: var(--sv-emerald);
@@ -643,7 +590,6 @@
     position: relative;
     z-index: 1;
 }
-
 .shortcut-text-box h5 {
     margin: 0;
     font-size: 13px;
@@ -654,14 +600,12 @@
     gap: 8px;
     letter-spacing: 0.2px;
 }
-
 .shortcut-desc {
     margin: 3px 0 0 0;
     font-size: 11px;
     color: var(--sv-text-2);
     line-height: 1.4;
 }
-
 .shortcut-arrow {
     margin-left: auto;
     color: var(--sv-text-2);
@@ -670,7 +614,6 @@
     position: relative;
     z-index: 1;
 }
-
 .action-shortcut-item:hover .shortcut-arrow {
     color: var(--action-accent, var(--sv-accent));
     transform: translateX(4px);
@@ -705,7 +648,7 @@
     position: fixed;
     bottom: 24px;
     right: 24px;
-    background: var(--sv-bg-1);
+    background: #ffffff;
     border: 1px solid var(--sv-border);
     border-left: 4px solid var(--sv-emerald);
     border-radius: 14px;
@@ -723,10 +666,7 @@
     transform: translateX(120%);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-.toast-notification.show {
-    transform: translateX(0);
-}
+.toast-notification.show { transform: translateX(0); }
 
 .toast-icon {
     flex-shrink: 0;
@@ -742,7 +682,6 @@
 }
 
 .toast-content { flex: 1; min-width: 0; }
-
 .toast-title {
     margin: 0 0 2px 0;
     font-weight: 700;
@@ -750,7 +689,6 @@
     color: var(--sv-text-0);
     letter-spacing: 0.2px;
 }
-
 .toast-message {
     margin: 0;
     font-size: 12px;
@@ -758,7 +696,6 @@
     line-height: 1.4;
     word-break: break-word;
 }
-
 .toast-close {
     background: none;
     border: none;
@@ -770,14 +707,13 @@
     transition: all 0.2s;
     flex-shrink: 0;
 }
-
 .toast-close:hover {
     color: var(--sv-text-0);
     background: var(--sv-bg-2);
 }
 
 /* ============================================================
-   HEADER: Refresh button + date display
+   HEADER: Refresh button + date display (blue gradient)
    ============================================================ */
 .btn-refresh-header {
     display: inline-flex;
@@ -785,9 +721,9 @@
     justify-content: center;
     gap: 8px;
     padding: 8px 16px;
-    background: linear-gradient(135deg, #4f6ef7 0%, #3b56d8 100%);
+    background: var(--header-gradient);
     color: white;
-    border: 1px solid rgba(79, 110, 247, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 10px;
     cursor: pointer;
     font-size: 12px;
@@ -796,12 +732,11 @@
     letter-spacing: 0.3px;
     height: 38px;
     white-space: nowrap;
-    box-shadow: 0 4px 14px rgba(79, 110, 247, 0.25);
+    box-shadow: 0 4px 14px rgba(33, 78, 186, 0.28);
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
 }
-
 .btn-refresh-header::before {
     content: '';
     position: absolute;
@@ -810,21 +745,17 @@
     opacity: 0;
     transition: opacity 0.25s ease;
 }
-
 .btn-refresh-header:hover:not(:disabled)::before { opacity: 1; }
-
 .btn-refresh-header:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(79, 110, 247, 0.42);
+    box-shadow: 0 8px 24px rgba(33, 78, 186, 0.42);
 }
-
 .btn-refresh-header:disabled {
     opacity: 0.55;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
 }
-
 .btn-refresh-header i { font-size: 12px; }
 
 .header-date {
@@ -832,7 +763,7 @@
     align-items: center;
     gap: 8px;
     padding: 8px 14px;
-    background: var(--sv-bg-1);
+    background: #ffffff;
     border: 1px solid var(--sv-border);
     border-radius: 10px;
     font-size: 12px;
@@ -840,7 +771,6 @@
     color: var(--sv-text-1);
     box-shadow: var(--sv-shadow-sm);
 }
-
 .header-date i {
     color: var(--sv-accent);
     font-size: 12px;
@@ -859,11 +789,9 @@
 @media (max-width: 1200px) {
     .analytics-metrics-grid { grid-template-columns: repeat(2, 1fr); }
 }
-
 @media (max-width: 1024px) {
     .dashboard-split-layout { grid-template-columns: 1fr; }
 }
-
 @media (max-width: 768px) {
     .analytics-metrics-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
     .metric-card { padding: 18px 20px; min-height: 100px; }
@@ -884,7 +812,6 @@
     }
     .week-range { display: block; margin-left: 0; margin-top: 4px; }
 }
-
 @media (max-width: 480px) {
     .analytics-metrics-grid { grid-template-columns: 1fr; gap: 10px; }
     .metric-card { padding: 16px; min-height: 90px; border-radius: 16px; }
@@ -934,6 +861,12 @@
     <span class="nav-icon"><i class="fas fa-tasks"></i></span>
     <span class="nav-text">Activity Checklist</span>
 </a></li>
+<li>
+    <a href="{% url 'control_dashboard:supervisor_checklist_requests' %}">
+        <span class="nav-icon"><i class="fas fa-inbox"></i></span>
+        <span class="nav-text">Checklist Requests</span>
+    </a>
+</li>
 <li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
     <span class="nav-icon"><i class="fas fa-search"></i></span>
     <span class="nav-text">Activity Logs</span>
@@ -960,9 +893,11 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
 {% endblock %}
 
 {% block content %}
-<!-- Metrics Cards -->
+<!-- ═══════════════════════════════════════════════════════
+     METRIC CARDS — static stats (NOT clickable)
+     ═══════════════════════════════════════════════════════ -->
 <div class="analytics-metrics-grid">
-    <div class="metric-card border-left-danger" onclick="window.location.href='{% url 'control_dashboard:analytics_dashboard' %}'">
+    <div class="metric-card border-left-danger">
         <div class="metric-card-content">
             <span class="card-metric-label">Total Exceptions</span>
             <h3 class="card-metric-value text-danger"
@@ -974,10 +909,9 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
             </span>
         </div>
         <div class="metric-card-icon text-danger-dim"><i class="fas fa-exclamation-triangle"></i></div>
-        <div class="metric-card-hover">View All Exceptions →</div>
     </div>
 
-    <div class="metric-card border-left-warning" onclick="window.location.href='{% url 'control_dashboard:submitted_reports' %}'">
+    <div class="metric-card border-left-warning">
         <div class="metric-card-content">
             <span class="card-metric-label">Submitted Reports</span>
             <h3 class="card-metric-value text-warning"
@@ -991,10 +925,9 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
             </span>
         </div>
         <div class="metric-card-icon text-warning-dim"><i class="fas fa-file-invoice"></i></div>
-        <div class="metric-card-hover">View Submitted Reports →</div>
     </div>
 
-    <div class="metric-card border-left-purple" onclick="window.location.href='{% url 'control_dashboard:team_performance' %}'">
+    <div class="metric-card border-left-purple">
         <div class="metric-card-content">
             <span class="card-metric-label">Team Members</span>
             <h3 class="card-metric-value text-purple"
@@ -1004,10 +937,9 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
             </span>
         </div>
         <div class="metric-card-icon text-purple-dim"><i class="fas fa-users"></i></div>
-        <div class="metric-card-hover">View Team Performance →</div>
     </div>
 
-    <div class="metric-card border-left-success" onclick="window.location.href='{% url 'control_dashboard:supervisor_checklist' %}'">
+    <div class="metric-card border-left-success">
         <div class="metric-card-content">
             <span class="card-metric-label">Team Completion</span>
             <h3 class="card-metric-value text-success"
@@ -1023,11 +955,12 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
             </span>
         </div>
         <div class="metric-card-icon text-success-dim"><i class="fas fa-chart-line"></i></div>
-        <div class="metric-card-hover">View Checklist →</div>
     </div>
 </div>
 
-<!-- Split Layout: Top Performers + Quick Actions -->
+<!-- ═══════════════════════════════════════════════════════
+     SPLIT LAYOUT — Top Performers + Quick Actions
+     ═══════════════════════════════════════════════════════ -->
 <div class="dashboard-split-layout">
     <div class="dashboard-panel-card">
         <div class="panel-card-header">
@@ -1091,8 +1024,9 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
         </table>
 
         {% if team_performance|length > 5 %}
-        <div style="text-align: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05);">
-            <a href="{% url 'control_dashboard:team_performance' %}" class="panel-header-link">
+        <div style="text-align: center; margin-top: 12px; padding: 12px; border-top: 1px solid var(--sv-hairline);">
+            <a href="{% url 'control_dashboard:team_performance' %}" class="panel-header-link"
+               style="background: var(--sv-accent-soft); color: var(--sv-accent); border-color: rgba(33, 78, 186, 0.22);">
                 View all {{ team_performance|length }} team members <i class="fas fa-arrow-right"></i>
             </a>
         </div>
@@ -1104,6 +1038,7 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
             <h4>⚡ Quick Actions</h4>
         </div>
         <div class="quick-actions-list-stack">
+            <!-- 1. Reports -->
             <a href="{% url 'control_dashboard:analytics_dashboard' %}" class="action-shortcut-item">
                 <div class="shortcut-icon-box danger-box">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -1119,22 +1054,18 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
                 </div>
                 <div class="shortcut-arrow"><i class="fas fa-chevron-right"></i></div>
             </a>
-            <a href="{% url 'control_dashboard:submitted_reports' %}" class="action-shortcut-item">
-                <div class="shortcut-icon-box primary-box"><i class="fas fa-file-alt"></i></div>
-                <div class="shortcut-text-box">
-                    <h5>Submitted Reports</h5>
-                    <p class="shortcut-desc">Review submitted reports</p>
-                </div>
-                <div class="shortcut-arrow"><i class="fas fa-chevron-right"></i></div>
-            </a>
+
+            <!-- 2. Ad-hoc Scorecard -->
             <a href="{% url 'control_dashboard:ad_hoc_scorecard' %}" class="action-shortcut-item">
                 <div class="shortcut-icon-box warning-box"><i class="fas fa-star"></i></div>
                 <div class="shortcut-text-box">
-                    <h5>Ad-Hoc Scorecard</h5>
+                    <h5>Ad-hoc Scorecard</h5>
                     <p class="shortcut-desc">Manage deductions</p>
                 </div>
                 <div class="shortcut-arrow"><i class="fas fa-chevron-right"></i></div>
             </a>
+
+            <!-- 3. Activity Checklist -->
             <a href="{% url 'control_dashboard:supervisor_checklist' %}" class="action-shortcut-item">
                 <div class="shortcut-icon-box success-box"><i class="fas fa-tasks"></i></div>
                 <div class="shortcut-text-box">
@@ -1153,24 +1084,16 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
     const TOP_PERFORMERS_ENDPOINT = "{% url 'control_dashboard:api_supervisor_top_performers_live' %}";
     const TOP_PERFORMERS_INTERVAL_MS = 15000;
 
-    // ============================================
-    // CSRF helper
-    // ============================================
     function getCsrfToken() {
         const meta = document.querySelector('meta[name="csrf-token"]');
         return meta ? meta.getAttribute('content') : '';
     }
 
-    // ============================================
-    // TOAST NOTIFICATION
-    // ============================================
     function showToast(message, title = 'Success!') {
         const toast = document.getElementById('toastNotification');
         if (!toast) return;
-
         const msgEl = document.getElementById('toastMessage');
         const titleEl = toast.querySelector('.toast-title');
-
         msgEl.textContent = message || 'Action completed successfully.';
         titleEl.textContent = title;
 
@@ -1186,9 +1109,7 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
             toast.querySelector('.toast-icon').style.color = '#10b981';
             toast.querySelector('.toast-icon').style.background = 'rgba(16, 185, 129, 0.1)';
         }
-
         toast.classList.add('show');
-
         if (window.toastTimeout) clearTimeout(window.toastTimeout);
         window.toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
     }
@@ -1196,15 +1117,9 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
     window.closeToast = function() {
         const toast = document.getElementById('toastNotification');
         if (toast) toast.classList.remove('show');
-        if (window.toastTimeout) {
-            clearTimeout(window.toastTimeout);
-            window.toastTimeout = null;
-        }
+        if (window.toastTimeout) { clearTimeout(window.toastTimeout); window.toastTimeout = null; }
     };
 
-    // ============================================
-    // SYNC DASHBOARD (manual refresh)
-    // ============================================
     function syncDashboard() {
         const btn = document.querySelector('.btn-refresh-header');
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
@@ -1213,16 +1128,10 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
         setTimeout(() => location.reload(), 700);
     }
 
-    // ============================================
-    // ANIMATED NUMBER (easeOutCubic)
-    // ============================================
     function animateNumber(el, from, to, duration, suffix) {
         suffix = suffix || '';
         if (!el) return;
-        if (from === to) {
-            if (suffix) el.textContent = to + suffix;
-            return;
-        }
+        if (from === to) { if (suffix) el.textContent = to + suffix; return; }
         const start = performance.now();
         (function tick(now) {
             const t = Math.min(1, (now - start) / duration);
@@ -1239,9 +1148,6 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
         setTimeout(() => el.classList.remove('sv-cell-updated'), 1400);
     }
 
-    // ============================================
-    // TOP PERFORMERS — LIVE REFRESH
-    // ============================================
     async function refreshTopPerformers() {
         const tbody = document.getElementById('topPerformersBody');
         if (!tbody) return;
@@ -1258,7 +1164,6 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
             const performers = data.top_performers || [];
             const teamUrl = "{% url 'control_dashboard:team_performance' %}";
 
-            // -------- Empty state --------
             if (performers.length === 0) {
                 tbody.innerHTML = `
                     <tr>
@@ -1270,20 +1175,15 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
                 return;
             }
 
-            // -------- Remove rows that fell out of the top 5 --------
             const keptIds = new Set(performers.map(p => String(p.id)));
             Array.from(tbody.querySelectorAll('tr[data-member-id]')).forEach(tr => {
-                if (!keptIds.has(tr.getAttribute('data-member-id'))) {
-                    tr.remove();
-                }
+                if (!keptIds.has(tr.getAttribute('data-member-id'))) tr.remove();
             });
 
-            // -------- Upsert each row in ranking order --------
             performers.forEach((p, idx) => {
                 const rank = idx + 1;
                 let row = tbody.querySelector(`tr[data-member-id="${p.id}"]`);
 
-                // If missing, build the row
                 if (!row) {
                     row = document.createElement('tr');
                     row.setAttribute('data-member-id', p.id);
@@ -1298,17 +1198,12 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
                     `;
                 }
 
-                // Ensure the row is at the correct position in the tbody
                 const currentlyAt = Array.from(tbody.children).indexOf(row);
                 if (currentlyAt !== idx) {
-                    if (idx >= tbody.children.length) {
-                        tbody.appendChild(row);
-                    } else {
-                        tbody.insertBefore(row, tbody.children[idx]);
-                    }
+                    if (idx >= tbody.children.length) tbody.appendChild(row);
+                    else tbody.insertBefore(row, tbody.children[idx]);
                 }
 
-                // -------- Rank badge --------
                 const rankBadge = row.querySelector('.rank-badge');
                 if (rankBadge) {
                     rankBadge.classList.remove('rank-1','rank-2','rank-3','rank-4','rank-5');
@@ -1316,29 +1211,20 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
                     rankBadge.textContent = rank;
                 }
 
-                // -------- Submitted --------
                 const subEl = row.querySelector('[data-field="submitted"]');
                 if (subEl) {
                     const oldVal = parseInt(subEl.textContent, 10) || 0;
-                    if (oldVal !== p.submitted) {
-                        animateNumber(subEl, oldVal, p.submitted, 900);
-                        flashEl(subEl);
-                    }
+                    if (oldVal !== p.submitted) { animateNumber(subEl, oldVal, p.submitted, 900); flashEl(subEl); }
                 }
 
-                // -------- Percentage --------
                 const pctEl = row.querySelector('[data-field="percentage"]');
                 if (pctEl) {
                     const oldVal = parseInt(pctEl.textContent, 10) || 0;
-                    if (oldVal !== p.percentage) {
-                        animateNumber(pctEl, oldVal, p.percentage, 900, '%');
-                        flashEl(pctEl);
-                    }
+                    if (oldVal !== p.percentage) { animateNumber(pctEl, oldVal, p.percentage, 900, '%'); flashEl(pctEl); }
                     pctEl.classList.remove('text-success','text-warning','text-danger');
                     pctEl.classList.add(`text-${p.status}`);
                 }
 
-                // -------- Status icon --------
                 const iconEl = row.querySelector('[data-field="status-icon"]');
                 if (iconEl) {
                     iconEl.classList.remove('active','pending','inactive');
@@ -1354,25 +1240,18 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
                 }
             });
 
-            // -------- Summary card refresh --------
             const summary = data.summary || {};
-
             const upd = (field, value, suffix) => {
                 const el = document.querySelector(`[data-summary-field="${field}"]`);
                 if (!el || typeof value === 'undefined') return;
                 const oldVal = parseInt(el.textContent, 10) || 0;
-                if (oldVal !== value) {
-                    animateNumber(el, oldVal, value, 900, suffix || '');
-                    flashEl(el);
-                }
+                if (oldVal !== value) { animateNumber(el, oldVal, value, 900, suffix || ''); flashEl(el); }
             };
-
             upd('total_exceptions', summary.total_exceptions);
             upd('submitted_reports_count', summary.submitted_reports_count);
             upd('team_size', summary.team_size);
             upd('completion_rate', summary.completion_rate, '%');
 
-            // Small badge inside the Analytics quick action
             const badge = document.querySelector('[data-summary-field="total_exceptions_badge"]');
             if (badge && typeof summary.total_exceptions !== 'undefined') {
                 if (summary.total_exceptions > 0) {
@@ -1385,49 +1264,31 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
                     badge.style.display = 'none';
                 }
             }
-
         } catch (err) {
             console.warn('Top Performers live refresh failed:', err);
         }
     }
 
-    // ============================================
-    // AUTO REFRESH (full page reload every 60s)
-    // ============================================
     let autoRefreshInterval = null;
-
     function startAutoRefresh() {
         if (autoRefreshInterval) clearInterval(autoRefreshInterval);
         autoRefreshInterval = setInterval(() => {
             if (!document.hidden) {
-                fetch(window.location.href, {
-                    method: 'HEAD',
-                    headers: { 'X-CSRFToken': getCsrfToken() }
-                })
-                .then(() => location.reload())
-                .catch(() => {});
+                fetch(window.location.href, { method: 'HEAD', headers: { 'X-CSRFToken': getCsrfToken() } })
+                    .then(() => location.reload())
+                    .catch(() => {});
             }
         }, 60000);
     }
 
-    // ============================================
-    // INITIALIZATION
-    // ============================================
     document.addEventListener('DOMContentLoaded', function() {
-        // Full page safety-net reload (still every 60s)
         startAutoRefresh();
-
-        // Lightweight partial refresh for Top Performers + summary cards
         setInterval(refreshTopPerformers, TOP_PERFORMERS_INTERVAL_MS);
 
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
-                if (autoRefreshInterval) {
-                    clearInterval(autoRefreshInterval);
-                    autoRefreshInterval = null;
-                }
+                if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
             } else {
-                // Coming back from a hidden tab — refresh immediately
                 refreshTopPerformers();
                 startAutoRefresh();
             }
@@ -1435,10 +1296,7 @@ Welcome back, {{ user_profile.full_name|default:"Supervisor" }}
     });
 
     window.addEventListener('beforeunload', function() {
-        if (autoRefreshInterval) {
-            clearInterval(autoRefreshInterval);
-            autoRefreshInterval = null;
-        }
+        if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
     });
 </script>
 {% endblock %}

@@ -112,7 +112,7 @@ urlpatterns = [
 
     # ==================== CONSOLIDATED REPORTS ====================
     path('member/consolidated-reports/',                 views.consolidated_reports,             name='consolidated_reports'),
-    path('member/consolidated-reports/generate-excel/',  views.generate_consolidated_excel,      name='generate_consolidated_excel'),
+   path('member/consolidated-reports/export-workbook/', views.export_consolidated_workbook,     name='export_consolidated_workbook'),
     path('api/consolidated/filter-options/',             views.api_consolidated_filter_options,  name='api_consolidated_filter_options'),
 
     # ==================== API - EXCEL ROWS ====================
@@ -132,10 +132,54 @@ urlpatterns = [
     path('api/trial-balance/compare-previous/',views.api_compare_trial_balance_previous,name='tb_compare_previous'),
     path('api/trial-balance/compare-range/',views.api_compare_trial_balance_range,name='tb_compare_range'),
     path('api/email/preview-exceptions/', views.api_email_preview_exceptions, name='api_email_preview_exceptions'),
+    path('adminboard/consolidated/export/',views.export_consolidated_workbook,name='export_consolidated_workbook',),
+    path('api/exceptions/<int:record_id>/comments/',
+     views.api_list_supervisor_comments,
+     name='api_list_supervisor_comments'),
 
-    # ==================== SECRET CHAT ====================
-path('api/secret-chat/recipients/',                        views.api_secret_chat_recipients, name='api_secret_chat_recipients'),
-path('api/secret-chat/open/',                              views.api_secret_chat_open,       name='api_secret_chat_open'),
-path('api/secret-chat/<uuid:channel_id>/send/',            views.api_secret_chat_send,       name='api_secret_chat_send'),
-path('api/secret-chat/<uuid:channel_id>/poll/',            views.api_secret_chat_poll,       name='api_secret_chat_poll'),
+path('api/exceptions/<int:record_id>/comments/add/',
+     views.api_add_supervisor_comment,
+     name='api_add_supervisor_comment'),
+
+path('api/comments/<int:comment_id>/resolve/',
+     views.api_resolve_supervisor_comment,
+     name='api_resolve_supervisor_comment'),
+# ═══ Member comment inbox + reply ═══
+path('api/member/comments/inbox/',
+     views.api_member_comment_inbox,
+     name='api_member_comment_inbox'),
+
+path('api/member/comments/<int:comment_id>/reply/',
+     views.api_member_reply_to_comment,
+     name='api_member_reply_to_comment'),
+
+    # ═══ MEMBER — checklist change requests ═══
+    path('member/checklist-requests/',
+         views.member_checklist_requests,
+         name='member_checklist_requests'),
+
+    path('api/member/checklist-requests/create/',
+         views.api_member_create_checklist_request,
+         name='api_member_create_checklist_request'),
+
+    # ═══ SUPERVISOR — checklist change requests ═══
+    path('supervisor/checklist-requests/',
+         views.supervisor_checklist_requests,
+         name='supervisor_checklist_requests'),
+
+    path('api/checklist-requests/<int:request_id>/',
+         views.api_checklist_request_detail,
+         name='api_checklist_request_detail'),
+
+    path('api/checklist-requests/pending-count/',
+         views.api_pending_checklist_requests_count,
+         name='api_pending_checklist_requests_count'),
+
+    path('api/checklist-requests/<int:request_id>/approve/',
+         views.api_approve_checklist_request,
+         name='api_approve_checklist_request'),
+
+    path('api/checklist-requests/<int:request_id>/reject/',
+         views.api_reject_checklist_request,
+         name='api_reject_checklist_request'),
 ]

@@ -1,0 +1,419 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Checklist Requests{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Ensure the wrapper takes full width of its parent container */
+    .reqv-wrap { 
+        width: 100%; 
+        max-width: 100%; 
+        margin: 0 auto; 
+        padding: 8px 0 40px; 
+        font-family: 'Poppins', sans-serif; 
+        color: #0f1b33; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 16px; 
+        box-sizing: border-box;
+    }
+
+    /* Tabs */
+    .reqv-tabs { display: flex; gap: 6px; padding: 6px; background: #ffffff; border: 1px solid #dbe3ef; border-radius: 12px; }
+    
+    .reqv-tab {
+        flex: 1;
+        /* FIXED: Restored to normal padding. The 40px was making the tabs huge. */
+        padding: 10px 16px; 
+        border-radius: 9px;
+        text-align: center;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #46536b;
+        text-decoration: none;
+        transition: all 0.15s;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-family: inherit;
+    }
+    .reqv-tab:hover { background: #f7f8fc; }
+    .reqv-tab.active { background: linear-gradient(135deg, #214EBA 0%, #003366 100%); color: #fff; box-shadow: 0 4px 12px rgba(33,78,186,0.28); }
+    .reqv-tab .pill { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: rgba(255,255,255,0.22); font-size: 11px; }
+    .reqv-tab:not(.active) .pill { background: #eef1ff; color: #214EBA; }
+
+    /* List */
+    .reqv-list { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 8px; 
+        padding: 14px; 
+        background: #ffffff; 
+        border: 1px solid #dbe3ef; 
+        border-radius: 16px; 
+        box-shadow: 0 4px 18px rgba(33,78,186,0.06); 
+        width: 100%; 
+        box-sizing: border-box;
+        /* Removed min-height so it wraps the content tightly */
+    }
+
+    .reqv-item {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 14px;
+        align-items: center;
+        padding: 20px 24px;
+        background: #fbfcff;
+        border: 1px solid #dbe3ef;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.15s;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .reqv-item:hover { border-color: #214EBA; background: #f5f8ff; box-shadow: 0 4px 14px rgba(33,78,186,0.10); }
+
+    .reqv-item-title { font-size: 13.5px; font-weight: 700; color: #0f1b33; }
+    .reqv-item-meta { font-size: 11.5px; color: #6b7a99; margin-top: 5px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .reqv-item-meta i { color: #214EBA; margin-right: 3px; }
+
+    .reqv-status { padding: 4px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; border: 1px solid; }
+    .reqv-status.pending   { background: #fdf2e0; color: #b45309; border-color: rgba(180,83,9,0.22); }
+    .reqv-status.approved  { background: #e2f7ef; color: #047857; border-color: rgba(4,120,87,0.22); }
+    .reqv-status.rejected  { background: #fdeaf0; color: #b91c1c; border-color: rgba(185,28,28,0.22); }
+    .reqv-status.cancelled { background: #f7f8fc; color: #6b7a99; border-color: #dbe3ef; }
+
+    .reqv-empty { padding: 60px 20px; text-align: center; color: #8493ab; font-size: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
+
+    /* Drawer */
+    .reqv-drawer-overlay {
+        position: fixed; inset: 0;
+        background: rgba(11, 26, 51, 0.55);
+        backdrop-filter: blur(4px);
+        z-index: 9998;
+        display: none;
+        align-items: center; justify-content: center;
+        padding: 24px;
+    }
+    .reqv-drawer-overlay.show { display: flex; }
+
+    .reqv-drawer {
+        background: #ffffff;
+        border-radius: 18px;
+        max-width: 720px;
+        width: 100%;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex; flex-direction: column;
+        box-shadow: 0 24px 60px rgba(0, 15, 35, 0.30);
+    }
+
+    .reqv-drawer-head {
+        padding: 18px 22px;
+        background: linear-gradient(135deg, #214EBA 0%, #3785DF 100%);
+        color: #fff;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .reqv-drawer-head h3 { margin: 0; font-size: 14px; font-weight: 700; }
+    .reqv-drawer-close { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.28); color: #fff; cursor: pointer; transition: background 0.15s; }
+    .reqv-drawer-close:hover { background: rgba(255,255,255,0.3); }
+
+    .reqv-drawer-body { padding: 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+
+    .reqv-field-row { display: flex; flex-direction: column; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
+    .reqv-field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: #6b7a99; }
+    .reqv-field-value { font-size: 13px; color: #0f1b33; line-height: 1.5; word-break: break-word; }
+
+    .reqv-task-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 5px; }
+    .reqv-task-list li { padding: 8px 12px; background: #f5f8ff; border: 1px solid #dbe3ef; border-radius: 8px; font-size: 12.5px; }
+
+    .reqv-drawer-foot { padding: 16px 22px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+    .reqv-btn { padding: 10px 20px; border-radius: 10px; border: none; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; }
+    .reqv-btn-approve { background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.28); }
+    .reqv-btn-approve:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(16,185,129,0.4); }
+    .reqv-btn-reject  { background: #ffffff; border: 1px solid #fdeaf0; color: #b91c1c; }
+    .reqv-btn-reject:hover:not(:disabled) { background: #fdeaf0; }
+    .reqv-btn:disabled { opacity: 0.55; cursor: wait; }
+    .reqv-btn-cancel  { background: #ffffff; border: 1px solid #dbe3ef; color: #46536b; }
+    .reqv-btn-cancel:hover:not(:disabled) { background: #f7f8fc; }
+
+    .reqv-note-input { width: 100%; padding: 10px 12px; border: 1px solid #dbe3ef; border-radius: 9px; font-family: inherit; font-size: 12.5px; resize: vertical; min-height: 60px; box-sizing: border-box; }
+    .reqv-note-input:focus { outline: none; border-color: #214EBA; box-shadow: 0 0 0 3px rgba(33,78,186,0.1); }
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:supervisor_dashboard' %}{% endblock %}
+{% block nav_links %}
+<li><a href="{% url 'control_dashboard:supervisor_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-line"></i></span>
+    <span class="nav-text">Dashboard</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:analytics_dashboard' %}">
+    <span class="nav-icon"><i class="fas fa-chart-pie"></i></span>
+    <span class="nav-text">Reports</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:team_performance' %}">
+    <span class="nav-icon"><i class="fas fa-users"></i></span>
+    <span class="nav-text">Team Performance</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:ad_hoc_scorecard' %}">
+    <span class="nav-icon"><i class="fas fa-star"></i></span>
+    <span class="nav-text">Ad-Hoc Scorecard</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:submitted_reports' %}">
+    <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
+    <span class="nav-text">Submitted Reports</span>
+</a></li>
+<li><a href="{% url 'control_dashboard:supervisor_checklist' %}">
+    <span class="nav-icon"><i class="fas fa-tasks"></i></span>
+    <span class="nav-text">Activity Checklist</span>
+</a></li>
+<li class="active">
+    <a href="{% url 'control_dashboard:supervisor_checklist_requests' %}">
+        <span class="nav-icon"><i class="fas fa-inbox"></i></span>
+        <span class="nav-text">Checklist Requests</span>
+    </a>
+</li>
+<li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
+    <span class="nav-icon"><i class="fas fa-search"></i></span>
+    <span class="nav-text">Activity Logs</span>
+</a></li>
+{% endblock %}
+{% block page_title %}Checklist Change Requests{% endblock %}
+
+{% block content %}
+<div class="reqv-wrap">
+
+    <div class="reqv-tabs">
+        <a href="?status=pending"   class="reqv-tab {% if status_filter == 'pending' %}active{% endif %}">Pending <span class="pill">{{ counts.pending }}</span></a>
+        <a href="?status=approved"  class="reqv-tab {% if status_filter == 'approved' %}active{% endif %}">Approved <span class="pill">{{ counts.approved }}</span></a>
+        <a href="?status=rejected"  class="reqv-tab {% if status_filter == 'rejected' %}active{% endif %}">Rejected <span class="pill">{{ counts.rejected }}</span></a>
+        <a href="?status=cancelled" class="reqv-tab {% if status_filter == 'cancelled' %}active{% endif %}">Cancelled <span class="pill">{{ counts.cancelled }}</span></a>
+        <a href="?status=all"       class="reqv-tab {% if status_filter == 'all' %}active{% endif %}">All</a>
+    </div>
+
+    <div class="reqv-list">
+        {% for r in requests_list %}
+        <div class="reqv-item" onclick='openRequestDetail({{ r.id }})'>
+            <div>
+                <div class="reqv-item-title">
+                    {% if r.request_type == 'create' %}Create checklist: {{ r.payload.name|default:"(unnamed)" }}
+                    {% elif r.request_type == 'modify' %}Modify: {{ r.target_checklist.name|default:"(missing)" }}
+                    {% elif r.request_type == 'delete' %}Delete: {{ r.target_checklist.name|default:"(missing)" }}
+                    {% elif r.request_type == 'add_task' %}Add task to: {{ r.target_checklist.name|default:"(missing)" }}
+                    {% endif %}
+                </div>
+                <div class="reqv-item-meta">
+                    <span><i class="fas fa-user"></i>{{ r.requester.full_name|default:r.requester.email }}</span>
+                    <span><i class="fas fa-clock"></i>{{ r.created_at|date:"M d, Y H:i" }}</span>
+                    <span><i class="fas fa-tag"></i>{{ r.get_request_type_display }}</span>
+                </div>
+            </div>
+            <span class="reqv-status {{ r.status }}">{{ r.get_status_display }}</span>
+            <i class="fas fa-chevron-right" style="color:#8493ab;"></i>
+        </div>
+        {% empty %}
+        <div class="reqv-empty">
+            <i class="fas fa-inbox" style="font-size:32px;color:#dbe3ef;margin-bottom:12px;"></i> 
+            No {{ status_filter }} requests found.
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+<!-- /.reqv-wrap — closed BEFORE the drawer so the fixed overlay is a direct child of the content block -->
+
+<!-- Drawer -->
+<div class="reqv-drawer-overlay" id="reqDrawerOverlay" onclick="closeReqDrawer(event)">
+    <div class="reqv-drawer" role="dialog">
+        <div class="reqv-drawer-head">
+            <h3 id="reqDrawerTitle">Request Details</h3>
+            <button class="reqv-drawer-close" onclick="closeReqDrawer()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="reqv-drawer-body" id="reqDrawerBody">Loading…</div>
+        <div class="reqv-drawer-foot" id="reqDrawerFoot"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const REQ_DETAIL_URL = "{% url 'control_dashboard:api_checklist_request_detail' 0 %}";
+const REQ_APPROVE_URL = "{% url 'control_dashboard:api_approve_checklist_request' 0 %}";
+const REQ_REJECT_URL  = "{% url 'control_dashboard:api_reject_checklist_request' 0 %}";
+
+function urlFor(tpl, id) { return tpl.replace('/0/', '/' + id + '/'); }
+
+function getCsrfToken() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : (document.querySelector('[name=csrfmiddlewaretoken]')?.value || '');
+}
+
+function esc(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+let _currentReq = null;
+
+async function openRequestDetail(requestId) {
+    const overlay = document.getElementById('reqDrawerOverlay');
+    overlay.classList.add('show');
+    const body = document.getElementById('reqDrawerBody');
+    const foot = document.getElementById('reqDrawerFoot');
+    body.innerHTML = 'Loading…';
+    foot.innerHTML = '';
+
+    try {
+        const resp = await fetch(urlFor(REQ_DETAIL_URL, requestId), { credentials: 'same-origin' });
+        const data = await resp.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load');
+
+        _currentReq = data.request;
+        renderRequestDetail(_currentReq);
+    } catch (err) {
+        body.innerHTML = `<p style="color:#c8395f;">${esc(err.message)}</p>`;
+    }
+}
+
+function renderRequestDetail(r) {
+    const title = document.getElementById('reqDrawerTitle');
+    title.textContent = r.request_type_display + ' — Request #' + r.id;
+
+    const body = document.getElementById('reqDrawerBody');
+    const foot = document.getElementById('reqDrawerFoot');
+
+    let payloadHtml = '';
+    const p = r.payload || {};
+
+    if (r.request_type === 'create') {
+        payloadHtml += field('Name', esc(p.name));
+        if (p.description) payloadHtml += field('Description', esc(p.description));
+        payloadHtml += field('Frequency', esc(p.frequency));
+        if (p.tasks && p.tasks.length) {
+            payloadHtml += `
+                <div class="reqv-field-row">
+                    <div class="reqv-field-label">Tasks (${p.tasks.length})</div>
+                    <ul class="reqv-task-list">
+                        ${p.tasks.map(t => `<li>${esc(t.description)}</li>`).join('')}
+                    </ul>
+                </div>`;
+        }
+        if (p.assigned_branches && p.assigned_branches.length) payloadHtml += field('Branches', p.assigned_branches.length + ' selected');
+        if (p.assigned_departments && p.assigned_departments.length) payloadHtml += field('Departments', p.assigned_departments.length + ' selected');
+    } else if (r.request_type === 'add_task') {
+        payloadHtml += field('New task', esc(p.description));
+    } else if (r.request_type === 'modify') {
+        Object.keys(p).forEach(k => {
+            if (k === 'tasks' && Array.isArray(p[k])) {
+                payloadHtml += `
+                    <div class="reqv-field-row">
+                        <div class="reqv-field-label">Tasks (${p[k].length})</div>
+                        <ul class="reqv-task-list">
+                            ${p[k].map(t => `<li>${esc(t.description)}</li>`).join('')}
+                        </ul>
+                    </div>`;
+            } else {
+                payloadHtml += field(k, esc(p[k]));
+            }
+        });
+    } else if (r.request_type === 'delete') {
+        payloadHtml += '<p style="color:#b91c1c;font-weight:600;">This request would deactivate the target checklist.</p>';
+    }
+
+    body.innerHTML = `
+        ${field('Requester', esc(r.requester.name) + ' &lt;' + esc(r.requester.email) + '&gt;')}
+        ${field('Submitted', esc(new Date(r.created_at).toLocaleString()))}
+        ${field('Target Checklist', r.target_checklist ? esc(r.target_checklist.name) : '—')}
+        ${field('Justification', esc(r.justification))}
+        <div style="border-bottom: none; padding-top: 8px;">
+            <div class="reqv-field-label" style="margin-bottom: 10px;">Proposed changes</div>
+            ${payloadHtml}
+        </div>
+        ${r.status === 'pending' ? `
+            <div class="reqv-field-row" style="border-bottom: none;">
+                <div class="reqv-field-label">Review Note (optional for approval, required for rejection)</div>
+                <textarea id="reqReviewNote" class="reqv-note-input" placeholder="Add a note for the requester…"></textarea>
+            </div>` : ''}
+    `;
+
+    if (r.status === 'pending') {
+        foot.innerHTML = `
+            <button class="reqv-btn reqv-btn-cancel" onclick="closeReqDrawer()">Cancel</button>
+            <button class="reqv-btn reqv-btn-reject" onclick="decideRequest('reject')">
+                <i class="fas fa-times"></i> Reject
+            </button>
+            <button class="reqv-btn reqv-btn-approve" onclick="decideRequest('approve')">
+                <i class="fas fa-check"></i> Approve &amp; Apply
+            </button>`;
+    } else {
+        foot.innerHTML = `<button class="reqv-btn reqv-btn-cancel" onclick="closeReqDrawer()">Close</button>`;
+        if (r.review_note) {
+            body.innerHTML += `<div class="reqv-field-row" style="border-top:1px solid #f1f5f9;padding-top:12px;border-bottom:none;">
+                <div class="reqv-field-label">Review Note</div>
+                <div class="reqv-field-value">${esc(r.review_note)}</div>
+            </div>`;
+        }
+    }
+}
+
+function field(label, html) {
+    return `<div class="reqv-field-row">
+        <div class="reqv-field-label">${esc(label)}</div>
+        <div class="reqv-field-value">${html}</div>
+    </div>`;
+}
+
+async function decideRequest(action) {
+    if (!_currentReq) return;
+    const note = (document.getElementById('reqReviewNote')?.value || '').trim();
+
+    if (action === 'reject' && !note) {
+        alert('A rejection reason is required.');
+        return;
+    }
+
+    const url = urlFor(action === 'approve' ? REQ_APPROVE_URL : REQ_REJECT_URL, _currentReq.id);
+    const buttons = document.querySelectorAll('.reqv-btn');
+    buttons.forEach(b => b.disabled = true);
+
+    try {
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ note: note })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Failed'));
+            buttons.forEach(b => b.disabled = false);
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Network error.');
+        buttons.forEach(b => b.disabled = false);
+    }
+}
+
+function closeReqDrawer(event) {
+    if (event && event.target !== document.getElementById('reqDrawerOverlay')) return;
+    document.getElementById('reqDrawerOverlay').classList.remove('show');
+    _currentReq = null;
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeReqDrawer({ target: document.getElementById('reqDrawerOverlay') });
+});
+</script>
+{% endblock %}

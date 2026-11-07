@@ -4,17 +4,20 @@
 {% block title %}All Submitted Exceptions{% endblock %}
 
 {% block extra_css %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 /* ============================================================
    ALL SUBMITTED EXCEPTIONS — Supervisor view
+   Blue/white theme · scrollable · comment icon per row
    ============================================================ */
 
 :root {
-    --an-bg-0: #eef1f8;
+    --header-gradient: linear-gradient(135deg, #214EBA 0%, #3785DF 100%);
+
+    --ob-navy: #003366;
+    --ob-gold: #D4AF37;
+
     --an-bg-1: #ffffff;
     --an-bg-2: #f7f8fc;
-    --an-bg-3: #f1f3f9;
 
     --an-border: rgba(15, 27, 51, 0.08);
     --an-border-strong: rgba(15, 27, 51, 0.16);
@@ -24,7 +27,7 @@
     --an-text-1: #46536b;
     --an-text-2: #8993a8;
 
-    --an-accent: #4f6ef7;
+    --an-accent: #214EBA;
     --an-accent-soft: #eef1ff;
     --an-emerald: #17a673;
     --an-emerald-soft: #e2f7ef;
@@ -32,8 +35,6 @@
     --an-amber-soft: #fdf2e0;
     --an-rose: #e0456a;
     --an-rose-soft: #fdeaf0;
-    --an-violet: #7c5cf0;
-    --an-violet-soft: #f0ebff;
 
     --an-shadow-sm: 0 1px 2px rgba(15, 27, 51, 0.04),
                     0 1px 3px rgba(15, 27, 51, 0.03);
@@ -55,7 +56,7 @@
 }
 
 /* ============================================================
-   FILTER BAR
+   FILTER BAR — BLUE HERO
    ============================================================ */
 .an-filter-bar {
     display: flex;
@@ -63,11 +64,12 @@
     gap: 12px;
     align-items: center;
     padding: 14px 18px;
-    background: var(--an-bg-1);
-    border: 1px solid var(--an-border);
+    background: var(--header-gradient);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 16px;
-    box-shadow: var(--an-shadow-sm);
+    box-shadow: 0 6px 20px rgba(33, 78, 186, 0.22);
     position: relative;
+    color: #ffffff;
 }
 
 .an-filter-bar::before {
@@ -77,9 +79,9 @@
     height: 3px;
     background: linear-gradient(90deg,
         transparent 0%,
-        var(--an-accent) 50%,
+        var(--ob-gold) 50%,
         transparent 100%);
-    opacity: 0.7;
+    opacity: 0.9;
     border-radius: 16px 16px 0 0;
 }
 
@@ -93,7 +95,7 @@
 .an-filter-group label {
     font-size: 10px;
     font-weight: 700;
-    color: var(--an-text-2);
+    color: rgba(255, 255, 255, 0.9);
     text-transform: uppercase;
     letter-spacing: 1px;
     white-space: nowrap;
@@ -102,13 +104,13 @@
 .an-filter-group select,
 .an-filter-group input {
     padding: 8px 32px 8px 14px;
-    border: 1px solid var(--an-border);
+    border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 10px;
     font-size: 12px;
     font-weight: 500;
     font-family: var(--an-font);
-    background: var(--an-bg-1);
-    color: var(--an-text-0);
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
     cursor: pointer;
     outline: none;
     transition: all 0.2s ease;
@@ -117,7 +119,7 @@
     min-width: 130px;
     appearance: none;
     -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238993a8' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 13px;
@@ -127,23 +129,22 @@
     background-image: none;
     padding-right: 14px;
     min-width: 130px;
-    color-scheme: light;
+    color-scheme: dark;
 }
+
+.an-filter-group select option { color: var(--an-text-0); }
 
 .an-filter-group select:hover,
 .an-filter-group input:hover {
-    border-color: var(--an-border-strong);
+    border-color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.24);
 }
 
 .an-filter-group select:focus,
 .an-filter-group input:focus {
-    border-color: var(--an-accent);
-    box-shadow: 0 0 0 3px rgba(79, 110, 247, 0.12);
-}
-
-.an-filter-group select option {
-    background: var(--an-bg-1);
-    color: var(--an-text-0);
+    border-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.24);
 }
 
 .an-filter-spacer { flex: 1; }
@@ -154,9 +155,9 @@
     justify-content: center;
     gap: 6px;
     padding: 8px 16px;
-    background: var(--an-bg-1);
-    color: var(--an-text-1);
-    border: 1px solid var(--an-border);
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 10px;
     font-size: 12px;
     font-weight: 600;
@@ -164,20 +165,19 @@
     cursor: pointer;
     text-decoration: none;
     height: 38px;
-    box-shadow: var(--an-shadow-sm);
     transition: all 0.2s ease;
     white-space: nowrap;
 }
 
 .an-btn-reset:hover {
-    background: var(--an-bg-2);
-    color: var(--an-text-0);
-    border-color: var(--an-border-strong);
+    background: rgba(255, 255, 255, 0.28);
+    border-color: rgba(255, 255, 255, 0.55);
     transform: translateY(-1px);
+    color: #ffffff;
 }
 
 /* ============================================================
-   UPLOADER GROUP HEADER
+   UPLOADER GROUP — WHITE GLASS with BLUE HEADER
    ============================================================ */
 .uploader-group {
     background: var(--an-bg-1);
@@ -187,12 +187,6 @@
     overflow: hidden;
     position: relative;
     margin-bottom: 16px;
-    transition: box-shadow 0.25s ease, border-color 0.25s ease;
-}
-
-.uploader-group:hover {
-    box-shadow: var(--an-shadow-md);
-    border-color: var(--an-border-strong);
 }
 
 .uploader-group::before {
@@ -202,9 +196,9 @@
     height: 3px;
     background: linear-gradient(90deg,
         transparent 0%,
-        var(--an-amber) 50%,
+        var(--ob-gold) 50%,
         transparent 100%);
-    opacity: 0.7;
+    opacity: 0.85;
     z-index: 2;
 }
 
@@ -214,9 +208,10 @@
     justify-content: space-between;
     gap: 14px;
     padding: 16px 22px;
-    border-bottom: 1px solid var(--an-hairline);
-    background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+    background: var(--header-gradient);
     flex-wrap: wrap;
+    color: #ffffff;
 }
 
 .uploader-info {
@@ -228,10 +223,9 @@
 }
 
 .uploader-avatar {
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #4f6ef7 0%, #7c5cf0 100%);
+    background: rgba(255, 255, 255, 0.18);
     color: #ffffff;
     display: grid;
     place-items: center;
@@ -240,17 +234,15 @@
     flex-shrink: 0;
     letter-spacing: 0.3px;
     text-transform: uppercase;
-    box-shadow: 0 2px 6px rgba(79, 110, 247, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
-.uploader-text {
-    min-width: 0;
-}
+.uploader-text { min-width: 0; }
 
 .uploader-name {
     font-size: 14px;
     font-weight: 700;
-    color: var(--an-text-0);
+    color: #ffffff;
     line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
@@ -259,7 +251,7 @@
 
 .uploader-meta {
     font-size: 11px;
-    color: var(--an-text-2);
+    color: rgba(255, 255, 255, 0.8);
     margin-top: 2px;
     display: flex;
     align-items: center;
@@ -269,7 +261,7 @@
 
 .uploader-meta i {
     font-size: 10px;
-    color: var(--an-accent);
+    color: rgba(255, 255, 255, 0.7);
     margin-right: 3px;
 }
 
@@ -277,9 +269,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: var(--an-accent-soft);
-    color: var(--an-accent);
-    border: 1px solid rgba(79, 110, 247, 0.22);
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.28);
     padding: 5px 12px;
     border-radius: 10px;
     font-size: 11px;
@@ -290,11 +282,12 @@
 }
 
 /* ============================================================
-   EXCEPTIONS TABLE
+   EXCEPTIONS TABLE — full scroll (no fixed max-height cap)
    ============================================================ */
 .exc-table-wrap {
-    max-height: 520px;
-    overflow: auto;
+    /* No max-height — the page scrolls naturally */
+    overflow-x: auto;
+    overflow-y: visible;
     scrollbar-width: thin;
     scrollbar-color: rgba(15, 27, 51, 0.15) transparent;
 }
@@ -317,28 +310,28 @@
 .exc-table thead th {
     position: sticky;
     top: 0;
-    background: var(--an-bg-2);
-    color: var(--an-text-2);
+    background: #eef3fa;
+    color: var(--ob-navy);
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
     text-align: left;
-    padding: 12px 14px;
+    padding: 14px 12px;
     border-bottom: 1px solid var(--an-border);
     z-index: 3;
     white-space: nowrap;
 }
 
 .exc-table tbody td {
-    padding: 12px 14px;
+    padding: 14px 12px;
     border-bottom: 1px solid var(--an-hairline);
     color: var(--an-text-1);
     vertical-align: top;
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
-.exc-table tbody tr:hover { background: var(--an-bg-2); }
+.exc-table tbody tr:hover { background: #f6f9fe; }
 .exc-table tbody tr:last-child td { border-bottom: none; }
 
 .exc-table .cell-mono {
@@ -349,13 +342,13 @@
 }
 
 .exc-table .cell-wide {
-    min-width: 380px;
-    max-width: 720px;
+    min-width: 320px;
+    max-width: 620px;
     white-space: normal;
     word-break: break-word;
     overflow-wrap: anywhere;
     color: var(--an-text-0);
-    line-height: 1.6;
+    line-height: 1.65;
 }
 
 .exc-table .cell-num {
@@ -403,9 +396,9 @@
 }
 
 .exc-status.in_progress {
-    background: var(--an-violet-soft);
-    color: var(--an-violet);
-    border-color: rgba(124, 92, 240, 0.22);
+    background: var(--an-accent-soft);
+    color: var(--an-accent);
+    border-color: rgba(33, 78, 186, 0.22);
 }
 
 .exc-status.rejected,
@@ -419,6 +412,68 @@
     background: var(--an-bg-2);
     color: var(--an-text-1);
     border-color: var(--an-border);
+}
+
+/* ============================================================
+   COMMENT BUTTON — one per row
+   ============================================================ */
+.exc-actions-cell {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.btn-comment {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 6px 11px;
+    background: rgba(33, 78, 186, 0.10);
+    color: var(--an-accent);
+    border: 1px solid rgba(33, 78, 186, 0.22);
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+}
+
+.btn-comment:hover {
+    background: var(--an-accent);
+    color: #ffffff;
+    border-color: var(--an-accent);
+    transform: translateY(-1px);
+}
+
+.btn-comment i { font-size: 11px; }
+
+.btn-comment .comment-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: rgba(255, 255, 255, 0.35);
+    color: inherit;
+    border-radius: 9px;
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.btn-comment.has-comments {
+    background: rgba(224, 138, 23, 0.12);
+    color: var(--an-amber);
+    border-color: rgba(224, 138, 23, 0.3);
+}
+
+.btn-comment.has-comments:hover {
+    background: var(--an-amber);
+    color: #ffffff;
+    border-color: var(--an-amber);
 }
 
 /* ============================================================
@@ -461,10 +516,7 @@
     color: var(--an-text-0);
 }
 
-.exc-empty p {
-    margin: 0;
-    font-size: 13px;
-}
+.exc-empty p { margin: 0; font-size: 13px; }
 
 /* ============================================================
    HEADER ACTION BUTTONS
@@ -475,9 +527,9 @@
     justify-content: center;
     gap: 8px;
     padding: 8px 16px;
-    background: var(--an-bg-1);
-    color: var(--an-text-1);
-    border: 1px solid var(--an-border);
+    background: var(--header-gradient);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 10px;
     font-size: 12px;
     font-weight: 600;
@@ -486,19 +538,291 @@
     height: 38px;
     text-decoration: none;
     white-space: nowrap;
-    box-shadow: var(--an-shadow-sm);
+    box-shadow: 0 4px 14px rgba(33, 78, 186, 0.28);
     transition: all 0.25s ease;
     margin-right: 8px;
 }
 
 .btn-back-dashboard:hover {
-    background: var(--an-bg-2);
-    color: var(--an-text-0);
-    border-color: var(--an-border-strong);
     transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(33, 78, 186, 0.42);
+    color: #ffffff;
 }
 
 .btn-back-dashboard i { font-size: 12px; }
+
+/* ============================================================
+   COMMENT MODAL
+   ============================================================ */
+.comment-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(11, 26, 51, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    overflow-y: auto;
+}
+
+.comment-modal-overlay.show { display: flex; }
+
+.comment-modal {
+    background: #ffffff;
+    border-radius: 20px;
+    max-width: 640px;
+    width: 100%;
+    box-shadow: 0 24px 64px rgba(0, 31, 61, 0.28);
+    overflow: hidden;
+    animation: modalIn 0.25s cubic-bezier(0.34, 1.36, 0.64, 1);
+    border-top: 4.5px solid #214EBA;
+    position: relative;
+}
+
+.comment-modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--ob-gold) 50%,
+        transparent 100%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: translateY(18px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.comment-modal-head {
+    padding: 20px 24px;
+    background: var(--header-gradient);
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.comment-modal-head h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comment-modal-head h3 i {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    font-size: 13px;
+}
+
+.comment-modal-close {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #ffffff;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background 0.15s;
+}
+
+.comment-modal-close:hover { background: rgba(255, 255, 255, 0.3); }
+
+.comment-modal-body {
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.comment-modal-summary {
+    font-size: 12px;
+    color: var(--an-text-2);
+    padding: 12px 14px;
+    background: var(--an-bg-2);
+    border-radius: 10px;
+    border: 1px solid var(--an-border);
+    line-height: 1.55;
+}
+
+.comment-modal-summary strong { color: var(--an-text-0); }
+
+.comment-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.comment-field label {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ob-navy);
+    text-transform: uppercase;
+    letter-spacing: 0.9px;
+}
+
+.comment-field textarea,
+.comment-field select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--an-border-strong);
+    border-radius: 10px;
+    font-family: var(--an-font);
+    font-size: 13px;
+    color: var(--an-text-0);
+    outline: none;
+    transition: all 0.15s;
+    box-sizing: border-box;
+    background: #ffffff;
+}
+
+.comment-field textarea {
+    min-height: 110px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.comment-field textarea:focus,
+.comment-field select:focus {
+    border-color: var(--an-accent);
+    box-shadow: 0 0 0 3px rgba(33, 78, 186, 0.14);
+}
+
+.comment-history {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-top: 4px;
+}
+
+.comment-history-item {
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 1px solid var(--an-border);
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--an-text-1);
+}
+
+.comment-history-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--an-text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.comment-history-meta strong {
+    color: var(--ob-navy);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 11.5px;
+}
+
+.comment-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--an-border);
+    background: #f8fafc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-cancel-comment {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--an-border-strong);
+    background: #ffffff;
+    color: var(--an-text-1);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-cancel-comment:hover {
+    background: var(--an-bg-2);
+    color: var(--an-text-0);
+}
+
+.btn-save-comment {
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: none;
+    background: var(--header-gradient);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(33, 78, 186, 0.28);
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: all 0.15s;
+}
+
+.btn-save-comment:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(33, 78, 186, 0.42);
+}
+
+.btn-save-comment:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.an-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    background: var(--header-gradient);
+    color: #ffffff;
+    font-family: var(--an-font);
+    font-size: 13px;
+    box-shadow: 0 16px 44px rgba(33, 78, 186, 0.32);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10001;
+    transform: translateX(120%);
+    transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.an-toast.show { transform: translateX(0); }
+.an-toast.error { background: linear-gradient(135deg, #c8395f 0%, #a82c4c 100%); }
+.an-toast i { font-size: 14px; }
 
 /* ============================================================
    RESPONSIVE
@@ -512,12 +836,115 @@
 }
 
 @media (max-width: 768px) {
-    .exc-table-wrap { max-height: none; }
-    .exc-table { min-width: 900px; }
-
+    .exc-table { min-width: 1200px; }
     .uploader-header { padding: 12px 16px; gap: 10px; }
     .uploader-avatar { width: 34px; height: 34px; font-size: 12px; }
     .uploader-name { font-size: 13px; }
+}
+
+/* ============================================================
+   HORIZONTAL SCROLL FIX — exception table
+   ------------------------------------------------------------
+   The table itself must scroll horizontally INSIDE its
+   .exc-table-wrap, without stretching the page. For that to
+   happen, every ancestor of .exc-table-wrap must be allowed
+   to shrink below the table's width (min-width: 0) and must
+   NOT clip the overflow (overflow: visible / hidden on the
+   wrap is what owns the scroll).
+   ============================================================ */
+
+/* 1 — Force a real minimum width on the table so it stops
+        shrink-to-fit and actually overflows its wrap. */
+.exc-table {
+    min-width: 1900px;
+    width: max-content;
+}
+
+/* 2 — Every ancestor must be allowed to shrink past the
+        table's width. This is the critical fix — without
+        min-width: 0 the grid/flex parent grows to match
+        the table, pushing the whole page wider. */
+.analytics-container {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: visible;
+}
+
+.uploader-group {
+    min-width: 0;
+    max-width: 100%;
+    /* Remove the `overflow: hidden` that was clipping scroll
+       context. Visible lets the inner wrap manage its own
+       overflow; the wrap's rounded corners still work because
+       the header/table backgrounds respect the border-radius. */
+    overflow: visible;
+    border-radius: 18px;
+    /* We keep the visual clipping via the wrap, not the group */
+}
+
+/* Re-apply rounded-corner clipping to the parts that need it */
+.uploader-header {
+    border-radius: 18px 18px 0 0;
+}
+
+.exc-table-wrap {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 0 0 18px 18px;
+    /* Prevent the wrap itself from being forced wider than its parent */
+    contain: inline-size;
+    /* Thin visible scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(33, 78, 186, 0.35) #eef3fa;
+}
+
+/* 3 — Main content area: allow it to shrink but keep the
+        page-level horizontal scroll disabled. */
+.main-content,
+#mainContent {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;      /* page should never scroll horizontally */
+    overflow-y: auto;
+}
+
+/* 4 — Visible scrollbar (WebKit) */
+.exc-table-wrap::-webkit-scrollbar {
+    height: 10px;
+}
+.exc-table-wrap::-webkit-scrollbar-track {
+    background: #eef3fa;
+    border-radius: 5px;
+}
+.exc-table-wrap::-webkit-scrollbar-thumb {
+    background: rgba(33, 78, 186, 0.35);
+    border-radius: 5px;
+}
+.exc-table-wrap::-webkit-scrollbar-thumb:hover {
+    background: rgba(33, 78, 186, 0.55);
+}
+
+/* 5 — Pin the Comment column (last th / last td) to the right
+        edge while scrolling so it's always reachable. */
+.exc-table thead th:last-child,
+.exc-table tbody td:last-child {
+    position: sticky;
+    right: 0;
+    background: #eef3fa;
+    box-shadow: -6px 0 10px -6px rgba(15, 27, 51, 0.18);
+    z-index: 2;
+}
+.exc-table tbody td:last-child {
+    background: #ffffff;
+}
+.exc-table tbody tr:hover td:last-child {
+    background: #f6f9fe;
+}
+.exc-table thead th:last-child {
+    z-index: 3;
 }
 </style>
 {% endblock %}
@@ -549,6 +976,12 @@
     <span class="nav-icon"><i class="fas fa-tasks"></i></span>
     <span class="nav-text">Activity Checklist</span>
 </a></li>
+<li>
+    <a href="{% url 'control_dashboard:supervisor_checklist_requests' %}">
+        <span class="nav-icon"><i class="fas fa-inbox"></i></span>
+        <span class="nav-text">Checklist Requests</span>
+    </a>
+</li>
 <li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
     <span class="nav-icon"><i class="fas fa-search"></i></span>
     <span class="nav-text">Activity Logs</span>
@@ -676,13 +1109,16 @@
                             <th>Category</th>
                             <th>Responsible Officer</th>
                             <th>Supervisor</th>
+                            <th>Auditee's Response</th>
+                            <th>Remarks</th>
                             <th>Status</th>
                             <th>Income / Cost Saved</th>
+                            <th style="text-align:center; width:70px;">Comment</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for e in group.rows %}
-                        <tr>
+                        <tr data-record-id="{{ e.id }}">
                             <td class="cell-mono">{{ e.serial_number }}</td>
                             <td>{{ e.branch_unit|default:"—" }}</td>
                             <td class="cell-wide">{{ e.exception|default:"—" }}</td>
@@ -691,6 +1127,8 @@
                             <td>{{ e.category|default:"—" }}</td>
                             <td>{{ e.responsible_officer|default:"—" }}</td>
                             <td>{{ e.supervisor|default:"—" }}</td>
+                            <td class="cell-wide">{{ e.auditee_response|default:"—" }}</td>
+                            <td class="cell-wide">{{ e.remarks|default:"—" }}</td>
                             <td>
                                 {% with s=e.status|lower %}
                                 <span class="exc-status
@@ -704,6 +1142,20 @@
                                 {% endwith %}
                             </td>
                             <td class="cell-num">{{ e.income_cost_saved }}</td>
+                            <td class="exc-actions-cell">
+                                <button type="button"
+                                        class="btn-comment {% if e.comment_count %}has-comments{% endif %}"
+                                        data-record-id="{{ e.id }}"
+                                        data-branch="{{ e.branch_unit|default:'' }}"
+                                        data-exception="{{ e.exception|default:''|truncatechars:90 }}"
+                                        data-status="{{ e.status|lower }}"
+                                        title="Add / view comments">
+                                    <i class="fas fa-comment-dots"></i>
+                                    {% if e.comment_count %}
+                                    <span class="comment-count">{{ e.comment_count }}</span>
+                                    {% endif %}
+                                </button>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -721,19 +1173,283 @@
     {% endif %}
 
 </div>
+
+<!-- ============================================================
+     COMMENT MODAL
+     ============================================================ -->
+<div class="comment-modal-overlay" id="commentModal" onclick="closeCommentModalOutside(event)">
+    <div class="comment-modal" role="dialog" aria-modal="true">
+        <div class="comment-modal-head">
+            <h3><i class="fas fa-comment-dots"></i> Exception Comment</h3>
+            <button type="button" class="comment-modal-close" onclick="closeCommentModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="comment-modal-body">
+            <div class="comment-modal-summary" id="commentModalSummary">
+                <strong>Record:</strong>
+                <span id="commentModalBranch">—</span>
+                <br>
+                <span id="commentModalException" style="color: var(--an-text-1);">—</span>
+            </div>
+
+            <div class="comment-field">
+                <label for="commentStatus">Correct Status</label>
+                <select id="commentStatus">
+                    <option value="open">Open</option>
+                    <option value="closed">Closed</option>
+                </select>
+            </div>
+
+            <div class="comment-field">
+                <label for="commentBody">Comment to the Member</label>
+                <textarea id="commentBody"
+                          placeholder="e.g. Please attach supporting evidence for this exception and close it by Friday."></textarea>
+            </div>
+
+            <div id="commentHistoryWrap">
+                <label class="comment-field"
+                       style="font-size:10.5px; font-weight:700; color:var(--ob-navy);
+                              text-transform:uppercase; letter-spacing:0.9px;
+                              margin-bottom:8px; display:block;">
+                    Previous Comments
+                </label>
+                <div class="comment-history" id="commentHistory">
+                    <p style="color: var(--an-text-2); font-style: italic; font-size: 12px;">
+                        No comments yet.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="comment-modal-footer">
+            <button type="button" class="btn-cancel-comment" onclick="closeCommentModal()">
+                Cancel
+            </button>
+            <button type="button" class="btn-save-comment" id="saveCommentBtn" onclick="saveComment()">
+                <i class="fas fa-check"></i> Save Comment
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="an-toast" id="anToast">
+    <i class="fas fa-check-circle"></i>
+    <span id="anToastMessage">Saved.</span>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    // ─── CSRF ────────────────────────────────────────────────────
+    function getCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    }
+
     function submitFilters() {
         const form = document.getElementById('analyticsFilterForm');
         if (form) form.submit();
     }
 
-    document.addEventListener('keydown', function(e) {
+    // ─── Toast ───────────────────────────────────────────────────
+    let _toastT = null;
+    function showToast(msg, variant) {
+        const t = document.getElementById('anToast');
+        document.getElementById('anToastMessage').textContent = msg;
+        t.classList.remove('error');
+        t.querySelector('i').className = 'fas fa-check-circle';
+        if (variant === 'error') {
+            t.classList.add('error');
+            t.querySelector('i').className = 'fas fa-exclamation-circle';
+        }
+        t.classList.add('show');
+        clearTimeout(_toastT);
+        _toastT = setTimeout(() => t.classList.remove('show'), 3200);
+    }
+
+    // ─── Comment modal ───────────────────────────────────────────
+    let _activeRecordId = null;
+
+    function openCommentModal(btn) {
+        const recordId = btn.getAttribute('data-record-id');
+        const branch = btn.getAttribute('data-branch') || '—';
+        const exception = btn.getAttribute('data-exception') || '—';
+        const status = (btn.getAttribute('data-status') || 'open').toLowerCase();
+
+        _activeRecordId = recordId;
+
+        document.getElementById('commentModalBranch').textContent = branch || '—';
+        document.getElementById('commentModalException').textContent = exception || '—';
+        document.getElementById('commentStatus').value = (status === 'closed' || status === 'resolved') ? 'closed' : 'open';
+        document.getElementById('commentBody').value = '';
+        document.getElementById('commentHistory').innerHTML =
+            '<p style="color: var(--an-text-2); font-style: italic; font-size: 12px;">Loading…</p>';
+
+        document.getElementById('commentModal').classList.add('show');
+        document.getElementById('commentBody').focus();
+
+        // Load existing comments
+        fetch(`/adminboard/api/exceptions/${recordId}/comments/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCsrfToken(),
+                'Accept': 'application/json',
+            },
+            credentials: 'same-origin',
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) throw new Error(data.error || 'Failed to load comments.');
+            renderComments(data.comments || []);
+        })
+        .catch(err => {
+            document.getElementById('commentHistory').innerHTML =
+                `<p style="color: var(--an-rose); font-size:12px;">
+                    ${err.message || 'Could not load comments.'}
+                </p>`;
+        });
+    }
+
+    function renderComments(comments) {
+        const box = document.getElementById('commentHistory');
+        if (!comments.length) {
+            box.innerHTML = `
+                <p style="color: var(--an-text-2); font-style: italic; font-size: 12px;">
+                    No comments yet.
+                </p>`;
+            return;
+        }
+        box.innerHTML = comments.map(c => `
+            <div class="comment-history-item">
+                <div class="comment-history-meta">
+                    <strong>${c.author.name}</strong>
+                    <span>${c.created_at_human}</span>
+                </div>
+                <div>${escapeHtml(c.body)}</div>
+            </div>
+        `).join('');
+    }
+
+    function closeCommentModal() {
+        document.getElementById('commentModal').classList.remove('show');
+        _activeRecordId = null;
+    }
+
+    function closeCommentModalOutside(event) {
+        if (event.target === document.getElementById('commentModal')) {
+            closeCommentModal();
+        }
+    }
+
+    function saveComment() {
+        if (!_activeRecordId) return;
+
+        const body = document.getElementById('commentBody').value.trim();
+        const status = document.getElementById('commentStatus').value;
+
+        if (!body) {
+            showToast('Comment cannot be empty.', 'error');
+            document.getElementById('commentBody').focus();
+            return;
+        }
+
+        const btn = document.getElementById('saveCommentBtn');
+        const original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+
+        fetch(`/adminboard/api/exceptions/${_activeRecordId}/comments/add/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+                'Accept': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ body: body, status: status }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = original;
+
+            if (!data.success) {
+                showToast(data.error || 'Failed to save comment.', 'error');
+                return;
+            }
+
+            // Update the button badge on the row
+            const rowBtn = document.querySelector(`.btn-comment[data-record-id="${_activeRecordId}"]`);
+            if (rowBtn) {
+                rowBtn.classList.add('has-comments');
+                let countEl = rowBtn.querySelector('.comment-count');
+                if (!countEl) {
+                    countEl = document.createElement('span');
+                    countEl.className = 'comment-count';
+                    countEl.textContent = '1';
+                    rowBtn.appendChild(countEl);
+                } else {
+                    countEl.textContent = String(parseInt(countEl.textContent || '0', 10) + 1);
+                }
+                // Update the row status pill
+                if (data.record_status) {
+                    rowBtn.setAttribute('data-status', data.record_status);
+                    const statusCell = rowBtn.closest('tr').querySelector('.exc-status');
+                    if (statusCell) {
+                        statusCell.classList.remove('open', 'closed', 'in_progress', 'rejected', 'pending');
+                        if (data.record_status === 'closed') {
+                            statusCell.classList.add('closed');
+                            statusCell.textContent = 'Closed';
+                        } else if (data.record_status === 'open') {
+                            statusCell.classList.add('open');
+                            statusCell.textContent = 'Open';
+                        }
+                    }
+                }
+            }
+
+            showToast('Comment saved.', 'success');
+            closeCommentModal();
+
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.innerHTML = original;
+            console.error(err);
+            showToast('Network error. Please try again.', 'error');
+        });
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────
+    function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = String(str == null ? '' : str);
+        return d.innerHTML;
+    }
+
+    // ─── Wire up comment buttons + ESC handler ───────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.btn-comment').forEach(btn => {
+            btn.addEventListener('click', function () {
+                openCommentModal(btn);
+            });
+        });
+    });
+
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             const t = e.target;
             if (t.id === 'start_date' || t.id === 'end_date') submitFilters();
+        }
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('commentModal');
+            if (modal && modal.classList.contains('show')) {
+                closeCommentModal();
+            }
         }
     });
 </script>

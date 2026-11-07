@@ -7,107 +7,104 @@
 <link rel="stylesheet" href="{% static 'stylesheets/submit.css' %}" type="text/css">
 <style>
 /* ============================================================
-   DAILY TRIAL BALANCE — OMNibsic BANK BLENDED
-   Matches the base shell's reading-column rhythm. Content
-   sits inside the chat-style content column with generous
-   whitespace, not stretched edge-to-edge.
+   DAILY TRIAL BALANCE — BLUE HERO + WHITE GLASS
    ============================================================ */
-
 :root {
-    /* ---- OmniBSIC brand primitives ---- */
     --ob-navy:        #003366;
-    --ob-navy-dark:   #001F3D;
-    --ob-navy-mid:    #1A4B7A;
-    --ob-navy-tint-1: rgba(0, 51, 102, 0.04);
-    --ob-navy-tint-2: rgba(0, 51, 102, 0.08);
-    --ob-navy-tint-3: rgba(0, 51, 102, 0.14);
     --ob-gold:        #D4AF37;
-    --ob-gold-soft:   rgba(212, 175, 55, 0.14);
-    --ob-gold-mid:    rgba(212, 175, 55, 0.28);
+    --ob-gold-light:  #F5E6B8;
+    --ob-gold-dark:   #B8960F;
+    --header-gradient: linear-gradient(135deg, #214EBA 0%, #3785DF 100%);
 
-    /* ---- Surfaces (blended with navy) ---- */
-    --tb-bg-1: #ffffff;
-    --tb-bg-2: #f6f9fe;
-    --tb-bg-3: #eef3fa;
+    --glass-white-strong: rgba(255, 255, 255, 0.92);
+    --glass-border:       rgba(33, 78, 186, 0.14);
+    --glass-shadow:       0 8px 28px rgba(33, 78, 186, 0.10);
+    --glass-shadow-lg:    0 16px 44px rgba(33, 78, 186, 0.14);
+    --glass-blur:         saturate(160%) blur(14px);
 
-    --tb-border: #dbe3ef;
-    --tb-border-strong: #c9d3e3;
-    --tb-hairline: #eaf0f8;
+    --tb-text:      #0b1a33;
+    --tb-text-2:    #4a5a75;
+    --tb-text-3:    #8493ab;
+    --tb-border:    #dbe3ef;
+    --tb-hairline:  #eaf0f8;
 
-    --tb-text-0: #0b1a33;
-    --tb-text-1: #2c3e5c;
-    --tb-text-2: #8493ab;
-
-    --tb-accent:       var(--ob-navy);
-    --tb-accent-soft:  var(--ob-navy-tint-2);
-
-    --tb-amber:        #d4820f;
-    --tb-amber-soft:   rgba(212, 130, 15, 0.10);
-    --tb-rose:         #c8395f;
-    --tb-rose-soft:    rgba(200, 57, 95, 0.10);
-    --tb-emerald:      #12a67a;
+    --tb-amber:     #d4820f;
+    --tb-amber-soft: rgba(212, 130, 15, 0.10);
+    --tb-rose:      #c8395f;
+    --tb-rose-soft: rgba(200, 57, 95, 0.10);
+    --tb-emerald:   #12a67a;
     --tb-emerald-soft: rgba(18, 166, 122, 0.10);
 
-    --tb-shadow-sm: 0 1px 2px rgba(0, 31, 61, 0.05),
-                    0 1px 3px rgba(0, 31, 61, 0.03);
-    --tb-shadow-md: 0 4px 12px rgba(0, 31, 61, 0.08),
-                    0 2px 4px rgba(0, 31, 61, 0.03);
-
     --tb-font: 'Poppins', system-ui, -apple-system, sans-serif;
-    --tb-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --tb-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
 }
 
-/* ------------------------------------------------------------
-   Container — centered reading column, matches base shell
-   ------------------------------------------------------------ */
+.tb-container, .tb-container * { font-family: var(--tb-font); }
+
 .tb-container {
     width: 100%;
-    max-width: 1180px;
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 0 0 48px;
-    font-family: var(--tb-font);
-    color: var(--tb-text-0);
+    padding: 4px 0 48px;
+    color: var(--tb-text);
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 22px;
     box-sizing: border-box;
 }
 
 /* ============================================================
-   HEADER ACTIONS — sits left, not stretched
+   HEADER ACTION BAR — BLUE HERO
    ============================================================ */
 .tb-header-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
-    padding: 0;
+    padding: 14px 20px;
+    background: var(--header-gradient);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    box-shadow: 0 6px 20px rgba(33, 78, 186, 0.22);
+    position: relative;
+    color: #ffffff;
+}
+
+.tb-header-actions::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 20px; right: 20px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--ob-gold) 50%, transparent 100%);
+    opacity: 0.9;
 }
 
 .tb-date-wrapper {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 16px;
-    background: #ffffff;
-    border: 1px solid var(--tb-border);
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 11px;
     transition: all 0.2s ease;
-    box-shadow: var(--tb-shadow-sm);
     min-height: 42px;
+    cursor: text;
 }
 
+.tb-date-wrapper:hover { background: rgba(255, 255, 255, 0.22); border-color: rgba(255, 255, 255, 0.55); }
 .tb-date-wrapper:focus-within {
-    border-color: var(--ob-navy);
-    box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.14);
+    border-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.22);
 }
 
 .tb-date-wrapper .tb-date-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.6px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
-    color: var(--ob-navy);
+    color: #ffffff;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -115,166 +112,157 @@
     white-space: nowrap;
 }
 
-.tb-date-wrapper .tb-date-label i { color: var(--ob-navy); }
-
 .tb-date-wrapper .tb-date-input {
     border: none;
     outline: none;
     font-size: 13px;
     font-weight: 600;
-    font-family: var(--tb-font);
-    color: var(--tb-text-0);
+    color: #ffffff;
     background: transparent;
     cursor: pointer;
     padding: 2px 4px;
-    color-scheme: light;
+    color-scheme: dark;
 }
 
-/* ---------- Buttons ---------- */
+/* Buttons on blue bar */
 .tb-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 18px;
+    padding: 10px 20px;
     border-radius: 11px;
     font-size: 12.5px;
     font-weight: 600;
-    font-family: var(--tb-font);
-    letter-spacing: 0.3px;
     cursor: pointer;
     border: 1px solid transparent;
     transition: all 0.2s ease;
     white-space: nowrap;
-    position: relative;
-    overflow: hidden;
     min-height: 42px;
+    font-family: var(--tb-font);
 }
 
 .tb-btn i { font-size: 12px; }
 
 .tb-btn-primary {
-    background: linear-gradient(135deg, var(--ob-navy) 0%, var(--ob-navy-mid) 100%);
-    color: #ffffff;
-    box-shadow: 0 3px 10px rgba(0, 51, 102, 0.24);
+    background: rgba(255, 255, 255, 0.96);
+    color: #214EBA;
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+    position: relative;
+    overflow: hidden;
+}
+
+.tb-btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -40%;
+    width: 40%; height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.35) 50%, transparent 100%);
+    transition: left 0.5s ease;
 }
 
 .tb-btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(0, 51, 102, 0.36);
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
+.tb-btn-primary:hover:not(:disabled)::after { left: 100%; }
 
 .tb-btn-success {
-    background: linear-gradient(135deg, var(--tb-emerald) 0%, #0f8a5e 100%);
+    background: rgba(56, 211, 159, 0.22);
     color: #ffffff;
-    box-shadow: 0 3px 10px rgba(18, 166, 122, 0.24);
+    border-color: rgba(255, 255, 255, 0.32);
 }
 
 .tb-btn-success:hover:not(:disabled) {
+    background: rgba(56, 211, 159, 0.35);
+    border-color: rgba(255, 255, 255, 0.55);
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(18, 166, 122, 0.36);
 }
 
 .tb-btn-outline {
-    background: #ffffff;
-    color: var(--ob-navy);
-    border-color: var(--tb-border);
-    box-shadow: var(--tb-shadow-sm);
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.28);
 }
 
 .tb-btn-outline:hover:not(:disabled) {
-    background: var(--ob-navy-tint-1);
-    border-color: var(--ob-navy-tint-3);
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
-.tb-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
+.tb-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* ============================================================
-   DAY LOCK BANNER
+   DAY LOCK BANNER — white glass
    ============================================================ */
 .tb-lock-banner {
     display: flex;
     align-items: center;
     gap: 16px;
-    background:
-        radial-gradient(circle at 100% 0%, rgba(212, 130, 15, 0.06) 0%, transparent 50%),
-        linear-gradient(180deg, #ffffff 0%, #fdf8ee 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #fdf8ee 100%);
     border: 1px solid rgba(212, 130, 15, 0.28);
     border-radius: 14px;
     padding: 16px 20px;
     position: relative;
     overflow: hidden;
-    box-shadow: var(--tb-shadow-sm);
+    box-shadow: var(--glass-shadow);
 }
 
 .tb-lock-banner::before {
     content: '';
     position: absolute;
     left: 0; top: 0; bottom: 0;
-    width: 3px;
+    width: 4px;
     background: linear-gradient(180deg, var(--tb-amber), var(--tb-rose));
 }
 
 .tb-lock-banner .lock-icon {
     width: 44px; height: 44px;
     border-radius: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 18px;
     flex-shrink: 0;
     background: var(--tb-amber-soft);
     color: var(--tb-amber);
     border: 1px solid rgba(212, 130, 15, 0.28);
-    box-shadow: 0 2px 6px rgba(212, 130, 15, 0.18);
 }
 
 .tb-lock-banner .lock-content { flex: 1; min-width: 0; }
 .tb-lock-banner .lock-title {
     font-size: 13px; font-weight: 700;
-    color: #8a5209; margin: 0 0 3px 0; letter-spacing: 0.2px;
+    color: #8a5209; margin: 0 0 3px 0;
 }
 .tb-lock-banner .lock-subtitle {
-    font-size: 12px; color: var(--tb-text-1);
+    font-size: 12px; color: var(--tb-text-2);
     margin: 0; line-height: 1.55;
 }
 
 /* ============================================================
-   CONTROL BAR
+   CONTROL BAR — BLUE HERO
    ============================================================ */
 .tb-control-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
-    background:
-        radial-gradient(circle at 100% 0%, rgba(0, 51, 102, 0.04) 0%, transparent 45%),
-        linear-gradient(180deg, #ffffff 0%, #f6f9fe 100%);
-    border: 1px solid var(--tb-border);
+    background: var(--header-gradient);
+    border: 1px solid rgba(255, 255, 255, 0.20);
     border-radius: 14px;
     padding: 14px 18px;
-    box-shadow: var(--tb-shadow-sm);
+    box-shadow: 0 6px 20px rgba(33, 78, 186, 0.22);
     position: relative;
+    color: #ffffff;
 }
 
 .tb-control-bar::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 18px;
-    right: 18px;
+    top: 0; left: 18px; right: 18px;
     height: 2px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--ob-gold) 50%,
-        transparent 100%);
-    opacity: 0.6;
-    pointer-events: none;
+    background: linear-gradient(90deg, transparent 0%, var(--ob-gold) 50%, transparent 100%);
+    opacity: 0.9;
 }
 
 .tb-filter-group {
@@ -284,76 +272,83 @@
 }
 
 .tb-filter-group label {
-    font-size: 10.5px; font-weight: 700;
-    color: var(--ob-navy); text-transform: uppercase;
-    letter-spacing: 1px; white-space: nowrap;
-    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-.tb-filter-group label i { color: var(--ob-navy); font-size: 11px; opacity: 0.8; }
+.tb-filter-group label i { color: #ffffff; font-size: 11px; opacity: 0.85; }
 
 .tb-filter-select {
-    padding: 9px 14px;
-    border: 1px solid var(--tb-border);
+    padding: 9px 34px 9px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 10px;
-    font-size: 12.5px; font-weight: 500;
-    font-family: var(--tb-font);
-    color: var(--tb-text-0);
-    background: #ffffff;
-    cursor: pointer; outline: none;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.16);
+    cursor: pointer;
+    outline: none;
     transition: all 0.2s ease;
-    min-width: 150px; max-width: 220px;
+    min-width: 150px;
+    max-width: 220px;
     appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23003366' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 11px center;
     background-size: 13px;
-    padding-right: 34px;
-    box-shadow: var(--tb-shadow-sm);
     min-height: 38px;
+    font-family: var(--tb-font);
+    color-scheme: dark;
 }
 
-.tb-filter-select:hover { border-color: var(--ob-navy-mid); }
+.tb-filter-select option { color: var(--tb-text); background: #ffffff; }
+
+.tb-filter-select:hover {
+    border-color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.24);
+}
 
 .tb-filter-select:focus {
-    border-color: var(--ob-navy);
-    box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.14);
-}
-
-.tb-filter-select option {
-    background: #ffffff;
-    color: var(--tb-text-0);
+    border-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.24);
 }
 
 #tbGLFilter { min-width: 220px; max-width: 320px; }
 
 .tb-filter-divider {
     width: 1px; height: 24px;
-    background: var(--tb-border);
+    background: rgba(255, 255, 255, 0.28);
     margin: 0 2px;
 }
 
 .tb-filter-meta {
     font-size: 11.5px;
-    color: var(--tb-text-2);
-    display: inline-flex; align-items: center; gap: 7px;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     padding: 7px 12px;
-    background: var(--ob-navy-tint-1);
-    border: 1px solid var(--ob-navy-tint-3);
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.32);
     border-radius: 9px;
     font-variant-numeric: tabular-nums;
     margin-left: auto;
 }
 
-.tb-filter-meta i { color: var(--ob-navy); opacity: 0.7; }
-
-.tb-filter-meta strong {
-    color: var(--ob-navy);
-    font-weight: 700;
-}
+.tb-filter-meta i { color: #ffffff; opacity: 0.85; }
+.tb-filter-meta strong { color: #ffffff; font-weight: 700; }
 
 /* ============================================================
-   TAB BAR
+   TAB BAR — white glass with blue active
    ============================================================ */
 .tb-tabbar {
     display: flex;
@@ -362,7 +357,7 @@
     border: 1px solid var(--tb-border);
     border-radius: 13px;
     padding: 6px;
-    box-shadow: var(--tb-shadow-sm);
+    box-shadow: var(--glass-shadow);
     width: fit-content;
     margin: 0 auto;
     position: relative;
@@ -371,90 +366,75 @@
 .tb-tabbar::before {
     content: '';
     position: absolute;
-    top: -1px;
-    left: 16px;
-    right: 16px;
+    top: -1px; left: 16px; right: 16px;
     height: 2px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--ob-gold) 50%,
-        transparent 100%);
-    opacity: 0.55;
+    background: linear-gradient(90deg, transparent 0%, var(--ob-gold) 50%, transparent 100%);
+    opacity: 0.7;
     border-radius: 2px;
-    pointer-events: none;
 }
 
 .tb-tabbar button {
-    display: inline-flex; align-items: center; gap: 7px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     padding: 9px 18px;
     border: none;
     background: transparent;
     border-radius: 9px;
-    font-family: var(--tb-font);
     font-size: 12.5px;
     font-weight: 600;
-    color: var(--tb-text-2);
+    color: var(--tb-text-3);
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
     min-height: 38px;
+    font-family: var(--tb-font);
 }
 
 .tb-tabbar button:hover {
-    color: var(--ob-navy);
-    background: var(--ob-navy-tint-1);
+    color: #214EBA;
+    background: rgba(33, 78, 186, 0.08);
 }
 
 .tb-tabbar button.active {
-    background: linear-gradient(135deg, var(--ob-navy) 0%, var(--ob-navy-mid) 100%);
+    background: var(--header-gradient);
     color: #ffffff;
-    box-shadow: 0 3px 10px rgba(0, 51, 102, 0.24);
+    box-shadow: 0 3px 10px rgba(33, 78, 186, 0.32);
 }
 
 .tb-tabbar button i { font-size: 11px; }
 
 /* ============================================================
-   CARD — reading-surface card
+   CARD — WHITE GLASS
    ============================================================ */
 .tb-card {
-    background: #ffffff;
+    background: var(--glass-white-strong);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
     border-radius: 16px;
-    border: 1px solid var(--tb-border);
     overflow: hidden;
-    box-shadow: var(--tb-shadow-sm);
-    transition: box-shadow 0.2s ease;
+    box-shadow: var(--glass-shadow);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
 }
 
 .tb-card:hover {
-    box-shadow: var(--tb-shadow-md);
+    box-shadow: var(--glass-shadow-lg);
+    border-color: rgba(33, 78, 186, 0.22);
 }
 
 .tb-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 22px 14px;
-    border-bottom: 1px solid var(--tb-border);
-    background: linear-gradient(180deg, #f8fafd 0%, #eef3fa 100%);
+    padding: 16px 22px 14px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.55);
     flex-wrap: wrap;
     gap: 12px;
     position: relative;
-}
-
-.tb-card-header::after {
-    content: '';
-    position: absolute;
-    left: 22px;
-    right: 22px;
-    bottom: -1px;
-    height: 1px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--ob-gold) 30%,
-        var(--ob-gold) 70%,
-        transparent 100%);
-    opacity: 0.4;
-    pointer-events: none;
+    color: var(--ob-navy);
 }
 
 .tb-card-header h4 {
@@ -470,12 +450,12 @@
 
 .tb-card-header h4 i {
     font-size: 12px;
-    width: 28px; height: 28px;
+    width: 30px; height: 30px;
     border-radius: 8px;
     display: grid; place-items: center;
-    background: var(--ob-navy);
-    color: #ffffff;
-    box-shadow: 0 2px 5px rgba(0, 51, 102, 0.20);
+    background: rgba(33, 78, 186, 0.12);
+    color: #214EBA;
+    border: 1px solid rgba(33, 78, 186, 0.20);
 }
 
 .tb-card-header .header-meta {
@@ -487,25 +467,26 @@
 }
 
 /* ============================================================
-   DATA TABLE
+   DATA TABLE — WHITE, DARK TEXT
    ============================================================ */
 .tb-table-wrapper {
     max-height: 560px;
     overflow: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 51, 102, 0.15) transparent;
+    scrollbar-color: rgba(33, 78, 186, 0.20) transparent;
+    background: #ffffff;
 }
 
 .tb-table-wrapper::-webkit-scrollbar { width: 9px; height: 9px; }
 .tb-table-wrapper::-webkit-scrollbar-track { background: transparent; }
 .tb-table-wrapper::-webkit-scrollbar-thumb {
-    background: rgba(0, 51, 102, 0.14);
+    background: rgba(33, 78, 186, 0.20);
     border-radius: 5px;
     border: 2px solid transparent;
     background-clip: padding-box;
 }
 .tb-table-wrapper::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 51, 102, 0.28);
+    background: rgba(33, 78, 186, 0.35);
     background-clip: padding-box;
     border: 2px solid transparent;
 }
@@ -514,14 +495,14 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 12.5px;
-    font-family: var(--tb-font);
     font-variant-numeric: tabular-nums;
+    font-family: var(--tb-font);
+    background: #ffffff;
 }
 
 .tb-table thead {
     background: linear-gradient(180deg, #eef3fa 0%, #e3ecf6 100%);
-    position: sticky; top: 0;
-    z-index: 2;
+    position: sticky; top: 0; z-index: 2;
 }
 
 .tb-table th {
@@ -533,29 +514,30 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     white-space: nowrap;
-    border-bottom: 1px solid var(--ob-navy-tint-3);
+    border-bottom: 1px solid rgba(33, 78, 186, 0.18);
 }
 
 .tb-table td {
     padding: 12px 16px;
     border-bottom: 1px solid var(--tb-hairline);
-    color: var(--tb-text-1);
+    color: var(--tb-text);
     vertical-align: middle;
     white-space: nowrap;
 }
 
-.tb-table tbody tr { transition: background 0.15s ease; }
-.tb-table tbody tr:hover { background: var(--ob-navy-tint-1); }
+.tb-table tbody tr:nth-child(even) { background: #fbfcff; }
+.tb-table tbody tr:hover { background: rgba(33, 78, 186, 0.05); }
 .tb-table tbody tr:last-child td { border-bottom: none; }
 
 .tb-table .num {
     text-align: right;
     font-variant-numeric: tabular-nums;
+    font-family: var(--tb-mono);
 }
 
 .tb-table tbody tr.tb-hidden { display: none; }
 
-/* Sticky first columns for the wide compare table */
+/* Sticky columns */
 .tb-table.compare-table th.sticky-col,
 .tb-table.compare-table td.sticky-col {
     position: sticky;
@@ -565,6 +547,9 @@
 .tb-table.compare-table thead th.sticky-col {
     background: linear-gradient(180deg, #eef3fa 0%, #e3ecf6 100%);
     z-index: 3;
+}
+.tb-table.compare-table tbody tr:hover td.sticky-col {
+    background: #f2f6fd;
 }
 .tb-table.compare-table .sticky-col-1 { left: 0;    min-width: 90px;  }
 .tb-table.compare-table .sticky-col-2 { left: 90px; min-width: 90px;  }
@@ -576,53 +561,61 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 8px;
+    padding: 3px 9px;
     border-radius: 7px;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
 .tb-delta.pos  { background: var(--tb-rose-soft);    color: var(--tb-rose);    }
 .tb-delta.neg  { background: var(--tb-emerald-soft); color: var(--tb-emerald); }
-.tb-delta.zero { background: var(--tb-bg-2);         color: var(--tb-text-2);  }
+.tb-delta.zero { background: #f6f9fe;                color: var(--tb-text-2);  }
 
 /* ============================================================
-   EMPTY STATE
+   EMPTY STATE — BLUE HERO (visual anchor for empty screens)
    ============================================================ */
 .tb-empty {
     text-align: center;
-    padding: 72px 28px;
-    background:
-        radial-gradient(circle at 50% 30%,
-            rgba(0, 51, 102, 0.05) 0%,
-            transparent 55%),
-        #ffffff;
-    border: 1px dashed var(--tb-border-strong);
+    padding: 64px 28px;
+    background: var(--header-gradient);
+    border: 1px dashed rgba(255, 255, 255, 0.35);
     border-radius: 16px;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(33, 78, 186, 0.22);
+}
+
+.tb-empty::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 28px; right: 28px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--ob-gold) 50%, transparent 100%);
+    opacity: 0.9;
 }
 
 .tb-empty-glyph {
-    width: 72px; height: 72px;
+    width: 76px; height: 76px;
     margin: 0 auto 18px;
-    border-radius: 50%;
+    border-radius: 20px;
     display: grid; place-items: center;
-    background: radial-gradient(circle,
-        rgba(0, 51, 102, 0.14) 0%,
-        rgba(0, 51, 102, 0.04) 60%,
-        transparent 70%);
-    color: var(--ob-navy);
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
     font-size: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .tb-empty h3 {
     font-size: 16px; font-weight: 700;
-    color: var(--ob-navy); margin: 0 0 8px 0;
-    letter-spacing: 0.2px;
+    color: #ffffff; margin: 0 0 8px 0;
 }
 
 .tb-empty p {
-    font-size: 13px; color: var(--tb-text-2);
-    margin: 0 auto; max-width: 420px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0 auto;
+    max-width: 460px;
     line-height: 1.6;
 }
 
@@ -636,18 +629,15 @@
     gap: 18px;
 }
 
-#panel-range > .tb-control-bar {
-    margin: 0;
-}
+#panel-range > .tb-control-bar { margin: 0; }
 
 /* ============================================================
-   LOADING OVERLAY — hard-capped so it never becomes a
-   full-page sheet. Anchored to viewport, card hard-capped.
+   LOADING OVERLAY
    ============================================================ */
 .tb-loading-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 31, 61, 0.28);
+    background: rgba(11, 26, 51, 0.32);
     backdrop-filter: blur(8px) saturate(140%);
     -webkit-backdrop-filter: blur(8px) saturate(140%);
     display: flex;
@@ -669,19 +659,9 @@
     padding: 32px 40px 28px;
     border-radius: 20px;
     text-align: center;
-    box-shadow: 0 1px 2px rgba(0, 31, 61, 0.06),
-                0 12px 32px rgba(0, 31, 61, 0.12),
-                0 32px 80px rgba(0, 31, 61, 0.14);
-
+    box-shadow: 0 12px 32px rgba(0, 31, 61, 0.14), 0 32px 80px rgba(0, 31, 61, 0.12);
     width: 100%;
     max-width: 320px;
-    height: auto;
-    max-height: 240px;
-    min-width: 0;
-    min-height: 0;
-    flex: 0 0 auto;
-    align-self: center;
-
     transform: scale(0.92) translateY(12px);
     opacity: 0;
     transition: transform 0.4s cubic-bezier(0.34, 1.36, 0.64, 1), opacity 0.3s ease;
@@ -698,27 +678,19 @@
 .tb-loading-card::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 40px;
-    right: 40px;
+    top: 0; left: 40px; right: 40px;
     height: 2px;
-    background: linear-gradient(90deg,
-        transparent 0%,
-        var(--ob-gold) 50%,
-        transparent 100%);
-    opacity: 0.85;
+    background: linear-gradient(90deg, transparent 0%, var(--ob-gold) 50%, transparent 100%);
+    opacity: 0.9;
 }
 
 .tb-spinner {
-    width: 48px;
-    height: 48px;
+    width: 48px; height: 48px;
     margin: 0 auto 18px;
     position: relative;
-    flex-shrink: 0;
 }
 
-.tb-spinner::before,
-.tb-spinner::after {
+.tb-spinner::before, .tb-spinner::after {
     content: '';
     position: absolute;
     border-radius: 50%;
@@ -726,16 +698,15 @@
 
 .tb-spinner::before {
     inset: 0;
-    border: 3px solid rgba(0, 51, 102, 0.14);
-    border-top-color: var(--ob-navy);
-    border-right-color: var(--ob-navy);
+    border: 3px solid rgba(33, 78, 186, 0.18);
+    border-top-color: #214EBA;
+    border-right-color: #214EBA;
     animation: tb-spin 0.9s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
-    filter: drop-shadow(0 2px 6px rgba(0, 51, 102, 0.32));
 }
 
 .tb-spinner::after {
     inset: 8px;
-    border: 2.5px solid rgba(212, 175, 55, 0.16);
+    border: 2.5px solid rgba(212, 175, 55, 0.18);
     border-top-color: var(--ob-gold);
     border-left-color: var(--ob-gold);
     animation: tb-spin 1.4s linear infinite reverse;
@@ -748,43 +719,33 @@
     font-weight: 600;
     color: var(--ob-navy);
     margin: 0;
-    letter-spacing: 0.2px;
-    line-height: 1.4;
 }
 
 /* ============================================================
-   TOAST — hard-capped so it never becomes a full-page sheet
+   TOAST — blue gradient + gold left accent
    ============================================================ */
 .toast-notification {
     position: fixed;
     bottom: 24px;
     right: 24px;
     z-index: 100000;
-
-    width: auto;
     min-width: 300px;
-    max-width: 400px;
-    height: auto;
-    min-height: 0;
-    max-height: 100px;
-
-    background: #ffffff;
+    max-width: 420px;
+    background: var(--header-gradient);
     border-radius: 14px;
-    padding: 14px 16px 14px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-left: 4px solid var(--ob-gold);
+    padding: 16px 18px;
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    box-shadow: 0 1px 2px rgba(0, 31, 61, 0.06),
-                0 8px 24px rgba(0, 31, 61, 0.10),
-                0 20px 48px rgba(0, 31, 61, 0.08);
-    border: 1px solid var(--tb-border);
+    box-shadow: 0 16px 44px rgba(33, 78, 186, 0.32);
     opacity: 0;
     transform: translateY(20px) scale(0.96);
     pointer-events: none;
-    transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.42s cubic-bezier(0.34, 1.36, 0.64, 1);
+    transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), transform 0.42s cubic-bezier(0.34, 1.36, 0.64, 1);
     overflow: hidden;
-    box-sizing: border-box;
+    color: #ffffff;
 }
 
 .toast-notification.show {
@@ -793,103 +754,66 @@
     pointer-events: auto;
 }
 
-.toast-notification::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: var(--toast-accent, var(--tb-emerald));
-    border-top-left-radius: 14px;
-    border-bottom-left-radius: 14px;
-    transition: background 0.3s ease;
-}
-
-.toast-notification.success { --toast-accent: var(--tb-emerald); }
-.toast-notification.error   { --toast-accent: var(--tb-rose);    }
-.toast-notification.warning { --toast-accent: var(--tb-amber);   }
-.toast-notification.info    { --toast-accent: var(--ob-navy);    }
+.toast-notification.error   { border-left-color: #FF8FA8; }
+.toast-notification.warning { border-left-color: #FFD86B; }
+.toast-notification.info    { border-left-color: #ffffff; }
 
 .toast-notification .toast-icon {
-    position: relative;
-    z-index: 1;
-    width: 34px;
-    height: 34px;
+    width: 34px; height: 34px;
     border-radius: 10px;
-    display: grid;
-    place-items: center;
+    display: grid; place-items: center;
     font-size: 13px;
     flex-shrink: 0;
     color: #ffffff;
-    background: linear-gradient(135deg,
-        var(--toast-accent, var(--tb-emerald)) 0%,
-        color-mix(in srgb, var(--toast-accent, var(--tb-emerald)) 78%, black) 100%);
-    box-shadow: 0 3px 10px color-mix(in srgb, var(--toast-accent, var(--tb-emerald)) 40%, transparent),
-                inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.20);
+    border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
-.toast-notification .toast-content {
-    position: relative;
-    z-index: 1;
-    flex: 1 1 auto;
-    min-width: 0;
-    min-height: 0;
-    padding-top: 1px;
-    overflow: hidden;
+.toast-notification.error .toast-icon {
+    background: rgba(255, 143, 168, 0.28);
+    border-color: rgba(255, 143, 168, 0.4);
+}
+.toast-notification.warning .toast-icon {
+    background: rgba(255, 216, 107, 0.28);
+    border-color: rgba(255, 216, 107, 0.4);
 }
 
+.toast-notification .toast-content { flex: 1; min-width: 0; padding-top: 1px; }
 .toast-notification .toast-title {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--ob-navy);
-    margin: 0 0 3px 0;
-    line-height: 1.3;
+    font-size: 12px; font-weight: 700;
+    color: #ffffff; margin: 0 0 3px 0;
 }
-
 .toast-notification .toast-message {
     font-size: 12px;
-    color: var(--tb-text-1);
-    margin: 0;
-    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0; line-height: 1.5;
     word-break: break-word;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
 }
 
 .toast-notification .toast-close {
-    position: relative;
-    z-index: 1;
     flex-shrink: 0;
     background: transparent;
     border: none;
-    color: var(--tb-text-2);
+    color: rgba(255, 255, 255, 0.75);
     cursor: pointer;
     padding: 4px;
-    width: 22px;
-    height: 22px;
+    width: 22px; height: 22px;
     font-size: 10px;
     border-radius: 6px;
-    display: grid;
-    place-items: center;
-    transition: all 0.15s ease;
+    display: grid; place-items: center;
 }
-
 .toast-notification .toast-close:hover {
-    color: var(--ob-navy);
-    background: var(--ob-navy-tint-1);
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.16);
 }
 
 .toast-notification .toast-progress {
     position: absolute;
-    bottom: 0;
-    left: 0;
+    bottom: 0; left: 0;
     height: 2px;
     width: 100%;
-    background: var(--toast-accent, var(--tb-emerald));
-    opacity: 0.35;
+    background: var(--ob-gold);
+    opacity: 0.6;
     transform-origin: left center;
     animation: toast-progress 4s linear forwards;
 }
@@ -902,18 +826,14 @@
 /* ============================================================
    RESPONSIVE
    ============================================================ */
-@media (max-width: 1024px) {
-    .tb-view-toggle { margin-left: 0; }
-    .tb-filter-meta { margin-left: 0; }
-}
+@media (max-width: 1024px) { .tb-filter-meta { margin-left: 0; } }
 
 @media (max-width: 768px) {
-    .tb-container { padding: 0 0 40px; gap: 20px; }
+    .tb-container { padding: 0 0 40px; gap: 18px; }
+    .tb-header-actions { padding: 12px 14px; }
     .tb-date-wrapper { width: 100%; justify-content: center; }
-    .tb-header-actions { width: 100%; }
     .tb-header-actions .tb-btn { flex: 1; justify-content: center; }
     .tb-control-bar { flex-direction: column; align-items: stretch; padding: 14px; }
-    .tb-control-bar::before { left: 14px; right: 14px; }
     .tb-filter-group { width: 100%; }
     .tb-filter-group label { width: 100px; }
     .tb-filter-select { flex: 1; max-width: none; }
@@ -921,26 +841,21 @@
     .tb-filter-meta { width: 100%; justify-content: center; margin-left: 0; }
     .tb-tabbar { width: 100%; flex-wrap: wrap; padding: 5px; }
     .tb-tabbar button { flex: 1; justify-content: center; padding: 8px 12px; font-size: 12px; }
-    .tb-card-header { padding: 16px 16px 12px; }
-    .tb-card-header::after { left: 16px; right: 16px; }
+    .tb-card-header { padding: 14px 16px 12px; }
     .tb-table th { padding: 12px 12px; font-size: 9.5px; }
     .tb-table td { padding: 11px 12px; font-size: 12px; }
-    .tb-empty { padding: 56px 20px; }
+    .tb-empty { padding: 48px 20px; }
 }
 
 @media (max-width: 640px) {
     .toast-notification {
-        left: 16px;
-        right: 16px;
-        bottom: 16px;
-        min-width: auto;
-        max-width: none;
+        left: 16px; right: 16px; bottom: 16px;
+        min-width: auto; max-width: none;
     }
 }
 
 @media (max-width: 480px) {
     .tb-card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
-    .tb-card-header::after { left: 14px; right: 14px; }
     .tb-lock-banner { flex-direction: column; align-items: flex-start; padding: 14px; gap: 12px; }
 }
 </style>
@@ -979,6 +894,12 @@
         <span class="nav-text">Activity Checklist</span>
     </a>
 </li>
+<li>
+    <a href="{% url 'control_dashboard:member_checklist_requests' %}">
+        <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
+        <span class="nav-text">Checklist Change</span>
+    </a>
+</li>
 <li class="active">
     <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
         <span class="nav-icon"><i class="fas fa-cash-register"></i></span>
@@ -1015,7 +936,6 @@
     </div>
     <input type="file" id="tbFileInput" accept=".xlsx,.xls,.csv" style="display:none;">
 
-    <!-- DAY LOCK BANNER -->
     <div class="tb-lock-banner" id="tb-lock-banner" style="display:none;">
         <div class="lock-icon"><i class="fas fa-lock"></i></div>
         <div class="lock-content">
@@ -1024,7 +944,6 @@
         </div>
     </div>
 
-    <!-- CONTROL BAR -->
     <div class="tb-control-bar" id="tb-filter-bar" style="display:none;">
         <div class="tb-filter-group">
             <label for="tbBranchFilter"><i class="fas fa-building"></i> Branch</label>
@@ -1057,7 +976,6 @@
         </div>
     </div>
 
-    <!-- TAB BAR -->
     <div class="tb-tabbar" id="tb-tabbar" style="display:none;">
         <button type="button" class="active" id="tab-overview" onclick="switchTab('overview')">
             <i class="fas fa-table"></i> Overview
@@ -1070,7 +988,6 @@
         </button>
     </div>
 
-    <!-- OVERVIEW PANEL -->
     <div id="panel-overview">
         <div class="tb-card" id="tb-preview-card" style="display:none;">
             <div class="tb-card-header">
@@ -1092,7 +1009,6 @@
         </div>
     </div>
 
-    <!-- COMPARE PANEL -->
     <div id="panel-compare" style="display:none;">
         <div class="tb-card" id="tb-compare-card" style="display:none;">
             <div class="tb-card-header">
@@ -1110,11 +1026,10 @@
         <div class="tb-empty" id="tb-compare-empty">
             <div class="tb-empty-glyph"><i class="fas fa-code-compare"></i></div>
             <h3>No Comparison Yet</h3>
-            <p>Load a trial balance (or click a date with an existing upload), then click "Compare Previous" to see how it changed against the previous day.</p>
+            <p>Load a trial balance, then click "Compare Previous" to see how it changed against the previous day.</p>
         </div>
     </div>
 
-    <!-- RANGE PANEL -->
     <div id="panel-range" style="display:none;">
         <div class="tb-control-bar">
             <div class="tb-filter-group">
@@ -1150,13 +1065,12 @@
         <div class="tb-empty" id="tb-range-empty">
             <div class="tb-empty-glyph"><i class="fas fa-calendar-week"></i></div>
             <h3>Pick a Date Range</h3>
-            <p>Choose a start and end date to see CLOSE_BAL_LCY and CLOSE_BAL_FCY for every GL, side by side across all uploads in that period.</p>
+            <p>Choose a start and end date to see CLOSE_BAL_LCY and CLOSE_BAL_FCY for every GL, side by side.</p>
         </div>
     </div>
 
 </div>
 
-<!-- Loading Overlay -->
 <div class="tb-loading-overlay" id="tbLoadingOverlay">
     <div class="tb-loading-card">
         <div class="tb-spinner"></div>
@@ -1164,7 +1078,6 @@
     </div>
 </div>
 
-<!-- Toast -->
 <div id="toastNotification" class="toast-notification success">
     <div class="toast-icon"><i class="fas fa-check"></i></div>
     <div class="toast-content">
@@ -1178,9 +1091,6 @@
 
 {% block extra_js %}
 <script>
-    // ============================================
-    // BRANCH CODE MAP
-    // ============================================
     const BRANCH_CODE_MAP_FALLBACK = {
         '001': 'CMU - ACCRA', '101': 'AIRPORT', '102': 'ABOSSEY OKAI',
         '103': 'ASHIAMAN', '104': 'ABELENKPE', '105': 'DOME',
@@ -1210,9 +1120,6 @@
                document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
     }
 
-    // ============================================
-    // TOAST
-    // ============================================
     function showToast(message, title = 'Success!', variant = 'success') {
         if (variant === true)  variant = 'error';
         if (variant === false) variant = 'success';
@@ -1246,9 +1153,6 @@
         if (window.toastTimeout) { clearTimeout(window.toastTimeout); window.toastTimeout = null; }
     };
 
-    // ============================================
-    // STATE
-    // ============================================
     let uploadedFileName = null;
     let parsedHeaders = [];
     let parsedDicts = [];
@@ -1257,15 +1161,10 @@
     let branchFilter = 'all';
     let categoryFilter = 'all';
     let glFilter = 'all';
-
     let allowedBranchCodes = null;
     let allowedDepartmentNames = null;
-
     let dayLockInfo = null;
 
-    // ============================================
-    // TABS
-    // ============================================
     function switchTab(tab) {
         ['overview', 'compare', 'range'].forEach(t => {
             const btn = document.getElementById('tab-' + t);
@@ -1273,15 +1172,9 @@
             if (btn) btn.classList.toggle('active', t === tab);
             if (panel) panel.style.display = (t === tab) ? '' : 'none';
         });
-
-        if (tab === 'compare') {
-            loadComparePrevious();
-        }
+        if (tab === 'compare') loadComparePrevious();
     }
 
-    // ============================================
-    // DAY LOCK
-    // ============================================
     async function checkDayLock() {
         const reportDate = document.getElementById('tbReportDate')?.value || '';
         const banner = document.getElementById('tb-lock-banner');
@@ -1289,11 +1182,7 @@
         const bannerSub = document.getElementById('tb-lock-subtitle');
         const uploadBtn = document.getElementById('tb-upload-btn');
 
-        if (!reportDate) {
-            banner.style.display = 'none';
-            dayLockInfo = null;
-            return;
-        }
+        if (!reportDate) { banner.style.display = 'none'; dayLockInfo = null; return; }
 
         try {
             const res = await fetch(
@@ -1301,13 +1190,7 @@
                 { headers: { 'X-CSRFToken': getCsrfToken() } }
             );
             const data = await res.json();
-
-            if (!data.success) {
-                banner.style.display = 'none';
-                dayLockInfo = null;
-                return;
-            }
-
+            if (!data.success) { banner.style.display = 'none'; dayLockInfo = null; return; }
             dayLockInfo = data;
 
             if (data.locked) {
@@ -1317,9 +1200,8 @@
                 const at = data.uploaded_at ? new Date(data.uploaded_at).toLocaleString() : '';
                 const count = (data.row_count || 0).toLocaleString();
                 bannerSub.textContent =
-                `Uploaded by ${by}${at ? ' · ' + at : ''} · ${count} rows. ` +
-                `All users can view this data. Only one upload per day is allowed.`;
-
+                    `Uploaded by ${by}${at ? ' · ' + at : ''} · ${count} rows. ` +
+                    `All users can view this data. Only one upload per day is allowed.`;
                 uploadBtn.disabled = true;
                 uploadBtn.title = 'Only one upload per day is allowed';
                 document.getElementById('tb-submit-btn').disabled = true;
@@ -1339,13 +1221,11 @@
         if (dayLockInfo && dayLockInfo.locked) {
             showToast(
                 `A trial balance for this day has already been uploaded by ` +
-                `${dayLockInfo.uploaded_by?.full_name || 'another user'}. ` +
-                `Only one upload per day is allowed.`,
+                `${dayLockInfo.uploaded_by?.full_name || 'another user'}.`,
                 'Day Locked', 'error'
             );
             return;
         }
-
         const dateInput = document.getElementById('tbReportDate');
         if (!dateInput.value) {
             showToast('Please select a report date first.', 'Error', 'error');
@@ -1365,18 +1245,12 @@
         document.getElementById('tbLoadingOverlay').classList.add('active');
     }
     function hideLoading() {
-        const overlay = document.getElementById('tbLoadingOverlay');
-        overlay.classList.remove('active');
-        overlay.style.display = '';
+        document.getElementById('tbLoadingOverlay').classList.remove('active');
     }
 
-    // ============================================
-    // FILE HANDLING
-    // ============================================
     function handleFile(file) {
         uploadedFileName = file.name;
         showLoading('Parsing trial balance...');
-
         const formData = new FormData();
         formData.append('file', file);
         formData.append('file_name', file.name);
@@ -1391,17 +1265,13 @@
             hideLoading();
             if (!data.success) {
                 showToast(data.error || 'Could not parse file.', 'Error', 'error');
-                resetToEmpty();
-                return;
+                resetToEmpty(); return;
             }
-
             parsedHeaders = data.headers || [];
             parsedDicts = data.rows || [];
             parsedSummary = data.summary || {};
-
             allowedBranchCodes = null;
             allowedDepartmentNames = null;
-
             renderPreview(data);
             showToast(`Parsed ${data.row_count} rows successfully.`, 'Loaded', 'success');
         })
@@ -1413,16 +1283,9 @@
         });
     }
 
-    // ============================================
-    // LOAD BY DATE
-    // ============================================
     function loadTrialBalanceByDate() {
         const reportDate = document.getElementById('tbReportDate')?.value || '';
-        if (!reportDate) {
-            resetToEmpty(false);
-            return;
-        }
-
+        if (!reportDate) { resetToEmpty(false); return; }
         showLoading('Loading trial balance...');
 
         fetch(`/adminboard/api/trial-balance/by-date/?date=${encodeURIComponent(reportDate)}`, {
@@ -1432,62 +1295,27 @@
         .then(r => r.json())
         .then(data => {
             hideLoading();
-
             if (!data.success) {
                 showToast(data.error || 'Could not load trial balance.', 'Error', 'error');
-                resetToEmpty(false);
-                return;
+                resetToEmpty(false); return;
             }
-
             if (!data.found) {
                 resetToEmpty(false);
-
                 if (data.upload_exists === false) {
-                    showToast(
-                        data.message || `No trial balance has been uploaded for ${reportDate} yet.`,
-                        'No Upload', 'info'
-                    );
-                } else if (data.upload_exists === true) {
-                    showToast(
-                        data.message || `A trial balance exists for ${reportDate}, but no entries match your assigned branches/departments.`,
-                        'No Matching Entries', 'info'
-                    );
+                    showToast(data.message || `No trial balance for ${reportDate}.`, 'No Upload', 'info');
                 } else {
-                    fetch(`/adminboard/api/trial-balance/check-day/?date=${encodeURIComponent(reportDate)}`)
-                        .then(r => r.json())
-                        .then(lockData => {
-                            if (lockData.success && lockData.locked) {
-                                showToast(
-                                    `A trial balance was uploaded by ${lockData.uploaded_by?.full_name || 'another user'} on this date, but no entries match your assigned branches/departments.`,
-                                    'No Matching Entries', 'info'
-                                );
-                            } else {
-                                showToast(
-                                    data.message || `No trial balance found for ${reportDate}.`,
-                                    'Info', 'info'
-                                );
-                            }
-                        })
-                        .catch(() => {
-                            showToast(data.message || `No trial balance found for ${reportDate}.`, 'Info', 'info');
-                        });
+                    showToast(data.message || `No matching entries for your branch/dept.`, 'No Matching Entries', 'info');
                 }
                 return;
             }
-
             uploadedFileName = data.file_name || 'trial_balance.xlsx';
             parsedHeaders = data.headers || [];
             parsedDicts = data.rows || [];
             parsedSummary = data.summary || {};
-
             allowedBranchCodes = (Array.isArray(data.allowed_branches) && data.allowed_branches.length > 0)
-                ? data.allowed_branches.map(c => String(c).trim())
-                : null;
-
+                ? data.allowed_branches.map(c => String(c).trim()) : null;
             allowedDepartmentNames = (Array.isArray(data.allowed_departments) && data.allowed_departments.length > 0)
-                ? data.allowed_departments.map(d => String(d).trim().toUpperCase())
-                : null;
-
+                ? data.allowed_departments.map(d => String(d).trim().toUpperCase()) : null;
             renderPreviewOnly(data);
             showToast(`Loaded ${data.row_count} entries for ${reportDate}.`, 'Loaded', 'success');
         })
@@ -1499,73 +1327,44 @@
         });
     }
 
-    // ============================================
-    // FILTER HELPERS
-    // ============================================
-    function findHeader(keywords) {
-        for (const h of parsedHeaders) {
-            const hu = String(h).toUpperCase();
-            for (const kw of keywords) {
-                if (hu.includes(kw)) return h;
-            }
-        }
-        return null;
-    }
-
     function populateFilterDropdowns() {
         const branchSelect = document.getElementById('tbBranchFilter');
         const catSelect = document.getElementById('tbCategoryFilter');
         const glSelect = document.getElementById('tbGLFilter');
-
         if (!branchSelect || !catSelect || !glSelect) return;
 
         branchSelect.innerHTML = '<option value="all">All Branches</option>';
         catSelect.innerHTML = '<option value="all">All Categories</option>';
         glSelect.innerHTML = '<option value="all">All GL Names</option>';
 
-        const branchCol = 'BRANCH_CODE';
-        const catCol = 'CATEGORY';
-        const descrCol = 'DESCR';
-
         const branchMap = new Map();
         const catValues = new Set();
         const glValues = new Set();
 
         parsedDicts.forEach(row => {
-            const code = String(row[branchCol] ?? '').trim();
-            if (code) {
-                if (allowedBranchCodes === null || allowedBranchCodes.includes(code)) {
-                    if (!branchMap.has(code)) {
-                        branchMap.set(code, branchNameFromCode(code));
-                    }
-                }
+            const code = String(row['BRANCH_CODE'] ?? '').trim();
+            if (code && (allowedBranchCodes === null || allowedBranchCodes.includes(code))) {
+                if (!branchMap.has(code)) branchMap.set(code, branchNameFromCode(code));
             }
-
-            const cat = String(row[catCol] ?? '').trim();
-            if (cat) {
-                if (allowedDepartmentNames === null || allowedDepartmentNames.includes(cat.toUpperCase())) {
-                    catValues.add(cat);
-                }
+            const cat = String(row['CATEGORY'] ?? '').trim();
+            if (cat && (allowedDepartmentNames === null || allowedDepartmentNames.includes(cat.toUpperCase()))) {
+                catValues.add(cat);
             }
-
-            const descr = String(row[descrCol] ?? '').trim();
+            const descr = String(row['DESCR'] ?? '').trim();
             if (descr) glValues.add(descr);
         });
 
-        Array.from(branchMap.entries()).sort((a,b) => a[0].localeCompare(b[0]))
-            .forEach(([code, name]) => {
-                const opt = document.createElement('option');
-                opt.value = code;
-                opt.textContent = (name && name !== code) ? `${code} — ${name}` : code;
-                branchSelect.appendChild(opt);
-            });
-
+        Array.from(branchMap.entries()).sort((a,b) => a[0].localeCompare(b[0])).forEach(([code, name]) => {
+            const opt = document.createElement('option');
+            opt.value = code;
+            opt.textContent = (name && name !== code) ? `${code} — ${name}` : code;
+            branchSelect.appendChild(opt);
+        });
         Array.from(catValues).sort().forEach(v => {
             const opt = document.createElement('option');
             opt.value = v; opt.textContent = v;
             catSelect.appendChild(opt);
         });
-
         Array.from(glValues).sort().forEach(v => {
             const opt = document.createElement('option');
             opt.value = v;
@@ -1575,17 +1374,12 @@
 
         branchSelect.value = (branchFilter !== 'all' && branchMap.has(branchFilter)) ? branchFilter : 'all';
         if (branchSelect.value === 'all') branchFilter = 'all';
-
         catSelect.value = (categoryFilter !== 'all' && catValues.has(categoryFilter)) ? categoryFilter : 'all';
         if (catSelect.value === 'all') categoryFilter = 'all';
-
         glSelect.value = (glFilter !== 'all' && glValues.has(glFilter)) ? glFilter : 'all';
         if (glSelect.value === 'all') glFilter = 'all';
     }
 
-    // ============================================
-    // FILTERS
-    // ============================================
     function applyFilters() {
         branchFilter = document.getElementById('tbBranchFilter')?.value || 'all';
         categoryFilter = document.getElementById('tbCategoryFilter')?.value || 'all';
@@ -1599,23 +1393,15 @@
         rows.forEach((tr, idx) => {
             const row = parsedDicts[idx];
             if (!row) return;
-
-            if (branchFilter !== 'all') {
-                if (String(row['BRANCH_CODE'] ?? '').trim() !== branchFilter) {
-                    tr.classList.add('tb-hidden'); return;
-                }
+            if (branchFilter !== 'all' && String(row['BRANCH_CODE'] ?? '').trim() !== branchFilter) {
+                tr.classList.add('tb-hidden'); return;
             }
-            if (categoryFilter !== 'all') {
-                if (String(row['CATEGORY'] ?? '').trim() !== categoryFilter) {
-                    tr.classList.add('tb-hidden'); return;
-                }
+            if (categoryFilter !== 'all' && String(row['CATEGORY'] ?? '').trim() !== categoryFilter) {
+                tr.classList.add('tb-hidden'); return;
             }
-            if (glFilter !== 'all') {
-                if (String(row['DESCR'] ?? '').trim() !== glFilter) {
-                    tr.classList.add('tb-hidden'); return;
-                }
+            if (glFilter !== 'all' && String(row['DESCR'] ?? '').trim() !== glFilter) {
+                tr.classList.add('tb-hidden'); return;
             }
-
             tr.classList.remove('tb-hidden');
             visible++;
         });
@@ -1624,9 +1410,6 @@
         document.getElementById('tb-total-count').textContent = parsedDicts.length;
     }
 
-    // ============================================
-    // BUILD TABLE
-    // ============================================
     function buildTableRows(tbody, headers, rows) {
         tbody.innerHTML = '';
         rows.forEach(row => {
@@ -1643,15 +1426,10 @@
         });
     }
 
-    // ============================================
-    // RENDER PREVIEW
-    // ============================================
     function renderPreview(data) {
         const headers = data.headers || [];
         const rows = data.rows || [];
-
         populateFilterDropdowns();
-
         document.getElementById('tb-empty-state').style.display = 'none';
         document.getElementById('tb-preview-card').style.display = '';
         document.getElementById('tb-filter-bar').style.display = 'flex';
@@ -1659,24 +1437,17 @@
 
         const thead = document.getElementById('tb-preview-thead');
         thead.innerHTML = '<tr>' + headers.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr>';
-
-        const tbody = document.getElementById('tb-preview-tbody');
-        buildTableRows(tbody, headers, rows);
-
+        buildTableRows(document.getElementById('tb-preview-tbody'), headers, rows);
         document.getElementById('tb-preview-meta').textContent =
             `${rows.length} rows · ${headers.length} columns`;
-
         document.getElementById('tb-submit-btn').disabled = false;
-
         applyFilters();
     }
 
     function renderPreviewOnly(data) {
         const headers = data.headers || [];
         const rows = data.rows || [];
-
         populateFilterDropdowns();
-
         document.getElementById('tb-filter-bar').style.display = 'flex';
         document.getElementById('tb-empty-state').style.display = 'none';
         document.getElementById('tb-preview-card').style.display = '';
@@ -1684,18 +1455,14 @@
 
         const thead = document.getElementById('tb-preview-thead');
         thead.innerHTML = '<tr>' + headers.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr>';
-
-        const tbody = document.getElementById('tb-preview-tbody');
-        buildTableRows(tbody, headers, rows);
+        buildTableRows(document.getElementById('tb-preview-tbody'), headers, rows);
 
         let metaParts = [`${rows.length} rows`, `${headers.length} columns`];
         if (data.uploaded_by && data.uploaded_by.full_name) {
             metaParts.push(`Uploaded by ${data.uploaded_by.full_name}`);
         }
         document.getElementById('tb-preview-meta').textContent = metaParts.join(' · ');
-
         document.getElementById('tb-submit-btn').disabled = true;
-
         applyFilters();
     }
 
@@ -1703,16 +1470,11 @@
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // ============================================
-    // COMPARE PREVIOUS
-    // ============================================
     function loadComparePrevious() {
         const reportDate = document.getElementById('tbReportDate')?.value || '';
         if (!reportDate) {
-            showToast('Pick a report date to compare against the previous upload.', 'Error', 'error');
-            return;
+            showToast('Pick a report date to compare.', 'Error', 'error'); return;
         }
-
         showLoading('Loading comparison...');
 
         fetch(`/adminboard/api/trial-balance/compare-previous/?date=${encodeURIComponent(reportDate)}`, {
@@ -1721,15 +1483,11 @@
         .then(r => r.json())
         .then(data => {
             hideLoading();
-            if (!data.success) {
-                showToast(data.error || 'Compare failed.', 'Error', 'error');
-                return;
-            }
+            if (!data.success) { showToast(data.error || 'Compare failed.', 'Error', 'error'); return; }
             renderCompare(data);
         })
         .catch(err => {
-            hideLoading();
-            console.error(err);
+            hideLoading(); console.error(err);
             showToast('Failed to load comparison.', 'Error', 'error');
         });
     }
@@ -1743,13 +1501,9 @@
 
         const merged = data.merged || [];
         if (merged.length === 0) {
-            card.style.display = 'none';
-            empty.style.display = '';
-            return;
+            card.style.display = 'none'; empty.style.display = ''; return;
         }
-
-        card.style.display = '';
-        empty.style.display = 'none';
+        card.style.display = ''; empty.style.display = 'none';
 
         const curDate = data.current?.date || '—';
         const prevDate = data.previous?.date || '—';
@@ -1766,22 +1520,19 @@
             '<th class="num">Variance LCY</th>' +
             '<th class="num">Current FCY</th>' +
             '<th class="num">Previous FCY</th>' +
-            '<th class="num">VarianceFCY</th>' +
+            '<th class="num">Variance FCY</th>' +
             '</tr>';
 
         tbody.innerHTML = '';
         merged.forEach(row => {
             const tr = document.createElement('tr');
-
             const cell = (val, cls) => {
                 const td = document.createElement('td');
                 if (cls) td.className = cls;
                 td.textContent = val;
                 return td;
             };
-
             const fmt = n => (n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
             const deltaClass = (d) => d > 0 ? 'pos' : (d < 0 ? 'neg' : 'zero');
 
             tr.appendChild(cell(row.BRANCH_CODE || '', 'sticky-col sticky-col-1'));
@@ -1793,8 +1544,7 @@
 
             const tdDeltaLCY = document.createElement('td');
             tdDeltaLCY.className = 'num';
-            tdDeltaLCY.innerHTML =
-                `<span class="tb-delta ${deltaClass(row.DELTA_LCY)}">${fmt(row.DELTA_LCY)}</span>`;
+            tdDeltaLCY.innerHTML = `<span class="tb-delta ${deltaClass(row.DELTA_LCY)}">${fmt(row.DELTA_LCY)}</span>`;
             tr.appendChild(tdDeltaLCY);
 
             tr.appendChild(cell(fmt(row.CURRENT_FCY), 'num'));
@@ -1802,26 +1552,17 @@
 
             const tdDeltaFCY = document.createElement('td');
             tdDeltaFCY.className = 'num';
-            tdDeltaFCY.innerHTML =
-                `<span class="tb-delta ${deltaClass(row.DELTA_FCY)}">${fmt(row.DELTA_FCY)}</span>`;
+            tdDeltaFCY.innerHTML = `<span class="tb-delta ${deltaClass(row.DELTA_FCY)}">${fmt(row.DELTA_FCY)}</span>`;
             tr.appendChild(tdDeltaFCY);
 
             tbody.appendChild(tr);
         });
     }
 
-    // ============================================
-    // DATE RANGE
-    // ============================================
     function loadRangeComparison() {
         const start = document.getElementById('tbRangeStart')?.value || '';
         const end = document.getElementById('tbRangeEnd')?.value || '';
-
-        if (!start || !end) {
-            showToast('Please pick both a start and end date.', 'Error', 'error');
-            return;
-        }
-
+        if (!start || !end) { showToast('Please pick both dates.', 'Error', 'error'); return; }
         showLoading('Loading date range...');
 
         fetch(`/adminboard/api/trial-balance/compare-range/?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`, {
@@ -1830,15 +1571,11 @@
         .then(r => r.json())
         .then(data => {
             hideLoading();
-            if (!data.success) {
-                showToast(data.error || 'Range compare failed.', 'Error', 'error');
-                return;
-            }
+            if (!data.success) { showToast(data.error || 'Range compare failed.', 'Error', 'error'); return; }
             renderRange(data);
         })
         .catch(err => {
-            hideLoading();
-            console.error(err);
+            hideLoading(); console.error(err);
             showToast('Failed to load range.', 'Error', 'error');
         });
     }
@@ -1854,14 +1591,12 @@
         const merged = data.merged || [];
 
         if (dates.length === 0 || merged.length === 0) {
-            card.style.display = 'none';
-            empty.style.display = '';
+            card.style.display = 'none'; empty.style.display = '';
             if (data.message) showToast(data.message, 'Info', 'info');
             return;
         }
 
-        card.style.display = '';
-        empty.style.display = 'none';
+        card.style.display = ''; empty.style.display = 'none';
         metaEl.textContent = `${merged.length} GLs · ${dates.length} date${dates.length === 1 ? '' : 's'}`;
 
         let headHtml =
@@ -1870,40 +1605,31 @@
             '<th class="sticky-col sticky-col-2">Category</th>' +
             '<th class="sticky-col sticky-col-3">GL Code</th>' +
             '<th class="sticky-col sticky-col-4">Description</th>';
-
-        dates.forEach(d => {
-            headHtml += `<th class="num" colspan="2">${d}</th>`;
-        });
+        dates.forEach(d => { headHtml += `<th class="num" colspan="2">${d}</th>`; });
         headHtml += '</tr><tr>' +
             '<th class="sticky-col sticky-col-1"></th>' +
             '<th class="sticky-col sticky-col-2"></th>' +
             '<th class="sticky-col sticky-col-3"></th>' +
             '<th class="sticky-col sticky-col-4"></th>';
-        dates.forEach(() => {
-            headHtml += '<th class="num">LCY</th><th class="num">FCY</th>';
-        });
+        dates.forEach(() => { headHtml += '<th class="num">LCY</th><th class="num">FCY</th>'; });
         headHtml += '</tr>';
-
         thead.innerHTML = headHtml;
 
         tbody.innerHTML = '';
         merged.forEach(row => {
             const tr = document.createElement('tr');
-
             const cell = (val, cls) => {
                 const td = document.createElement('td');
                 if (cls) td.className = cls;
                 td.textContent = val;
                 return td;
             };
-
             tr.appendChild(cell(row.BRANCH_CODE || '', 'sticky-col sticky-col-1'));
             tr.appendChild(cell(row.CATEGORY || '', 'sticky-col sticky-col-2'));
             tr.appendChild(cell(row.GL_CODE || '', 'sticky-col sticky-col-3'));
             tr.appendChild(cell(row.DESCR || '', 'sticky-col sticky-col-4'));
 
             const fmt = n => (n ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
             dates.forEach(d => {
                 const bal = row.balances?.[d];
                 if (bal) {
@@ -1912,25 +1638,16 @@
                 } else {
                     const tdL = document.createElement('td');
                     tdL.className = 'num';
-                    tdL.innerHTML = '<span style="color:var(--tb-text-2);">—</span>';
+                    tdL.innerHTML = '<span style="color:#8493ab;">—</span>';
                     tr.appendChild(tdL);
                     const tdF = document.createElement('td');
                     tdF.className = 'num';
-                    tdF.innerHTML = '<span style="color:var(--tb-text-2);">—</span>';
+                    tdF.innerHTML = '<span style="color:#8493ab;">—</span>';
                     tr.appendChild(tdF);
                 }
             });
-
             tbody.appendChild(tr);
         });
-    }
-
-    // ============================================
-    // RESET / SUBMIT
-    // ============================================
-    function clearUpload() {
-        resetToEmpty();
-        showToast('Cleared.', 'Info', 'info');
     }
 
     function resetToEmpty(resetDate = true) {
@@ -1938,13 +1655,11 @@
         parsedHeaders = [];
         parsedDicts = [];
         parsedSummary = null;
-
         branchFilter = 'all';
         categoryFilter = 'all';
         glFilter = 'all';
         allowedBranchCodes = null;
         allowedDepartmentNames = null;
-
         document.getElementById('tbFileInput').value = '';
 
         if (resetDate) {
@@ -1957,9 +1672,7 @@
         document.getElementById('tb-empty-state').style.display = '';
         document.getElementById('tb-submit-btn').disabled = true;
         document.getElementById('tb-tabbar').style.display = 'none';
-
         switchTab('overview');
-
         document.getElementById('tb-compare-card').style.display = 'none';
         document.getElementById('tb-compare-empty').style.display = '';
         document.getElementById('tb-range-card').style.display = 'none';
@@ -1970,31 +1683,24 @@
         if (dayLockInfo && dayLockInfo.locked) {
             showToast(
                 `A trial balance for this day has already been uploaded by ` +
-                `${dayLockInfo.uploaded_by?.full_name || 'another user'}. ` +
-                `Only one upload per day is allowed.`,
+                `${dayLockInfo.uploaded_by?.full_name || 'another user'}.`,
                 'Day Locked', 'error'
             );
             return;
         }
-
         if (!parsedDicts.length) {
-            showToast('Upload a file first.', 'Error', 'error');
-            return;
+            showToast('Upload a file first.', 'Error', 'error'); return;
         }
-
         const reportDate = document.getElementById('tbReportDate')?.value || '';
         if (!reportDate) {
             showToast('Please select a report date.', 'Error', 'error');
-            document.getElementById('tbReportDate')?.focus();
-            return;
+            document.getElementById('tbReportDate')?.focus(); return;
         }
-
         _doSubmit(reportDate);
     }
 
     function _doSubmit(reportDate) {
         showLoading('Submitting trial balance...');
-
         fetch('/adminboard/api/trial-balance/submit/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
@@ -2008,60 +1714,43 @@
         .then(r => r.json().then(body => ({ status: r.status, body })))
         .then(({ status, body }) => {
             hideLoading();
-
             if (status === 409 && body.locked) {
                 showToast(body.error || 'A trial balance for this day already exists.', 'Day Locked', 'warning');
-                checkDayLock();
-                return;
+                checkDayLock(); return;
             }
-
             if (body.success) {
                 showToast(body.message || 'Trial balance submitted.', 'Submitted', 'success');
-                setTimeout(() => {
-                    resetToEmpty(false);
-                    checkDayLock();
-                    loadTrialBalanceByDate();
-                }, 1500);
+                setTimeout(() => { resetToEmpty(false); checkDayLock(); loadTrialBalanceByDate(); }, 1500);
             } else {
                 showToast(body.error || 'Submission failed.', 'Error', 'error');
             }
         })
         .catch(err => {
-            hideLoading();
-            console.error(err);
+            hideLoading(); console.error(err);
             showToast('Submission failed. Please try again.', 'Error', 'error');
         });
     }
 
-    // ============================================
-    // INIT
-    // ============================================
     document.addEventListener('DOMContentLoaded', function() {
         const dateInput = document.getElementById('tbReportDate');
         if (dateInput) {
             dateInput.value = new Date().toISOString().slice(0, 10);
-
             dateInput.addEventListener('change', function() {
                 checkDayLock();
                 loadTrialBalanceByDate();
             });
         }
-
         const rangeStart = document.getElementById('tbRangeStart');
         const rangeEnd = document.getElementById('tbRangeEnd');
         if (rangeStart && !rangeStart.value) {
-            const d = new Date();
-            d.setDate(d.getDate() - 6);
+            const d = new Date(); d.setDate(d.getDate() - 6);
             rangeStart.value = d.toISOString().slice(0, 10);
         }
         if (rangeEnd && !rangeEnd.value) {
             rangeEnd.value = new Date().toISOString().slice(0, 10);
         }
-
         checkDayLock();
         loadTrialBalanceByDate();
-
-        console.log('[TB] Daily Trial Balance page ready');
     });
 </script>
 {% endblock %}

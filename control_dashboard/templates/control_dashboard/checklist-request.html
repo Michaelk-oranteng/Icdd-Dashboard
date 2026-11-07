@@ -1,0 +1,490 @@
+{% extends 'control_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Request a Checklist Change{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Updated to stretch to the full width of the dashboard */
+    .req-wrap {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 8px 0 40px; /* Removed side padding to rely on parent container padding */
+        font-family: 'Poppins', sans-serif;
+        color: #0f1b33;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        box-sizing: border-box;
+    }
+
+    .req-card {
+        background: #ffffff;
+        border: 1px solid rgba(33, 78, 186, 0.14);
+        border-radius: 16px;
+        box-shadow: 0 4px 18px rgba(33, 78, 186, 0.06);
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .req-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        background: linear-gradient(135deg, #214EBA 0%, #3785DF 100%);
+        color: #fff;
+    }
+    .req-head h3 { margin: 0; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .req-head h3 i {
+        width: 30px; height: 30px; border-radius: 8px;
+        display: grid; place-items: center;
+        background: rgba(255,255,255,0.18);
+        border: 1px solid rgba(255,255,255,0.28);
+        font-size: 13px;
+    }
+
+    .req-body {
+        padding: 24px;
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 22px 28px;
+        align-items: start;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    @media (max-width: 1100px) { .req-body { grid-template-columns: 1fr; } }
+
+    .req-field {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    #reqTypeWrap   { grid-column: 1 / 2; }
+    #reqTargetWrap { grid-column: 2 / 3; }
+    @media (max-width: 1100px) {
+        #reqTypeWrap, #reqTargetWrap { grid-column: 1 / -1; }
+    }
+
+    .req-field label {
+        font-size: 11px; font-weight: 700; color: #46536b;
+        text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    .req-field label .req { color: #c8395f; }
+
+    .req-field input, .req-field select, .req-field textarea {
+        padding: 11px 14px;
+        border: 1px solid #dbe3ef;
+        border-radius: 10px;
+        font-family: inherit; font-size: 13px;
+        color: #0f1b33; outline: none; background: #fff;
+        box-sizing: border-box; width: 100%;
+    }
+    .req-field input:focus, .req-field select:focus, .req-field textarea:focus {
+        border-color: #214EBA;
+        box-shadow: 0 0 0 3px rgba(33,78,186,0.12);
+    }
+    .req-field textarea { min-height: 90px; resize: vertical; }
+
+    .req-create-top {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: 18px;
+        width: 100%;
+    }
+    @media (max-width: 720px) { .req-create-top { grid-template-columns: 1fr; } }
+
+    .req-tasks { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; }
+    .req-tasks > label {
+        font-size: 11px; font-weight: 700; color: #46536b;
+        text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    .req-task-row { display: flex; gap: 8px; align-items: center; width: 100%; }
+    .req-task-row input { flex: 1; }
+    .req-task-row button {
+        width: 38px; height: 38px; border-radius: 8px;
+        border: 1px solid rgba(200,57,95,0.25);
+        background: #fdeaf0; color: #c8395f;
+        cursor: pointer; flex-shrink: 0;
+    }
+    .req-task-row button:hover { background: #fbd5e0; }
+
+    .req-btn-add {
+        align-self: flex-start; margin-top: 4px;
+        padding: 8px 14px;
+        border: 1px dashed rgba(33,78,186,0.4);
+        border-radius: 9px; background: #f5f8ff; color: #214EBA;
+        font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+    }
+    .req-btn-add:hover { background: #eef1ff; }
+
+    .req-assign-row {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        width: 100%;
+    }
+    @media (max-width: 900px) { .req-assign-row { grid-template-columns: 1fr; } }
+
+    .req-multi {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+        padding: 10px; border: 1px solid #dbe3ef; border-radius: 10px;
+        background: #fbfcff; max-height: 240px; overflow-y: auto;
+    }
+    .req-multi label {
+        display: flex; align-items: center; gap: 8px;
+        padding: 6px 10px; border-radius: 7px; font-size: 12px; cursor: pointer;
+    }
+    .req-multi label:hover { background: #f0f4fb; }
+    .req-multi input { accent-color: #214EBA; }
+
+    .req-actions {
+        grid-column: 1 / -1;
+        display: flex; justify-content: flex-end; gap: 10px;
+        padding-top: 16px; border-top: 1px solid #f1f5f9;
+        width: 100%;
+    }
+    .req-btn { padding: 11px 24px; border-radius: 10px; border: none; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .req-btn-cancel { background: #ffffff; border: 1px solid #dbe3ef; color: #46536b; }
+    .req-btn-cancel:hover { background: #f7f8fc; }
+    .req-btn-submit { background: linear-gradient(135deg, #214EBA 0%, #003366 100%); color: #fff; box-shadow: 0 4px 14px rgba(33,78,186,0.24); }
+    .req-btn-submit:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(33,78,186,0.35); }
+    .req-btn-submit:disabled { opacity: 0.6; cursor: wait; }
+
+    .req-history-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+        gap: 10px; padding: 16px; background: #fbfcff;
+        width: 100%; box-sizing: border-box;
+    }
+    @media (max-width: 640px) { .req-history-list { grid-template-columns: 1fr; } }
+
+    .req-history-item {
+        display: grid; grid-template-columns: 1fr auto; gap: 14px;
+        padding: 14px 16px; background: #fff;
+        border: 1px solid #dbe3ef; border-radius: 12px;
+        width: 100%; box-sizing: border-box;
+    }
+    .req-history-item h5 { margin: 0; font-size: 13px; font-weight: 700; color: #0f1b33; }
+    .req-history-meta { font-size: 11px; color: #8493ab; margin-top: 3px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .req-history-meta i { color: #214EBA; margin-right: 3px; }
+
+    .req-status {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 10px; border-radius: 999px;
+        font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+        border: 1px solid;
+    }
+    .req-status.pending   { background: #fdf2e0; color: #b45309; border-color: rgba(180,83,9,0.22); }
+    .req-status.approved  { background: #e2f7ef; color: #047857; border-color: rgba(4,120,87,0.22); }
+    .req-status.rejected  { background: #fdeaf0; color: #b91c1c; border-color: rgba(185,28,28,0.22); }
+    .req-status.cancelled { background: #f7f8fc; color: #6b7a99; border-color: #dbe3ef; }
+
+    .req-note { margin-top: 6px; font-size: 12px; color: #46536b; background: #f7f8fc; padding: 8px 10px; border-radius: 8px; }
+    .req-empty { text-align: center; padding: 60px 20px; color: #8493ab; font-size: 13px; grid-column: 1 / -1; }
+</style>
+{% endblock %}
+
+{% block dashboard_url %}{% url 'control_dashboard:member_dashboard' %}{% endblock %}
+
+{% block nav_links %}
+<li>
+    <a href="{% url 'control_dashboard:member_dashboard' %}" data-tooltip="Dashboard">
+        <span class="nav-icon"><i class="fas fa-gauge"></i></span>
+        <span class="nav-text">Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:drafts_page' %}" data-tooltip="Upload Report">
+        <span class="nav-icon"><i class="fas fa-folder-plus"></i></span>
+        <span class="nav-text">Upload Report</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:reports_page' %}" data-tooltip="My Reports">
+        <span class="nav-icon"><i class="fas fa-file-lines"></i></span>
+        <span class="nav-text">My Reports</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:email_page' %}" data-tooltip="Email">
+        <span class="nav-icon"><i class="fas fa-envelope"></i></span>
+        <span class="nav-text">Email</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:member_checklist' %}" data-tooltip="Checklist">
+        <span class="nav-icon"><i class="fas fa-rectangle-list"></i></span>
+        <span class="nav-text">Activity Checklist</span>
+    </a>
+</li>
+<li class="active">
+    <a href="{% url 'control_dashboard:member_checklist_requests' %}">
+        <span class="nav-icon"><i class="fas fa-paper-plane"></i></span>
+        <span class="nav-text">Checklist Change</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:daily_trial_balance' %}" data-tooltip="Daily Trial Balance">
+        <span class="nav-icon"><i class="fas fa-cash-register"></i></span>
+        <span class="nav-text">Daily Trial Balance</span>
+    </a>
+</li>
+<li>
+    <a href="{% url 'control_dashboard:consolidated_reports' %}" data-tooltip="Consolidated Reports">
+        <span class="nav-icon"><i class="fas fa-database"></i></span>
+        <span class="nav-text">Consolidated Reports</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block page_title %}Request a Checklist Change{% endblock %}
+
+{% block content %}
+<div class="req-wrap">
+
+    <div class="req-card">
+        <div class="req-head">
+            <h3><i class="fas fa-paper-plane"></i> Submit a Checklist Request</h3>
+        </div>
+        <div class="req-body">
+            {% csrf_token %}
+
+            <div class="req-field" id="reqTypeWrap">
+                <label for="reqType">Request Type <span class="req">*</span></label>
+                <select id="reqType" onchange="onReqTypeChange()">
+                    <option value="create">Create a new checklist</option>
+                    <option value="modify">Modify an existing checklist</option>
+                    <option value="add_task">Add a task to an existing checklist</option>
+                    <option value="delete">Delete an existing checklist</option>
+                </select>
+            </div>
+
+            <div class="req-field" id="reqTargetWrap" style="display:none;">
+                <label for="reqTarget">Target Checklist <span class="req">*</span></label>
+                <select id="reqTarget">
+                    <option value="">Select checklist...</option>
+                    {% for c in modifiable_checklists %}
+                    <option value="{{ c.id }}">{{ c.name }} ({{ c.get_frequency_display }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div id="reqCreateFields" style="display:contents;">
+                <div class="req-create-top">
+                    <div class="req-field" style="grid-column:auto;">
+                        <label for="reqName">Checklist Name <span class="req">*</span></label>
+                        <input type="text" id="reqName" placeholder="e.g. Daily Cash Count Verification">
+                    </div>
+                    <div class="req-field" style="grid-column:auto;">
+                        <label for="reqFrequency">Frequency <span class="req">*</span></label>
+                        <select id="reqFrequency">
+                            {% for v, l in frequencies %}
+                            <option value="{{ v }}" {% if v == 'weekly' %}selected{% endif %}>{{ l }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="req-field">
+                    <label for="reqDescription">Description</label>
+                    <textarea id="reqDescription" placeholder="Optional short description..."></textarea>
+                </div>
+
+                <div class="req-tasks">
+                    <label>Tasks <span class="req">*</span></label>
+                    <div id="reqTasksEditor" style="display:flex; flex-direction:column; gap:6px;">
+                        <div class="req-task-row">
+                            <input type="text" class="req-task-input" placeholder="Task description">
+                            <button type="button" onclick="removeReqTask(this)"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <button type="button" class="req-btn-add" onclick="addReqTask()">
+                        <i class="fas fa-plus"></i> Add Task
+                    </button>
+                </div>
+
+                <div class="req-assign-row">
+                    <div class="req-field" style="grid-column:auto;">
+                        <label>Assign to Branches</label>
+                        <div class="req-multi" id="reqBranchList">
+                            {% for b in branches %}
+                            <label><input type="checkbox" class="req-branch-check" value="{{ b.id }}"> {{ b.name }}</label>
+                            {% empty %}<span style="font-size:11px;color:#8493ab;">No branches.</span>{% endfor %}
+                        </div>
+                    </div>
+                    <div class="req-field" style="grid-column:auto;">
+                        <label>Assign to Departments</label>
+                        <div class="req-multi" id="reqDeptList">
+                            {% for d in departments %}
+                            <label><input type="checkbox" class="req-dept-check" value="{{ d.id }}"> {{ d.name }}</label>
+                            {% empty %}<span style="font-size:11px;color:#8493ab;">No departments.</span>{% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="req-field" id="reqAddTaskFields" style="display:none;">
+                <label for="reqNewTask">New Task Description <span class="req">*</span></label>
+                <input type="text" id="reqNewTask" placeholder="e.g. Verify closing float against system balance">
+            </div>
+
+            <div class="req-field">
+                <label for="reqJustification">Justification <span class="req">*</span></label>
+                <textarea id="reqJustification" placeholder="Explain why this request is needed..."></textarea>
+            </div>
+
+            <div class="req-actions">
+                <button type="button" class="req-btn req-btn-cancel" onclick="window.location.reload()">Reset</button>
+                <button type="button" class="req-btn req-btn-submit" id="reqSubmitBtn" onclick="submitChecklistRequest()">
+                    <i class="fas fa-paper-plane"></i> Submit Request
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="req-card">
+        <div class="req-head">
+            <h3><i class="fas fa-history"></i> My Past Requests ({{ my_requests|length }})</h3>
+        </div>
+        <div class="req-history-list">
+            {% for r in my_requests %}
+            <div class="req-history-item">
+                <div>
+                    <h5>
+                        {% if r.request_type == 'create' %}Create: {{ r.payload.name|default:"(unnamed)" }}
+                        {% elif r.request_type == 'modify' %}Modify: {{ r.target_checklist.name|default:"(missing)" }}
+                        {% elif r.request_type == 'delete' %}Delete: {{ r.target_checklist.name|default:"(missing)" }}
+                        {% elif r.request_type == 'add_task' %}Add task to: {{ r.target_checklist.name|default:"(missing)" }}
+                        {% endif %}
+                    </h5>
+                    <div class="req-history-meta">
+                        <span><i class="fas fa-clock"></i>{{ r.created_at|date:"M d, Y H:i" }}</span>
+                        <span><i class="fas fa-tag"></i>{{ r.get_request_type_display }}</span>
+                        {% if r.reviewed_by %}
+                        <span><i class="fas fa-user-check"></i>{{ r.reviewed_by.full_name|default:r.reviewed_by.email }}</span>
+                        {% endif %}
+                    </div>
+                    {% if r.review_note %}
+                    <div class="req-note"><strong>Supervisor note:</strong> {{ r.review_note }}</div>
+                    {% endif %}
+                </div>
+                <div style="display:flex; align-items:flex-start;">
+                    <span class="req-status {{ r.status }}">{{ r.get_status_display }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="req-empty"><i class="fas fa-inbox" style="font-size:28px;color:#dbe3ef;display:block;margin-bottom:10px;"></i> No requests submitted yet.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const REQ_CREATE_URL = "{% url 'control_dashboard:api_member_create_checklist_request' %}";
+
+function getCsrfToken() {
+    const m = document.cookie.match(/csrftoken=([^;]+)/);
+    return m ? m[1] : (document.querySelector('[name=csrfmiddlewaretoken]')?.value || '');
+}
+
+function onReqTypeChange() {
+    const type = document.getElementById('reqType').value;
+    document.getElementById('reqTargetWrap').style.display = (type === 'create') ? 'none' : 'flex';
+    document.getElementById('reqCreateFields').style.display = (type === 'create') ? 'contents' : 'none';
+    document.getElementById('reqAddTaskFields').style.display = (type === 'add_task') ? 'flex' : 'none';
+}
+
+function addReqTask() {
+    const editor = document.getElementById('reqTasksEditor');
+    const row = document.createElement('div');
+    row.className = 'req-task-row';
+    row.innerHTML = '<input type="text" class="req-task-input" placeholder="Task description"><button type="button" onclick="removeReqTask(this)"><i class="fas fa-times"></i></button>';
+    editor.appendChild(row);
+}
+function removeReqTask(btn) {
+    const row = btn.closest('.req-task-row');
+    const editor = document.getElementById('reqTasksEditor');
+    if (editor.children.length > 1) row.remove();
+    else row.querySelector('.req-task-input').value = '';
+}
+
+async function submitChecklistRequest() {
+    const type          = document.getElementById('reqType').value;
+    const justification = document.getElementById('reqJustification').value.trim();
+    const targetId      = document.getElementById('reqTarget').value;
+
+    if (!justification) { alert('Please fill in the justification.'); return; }
+
+    let payload = {};
+    if (type === 'create') {
+        const name = document.getElementById('reqName').value.trim();
+        const freq = document.getElementById('reqFrequency').value;
+        const desc = document.getElementById('reqDescription').value.trim();
+        const tasks = Array.from(document.querySelectorAll('#reqTasksEditor .req-task-input'))
+            .map(i => ({ description: i.value.trim() }))
+            .filter(t => t.description);
+        const branches = Array.from(document.querySelectorAll('.req-branch-check:checked')).map(c => parseInt(c.value, 10));
+        const departments = Array.from(document.querySelectorAll('.req-dept-check:checked')).map(c => parseInt(c.value, 10));
+
+        if (!name || !freq || tasks.length === 0) { alert('Fill in name, frequency, and at least one task.'); return; }
+        if (branches.length === 0 && departments.length === 0) { alert('Assign to at least one branch or department.'); return; }
+
+        payload = { name, description: desc, frequency: freq, tasks, assigned_branches: branches, assigned_departments: departments };
+    } else if (type === 'add_task') {
+        const desc = document.getElementById('reqNewTask').value.trim();
+        if (!desc) { alert('Enter the task description.'); return; }
+        payload = { description: desc };
+    }
+
+    if (type !== 'create' && !targetId) { alert('Select a target checklist.'); return; }
+
+    const btn = document.getElementById('reqSubmitBtn');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+    try {
+        const resp = await fetch(REQ_CREATE_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                request_type: type,
+                target_id: targetId || null,
+                justification: justification,
+                payload: payload,
+            })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            alert('Request submitted — waiting for supervisor review.');
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Could not submit.'));
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Network error.');
+        btn.disabled = false;
+        btn.innerHTML = orig;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', onReqTypeChange);
+</script>
+{% endblock %}

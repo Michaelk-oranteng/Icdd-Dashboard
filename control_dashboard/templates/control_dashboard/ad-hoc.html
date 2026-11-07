@@ -78,48 +78,6 @@
     transform: translateY(-1px);
 }
 
-/* ---------- KPI cards ---------- */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-    margin-bottom: 22px;
-}
-@media (max-width: 780px) { .stats-grid { grid-template-columns: 1fr; } }
-
-.stat-card {
-    display: flex; align-items: center; gap: 14px;
-    padding: 18px 20px;
-    background: var(--ah-bg-1, #fff);
-    border: 1px solid var(--ah-border, rgba(15,27,51,0.08));
-    border-radius: 14px;
-    box-shadow: var(--ah-shadow-sm, 0 1px 2px rgba(15,27,51,0.04));
-    transition: transform .2s ease, box-shadow .2s ease;
-}
-.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(15,27,51,0.07); }
-
-.stat-icon {
-    width: 44px; height: 44px; flex: 0 0 44px;
-    border-radius: 12px;
-    display: grid; place-items: center;
-    font-size: 16px;
-}
-.stat-icon.warning      { background: rgba(79,110,247,0.10); color: #3b56d8; }
-.stat-icon.danger       { background: rgba(214,69,69,0.10); color: #d64545; }
-.stat-icon.success-icon { background: rgba(23,166,115,0.10); color: #17a673; }
-
-.stat-info { display: flex; flex-direction: column; min-width: 0; }
-.stat-value {
-    font-size: 20px; font-weight: 700; line-height: 1.15;
-    color: var(--ah-text-0, #0f1b33);
-    font-variant-numeric: tabular-nums;
-}
-.stat-label {
-    font-size: 11px; font-weight: 600; letter-spacing: .04em;
-    color: var(--ah-text-2, #7b879e); margin-top: 2px;
-    text-transform: uppercase;
-}
-
 /* ---------- Create form ---------- */
 .create-form {
     background: var(--ah-bg-1, #fff);
@@ -450,6 +408,12 @@
     <span class="nav-icon"><i class="fas fa-tasks"></i></span>
     <span class="nav-text">Activity Checklist</span>
 </a></li>
+<li>
+    <a href="{% url 'control_dashboard:supervisor_checklist_requests' %}">
+        <span class="nav-icon"><i class="fas fa-inbox"></i></span>
+        <span class="nav-text">Checklist Requests</span>
+    </a>
+</li>
 <li><a href="{% url 'control_dashboard:supervisor_activity_logs' %}">
     <span class="nav-icon"><i class="fas fa-search"></i></span>
     <span class="nav-text">Activity Logs</span>
@@ -479,34 +443,8 @@
 {% endblock %}
 
 {% block content %}
-<!-- Hidden CSRF anchor — guarantees the token is present on every render,
-     regardless of whether base.html includes the meta tag or not. -->
+<!-- Hidden CSRF anchor — guarantees the token is present on every render. -->
 {% csrf_token %}
-
-<!-- KPI cards -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon warning"><i class="fas fa-users"></i></div>
-        <div class="stat-info">
-            <span class="stat-value">{{ users|length }}</span>
-            <span class="stat-label">Team Members</span>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon danger"><i class="fas fa-minus-circle"></i></div>
-        <div class="stat-info">
-            <span class="stat-value">−{{ total_points|default:0 }}</span>
-            <span class="stat-label">Total Deducted</span>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon success-icon"><i class="fas fa-plus-circle"></i></div>
-        <div class="stat-info">
-            <span class="stat-value">+{{ total_points_added|default:0 }}</span>
-            <span class="stat-label">Total Added</span>
-        </div>
-    </div>
-</div>
 
 <!-- Create form -->
 <div id="createForm" class="create-form" style="display: none;">
@@ -610,8 +548,7 @@
     </div>
 </div>
 
-<!-- Fallback toast — only used if base.html's #toastNotification is missing.
-     This guarantees the user always sees feedback. -->
+<!-- Fallback toast -->
 <div id="adhocFallbackToast" class="adhoc-fallback-toast" aria-live="polite">
     <div class="ft-icon"><i class="fas fa-check"></i></div>
     <div class="ft-content">
@@ -624,30 +561,18 @@
 {% block extra_js %}
 <script>
 /* ============================================================
-   CSRF — guaranteed to resolve on a fresh login.
-   The token comes from one of:
-     1. A hidden {% csrf_token %} input rendered in the content block
-     2. A <meta name="csrf-token"> in base.html's <head>
-     3. The csrftoken cookie
-   If all three fail, we hard-fail loudly instead of sending a
-   request that Django will silently reject with 403.
+   CSRF — resolves from hidden input, meta tag, or cookie
    ============================================================ */
 function getCsrfToken() {
-    // 1. Hidden form input — we render {% csrf_token %} ourselves,
-    //    so this is the primary source.
     const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
     if (input && input.value && input.value !== 'NOTPROVIDED') {
         return input.value;
     }
-
-    // 2. Meta tag (if base.html provides one)
     const meta = document.querySelector('meta[name="csrf-token"]');
     if (meta) {
         const v = meta.getAttribute('content');
         if (v && v !== 'NOTPROVIDED') return v;
     }
-
-    // 3. Cookie
     const name = 'csrftoken';
     const cookies = document.cookie ? document.cookie.split(';') : [];
     for (let i = 0; i < cookies.length; i++) {
@@ -656,20 +581,15 @@ function getCsrfToken() {
             return decodeURIComponent(c.substring(name.length + 1));
         }
     }
-
     return '';
 }
 
 /* ============================================================
    TOAST
-   Prefers base.html's #toastNotification if present.
-   Falls back to the local #adhocFallbackToast otherwise, so
-   feedback is never swallowed silently.
    ============================================================ */
 function showToast(message, title = 'Success!') {
     const isError = /error|warning/i.test(title);
 
-    // ---- Preferred: base.html toast ----
     const baseToast = document.getElementById('toastNotification');
     if (baseToast) {
         const msgEl = document.getElementById('toastMessage');
@@ -692,10 +612,8 @@ function showToast(message, title = 'Success!') {
         return;
     }
 
-    // ---- Fallback: our own toast ----
     const ft = document.getElementById('adhocFallbackToast');
     if (!ft) {
-        // Absolute last resort
         console.warn('[toast]', title, message);
         return;
     }
@@ -716,14 +634,11 @@ window.closeToast = function () {
 };
 
 /* ============================================================
-   FETCH HELPER — reads the response as TEXT first, then tries
-   JSON. This surfaces Django's HTML 403 CSRF page as a real
-   error instead of "Unexpected token '<' in JSON".
+   FETCH HELPER — surfaces CSRF / HTML errors as real errors
    ============================================================ */
 async function parseResponse(r) {
     const text = await r.text();
 
-    // HTML response = Django error page (CSRF, 500, etc.)
     if (text.trim().startsWith('<')) {
         if (r.status === 403) {
             throw new Error(
@@ -776,8 +691,6 @@ function toggleCreateForm() {
    CREATE ENTRY
    ============================================================ */
 async function createInlineDeduction() {
-    // Pre-flight CSRF check — fail loudly *before* sending a request
-    // that Django would silently reject with a 403 HTML page.
     const csrf = getCsrfToken();
     if (!csrf) {
         showToast(
@@ -1034,8 +947,7 @@ document.addEventListener('keydown', function (e) {
 });
 
 /* ============================================================
-   DIAGNOSTIC — logs once on load so you can spot CSRF issues
-   in the console immediately. Safe to remove later.
+   DIAGNOSTIC
    ============================================================ */
 document.addEventListener('DOMContentLoaded', function () {
     const token = getCsrfToken();

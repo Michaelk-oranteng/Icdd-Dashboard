@@ -26,7 +26,7 @@
         box-shadow: 0 1px 2px rgba(15, 27, 51, 0.04);
         position: relative;
         overflow-x: auto;
-        flex-shrink: 0 !important; /* PREVENTS THE CONTAINER FROM SQUEEZING VERTICALLY */
+        flex-shrink: 0 !important;
     }
 
     .table-container::before {
@@ -294,6 +294,7 @@
     .type-branch     { background: #dbeafe; color: #1e40af; }
     .type-department { background: #fef3c7; color: #92400e; }
 
+    /* ---- Scope badges (distinct per scope) ---- */
     .scope-badge {
         display: inline-flex;
         align-items: center;
@@ -304,6 +305,31 @@
         font-weight: 600;
         background: #f3f4f6;
         color: #374151;
+        border: 1px solid transparent;
+    }
+
+    .scope-badge.scope-cc {
+        background: #eef2ff;
+        color: #3730a3;
+        border-color: rgba(55, 48, 163, 0.15);
+    }
+
+    .scope-badge.scope-hc {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: rgba(146, 64, 14, 0.2);
+    }
+
+    .scope-badge.scope-specific {
+        background: #ecfdf5;
+        color: #065f46;
+        border-color: rgba(6, 95, 70, 0.2);
+    }
+
+    .scope-badge.scope-unset {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px dashed rgba(153, 27, 27, 0.35);
     }
 
     .row-actions {
@@ -493,21 +519,30 @@
                 <th style="width: 180px;">Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="unitTableBody">
             {% for b in branches %}
             <tr data-unit-id="{{ b.id }}" data-unit-type="branch">
                 <td><span class="type-badge type-branch"><i class="fas fa-building"></i> Branch</span></td>
                 <td><strong>{{ b.name }}</strong></td>
                 <td>
                     {% if b.assignment_scope == 'specific' %}
-                        <span class="scope-badge">
+                        <span class="scope-badge scope-specific">
                             <i class="fas fa-users"></i>
                             {{ b.assigned_users.count }} user{{ b.assigned_users.count|pluralize }}
                         </span>
                     {% elif b.assignment_scope == 'hc' %}
-                        <span class="scope-badge"><i class="fas fa-user-tie"></i> Head Office Control</span>
+                        <span class="scope-badge scope-hc">
+                            <i class="fas fa-user-tie"></i> Head Office Control
+                        </span>
+                    {% elif b.assignment_scope == 'cc' %}
+                        <span class="scope-badge scope-cc">
+                            <i class="fas fa-user-tag"></i> Cluster Control
+                        </span>
                     {% else %}
-                        <span class="scope-badge"><i class="fas fa-user-tag"></i> Cluster Control</span>
+                        <span class="scope-badge scope-unset">
+                            <i class="fas fa-circle-question"></i>
+                            {{ b.assignment_scope|default:"Not assigned" }}
+                        </span>
                     {% endif %}
                 </td>
                 <td>{{ b.description|default:"—"|truncatechars:60 }}</td>
@@ -519,7 +554,8 @@
                                 data-unit-type="branch"
                                 data-name="{{ b.name }}"
                                 data-description="{{ b.description|default:'' }}"
-                                data-assignment="{{ b.assignment_scope }}">
+                                data-assignment="{{ b.assignment_scope }}"
+                                data-user-ids="{% for u in b.assigned_users.all %}{{ u.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
                             <i class="fas fa-pen"></i> Edit
                         </button>
                         <button type="button"
@@ -540,14 +576,23 @@
                 <td><strong>{{ d.name }}</strong></td>
                 <td>
                     {% if d.assignment_scope == 'specific' %}
-                        <span class="scope-badge">
+                        <span class="scope-badge scope-specific">
                             <i class="fas fa-users"></i>
                             {{ d.assigned_users.count }} user{{ d.assigned_users.count|pluralize }}
                         </span>
                     {% elif d.assignment_scope == 'hc' %}
-                        <span class="scope-badge"><i class="fas fa-user-tie"></i> Head Office Control</span>
+                        <span class="scope-badge scope-hc">
+                            <i class="fas fa-user-tie"></i> Head Office Control
+                        </span>
+                    {% elif d.assignment_scope == 'cc' %}
+                        <span class="scope-badge scope-cc">
+                            <i class="fas fa-user-tag"></i> Cluster Control
+                        </span>
                     {% else %}
-                        <span class="scope-badge"><i class="fas fa-user-tag"></i> Cluster Control</span>
+                        <span class="scope-badge scope-unset">
+                            <i class="fas fa-circle-question"></i>
+                            {{ d.assignment_scope|default:"Not assigned" }}
+                        </span>
                     {% endif %}
                 </td>
                 <td>{{ d.description|default:"—"|truncatechars:60 }}</td>
@@ -559,7 +604,8 @@
                                 data-unit-type="department"
                                 data-name="{{ d.name }}"
                                 data-description="{{ d.description|default:'' }}"
-                                data-assignment="{{ d.assignment_scope }}">
+                                data-assignment="{{ d.assignment_scope }}"
+                                data-user-ids="{% for u in d.assigned_users.all %}{{ u.id }}{% if not forloop.last %},{% endif %}{% endfor %}">
                             <i class="fas fa-pen"></i> Edit
                         </button>
                         <button type="button"
@@ -575,7 +621,7 @@
             {% endfor %}
 
             {% if not branches and not departments %}
-            <tr>
+            <tr id="emptyStateRow">
                 <td colspan="5" style="text-align:center;color:#6b7280;padding:30px;">
                     No branches or departments yet. Add one above.
                 </td>
@@ -586,6 +632,9 @@
 </div>
 
 <script>
+    /* ============================================================
+       CSRF
+       ============================================================ */
     function getCsrfToken() {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -608,10 +657,36 @@
     let _editingUnitId = null;
     let _editingUnitType = null;
 
+    /* ============================================================
+       ASSIGNMENT NORMALIZER — handles backend inconsistencies
+       ============================================================ */
+    function normalizeAssignment(raw) {
+        const v = String(raw || '').trim().toLowerCase();
+        if (v === 'hc' || v === 'head_office' || v === 'head-office' || v === 'headoffice') return 'hc';
+        if (v === 'specific' || v === 'specific_users' || v === 'users') return 'specific';
+        if (v === 'cc' || v === 'cluster' || v === 'cluster_control' || v === 'cluster-control') return 'cc';
+        return v || 'cc';
+    }
+
+    /* ============================================================
+       UI HELPERS
+       ============================================================ */
     function onAssignmentChange() {
         const scope = document.getElementById('unitAssignment').value;
         const picker = document.getElementById('userPickerField');
         picker.classList.toggle('hidden', scope !== 'specific');
+    }
+
+    function setUserPickerSelection(ids) {
+        const wanted = new Set((ids || []).map(String));
+        document.querySelectorAll('#userPicker input[type="checkbox"]').forEach(cb => {
+            cb.checked = wanted.has(String(cb.value));
+        });
+    }
+
+    function getSelectedUserIds() {
+        return Array.from(document.querySelectorAll('#userPicker input[type="checkbox"]:checked'))
+                    .map(cb => parseInt(cb.value, 10));
     }
 
     function resetForm() {
@@ -619,8 +694,7 @@
         document.getElementById('unitType').value = 'branch';
         document.getElementById('unitAssignment').value = 'cc';
         onAssignmentChange();
-
-        document.querySelectorAll('#userPicker input[type="checkbox"]').forEach(cb => cb.checked = false);
+        setUserPickerSelection([]);
 
         _editingUnitId = null;
         _editingUnitType = null;
@@ -632,13 +706,49 @@
 
     function cancelEdit() { resetForm(); }
 
+    /* ============================================================
+       BADGE RENDERER — used after save/update without page reload
+       ============================================================ */
+    function renderScopeBadge(scope, userCount) {
+        const s = normalizeAssignment(scope);
+        if (s === 'specific') {
+            const n = userCount || 0;
+            return `<span class="scope-badge scope-specific">
+                        <i class="fas fa-users"></i>
+                        ${n} user${n === 1 ? '' : 's'}
+                    </span>`;
+        }
+        if (s === 'hc') {
+            return `<span class="scope-badge scope-hc">
+                        <i class="fas fa-user-tie"></i> Head Office Control
+                    </span>`;
+        }
+        if (s === 'cc') {
+            return `<span class="scope-badge scope-cc">
+                        <i class="fas fa-user-tag"></i> Cluster Control
+                    </span>`;
+        }
+        return `<span class="scope-badge scope-unset">
+                    <i class="fas fa-circle-question"></i> ${escapeHtml(scope || 'Not assigned')}
+                </span>`;
+    }
+
+    function escapeHtml(s) {
+        const d = document.createElement('div');
+        d.textContent = String(s || '');
+        return d.innerHTML;
+    }
+
+    /* ============================================================
+       SAVE (create / edit)
+       ============================================================ */
     function saveUnit(event) {
         event.preventDefault();
 
         const unitType    = document.getElementById('unitType').value;
         const name        = document.getElementById('unitName').value.trim();
         const description = document.getElementById('unitDescription').value.trim();
-        const assignment  = document.getElementById('unitAssignment').value;
+        const assignment  = normalizeAssignment(document.getElementById('unitAssignment').value);
 
         if (!name) {
             alert('Name is required.');
@@ -647,8 +757,7 @@
 
         let userIds = [];
         if (assignment === 'specific') {
-            userIds = Array.from(document.querySelectorAll('#userPicker input[type="checkbox"]:checked'))
-                           .map(cb => parseInt(cb.value, 10));
+            userIds = getSelectedUserIds();
             if (userIds.length === 0) {
                 alert('Please select at least one user.');
                 return;
@@ -686,12 +795,57 @@
             btn.disabled = false;
             btn.innerHTML = originalHTML;
 
-            if (data.success) {
-                alert(data.message || 'Saved successfully.');
-                window.location.reload();
-            } else {
+            if (!data.success) {
                 alert('Error: ' + (data.error || 'Save failed.'));
+                return;
             }
+
+            /* ---- Update the row in place so badge + name refresh instantly ---- */
+            const serverUnit = data.unit || {};
+            const savedScope = normalizeAssignment(serverUnit.assignment_scope || assignment);
+            const savedUserCount =
+                Array.isArray(serverUnit.assigned_user_ids)
+                    ? serverUnit.assigned_user_ids.length
+                    : (Array.isArray(userIds) ? userIds.length : 0);
+
+            if (isEdit) {
+                const tr = document.querySelector(
+                    `tr[data-unit-id="${_editingUnitId}"][data-unit-type="${_editingUnitType}"]`
+                );
+                if (tr) {
+                    tr.querySelector('td:nth-child(2)').innerHTML = `<strong>${escapeHtml(name)}</strong>`;
+                    tr.querySelector('td:nth-child(3)').innerHTML = renderScopeBadge(savedScope, savedUserCount);
+                    tr.querySelector('td:nth-child(4)').textContent =
+                        description ? (description.length > 60 ? description.slice(0, 60) + '…' : description) : '—';
+
+                    const editBtn = tr.querySelector('.js-edit-unit');
+                    if (editBtn) {
+                        editBtn.dataset.name = name;
+                        editBtn.dataset.description = description;
+                        editBtn.dataset.assignment = savedScope;
+                        editBtn.dataset.userIds = userIds.join(',');
+                    }
+                }
+                alert(data.message || 'Updated successfully.');
+            } else {
+                /* Insert a new row on top of its type group */
+                const newId = serverUnit.id;
+                if (newId != null) {
+                    const emptyRow = document.getElementById('emptyStateRow');
+                    if (emptyRow) emptyRow.remove();
+                    insertNewRow({
+                        id: newId,
+                        unit_type: unitType,
+                        name: name,
+                        description: description,
+                        assignment: savedScope,
+                        user_ids: userIds
+                    });
+                }
+                alert(data.message || 'Created successfully.');
+            }
+
+            resetForm();
         })
         .catch(err => {
             btn.disabled = false;
@@ -701,21 +855,89 @@
         });
     }
 
-    document.querySelectorAll('.js-edit-unit').forEach(btn => {
+    /* ============================================================
+       INSERT NEW ROW (used after create, avoids page reload)
+       ============================================================ */
+    function insertNewRow(u) {
+        const tbody = document.getElementById('unitTableBody');
+        if (!tbody) return;
+
+        const isBranch = u.unit_type === 'branch';
+        const typeBadge = isBranch
+            ? `<span class="type-badge type-branch"><i class="fas fa-building"></i> Branch</span>`
+            : `<span class="type-badge type-department"><i class="fas fa-sitemap"></i> Dept</span>`;
+
+        const scopeBadge = renderScopeBadge(u.assignment, u.user_ids ? u.user_ids.length : 0);
+
+        const descCell = u.description
+            ? escapeHtml(u.description.length > 60 ? u.description.slice(0, 60) + '…' : u.description)
+            : '—';
+
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-unit-id', u.id);
+        tr.setAttribute('data-unit-type', u.unit_type);
+        tr.innerHTML = `
+            <td>${typeBadge}</td>
+            <td><strong>${escapeHtml(u.name)}</strong></td>
+            <td>${scopeBadge}</td>
+            <td>${descCell}</td>
+            <td>
+                <div class="row-actions">
+                    <button type="button"
+                            class="btn-edit js-edit-unit"
+                            data-unit-id="${u.id}"
+                            data-unit-type="${u.unit_type}"
+                            data-name="${escapeHtml(u.name)}"
+                            data-description="${escapeHtml(u.description || '')}"
+                            data-assignment="${u.assignment}"
+                            data-user-ids="${(u.user_ids || []).join(',')}">
+                        <i class="fas fa-pen"></i> Edit
+                    </button>
+                    <button type="button"
+                            class="btn-delete js-delete-unit"
+                            data-unit-id="${u.id}"
+                            data-unit-type="${u.unit_type}"
+                            data-name="${escapeHtml(u.name)}">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </td>
+        `;
+
+        /* Insert at top of matching group, or top of tbody */
+        if (isBranch) {
+            tbody.insertBefore(tr, tbody.firstChild);
+        } else {
+            /* After the last branch (if any) else at top */
+            const lastBranch = tbody.querySelector('tr[data-unit-type="branch"]:last-of-type');
+            if (lastBranch && lastBranch.nextSibling) {
+                tbody.insertBefore(tr, lastBranch.nextSibling);
+            } else {
+                tbody.appendChild(tr);
+            }
+        }
+
+        bindRowHandlers(tr);
+    }
+
+    /* ============================================================
+       EDIT HANDLER
+       ============================================================ */
+    function bindEditButton(btn) {
         btn.addEventListener('click', () => {
             _editingUnitId   = btn.dataset.unitId;
             _editingUnitType = btn.dataset.unitType;
 
+            const assignment = normalizeAssignment(btn.dataset.assignment);
             document.getElementById('unitType').value        = btn.dataset.unitType;
             document.getElementById('unitName').value        = btn.dataset.name;
             document.getElementById('unitDescription').value = btn.dataset.description || '';
-            document.getElementById('unitAssignment').value  = btn.dataset.assignment || 'cc';
+            document.getElementById('unitAssignment').value  = assignment;
 
             onAssignmentChange();
 
-            if ((btn.dataset.assignment || '') === 'specific') {
-                document.querySelectorAll('#userPicker input[type="checkbox"]').forEach(cb => cb.checked = false);
-            }
+            const ids = (btn.dataset.userIds || '').split(',').filter(Boolean);
+            setUserPickerSelection(ids);
 
             document.getElementById('formTitle').textContent =
                 `Edit ${btn.dataset.unitType === 'branch' ? 'Branch' : 'Department'}`;
@@ -724,9 +946,12 @@
 
             document.getElementById('unitForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
-    });
+    }
 
-    document.querySelectorAll('.js-delete-unit').forEach(btn => {
+    /* ============================================================
+       DELETE HANDLER
+       ============================================================ */
+    function bindDeleteButton(btn) {
         btn.addEventListener('click', () => {
             const unitId   = btn.dataset.unitId;
             const unitType = btn.dataset.unitType;
@@ -748,8 +973,21 @@
                 btn.innerHTML = originalHTML;
 
                 if (data.success) {
-                    const row = document.querySelector(`tr[data-unit-id="${unitId}"][data-unit-type="${unitType}"]`);
+                    const row = document.querySelector(
+                        `tr[data-unit-id="${unitId}"][data-unit-type="${unitType}"]`
+                    );
                     if (row) row.remove();
+
+                    /* Show empty state if no rows remain */
+                    const tbody = document.getElementById('unitTableBody');
+                    if (tbody && tbody.querySelectorAll('tr').length === 0) {
+                        const tr = document.createElement('tr');
+                        tr.id = 'emptyStateRow';
+                        tr.innerHTML = `<td colspan="5" style="text-align:center;color:#6b7280;padding:30px;">
+                            No branches or departments yet. Add one above.
+                        </td>`;
+                        tbody.appendChild(tr);
+                    }
                 } else {
                     alert('Error: ' + (data.error || 'Delete failed.'));
                 }
@@ -761,10 +999,26 @@
                 alert('An error occurred. Please try again.');
             });
         });
-    });
+    }
 
+    /* ============================================================
+       ROW BINDING HELPERS (for dynamically added rows)
+       ============================================================ */
+    function bindRowHandlers(tr) {
+        const editBtn = tr.querySelector('.js-edit-unit');
+        const deleteBtn = tr.querySelector('.js-delete-unit');
+        if (editBtn) bindEditButton(editBtn);
+        if (deleteBtn) bindDeleteButton(deleteBtn);
+    }
+
+    /* ============================================================
+       BOOTSTRAP
+       ============================================================ */
     document.addEventListener('DOMContentLoaded', () => {
         onAssignmentChange();
+
+        document.querySelectorAll('.js-edit-unit').forEach(bindEditButton);
+        document.querySelectorAll('.js-delete-unit').forEach(bindDeleteButton);
     });
 </script>
 {% endblock %}

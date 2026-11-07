@@ -39,42 +39,13 @@ from .models import (
     TrialBalanceUpload,
     TrialBalanceEntry,
     SentEmail,
+    SupervisorComment,
+    ChecklistChangeRequest
 )
 from .forms import UserProfileForm
 
 logger = logging.getLogger(__name__)
 
-import uuid as _chat_uuid
-import threading as _chat_threading
-import time as _chat_time
-
-# channel_id (uuid str) -> {
-#     "members": set(user_email_lower),
-#     "messages": [ { id, sender, text, ts }, ... ],
-#     "lock": threading.RLock(),
-# }
-_SECRET_CHAT_BUS = {}
-_SECRET_CHAT_LOCK = _chat_threading.RLock()
-
-
-def _secret_chat_channel(channel_id, create=False):
-    """
-    Look up a channel.
-
-    create=True  → create it if missing (used only by api_secret_chat_open)
-    create=False → return None if missing (used by send/poll so a
-                   dead channel returns 410, not a confusing 403)
-    """
-    with _SECRET_CHAT_LOCK:
-        ch = _SECRET_CHAT_BUS.get(channel_id)
-        if ch is None and create:
-            ch = {
-                "members": set(),
-                "messages": [],
-                "lock": _chat_threading.RLock(),
-            }
-            _SECRET_CHAT_BUS[channel_id] = ch
-        return ch
 
 # ==================== CONSTANTS ====================
 TRIAL_BALANCE_REPORT_TYPE = '__TRIAL_BALANCE__'
@@ -457,22 +428,35 @@ def _build_member_scorecard(member, today=None):
         status = 'danger'
         status_text = 'Needs Attention'
 
+        # Final score in RAW POINTS (out of total_expected * 100)
+    final_score = max(0, email_score + adhoc_credits - adhoc_debits)
+
+    # Maximum possible raw points
+    max_possible_points = total_expected * 100
+
     return {
         'user':            member,
         'email_count':     len(emails),
         'total_tasks':     total_expected,
         'expected':        total_expected,
-        # Component breakdown
-        'email_score':     email_score,
-        'adhoc_credits':   adhoc_credits,
-        'adhoc_debits':    adhoc_debits,
-        # Headline numbers
-        'net_score':       net_score,
-        'net_vs_target':   net_vs_target,
-        'percentage':      percentage,
-        'percentage_bar':  percentage,
+
+        # ── Component breakdown ──────────────────────────────────
+        'email_score':           email_score,       # 1. raw email points
+        'adhoc_credits':         adhoc_credits,     # 2. positive adjustments
+        'adhoc_debits':          adhoc_debits,      # 3. deduction amounts (positive)
+
+        # ── Headline numbers ─────────────────────────────────────
+        'final_score':           final_score,       # (1 + 2 - 3) in raw points
+        'max_possible_points':   max_possible_points,  # 4 × 100
+        'net_score':             final_score,       # keep old alias for compat
+        'percentage':            percentage,        # final / (4×100) × 100
+        'percentage_bar':        percentage,
+        'net_vs_target':         percentage - 100,
+
+        # ── Status ───────────────────────────────────────────────
         'status':          status,
         'status_text':     status_text,
+    
     }
 
 def _generate_occurrences(report, until=None):
@@ -1598,12 +1582,11 @@ def api_create_checklist(request):
 
         # ── Create ──
         checklist = Checklist.objects.create(
-            name=name,
-            description=description,
-            frequency=frequency,
-            is_active=True,
-            created_by=created_by,
-        )
+                name=p['name'],
+                description=p.get('description', ''),
+                frequency=p['frequency'],
+                created_by=self.requester,
+            )
 
         if assigned_branches_ids:
             checklist.assigned_branches.set(
@@ -3957,6 +3940,7 @@ def api_team_performance_live(request):
             'email_score':     card['email_score'],
             'adhoc_credits':   card['adhoc_credits'],
             'adhoc_debits':    card['adhoc_debits'],
+            'final_score':     card['final_score'],
             'net_score':       card['net_score'],
             'net_vs_target':   card['net_vs_target'],
             'total_tasks':     card['total_tasks'],
@@ -4949,16 +4933,12 @@ def activity_logs(request):
 
 # ==================== ANALYTICS DASHBOARD ====================
 
-# ==================== ANALYTICS DASHBOARD ====================
 
 @login_required
 def analytics_dashboard(request):
     """
     All Submitted Exceptions (supervisor view).
-
-    Shows every exception submitted by every user, grouped by
-    uploader. Admins / supervisors see everyone; members see only
-    their own.
+    Shows every exception submitted by every user, grouped by uploader.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -4969,19 +4949,16 @@ def analytics_dashboard(request):
         messages.error(request, 'You do not have permission to access this page.')
         return redirect_dashboard(request.user)
 
-    from decimal import Decimal
     from collections import OrderedDict
 
     today = timezone.now().date()
     is_privileged = user_profile.role in ('admin', 'supervisor')
 
     base_qs = ExceptionRecord.objects.filter(upload__isnull=False)
-
-    # Members see only their own uploads.
     if not is_privileged:
         base_qs = base_qs.filter(upload__uploaded_by=user_profile)
 
-    # ── Filters ────────────────────────────────────────────────
+    # ── Filter params ──────────────────────────────────────────
     uploader_filter = request.GET.get('uploader', 'all').strip()
     branch_filter   = request.GET.get('branch', 'all').strip()
     category_filter = request.GET.get('category', 'all').strip()
@@ -4998,13 +4975,18 @@ def analytics_dashboard(request):
             pass
 
     if branch_filter and branch_filter != 'all':
-        filtered_qs = filtered_qs.filter(branch_unit=branch_filter)
+        filtered_qs = filtered_qs.filter(branch_unit__iexact=branch_filter)
 
     if category_filter and category_filter != 'all':
-        filtered_qs = filtered_qs.filter(category=category_filter)
+        filtered_qs = filtered_qs.filter(category__iexact=category_filter)
 
     if status_filter and status_filter != 'all':
-        filtered_qs = filtered_qs.filter(status=status_filter)
+        OPEN_LIKE   = ('open', 'in_progress', 'pending', 'overdue')
+        CLOSED_LIKE = ('closed', 'resolved')
+        if status_filter == 'open':
+            filtered_qs = filtered_qs.filter(status__in=OPEN_LIKE)
+        elif status_filter == 'closed':
+            filtered_qs = filtered_qs.filter(status__in=CLOSED_LIKE)
 
     if start_date_str:
         try:
@@ -5020,13 +5002,20 @@ def analytics_dashboard(request):
         except ValueError:
             pass
 
-    # ── Group by uploader ──────────────────────────────────────
+    # ── Annotate with comment counts + prefetch for display ──
     filtered_qs = (
         filtered_qs
         .select_related('upload', 'upload__uploaded_by')
-        .order_by('upload__uploaded_by__full_name', 'upload__created_at', 'source_row_index')
+        .prefetch_related('supervisor_comments')
+        .annotate(comment_count=Count('supervisor_comments', distinct=True))
+        .order_by(
+            'upload__uploaded_by__full_name',
+            'upload__created_at',
+            'source_row_index',
+        )
     )
 
+    # ── Group by uploader ──────────────────────────────────────
     grouped = OrderedDict()
     for rec in filtered_qs:
         uploader = getattr(rec.upload, 'uploaded_by', None) if rec.upload else None
@@ -5034,48 +5023,37 @@ def analytics_dashboard(request):
             continue
         key = uploader.id
         if key not in grouped:
-            grouped[key] = {
-                'uploader': uploader,
-                'count': 0,
-                'rows': [],
-            }
+            grouped[key] = {'uploader': uploader, 'count': 0, 'rows': []}
         grouped[key]['count'] += 1
         grouped[key]['rows'].append(rec)
 
     uploader_groups = list(grouped.values())
 
-    # ── Filter dropdown options ────────────────────────────────
+    # ── Filter dropdown options ──
+    def _unique_normalized(iterable):
+        seen = {}
+        for raw in iterable:
+            s = (raw or '').strip()
+            if not s:
+                continue
+            k = s.lower()
+            if k not in seen:
+                seen[k] = s
+        return sorted(seen.values(), key=lambda v: v.lower())
+
     available_uploaders = (
         UserProfile.objects
         .filter(exception_uploads__isnull=False)
         .distinct()
         .order_by('full_name')
     )
-
-    available_branches = list(
-        base_qs
-        .exclude(branch_unit='')
-        .values_list('branch_unit', flat=True)
-        .distinct()
-        .order_by('branch_unit')
+    available_branches = _unique_normalized(
+        base_qs.exclude(branch_unit='').values_list('branch_unit', flat=True)
     )
-
-    available_categories = list(
-        base_qs
-        .exclude(category='')
-        .values_list('category', flat=True)
-        .distinct()
-        .order_by('category')
+    available_categories = _unique_normalized(
+        base_qs.exclude(category='').values_list('category', flat=True)
     )
-
-    available_statuses = [
-        ('open', 'Open'),
-        ('in_progress', 'In Progress'),
-        ('pending', 'Pending'),
-        ('overdue', 'Overdue'),
-        ('closed', 'Closed'),
-        ('resolved', 'Resolved'),
-    ]
+    available_statuses = [('open', 'Open'), ('closed', 'Closed')]
 
     context = {
         'user_profile': user_profile,
@@ -5102,7 +5080,6 @@ def analytics_dashboard(request):
         if is_privileged
         else 'control_dashboard/analytics.html'
     )
-
     return render(request, template, context)
 
 # ==================== SUBMIT SELECTED REPORTS ====================
@@ -5580,16 +5557,29 @@ def api_download_trial_balance_template(request):
 
 # ==================== CONSOLIDATED REPORTS ====================
 
-@login_required
-def consolidated_reports(request):
-    """
-    Consolidated Reports — cross-user view of exception data.
-    """
-    try:
-        user_profile = UserProfile.objects.get(email=request.user.email)
-    except UserProfile.DoesNotExist:
-        return redirect('control_dashboard:member_dashboard')
+# ==================== CONSOLIDATED REPORTS (TABBED) ====================
 
+CONSOLIDATED_TAB_DASHBOARD    = 'dashboard'
+CONSOLIDATED_TAB_CURRENT_WEEK = 'current_week'
+CONSOLIDATED_TAB_OPEN         = 'open_issues'
+CONSOLIDATED_TAB_CLOSED       = 'closed_issues'
+
+CONSOLIDATED_TABS = (
+    CONSOLIDATED_TAB_DASHBOARD,
+    CONSOLIDATED_TAB_CURRENT_WEEK,
+    CONSOLIDATED_TAB_OPEN,
+    CONSOLIDATED_TAB_CLOSED,
+)
+
+OPEN_STATUSES   = ('open', 'in_progress', 'pending', 'overdue')
+CLOSED_STATUSES = ('closed', 'resolved')
+
+
+def _consolidated_queryset_for_user(user_profile):
+    """
+    Base ExceptionRecord queryset the user is allowed to see on the
+    Consolidated Reports page. Returns (queryset, allowed_report_types, has_access).
+    """
     assigned_consolidated_qs = Report.objects.filter(
         Q(assigned_to=user_profile) |
         Q(is_assigned_to_all=True) |
@@ -5602,20 +5592,19 @@ def consolidated_reports(request):
         report_type__icontains='consolidated'
     )
 
-    available_report_types = sorted(
+    allowed_report_types = sorted(
         {rt for rt in assigned_consolidated_qs.values_list('report_type', flat=True) if rt}
     )
 
-    has_access = len(available_report_types) > 0
+    has_access = len(allowed_report_types) > 0
 
-    selected_report_type = (request.GET.get('report_type') or '').strip()
-    if not selected_report_type or selected_report_type == 'all':
-        if available_report_types:
-            selected_report_type = available_report_types[0]
+    if not has_access:
+        return ExceptionRecord.objects.none(), allowed_report_types, has_access
 
-    if selected_report_type not in available_report_types:
-        selected_report_type = available_report_types[0] if available_report_types else ''
+    qs = ExceptionRecord.objects.filter(upload__isnull=False)
 
+    # Scope to the uploader position derived from the selected
+    # report type (head-office vs cluster), else by report_type.
     def _derive_position_scope(report_type):
         name = (report_type or '').lower()
         if 'head office' in name or 'headoffice' in name or 'head-office' in name:
@@ -5624,82 +5613,368 @@ def consolidated_reports(request):
             return 'cc'
         return None
 
-    uploader_scope = _derive_position_scope(selected_report_type)
+    # If the user has access via a "head office" / "cluster" report
+    # type, scope by position; otherwise scope strictly by report_type.
+    scopes = {_derive_position_scope(rt) for rt in allowed_report_types}
 
-    exception_rows = []
-    total_count = 0
-    total_cost = 0
-    distinct_uploaders = 0
+    if scopes == {'hc'}:
+        qs = qs.filter(upload__uploaded_by__position='hc')
+    elif scopes == {'cc'}:
+        qs = qs.filter(upload__uploaded_by__position='cc')
+    else:
+        qs = qs.filter(upload__report_type__in=allowed_report_types)
+
+    return qs.select_related('upload', 'upload__uploaded_by'), allowed_report_types, has_access
+
+def _serialize_consolidated_row(rec):
+    """Build the row dict the shared sheet table expects."""
+    uploader = getattr(rec.upload, 'uploaded_by', None) if rec.upload else None
+    uploader_name = (uploader.full_name or uploader.email) if uploader else ''
+    uploader_initials = _initials_from_name(uploader_name) if uploader_name else ''
+
+    return {
+        'row_id': rec.id,
+        'serial_number': rec.serial_number,
+        'branch_unit': rec.branch_unit or '—',
+        'exception': rec.exception or '—',
+        'date_noted': rec.date_noted,
+        'date_noted_raw': rec.date_noted_raw or '',
+        'target_closure_date': rec.target_closure_date,
+        'target_closure_date_raw': rec.target_closure_date_raw or '',
+        'category': rec.category or '—',
+        'responsible_officer': rec.responsible_officer or '—',
+        'supervisor': rec.supervisor or '—',
+        'auditee_response': rec.auditee_response or '',
+        'remarks': rec.remarks or '',
+        'status': rec.get_status_display() or rec.status_raw or '—',
+        'status_raw': (rec.status or 'open'),
+        'income_cost_saved': (
+            f'{rec.income_cost_saved:,.2f}'
+            if rec.income_cost_saved is not None else ''
+        ),
+        'uploaded_by_name': uploader_name,
+        'uploaded_by_initials': uploader_initials,
+        'uploaded_at': rec.upload.created_at if rec.upload else None,
+        'report_type': (rec.upload.report_type if rec.upload else '—'),
+    }
+
+# ==================== CONSOLIDATED REPORTS (TABBED) ====================
+
+CONSOLIDATED_TAB_DASHBOARD    = 'dashboard'
+CONSOLIDATED_TAB_CURRENT_WEEK = 'current_week'
+CONSOLIDATED_TAB_OPEN         = 'open_issues'
+CONSOLIDATED_TAB_CLOSED       = 'closed_issues'
+
+CONSOLIDATED_TABS = (
+    CONSOLIDATED_TAB_DASHBOARD,
+    CONSOLIDATED_TAB_CURRENT_WEEK,
+    CONSOLIDATED_TAB_OPEN,
+    CONSOLIDATED_TAB_CLOSED,
+)
+
+OPEN_STATUSES   = ('open', 'in_progress', 'pending', 'overdue')
+CLOSED_STATUSES = ('closed', 'resolved')
+
+
+def _derive_position_scope(report_type):
+    """Return 'hc' / 'cc' / None based on the report-type name."""
+    name = (report_type or '').lower()
+    if 'head office' in name or 'headoffice' in name or 'head-office' in name:
+        return 'hc'
+    if 'cluster' in name:
+        return 'cc'
+    return None
+
+
+def _consolidated_queryset_for_user(user_profile):
+    """
+    Base ExceptionRecord queryset the user is allowed to see on the
+    Consolidated Reports page. Returns (queryset, allowed_report_types, has_access).
+    """
+    assigned_consolidated_qs = Report.objects.filter(
+        Q(assigned_to=user_profile) |
+        Q(is_assigned_to_all=True) |
+        Q(created_by=user_profile)
+    ).exclude(
+        report_type=TRIAL_BALANCE_REPORT_TYPE
+    ).exclude(
+        status=UPLOADED_STATUS
+    ).filter(
+        report_type__icontains='consolidated'
+    )
+
+    allowed_report_types = sorted(
+        {rt for rt in assigned_consolidated_qs.values_list('report_type', flat=True) if rt}
+    )
+
+    has_access = len(allowed_report_types) > 0
+
+    if not has_access:
+        return ExceptionRecord.objects.none(), allowed_report_types, has_access
+
+    qs = ExceptionRecord.objects.filter(upload__isnull=False)
+
+    scopes = {_derive_position_scope(rt) for rt in allowed_report_types}
+
+    # Prefer position-based filtering when the user's access is scoped
+    # to Head Office / Cluster; fall back to report_type filtering if
+    # no uploader actually has that position set, so the tabs never
+    # silently collapse to zero rows.
+    if scopes == {'hc'}:
+        qs_by_pos = qs.filter(upload__uploaded_by__position='hc')
+        qs = qs_by_pos if qs_by_pos.exists() else qs.filter(upload__report_type__in=allowed_report_types)
+    elif scopes == {'cc'}:
+        qs_by_pos = qs.filter(upload__uploaded_by__position='cc')
+        qs = qs_by_pos if qs_by_pos.exists() else qs.filter(upload__report_type__in=allowed_report_types)
+    else:
+        qs = qs.filter(upload__report_type__in=allowed_report_types)
+
+    return qs.select_related('upload', 'upload__uploaded_by'), allowed_report_types, has_access
+
+
+def _serialize_consolidated_row(rec):
+    """Build the row dict the table expects."""
+    uploader = getattr(rec.upload, 'uploaded_by', None) if rec.upload else None
+    uploader_name = (uploader.full_name or uploader.email) if uploader else ''
+    uploader_initials = _initials_from_name(uploader_name) if uploader_name else ''
+
+    return {
+        'row_id': rec.id,
+        'serial_number': rec.serial_number,
+        'branch_unit': rec.branch_unit or '—',
+        'exception': rec.exception or '—',
+        'date_noted': rec.date_noted,
+        'date_noted_raw': rec.date_noted_raw or '',
+        'target_closure_date': rec.target_closure_date,
+        'target_closure_date_raw': rec.target_closure_date_raw or '',
+        'category': rec.category or '—',
+        'responsible_officer': rec.responsible_officer or '—',
+        'supervisor': rec.supervisor or '—',
+        'auditee_response': rec.auditee_response or '',
+        'remarks': rec.remarks or '',
+        'status': rec.get_status_display() or rec.status_raw or '—',
+        'status_raw': (rec.status or 'open'),
+        'income_cost_saved': (
+            f'{rec.income_cost_saved:,.2f}'
+            if rec.income_cost_saved is not None else ''
+        ),
+        'uploaded_by_name': uploader_name,
+        'uploaded_by_initials': uploader_initials,
+        'uploaded_at': rec.upload.created_at if rec.upload else None,
+        'report_type': (rec.upload.report_type if rec.upload else '—'),
+    }
+
+@login_required
+def consolidated_reports(request):
+    """
+    Consolidated Reports — 4-tab page.
+
+      • Dashboard      : pivot table — rows = branch/unit, columns = category
+      • Current Week   : flat list of records captured this week
+      • Open Issues    : flat list of open items before this week
+      • Closed Issues  : flat list of closed items before this week
+    """
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+    except UserProfile.DoesNotExist:
+        return redirect('control_dashboard:member_dashboard')
+
+    active_tab = (request.GET.get('tab') or CONSOLIDATED_TAB_DASHBOARD).strip().lower()
+    if active_tab not in CONSOLIDATED_TABS:
+        active_tab = CONSOLIDATED_TAB_DASHBOARD
+
+    base_qs, available_report_types, has_access = _consolidated_queryset_for_user(user_profile)
+
+    # ==================================================================
+    # DASHBOARD TAB — PIVOT
+    # ==================================================================
+    selected_report_type = (request.GET.get('report_type') or '').strip()
+    if not selected_report_type or selected_report_type == 'all':
+        if available_report_types:
+            selected_report_type = available_report_types[0]
+
+    if selected_report_type not in available_report_types:
+        selected_report_type = available_report_types[0] if available_report_types else ''
+
+    uploader_scope = None
+
+    pivot_categories  = []
+    pivot_rows        = []
+    pivot_totals      = {
+        'counts': {},
+        'total': 0,
+        'open': 0,
+        'closed': 0,
+        'resolution_rate': 0,
+    }
+    pivot_grand_total = 0
 
     if has_access and selected_report_type:
-        er_qs = ExceptionRecord.objects.filter(
-            upload__isnull=False,
-        )
+        uploader_scope = _derive_position_scope(selected_report_type)
 
         if uploader_scope:
-            er_qs = er_qs.filter(
-                upload__uploaded_by__position=uploader_scope,
-            )
+            dash_qs = base_qs.filter(upload__uploaded_by__position=uploader_scope)
+            if not dash_qs.exists():
+                dash_qs = base_qs.filter(upload__report_type=selected_report_type)
         else:
-            er_qs = er_qs.filter(
-                upload__report_type=selected_report_type,
+            dash_qs = base_qs.filter(upload__report_type=selected_report_type)
+
+        # Light query for aggregation
+        bucket_qs = dash_qs.values('branch_unit', 'category', 'status')
+
+        pivot_map       = {}
+        categories_seen = set()
+
+        for row in bucket_qs.iterator():
+            branch = (row['branch_unit'] or '—').strip() or '—'
+            cat    = (row['category'] or '—').strip() or '—'
+            status = (row['status'] or '').strip()
+
+            bucket = pivot_map.setdefault(
+                branch,
+                {'counts': {}, 'open': 0, 'closed': 0, 'total': 0},
             )
 
-        er_qs = er_qs.select_related(
-            'upload', 'upload__uploaded_by'
-        ).order_by('-upload__created_at', 'source_row_index')
+            bucket['counts'][cat] = bucket['counts'].get(cat, 0) + 1
+            bucket['total'] += 1
 
-        total_count = er_qs.count()
+            if status in OPEN_STATUSES:
+                bucket['open'] += 1
+            elif status in CLOSED_STATUSES:
+                bucket['closed'] += 1
 
-        cost_agg = er_qs.aggregate(total=Sum('income_cost_saved'))
-        try:
-            total_cost = float(cost_agg.get('total') or 0)
-        except (TypeError, ValueError):
-            total_cost = 0.0
+            categories_seen.add(cat)
 
-        distinct_uploaders = er_qs.values('upload__uploaded_by').distinct().count()
+        # Deterministic category ordering ('—' last, alphabetical otherwise)
+        pivot_categories = sorted(
+            categories_seen,
+            key=lambda c: (c == '—', c.lower()),
+        )
 
-        for rec in er_qs[:100]:
-            # ---- Resolve the report's uploader ----
-            uploader = getattr(rec.upload, 'uploaded_by', None) if rec.upload else None
-            if uploader:
-                uploader_name = uploader.full_name or uploader.email or ''
-                uploader_initials = _initials_from_name(uploader_name)
-            else:
-                uploader_name = ''
-                uploader_initials = ''
+        # Build rows
+        for branch, bucket in pivot_map.items():
+            cat_counts = {c: bucket['counts'].get(c, 0) for c in pivot_categories}
+            total  = bucket['total']
+            opened = bucket['open']
+            closed = bucket['closed']
+            handled = opened + closed
+            resolution_rate = (
+                int(round(closed / handled * 100))
+                if handled else 0
+            )
 
-            exception_rows.append({
-                'serial_number': rec.serial_number,
-                'branch_unit': rec.branch_unit or '—',
-                'exception': rec.exception or '—',
-                'date_noted': rec.date_noted,
-                'target_closure_date': rec.target_closure_date,
-                'category': rec.category or '—',
-                'responsible_officer': rec.responsible_officer or '—',
-                'supervisor': rec.supervisor or '—',
-                'status': rec.get_status_display() or rec.status_raw or '—',
-                'income_cost_saved': rec.income_cost_saved,
-                'source_report': (rec.upload.report_type if rec.upload else '—'),
-                # ---- New uploader fields for the template ----
-                'uploaded_by_name': uploader_name,
-                'uploaded_by_initials': uploader_initials,
-                'uploaded_at': rec.upload.created_at if rec.upload else None,
+            pivot_rows.append({
+                'branch_unit':     branch,
+                'counts':          cat_counts,
+                'total':           total,
+                'open':            opened,
+                'closed':          closed,
+                'resolution_rate': resolution_rate,
             })
+
+        # Alphabetical by branch, '—' last
+        pivot_rows.sort(
+            key=lambda r: (r['branch_unit'] == '—', r['branch_unit'].lower())
+        )
+
+        # Column totals + grand totals
+        for cat in pivot_categories:
+            pivot_totals['counts'][cat] = sum(
+                r['counts'].get(cat, 0) for r in pivot_rows
+            )
+        pivot_totals['total']  = sum(r['total']  for r in pivot_rows)
+        pivot_totals['open']   = sum(r['open']   for r in pivot_rows)
+        pivot_totals['closed'] = sum(r['closed'] for r in pivot_rows)
+        handled_total = pivot_totals['open'] + pivot_totals['closed']
+        pivot_totals['resolution_rate'] = (
+            int(round(pivot_totals['closed'] / handled_total * 100))
+            if handled_total else 0
+        )
+        pivot_grand_total = pivot_totals['total']
+
+    # ==================================================================
+    # WEEK-ANCHORED TABS
+    # ==================================================================
+    today = timezone.now().date()
+    week_start = get_week_start(today)
+    week_end = week_start + timedelta(days=6)
+
+    week_qs = base_qs.none()
+    open_qs = base_qs.none()
+    closed_qs = base_qs.none()
+
+    if has_access:
+        week_qs = (
+            base_qs
+            .filter(upload__created_at__date__gte=week_start,
+                    upload__created_at__date__lte=week_end)
+            .order_by('-upload__created_at', 'source_row_index')
+        )
+        open_qs = (
+            base_qs
+            .filter(upload__created_at__date__lt=week_start)
+            .filter(status__in=OPEN_STATUSES)
+            .order_by('-upload__created_at', 'source_row_index')
+        )
+        closed_qs = (
+            base_qs
+            .filter(upload__created_at__date__lt=week_start)
+            .filter(status__in=CLOSED_STATUSES)
+            .order_by('-upload__created_at', 'source_row_index')
+        )
+
+    def _group_by_report_type(records_qs):
+        grouped = {}
+        order = []
+        for rec in records_qs:
+            rt = (rec.upload.report_type if rec.upload else 'Uncategorized') or 'Uncategorized'
+            if rt not in grouped:
+                grouped[rt] = []
+                order.append(rt)
+            grouped[rt].append(_serialize_consolidated_row(rec))
+        return [{'report_type': rt, 'rows': grouped[rt]} for rt in order]
+
+    current_week_groups = _group_by_report_type(week_qs)
+    open_groups         = _group_by_report_type(open_qs)
+    closed_groups       = _group_by_report_type(closed_qs)
 
     context = {
         'user_profile': user_profile,
         'today': timezone.now(),
+
+        # Access
         'has_access': has_access,
         'available_report_types': available_report_types,
         'selected_report_type': selected_report_type,
         'uploader_scope': uploader_scope,
-        'exception_rows': exception_rows,
-        'total_count': total_count,
-        'total_cost': total_cost,
-        'distinct_uploaders': distinct_uploaders,
+
+        # Active tab
+        'active_tab': active_tab,
+
+        # Dashboard pivot
+        'pivot_categories':  pivot_categories,
+        'pivot_rows':        pivot_rows,
+        'pivot_totals':      pivot_totals,
+        'pivot_grand_total': pivot_grand_total,
+
+        # Week bounds
+        'week_start': week_start,
+        'week_end': week_end,
+
+        # Week-anchored tabs
+        'current_week_groups': current_week_groups,
+        'open_groups': open_groups,
+        'closed_groups': closed_groups,
+
+        'current_week_count': sum(len(g['rows']) for g in current_week_groups),
+        'open_count': sum(len(g['rows']) for g in open_groups),
+        'closed_count': sum(len(g['rows']) for g in closed_groups),
+
+        # Header labels
+        'exception_headers': EXCEPTION_CANONICAL_HEADERS,
     }
     return render(request, 'control_dashboard/consolidated.html', context)
+
 
 @csrf_exempt
 @require_http_methods(["GET"])
@@ -5721,11 +5996,19 @@ def api_consolidated_filter_options(request):
 
     return JsonResponse({'success': True, 'report_types': report_types})
 
+
 @login_required
 @require_http_methods(["GET"])
-def generate_consolidated_excel(request):
+def export_consolidated_workbook(request):
     """
-    Export a consolidated report as Excel.
+    Export a single .xlsx workbook with four named sheets:
+      • Dashboard
+      • Current Week
+      • Open Issues
+      • Closed Issues
+
+    Each sheet has the same 13 columns as the HTML tables and uses
+    the same serializers the page uses.
     """
     try:
         user_profile = UserProfile.objects.get(email=request.user.email)
@@ -5733,145 +6016,171 @@ def generate_consolidated_excel(request):
         messages.error(request, 'User profile not found.')
         return redirect('control_dashboard:consolidated_reports')
 
-    assigned_consolidated_qs = Report.objects.filter(
-        Q(assigned_to=user_profile) |
-        Q(is_assigned_to_all=True) |
-        Q(created_by=user_profile)
-    ).exclude(
-        report_type=TRIAL_BALANCE_REPORT_TYPE
-    ).exclude(
-        status=UPLOADED_STATUS
-    ).filter(
-        report_type__icontains='consolidated'
-    )
+    base_qs, available_report_types, has_access = _consolidated_queryset_for_user(user_profile)
 
-    allowed_report_types = {
-        rt for rt in assigned_consolidated_qs.values_list('report_type', flat=True) if rt
-    }
-
-    if not allowed_report_types:
+    if not has_access:
         messages.error(request, 'You do not have access to consolidated reports.')
         return redirect('control_dashboard:consolidated_reports')
 
-    report_type_filter = (request.GET.get('report_type') or '').strip()
-    start_date_str = (request.GET.get('start_date') or '').strip()
-    end_date_str = (request.GET.get('end_date') or '').strip()
+    # ---- Build the four row sets ------------------------------------
+    # Dashboard: same default report_type the page picks
+    selected_report_type = (
+        available_report_types[0] if available_report_types else ''
+    )
+    dashboard_rows = []
+    if selected_report_type:
+        uploader_scope = _derive_position_scope(selected_report_type)
+        if uploader_scope:
+            dash_qs = base_qs.filter(upload__uploaded_by__position=uploader_scope)
+            if not dash_qs.exists():
+                dash_qs = base_qs.filter(upload__report_type=selected_report_type)
+        else:
+            dash_qs = base_qs.filter(upload__report_type=selected_report_type)
+        dash_qs = dash_qs.order_by('-upload__created_at', 'source_row_index')
+        dashboard_rows = [_serialize_consolidated_row(r) for r in dash_qs]
 
-    if not report_type_filter or report_type_filter == 'all':
-        report_type_filter = sorted(allowed_report_types)[0]
+    # Week-anchored
+    today = timezone.now().date()
+    week_start = get_week_start(today)
+    week_end = week_start + timedelta(days=6)
 
-    if report_type_filter not in allowed_report_types:
-        messages.error(request, f'You do not have access to "{report_type_filter}".')
-        return redirect('control_dashboard:consolidated_reports')
-
-    def _derive_position_scope(report_type):
-        name = (report_type or '').lower()
-        if 'head office' in name or 'headoffice' in name or 'head-office' in name:
-            return 'hc'
-        if 'cluster' in name:
-            return 'cc'
-        return None
-
-    uploader_scope = _derive_position_scope(report_type_filter)
-
-    er_qs = ExceptionRecord.objects.filter(
-        upload__isnull=False,
+    week_qs = (
+        base_qs
+        .filter(upload__created_at__date__gte=week_start,
+                upload__created_at__date__lte=week_end)
+        .order_by('-upload__created_at', 'source_row_index')
+    )
+    open_qs = (
+        base_qs
+        .filter(upload__created_at__date__lt=week_start)
+        .filter(status__in=OPEN_STATUSES)
+        .order_by('-upload__created_at', 'source_row_index')
+    )
+    closed_qs = (
+        base_qs
+        .filter(upload__created_at__date__lt=week_start)
+        .filter(status__in=CLOSED_STATUSES)
+        .order_by('-upload__created_at', 'source_row_index')
     )
 
-    if uploader_scope:
-        er_qs = er_qs.filter(
-            upload__uploaded_by__position=uploader_scope,
-        )
-    else:
-        er_qs = er_qs.filter(
-            upload__report_type=report_type_filter,
-        )
+    week_rows   = [_serialize_consolidated_row(r) for r in week_qs]
+    open_rows   = [_serialize_consolidated_row(r) for r in open_qs]
+    closed_rows = [_serialize_consolidated_row(r) for r in closed_qs]
 
-    er_qs = er_qs.select_related(
-        'upload', 'upload__uploaded_by'
-    ).order_by('-upload__created_at', 'source_row_index')
-
-    if start_date_str:
-        try:
-            start_d = datetime.strptime(start_date_str, '%Y-%m-%d').date()
-            er_qs = er_qs.filter(date_noted__gte=start_d)
-        except ValueError:
-            pass
-
-    if end_date_str:
-        try:
-            end_d = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-            er_qs = er_qs.filter(date_noted__lte=end_d)
-        except ValueError:
-            pass
-
-    records = list(er_qs)
-
-    if not records:
-        messages.warning(request, f'No exception records found for "{report_type_filter}".')
-        return redirect('control_dashboard:consolidated_reports')
-
+    # ---- Build the workbook -----------------------------------------
     wb = openpyxl.Workbook()
-    ws = wb.active
-    safe_title = re.sub(r'[\[\]\:\*\?\/\\]', '_', report_type_filter)[:31] or 'Consolidated'
-    ws.title = safe_title
 
     headers = [
-        'S/N', 'Branch / Unit', 'Exception',
-        'Date Noted', 'Target Closure', 'Category',
-        'Responsible Officer', 'Supervisor', 'Status',
-        "Auditee's Response", 'Remarks',
+        'S/N',
+        'Branch / Unit',
+        'Exception',
+        'Date Noted',
+        'Target Closure',
+        'Category',
+        'Responsible Officer',
+        'Supervisor',
+        "Auditee's Response",
+        'Remarks',
+        'Status',
         'Income / Cost Saved',
-        'Source Report',
+        'Uploaded By',
     ]
 
-    for col, h in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col, value=h)
-        cell.font = Font(bold=True, color='FFFFFF')
-        cell.fill = PatternFill(start_color='0066CC', end_color='0066CC', fill_type='solid')
-        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    header_font = Font(bold=True, color='FFFFFF', name='Calibri', size=11)
+    header_fill = PatternFill(
+        start_color='003366', end_color='003366', fill_type='solid'
+    )
+    header_align = Alignment(
+        horizontal='center', vertical='center', wrap_text=True
+    )
+    thin = Side(border_style='thin', color='C9D3E3')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    body_font = Font(name='Calibri', size=11)
+    body_align = Alignment(vertical='top', wrap_text=True)
 
-    row_idx = 2
-    for rec in records:
-        ws.cell(row=row_idx, column=1,  value=rec.serial_number)
-        ws.cell(row=row_idx, column=2,  value=rec.branch_unit or '')
-        ws.cell(row=row_idx, column=3,  value=rec.exception or '')
-        ws.cell(row=row_idx, column=4,  value=rec.date_noted.strftime('%Y-%m-%d') if rec.date_noted else (rec.date_noted_raw or ''))
-        ws.cell(row=row_idx, column=5,  value=rec.target_closure_date.strftime('%Y-%m-%d') if rec.target_closure_date else (rec.target_closure_date_raw or ''))
-        ws.cell(row=row_idx, column=6,  value=rec.category or '')
-        ws.cell(row=row_idx, column=7,  value=rec.responsible_officer or '')
-        ws.cell(row=row_idx, column=8,  value=rec.supervisor or '')
-        ws.cell(row=row_idx, column=9,  value=rec.get_status_display() or rec.status_raw or '')
-        ws.cell(row=row_idx, column=10, value=rec.auditee_response or '')
-        ws.cell(row=row_idx, column=11, value=rec.remarks or '')
-        try:
-            ws.cell(row=row_idx, column=12, value=float(rec.income_cost_saved) if rec.income_cost_saved is not None else 0)
-        except (TypeError, ValueError):
-            ws.cell(row=row_idx, column=12, value=0)
-        ws.cell(row=row_idx, column=13, value=(rec.upload.report_type if rec.upload else ''))
-        row_idx += 1
+    widths = [6, 18, 55, 14, 14, 18, 20, 18, 40, 26, 14, 16, 26]
 
-    for col in range(1, len(headers) + 1):
-        letter = get_column_letter(col)
-        max_len = 12
-        for r in range(1, min(ws.max_row + 1, 80)):
-            v = ws.cell(row=r, column=col).value
-            if v is not None:
-                max_len = max(max_len, len(str(v)))
-        ws.column_dimensions[letter].width = min(max_len + 2, 45)
+    def _write_sheet(ws, rows):
+        # Header
+        for col, h in enumerate(headers, start=1):
+            c = ws.cell(row=1, column=col, value=h)
+            c.font = header_font
+            c.fill = header_fill
+            c.alignment = header_align
+            c.border = border
 
-    ws.freeze_panes = 'A2'
+        # Body
+        for idx, row in enumerate(rows, start=2):
+            values = [
+                row.get('serial_number', ''),
+                row.get('branch_unit', ''),
+                row.get('exception', ''),
+                (
+                    row['date_noted'].strftime('%Y-%m-%d')
+                    if row.get('date_noted')
+                    else (row.get('date_noted_raw') or '')
+                ),
+                (
+                    row['target_closure_date'].strftime('%Y-%m-%d')
+                    if row.get('target_closure_date')
+                    else (row.get('target_closure_date_raw') or '')
+                ),
+                row.get('category', ''),
+                row.get('responsible_officer', ''),
+                row.get('supervisor', ''),
+                row.get('auditee_response', ''),
+                row.get('remarks', ''),
+                row.get('status', ''),
+                row.get('income_cost_saved', ''),
+                row.get('uploaded_by_name', ''),
+            ]
+            for col, v in enumerate(values, start=1):
+                c = ws.cell(row=idx, column=col, value=v)
+                c.font = body_font
+                c.alignment = body_align
+                c.border = border
 
-    output = io.BytesIO()
-    wb.save(output)
-    output.seek(0)
+        # Column widths
+        for col, w in enumerate(widths, start=1):
+            ws.column_dimensions[get_column_letter(col)].width = w
 
-    safe_filename_part = re.sub(r'[^A-Za-z0-9_-]', '_', report_type_filter)[:40]
-    filename = f'Consolidated_{safe_filename_part}_{timezone.now().strftime("%Y%m%d_%H%M")}.xlsx'
+        ws.freeze_panes = 'A2'
+        ws.auto_filter.ref = (
+            f'A1:{get_column_letter(len(headers))}{max(ws.max_row, 1)}'
+        )
 
+    # ---- Sheet 1: Dashboard -----------------------------------------
+    ws_dash = wb.active
+    ws_dash.title = 'Dashboard'
+    _write_sheet(ws_dash, dashboard_rows)
+
+    # ---- Sheet 2: Current Week --------------------------------------
+    ws_week = wb.create_sheet('Current Week')
+    _write_sheet(ws_week, week_rows)
+
+    # ---- Sheet 3: Open Issues ---------------------------------------
+    ws_open = wb.create_sheet('Open Issues')
+    _write_sheet(ws_open, open_rows)
+
+    # ---- Sheet 4: Closed Issues -------------------------------------
+    ws_closed = wb.create_sheet('Closed Issues')
+    _write_sheet(ws_closed, closed_rows)
+
+    # ---- Save --------------------------------------------------------
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    filename = (
+        f'Consolidated_Reports_'
+        f'{timezone.now().strftime("%Y%m%d_%H%M")}.xlsx'
+    )
     response = HttpResponse(
-        output.getvalue(),
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        buf.getvalue(),
+        content_type=(
+            'application/vnd.openxmlformats-officedocument'
+            '.spreadsheetml.sheet'
+        ),
     )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
@@ -7018,6 +7327,159 @@ def api_supervisor_top_performers_live(request):
         },
     })
 
+# ============================================================
+# SUPERVISOR COMMENTS — list, add, (optional) resolve
+# ============================================================
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_list_supervisor_comments(request, record_id):
+    """
+    Return every comment on a single ExceptionRecord, newest first.
+    Accessible to admin/supervisor (read + write) and to the member
+    who uploaded the parent record (read only).
+    """
+    try:
+        record = get_object_or_404(ExceptionRecord, id=record_id)
+
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        # Admin / supervisor → full access.
+        # The uploader of the parent record → read-only view.
+        is_privileged = user_profile.role in ('admin', 'supervisor')
+        is_uploader = (
+            record.upload
+            and record.upload.uploaded_by_id == user_profile.id
+        )
+        if not (is_privileged or is_uploader):
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+        comments = (
+            record.supervisor_comments
+            .select_related('author')
+            .order_by('-created_at')
+        )
+        return JsonResponse({
+            'success': True,
+            'count': comments.count(),
+            'comments': [c.to_dict() for c in comments],
+        })
+
+    except Exception:
+        logger.exception("Error in api_list_supervisor_comments")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_add_supervisor_comment(request, record_id):
+    """
+    Add a supervisor comment to a single ExceptionRecord, and
+    optionally correct the record's status.
+
+    Payload:
+    {
+        "body":   "Please attach evidence and close by Friday.",
+        "status": "open" | "closed"   (optional)
+    }
+    """
+    try:
+        record = get_object_or_404(ExceptionRecord, id=record_id)
+
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        if user_profile.role not in ('admin', 'supervisor'):
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+        data = json.loads(request.body or '{}')
+        body = (data.get('body') or '').strip()
+        status_val = (data.get('status') or '').strip().lower()
+
+        if not body:
+            return JsonResponse({'success': False, 'error': 'Comment body is required.'}, status=400)
+
+        comment = SupervisorComment.objects.create(
+            record=record,
+            author=user_profile,
+            author_role='supervisor',
+            body=body,
+        )
+
+        # Optionally correct the record's status.
+        if status_val in ('open', 'closed') and record.status != status_val:
+            record.status = status_val
+            record.status_raw = status_val.capitalize()
+            record.save(update_fields=['status', 'status_raw', 'updated_at'])
+
+        log_activity(
+            user=user_profile,
+            activity_type='report_updated',
+            details=(
+                f'Commented on exception #{record.id} '
+                f'({record.branch_unit or "—"}) — '
+                f'status set to {status_val or "unchanged"}'
+            ),
+            request=request,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Comment saved.',
+            'comment': comment.to_dict(),
+            'record_status': record.status,
+            'record_id': record.id,
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
+    except Exception:
+        logger.exception("Error in api_add_supervisor_comment")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_resolve_supervisor_comment(request, comment_id):
+    """
+    Mark a comment as resolved. Used by the member once they've
+    acted on the supervisor's instruction.
+    """
+    try:
+        comment = get_object_or_404(SupervisorComment, id=comment_id)
+
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        is_privileged = user_profile.role in ('admin', 'supervisor')
+        is_uploader = (
+            comment.record.upload
+            and comment.record.upload.uploaded_by_id == user_profile.id
+        )
+        if not (is_privileged or is_uploader):
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+        comment.is_resolved = True
+        comment.resolved_at = timezone.now()
+        comment.save(update_fields=['is_resolved', 'resolved_at', 'updated_at'])
+
+        return JsonResponse({
+            'success': True,
+            'comment_id': comment.id,
+            'is_resolved': True,
+        })
+
+    except Exception:
+        logger.exception("Error in api_resolve_supervisor_comment")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
 
 # ═══ NEW ═══ Avatar upload / delete endpoints
 
@@ -7998,268 +8460,485 @@ def api_email_preview_exceptions(request):
         logger.exception("Error in api_email_preview_exceptions")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-# ============================================================
-# ═══ SECRET CHAT ENDPOINTS ═══
-# ============================================================
-
 @csrf_exempt
 @require_http_methods(["GET"])
-def api_secret_chat_recipients(request):
+def api_member_comment_inbox(request):
     """
-    Return the list of users the current caller can DM.
-    Only exposes: id, full_name, email, position, initials.
+    Every supervisor comment on any ExceptionRecord the current member
+    uploaded — newest first. Drives the bell notification + inbox panel.
 
-    NOTE: does NOT write anything to the session or DB.
+    Query params (optional):
+        unresolved_only = '1'   → only return comments where is_resolved=False
     """
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
+    try:
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
 
-    me = UserProfile.objects.filter(email__iexact=request.user.email).first()
-    qs = UserProfile.objects.filter(status='active').exclude(
-        email__iexact=request.user.email
-    ).order_by('full_name')
+        unresolved_only = (request.GET.get('unresolved_only') or '').strip() == '1'
 
-    payload = []
-    for u in qs:
-        payload.append({
-            'id': u.id,
-            'email': u.email,
-            'full_name': u.full_name or u.email,
-            'position': u.get_position_display() if hasattr(u, 'get_position_display') else '',
-            'role': u.role,
-            'initials': _initials_from_name(u.full_name or u.email),
+        comments_qs = (
+            SupervisorComment.objects
+            .filter(record__upload__uploaded_by=user_profile)
+            .select_related('record', 'record__upload', 'author')
+            .order_by('-created_at')
+        )
+        if unresolved_only:
+            comments_qs = comments_qs.filter(is_resolved=False)
+
+        # Counts for the bell badge
+        total_count      = SupervisorComment.objects.filter(
+            record__upload__uploaded_by=user_profile
+        ).count()
+        unresolved_count = SupervisorComment.objects.filter(
+            record__upload__uploaded_by=user_profile,
+            is_resolved=False,
+        ).count()
+
+        # Build the payload — include the exception context so the
+        # member sees what the supervisor is talking about.
+        payload = []
+        for c in comments_qs[:200]:
+            rec = c.record
+            payload.append({
+                'comment': c.to_dict(),
+                'record': {
+                    'id': rec.id,
+                    'serial_number': rec.serial_number,
+                    'branch_unit': rec.branch_unit or '',
+                    'exception': rec.exception or '',
+                    'category': rec.category or '',
+                    'status': rec.status,
+                    'status_display': rec.get_status_display(),
+                    'target_closure_date': (
+                        rec.target_closure_date.isoformat()
+                        if rec.target_closure_date else None
+                    ),
+                    'report_type': rec.upload.report_type if rec.upload else '',
+                    'upload_id': rec.upload.id if rec.upload else None,
+                },
+            })
+
+        return JsonResponse({
+            'success': True,
+            'total_count': total_count,
+            'unresolved_count': unresolved_count,
+            'comments': payload,
         })
 
-    return JsonResponse({
-        'success': True,
-        'me': {
-            'email': request.user.email,
-            'full_name': (me.full_name if me else request.user.get_full_name() or request.user.username),
-        },
-        'recipients': payload,
-    })
-
+    except Exception:
+        logger.exception("Error in api_member_comment_inbox")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def api_secret_chat_open(request):
+def api_member_reply_to_comment(request, comment_id):
     """
-    Open (or join) a chat channel.
+    Member's reply to a supervisor comment.
 
-    Body:
-    {
-      "recipients": ["a@x.com", "b@x.com"]
-    }
+    Creates a NEW SupervisorComment row (author_role='member',
+    author=request.user) so the thread stays chronological.
 
-    The caller is included automatically. Returns a channel_id — a
-    random UUID. NO state is written to session, DB, or disk. If the
-    server restarts, all channel ids are gone (which is the point).
+    The front-end then calls api_resolve_supervisor_comment
+    on the *parent* comment to close it.
+
+    Payload:
+        { "body": "Done — evidence attached." }
     """
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
-
     try:
+        parent = get_object_or_404(SupervisorComment, id=comment_id)
+
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        # Only the uploader of the parent record can reply.
+        if not (parent.record.upload and
+                parent.record.upload.uploaded_by_id == user_profile.id):
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
         data = json.loads(request.body or '{}')
-    except Exception:
-        data = {}
+        body = (data.get('body') or '').strip()
 
-    me = (request.user.email or '').strip().lower()
-    if not me:
-        return JsonResponse({'success': False, 'error': 'No email on account.'}, status=400)
+        if not body:
+            return JsonResponse({'success': False, 'error': 'Reply body is required.'}, status=400)
 
-    recipients = data.get('recipients') or []
-    if not isinstance(recipients, list):
-        recipients = []
-
-    recipients = [
-        str(r or '').strip().lower()
-        for r in recipients
-        if str(r or '').strip()
-    ]
-    # De-dupe, drop self
-    recipients = [r for r in dict.fromkeys(recipients) if r and r != me]
-    if not recipients:
-        return JsonResponse(
-            {'success': False, 'error': 'Pick at least one recipient.'},
-            status=400,
+        reply = SupervisorComment.objects.create(
+            record=parent.record,
+            author=user_profile,
+            author_role='member',      # requires the model change above
+            body=body,
         )
 
-    channel_id = str(_chat_uuid.uuid4())
-    ch = _secret_chat_channel(channel_id, create=True)
-    with ch['lock']:
-        ch['members'].add(me)
-        for r in recipients:
-            ch['members'].add(r)
+        # Optionally auto-resolve the parent comment
+        auto_resolve = data.get('resolve_parent', True)
+        if auto_resolve and not parent.is_resolved:
+            parent.is_resolved = True
+            parent.resolved_at = timezone.now()
+            parent.save(update_fields=['is_resolved', 'resolved_at', 'updated_at'])
 
-    return JsonResponse({
-        'success': True,
-        'channel_id': channel_id,
-        'members': sorted(ch['members']),
-    })
+        log_activity(
+            user=user_profile,
+            activity_type='report_updated',
+            details=(
+                f'Replied to supervisor comment #{parent.id} '
+                f'on exception #{parent.record_id}'
+            ),
+            request=request,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'reply': reply.to_dict(),
+            'parent_resolved': parent.is_resolved,
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
+    except Exception:
+        logger.exception("Error in api_member_reply_to_comment")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+    # ============================================================
+# MEMBER — CHECKLIST CHANGE REQUESTS
+# ============================================================
+
+def _snapshot_checklist_for_request(checklist):
+    """Return the serializable snapshot used by ChecklistChangeRequest."""
+    if checklist is None:
+        return {}
+    return {
+        'id': checklist.id,
+        'name': checklist.name,
+        'description': checklist.description,
+        'frequency': checklist.frequency,
+        'is_active': checklist.is_active,
+        'assigned_branches': list(checklist.assigned_branches.values_list('id', flat=True)),
+        'assigned_departments': list(checklist.assigned_departments.values_list('id', flat=True)),
+        'tasks': [
+            {'id': t.id, 'description': t.description, 'order': t.order}
+            for t in checklist.tasks.all().order_by('order')
+        ],
+    }
+
+
+@login_required
+def member_checklist_requests(request):
+    """
+    Member-facing page to raise a new checklist request and see
+    the status of requests they've already submitted.
+    """
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+    except UserProfile.DoesNotExist:
+        return redirect('control_dashboard:member_dashboard')
+
+    my_requests = (
+        ChecklistChangeRequest.objects
+        .filter(requester=user_profile)
+        .select_related('target_checklist', 'reviewed_by')
+        .order_by('-created_at')
+    )
+
+    user_branch_ids = set(user_profile.branches.values_list('id', flat=True))
+    user_dept_ids   = set(user_profile.departments.values_list('id', flat=True))
+
+    modifiable_checklists = (
+        Checklist.objects
+        .filter(is_active=True)
+        .filter(
+            Q(assigned_branches__in=user_branch_ids) |
+            Q(assigned_departments__in=user_dept_ids)
+        )
+        .distinct()
+        .order_by('name')
+    )
+
+    context = {
+        'user_profile':           user_profile,
+        'my_requests':            my_requests,
+        'modifiable_checklists':  modifiable_checklists,
+        'frequencies':            Checklist.FREQUENCY_CHOICES,
+        'branches':               Branch.objects.filter(is_active=True).order_by('name'),
+        'departments':            Department.objects.filter(is_active=True).order_by('name'),
+    }
+    return render(request, 'control_dashboard/checklist-request.html', context)
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def api_secret_chat_send(request, channel_id):
+def api_member_create_checklist_request(request):
     """
-    Append a message to the in-memory bus.
-
-    Body:
-    { "text": "hello" }
-
-    No DB row, no log, no session write. Message lives ONLY in
-    `_SECRET_CHAT_BUS[channel_id]['messages']` while the server is alive.
+    Member submits a ChecklistChangeRequest.
     """
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
-
     try:
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
         data = json.loads(request.body or '{}')
-    except Exception:
-        return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
+        request_type = (data.get('request_type') or '').strip().lower()
+        justification = (data.get('justification') or '').strip()
+        payload = data.get('payload') or {}
+        target_id = data.get('target_id')
 
-    text = (data.get('text') or '').strip()
-    if not text:
-        return JsonResponse({'success': False, 'error': 'Empty message'}, status=400)
-    text = text[:2000]
-
-    me = (request.user.email or '').strip().lower()
-
-    # NEVER create — if the channel is gone, say so clearly.
-    ch = _secret_chat_channel(channel_id, create=False)
-    if ch is None:
-        return JsonResponse({
-            'success': False,
-            'error': 'This chat has expired. Please start a new one.',
-            'expired': True,
-        }, status=410)
-
-    with ch['lock']:
-        if me not in ch['members']:
-            return JsonResponse(
-                {'success': False, 'error': 'Not a member of this channel.'},
-                status=403,
-            )
-
-        msg = {
-            'id': str(_chat_uuid.uuid4()),
-            'sender': me,
-            'text': text,
-            'ts': timezone.now().isoformat(),
+        valid_types = {
+            ChecklistChangeRequest.RequestType.CREATE,
+            ChecklistChangeRequest.RequestType.MODIFY,
+            ChecklistChangeRequest.RequestType.DELETE,
+            ChecklistChangeRequest.RequestType.ADD_TASK,
         }
-        ch['messages'].append(msg)
-        if len(ch['messages']) > 500:
-            ch['messages'] = ch['messages'][-500:]
+        if request_type not in valid_types:
+            return JsonResponse({'success': False, 'error': 'Invalid request_type.'}, status=400)
 
-    return JsonResponse({'success': True, 'message': msg})
+        if not justification:
+            return JsonResponse({'success': False, 'error': 'Justification is required.'}, status=400)
+
+        target_checklist = None
+        snapshot = {}
+
+        if request_type == ChecklistChangeRequest.RequestType.CREATE:
+            if not (payload.get('name') or '').strip():
+                return JsonResponse({'success': False, 'error': 'Name is required.'}, status=400)
+            if not payload.get('frequency'):
+                return JsonResponse({'success': False, 'error': 'Frequency is required.'}, status=400)
+            if not payload.get('tasks'):
+                return JsonResponse({'success': False, 'error': 'At least one task is required.'}, status=400)
+        else:
+            if not target_id:
+                return JsonResponse({'success': False, 'error': 'target_id is required.'}, status=400)
+
+            try:
+                target_checklist = Checklist.objects.get(id=target_id)
+            except Checklist.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Target checklist not found.'}, status=404)
+
+            user_branch_ids = set(user_profile.branches.values_list('id', flat=True))
+            user_dept_ids   = set(user_profile.departments.values_list('id', flat=True))
+
+            allowed = (
+                target_checklist.assigned_branches.filter(id__in=user_branch_ids).exists() or
+                target_checklist.assigned_departments.filter(id__in=user_dept_ids).exists()
+            )
+            if not allowed:
+                return JsonResponse({'success': False, 'error': 'You are not assigned to this checklist.'}, status=403)
+
+            snapshot = _snapshot_checklist_for_request(target_checklist)
+
+            if request_type == ChecklistChangeRequest.RequestType.ADD_TASK:
+                if not (payload.get('description') or '').strip():
+                    return JsonResponse({'success': False, 'error': 'Task description is required.'}, status=400)
+
+        req = ChecklistChangeRequest.objects.create(
+            requester=user_profile,
+            request_type=request_type,
+            status=ChecklistChangeRequest.Status.PENDING,
+            target_checklist=target_checklist,
+            current_snapshot=snapshot,
+            payload=payload,
+            justification=justification,
+        )
+
+        log_activity(
+            user=user_profile,
+            activity_type='report_updated',
+            details=f'Submitted checklist change request #{req.id} ({request_type})',
+            request=request,
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Request submitted — waiting for supervisor review.',
+            'request_id': req.id,
+        })
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data.'}, status=400)
+    except Exception:
+        logger.exception("Error in api_member_create_checklist_request")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+
+# ============================================================
+# SUPERVISOR — CHECKLIST CHANGE REQUESTS
+# ============================================================
+
+@login_required
+def supervisor_checklist_requests(request):
+    """
+    Supervisor inbox of checklist change requests.
+    """
+    try:
+        user_profile = UserProfile.objects.get(email=request.user.email)
+        if user_profile.role not in ('supervisor', 'admin'):
+            messages.error(request, 'You do not have permission to access this page.')
+            return redirect_dashboard(request.user)
+    except UserProfile.DoesNotExist:
+        return redirect_dashboard(request.user)
+
+    status_filter = request.GET.get('status', 'pending')
+    valid_status = {'pending', 'approved', 'rejected', 'cancelled', 'all'}
+    if status_filter not in valid_status:
+        status_filter = 'pending'
+
+    qs = (
+        ChecklistChangeRequest.objects
+        .select_related('requester', 'target_checklist', 'reviewed_by')
+        .order_by('-created_at')
+    )
+    if status_filter != 'all':
+        qs = qs.filter(status=status_filter)
+
+    requests_list = list(qs)
+
+    counts = {
+        'pending':   ChecklistChangeRequest.objects.filter(status='pending').count(),
+        'approved':  ChecklistChangeRequest.objects.filter(status='approved').count(),
+        'rejected':  ChecklistChangeRequest.objects.filter(status='rejected').count(),
+        'cancelled': ChecklistChangeRequest.objects.filter(status='cancelled').count(),
+    }
+
+    context = {
+        'user_profile':   user_profile,
+        'requests_list':  requests_list,
+        'status_filter':  status_filter,
+        'counts':         counts,
+    }
+    return render(request, 'control_dashboard/checklist-requests-sup.html', context)
+
 
 @csrf_exempt
 @require_http_methods(["GET"])
-def api_secret_chat_poll(request, channel_id):
-    """
-    Long-ish poll: wait up to ~20 s for new messages, then return
-    whatever's there.
+def api_checklist_request_detail(request, request_id):
+    """Supervisor view — full details of a single request."""
+    try:
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
 
-    Query:
-      since=<last_message_id>   (optional)
+        if user_profile.role not in ('supervisor', 'admin'):
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
-    No state persisted — the caller passes their own cursor.
-    """
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
+        req = get_object_or_404(ChecklistChangeRequest, id=request_id)
+        return JsonResponse({'success': True, 'request': req.to_dict()})
 
-    me = (request.user.email or '').strip().lower()
+    except Exception:
+        logger.exception("Error in api_checklist_request_detail")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
 
-    # NEVER create — a missing channel means it's gone (server restart,
-    # different gunicorn worker, etc.).
-    ch = _secret_chat_channel(channel_id, create=False)
-    if ch is None:
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def api_pending_checklist_requests_count(request):
+    """Cheap endpoint for the bell badge / nav counter."""
+    try:
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        if user_profile.role not in ('supervisor', 'admin'):
+            return JsonResponse({'success': True, 'count': 0})
+
+        count = ChecklistChangeRequest.objects.filter(status='pending').count()
+        return JsonResponse({'success': True, 'count': count})
+
+    except Exception:
+        logger.exception("Error in api_pending_checklist_requests_count")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_approve_checklist_request(request, request_id):
+    """Supervisor approves — payload is applied to the real Checklist."""
+    try:
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+
+        if user_profile.role not in ('supervisor', 'admin'):
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+
+        req = get_object_or_404(ChecklistChangeRequest, id=request_id)
+
+        if req.status != ChecklistChangeRequest.Status.PENDING:
+            return JsonResponse({'success': False, 'error': 'This request is no longer pending.'}, status=400)
+
+        try:
+            body = json.loads(request.body or '{}')
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
+
+        note = (body.get('note') or '').strip()
+
+        try:
+            req.approve(supervisor=user_profile, note=note)
+        except ValueError as exc:
+            return JsonResponse({'success': False, 'error': str(exc)}, status=400)
+        except Exception as exc:
+            logger.exception("Error applying checklist change request")
+            return JsonResponse({
+                'success': False,
+                'error': f'Could not apply request: {exc}',
+            }, status=500)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Request approved and applied.',
+            'request': req.to_dict(),
+        })
+
+    except Exception as exc:
+        logger.exception("Error in api_approve_checklist_request")
         return JsonResponse({
             'success': False,
-            'error': 'This chat has expired. Please start a new one.',
-            'expired': True,
-        }, status=410)
+            'error': f'An internal error occurred: {exc}',
+        }, status=500)
 
-    since = (request.GET.get('since') or '').strip()
-    deadline = _chat_time.time() + 20  # 20 s long-poll window
 
-    while True:
-        # ---- Read under the lock ----
-        with ch['lock']:
-            if me not in ch['members']:
-                return JsonResponse(
-                    {'success': False, 'error': 'Not a member of this channel.'},
-                    status=403,
-                )
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_reject_checklist_request(request, request_id):
+    """Supervisor rejects — payload is not applied."""
+    try:
+        try:
+            user_profile = UserProfile.objects.get(email=request.user.email)
+        except UserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
 
-            new_msgs = []
-            seen = False if since else True
-            for m in ch['messages']:
-                if not seen:
-                    if m['id'] == since:
-                        seen = True
-                    continue
-                new_msgs.append(m)
+        if user_profile.role not in ('supervisor', 'admin'):
+            return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
 
-            members_snapshot = sorted(ch['members'])
+        req = get_object_or_404(ChecklistChangeRequest, id=request_id)
 
-            if new_msgs:
-                return JsonResponse({
-                    'success': True,
-                    'messages': new_msgs,
-                    'members': members_snapshot,
-                })
+        if req.status != ChecklistChangeRequest.Status.PENDING:
+            return JsonResponse({'success': False, 'error': 'This request is no longer pending.'}, status=400)
 
-        # ---- Sleep OUTSIDE the lock ----
-        if _chat_time.time() >= deadline:
-            return JsonResponse({
-                'success': True,
-                'messages': [],
-                'members': members_snapshot,
-            })
-        _chat_time.sleep(0.75)
-    """
-    Long-ish poll: wait up to ~20 seconds for new messages,
-    then return whatever's there.
+        data = json.loads(request.body or '{}')
+        note = (data.get('note') or '').strip()
 
-    Query:
-      since=<last_message_id>   (optional)
+        if not note:
+            return JsonResponse({'success': False, 'error': 'A rejection reason is required.'}, status=400)
 
-    No state persisted — the caller passes their own cursor.
-    """
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'Not authenticated'}, status=401)
+        try:
+            req.reject(supervisor=user_profile, note=note)
+        except ValueError as exc:
+            return JsonResponse({'success': False, 'error': str(exc)}, status=400)
 
-    me = (request.user.email or '').lower()
-    ch = _secret_chat_channel(channel_id)
+        return JsonResponse({
+            'success': True,
+            'message': 'Request rejected.',
+            'request': req.to_dict(),
+        })
 
-    since = (request.GET.get('since') or '').strip()
-
-    # Wait up to 20 s for new messages past `since`
-    deadline = timezone.now().timestamp() + 20
-    while timezone.now().timestamp() < deadline:
-        with ch['lock']:
-            if me not in ch['members']:
-                return JsonResponse({'success': False, 'error': 'Not in this channel'}, status=403)
-
-            # Find index after `since`
-            new_msgs = []
-            seen = False if since else True
-            for m in ch['messages']:
-                if not seen:
-                    if m['id'] == since:
-                        seen = True
-                    continue
-                new_msgs.append(m)
-
-            if new_msgs:
-                return JsonResponse({
-                    'success': True,
-                    'messages': new_msgs,
-                    'members': sorted(ch['members']),
-                })
-
-        # Nothing yet — sleep briefly and retry
-        import time as _time
-        _time.sleep(0.75)
-
-    return JsonResponse({'success': True, 'messages': [], 'members': sorted(ch['members'])})
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON.'}, status=400)
+    except Exception:
+        logger.exception("Error in api_reject_checklist_request")
+        return JsonResponse({'success': False, 'error': 'An internal error occurred.'}, status=500)
